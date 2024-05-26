@@ -29,10 +29,10 @@ namespace FDW
 		void SetSampleDesc(DXGI_SAMPLE_DESC sampleDesc);
 
 		void SetVS(ID3DBlob* vsByteCode);
-		void SetPS(ID3DBlob* vsByteCode);
-		void SetHS(ID3DBlob* vsByteCode);
-		void SetDS(ID3DBlob* vsByteCode);
-		void SetGS(ID3DBlob* vsByteCode);
+		void SetPS(ID3DBlob* psByteCode);
+		void SetHS(ID3DBlob* hsByteCode);
+		void SetDS(ID3DBlob* dsByteCode);
+		void SetGS(ID3DBlob* gsByteCode);
 
 		ID3D12PipelineState* GetPSO() const;
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC GetDesc() const;

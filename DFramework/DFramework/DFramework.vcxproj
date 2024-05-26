@@ -148,10 +148,12 @@
     <ClInclude Include="GraphicUtilites\BufferMananger.h" />
     <ClInclude Include="GraphicUtilites\CommandList.h" />
     <ClInclude Include="GraphicUtilites\DepthStencilView.h" />
+    <ClInclude Include="GraphicUtilites\InputLayout.h" />
     <ClInclude Include="GraphicUtilites\Materials.h" />
     <ClInclude Include="GraphicUtilites\PipelineStateObject.h" />
     <ClInclude Include="GraphicUtilites\RenderTarget.h" />
     <ClInclude Include="GraphicUtilites\ResourcePacker.h" />
+    <ClInclude Include="GraphicUtilites\RootSignature.h" />
     <ClInclude Include="GraphicUtilites\Shader.h" />
     <ClInclude Include="GraphicUtilites\Texture.h" />
     <ClInclude Include="Objects\MaterialsMananger.h" />
@@ -189,6 +191,9 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GraphicUtilites\ResourcePacker.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="GraphicUtilites\RootSignature.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GraphicUtilites\Shader.cpp">

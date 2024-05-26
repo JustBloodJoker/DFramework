@@ -1,14 +1,8 @@
 #pragma once
 
-#include "Objects/SimpleObjects.h"
-#include "Objects/Scene.h"
+
 #include "DFW.h"
 
-#include "GraphicUtilites/Texture.h"
-#include "GraphicUtilites/ResourcePacker.h"
-#include "GraphicUtilites/PipelineStateObject.h"
-#include "GraphicUtilites/RenderTarget.h"
-#include "GraphicUtilites/DepthStencilView.h"
 
 class myRender 
 	: public FDW::DFW
@@ -35,7 +29,8 @@ private:
 	std::unique_ptr<FDW::UploadBuffer<FDW::MaterialFrameWork>> pMaterialConstantBuffer;
 	std::unique_ptr<FDW::SamplerPacker> samplerPack;
 
-	wrl::ComPtr<ID3D12RootSignature> pRootSignature;
+	std::unique_ptr<FDW::RootSingature> pRootSignFirstPass;
+	std::unique_ptr<FDW::RootSingature> pRootSignSecondPass;
 
 //	std::unique_ptr<FDW::SRVPacker> srvPack;
 
@@ -56,8 +51,11 @@ private:
 	std::unique_ptr<FDW::Rectangle> screenRes;
 
 	std::unique_ptr<FDW::PipelineStateObject> pso;
+	std::unique_ptr<FDW::PipelineStateObject> mainpso;
 
-	std::unique_ptr<FDW::RenderTarget> rtv;
+	std::unique_ptr<FDW::RenderTarget> rtvPos;
+	std::unique_ptr<FDW::RenderTarget> rtvBase;
+	std::unique_ptr<FDW::RenderTarget> rtvNormals;
 	std::unique_ptr<FDW::DepthStencilView> dsv;
 
 	std::unique_ptr<FDW::DSVPacker> dsvPack;

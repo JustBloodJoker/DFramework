@@ -35,11 +35,7 @@ namespace FDW
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 		
-		/*
-		psoDesc.VS = { reinterpret_cast<BYTE*>(pVSByteCode->GetBufferPointer()) , pVSByteCode->GetBufferSize() };
-		psoDesc.PS = { reinterpret_cast<BYTE*>(pPSByteCode->GetBufferPointer()) , pPSByteCode->GetBufferSize() };
 		
-		*/
 	}
 
 	void PipelineStateObject::SetRasterizerState(D3D12_RASTERIZER_DESC rasterizerDesc)
@@ -89,6 +85,8 @@ namespace FDW
 
 	ID3D12PipelineState* PipelineStateObject::GetPSO() const
 	{
+		SAFE_ASSERT(pPSO.Get(), "PSO not created. Use CreatePSO after set up PSO data");
+
 		return pPSO.Get();
 	}
 
@@ -100,6 +98,7 @@ namespace FDW
 	void PipelineStateObject::CreatePSO(ID3D12Device* pDevice)
 	{
 		HRESULT_ASSERT(pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(pPSO.GetAddressOf())), "Create PSO error");
+		CONSOLE_MESSAGE("PSO created");
 	}
 
 }

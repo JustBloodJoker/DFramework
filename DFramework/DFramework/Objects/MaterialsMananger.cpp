@@ -25,7 +25,7 @@ namespace FDW
 		else if(index == -1)
 		{
 			CONSOLE_MESSAGE(std::string("SET TEXTURE TO THE MATERIAL WITH INDEX " + std::to_string(materials.size() - 1)).c_str());
-			SetTexture(materials[materials.size() - 1], texturePath, type, pDevice, pCommandList);
+			SetTexture(*materials.rbegin(), texturePath, type, pDevice, pCommandList);
 		}
 		else
 		{
@@ -43,7 +43,7 @@ namespace FDW
 		else if (index == -1)
 		{
 			CONSOLE_MESSAGE(std::string("SET MATERIALDESC TO THE MATERIAL WITH INDEX " + std::to_string(materials.size() - 1)).c_str());
-			SetMaterialDesc(materials[materials.size() - 1], materialDesc);
+			SetMaterialDesc(*materials.rbegin(), materialDesc);
 		}
 		else
 		{

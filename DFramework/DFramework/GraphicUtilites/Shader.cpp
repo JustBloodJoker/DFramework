@@ -29,12 +29,7 @@ namespace FDW
 		if (errors != nullptr)
 			OutputDebugStringA((char*)errors->GetBufferPointer());
 		
-		HRESULT_ASSERT(hr, "SHADER COMPILE ERROR");
-	
-		if (FAILED(hr))
-		{
-			GenerateBytecode(filename, defines, entrypoint, target, result);
-		}
+		HRESULT_ASSERT(hr, "SHADER COMPILE ERROR");	
 		
 		CONSOLE_MESSAGE_NO_PREF(std::string("SHADER " + std::string(filename.begin(), filename.end()) +" ENTRY POINT: " + entrypoint + " success compiled"));
 	}

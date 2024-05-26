@@ -15,54 +15,59 @@ myRender::~myRender()
 	scene.reset();
 	screenRes.reset();
 	pso.reset();
-	rtv.reset();
+	rtvPos.reset();
+	rtvBase.reset();
+	rtvNormals.reset();
 	dsv.reset();
 	dsvPack.reset();
 	rtvPack.reset();
 	srvPackRTV.reset();
+	pRootSignFirstPass.reset();
+	pRootSignSecondPass.reset();
 }
 
 void myRender::UserInit()
 {
-	rtv = std::make_unique<FDW::RenderTarget>(pDevice.Get(), DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, 1024, 1024, DXGI_SAMPLE_DESC({ 1,0 }));
+	rtvPos = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	rtvBase = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	rtvNormals = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	
+	srvPackRTV = CreateSRVPack(3u);
+	srvPackRTV->PushResource(rtvPos->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, pDevice.Get());
+	srvPackRTV->PushResource(rtvBase->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, pDevice.Get());
+	srvPackRTV->PushResource(rtvNormals->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, pDevice.Get());
 
-	srvPackRTV = std::make_unique<FDW::SRVPacker>(cbvsrvuavDescriptorSize, 1u, 0u, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
-	srvPackRTV->AddResource(rtv->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 0, pDevice.Get());
-
-	rtvPack = std::make_unique<FDW::RTVPacker>(rtvDescriptorSize, 1u, 0u, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
-	rtvPack->AddResource(rtv->GetRTVResource(), rtv->GetRTVDesc(), 0, pDevice.Get());
-
-	dsv = std::make_unique<FDW::DepthStencilView>(pDevice.Get(), DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024, DXGI_SAMPLE_DESC({ 1,0 }));
-	dsvPack = std::make_unique<FDW::DSVPacker>(dsvDescriptorSize, 1u, 0u, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
-	dsvPack->AddResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), 0, pDevice.Get());
+	rtvPack = CreateRTVPack(3u);
+	rtvPack->PushResource(rtvPos->GetRTVResource(), rtvPos->GetRTVDesc(), pDevice.Get());
+	rtvPack->PushResource(rtvBase->GetRTVResource(), rtvBase->GetRTVDesc(), pDevice.Get());
+	rtvPack->PushResource(rtvNormals->GetRTVResource(), rtvNormals->GetRTVDesc(), pDevice.Get());
+	
+	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	
+	dsvPack = CreateDSVPack(1u);
+	dsvPack->PushResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), pDevice.Get());
 	dsv->DepthWrite(pCommandList.Get());
 
-	screenRes = std::make_unique<FDW::Rectangle>(pDevice.Get(), pCommandList.Get(), true);
-
-	scene = std::make_unique<FDW::Scene>("scene.gltf", pDevice.Get(), pCommandList.Get(), true);
+	screenRes = CreateRectangle(true);
+	scene = CreateScene("scene.gltf", true);
 	
-	pConstantUploadBuffer = std::make_unique<FDW::UploadBuffer<FDW::MatricesConstantBufferStructureFrameWork>>(pDevice.Get(), 1, true);
-	pMaterialConstantBuffer = std::make_unique<FDW::UploadBuffer<FDW::MaterialFrameWork>>(pDevice.Get(), scene->GetMaterialSize(), true);
-	
+	pConstantUploadBuffer = CreateConstantBuffer<FDW::MatricesConstantBufferStructureFrameWork>(1);
+	pMaterialConstantBuffer = CreateConstantBuffer<FDW::MaterialFrameWork>(scene->GetMaterialSize());
 
 	for (size_t ind = 0; ind < scene->GetMaterialSize(); ind++)
 	{
-		srvPacks.push_back(std::make_unique<FDW::SRVPacker>(cbvsrvuavDescriptorSize, 1u, 0u, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get()));
+		srvPacks.push_back(CreateSRVPack(1u));
 		if (scene->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(FDW::BASE))
 		{
-			(*srvPacks.rbegin())->AddResource(scene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(FDW::TEXTURE_TYPE::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, 0, pDevice.Get());
+			(*srvPacks.rbegin())->PushResource(scene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(FDW::TEXTURE_TYPE::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, pDevice.Get());
 		}
-	}
-
-	samplerPack = std::make_unique<FDW::SamplerPacker>(cbvsrvuavDescriptorSize, 1u, 0u, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());	
-	samplerPack->AddDefaultSampler(0, pDevice.Get());
-
-	for (size_t ind = 0; ind < scene->GetMaterialSize(); ind++)
-	{
 		pMaterialConstantBuffer->CpyData(ind, scene->GetMaterialMananger()->GetMaterialDesc(ind));
 	}
-	
 
+	samplerPack = CreateSamplerPack(1u);
+	samplerPack->AddDefaultSampler(0, pDevice.Get());
+	
+	
 	std::vector<D3D12_INPUT_ELEMENT_DESC> layoutDesc =
 	{
 		{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -72,52 +77,54 @@ void myRender::UserInit()
 		{"BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 44, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
 	};
 
+	CD3DX12_ROOT_PARAMETER slotMainRootParameter[2];
 
+	CD3DX12_DESCRIPTOR_RANGE srvMainTable;
+	srvMainTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
+	slotMainRootParameter[0].InitAsDescriptorTable(1, &srvMainTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
+	CD3DX12_DESCRIPTOR_RANGE samplerTable;
+	samplerTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+	slotMainRootParameter[1].InitAsDescriptorTable(1, &samplerTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
+	pRootSignSecondPass = CreateRootSignature(slotMainRootParameter, _countof(slotMainRootParameter));
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 	slotRootParameter[0].InitAsConstantBufferView(0);
 	slotRootParameter[1].InitAsConstantBufferView(1);
 	
 	CD3DX12_DESCRIPTOR_RANGE srvTable;
-	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);
+	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 	slotRootParameter[2].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	
-	CD3DX12_DESCRIPTOR_RANGE samplerTable;
-	samplerTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
 	slotRootParameter[3].InitAsDescriptorTable(1, &samplerTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4,
-		slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-
-	wrl::ComPtr<ID3DBlob> serializedRootSig = nullptr;
-	wrl::ComPtr<ID3DBlob> errorBlob = nullptr;
-
-	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
-
-	HRESULT_ASSERT(pDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(pRootSignature.GetAddressOf())), "Root signature create error");
+	
+	pRootSignFirstPass = CreateRootSignature(slotRootParameter, _countof(slotRootParameter));
 
 
 	wrl::ComPtr<ID3DBlob> pVSByteCode;
 	wrl::ComPtr<ID3DBlob> pPSByteCode;
-	FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl",nullptr, "VS", "vs_5_1", pVSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl",nullptr, "PS", "ps_5_1", pPSByteCode);
+	wrl::ComPtr<ID3DBlob> pVSMainByteCode;
+	wrl::ComPtr<ID3DBlob> pPSMainByteCode;
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl",nullptr, "VS", "vs_5_1", pVSByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl",nullptr, "PS", "ps_5_1", pPSByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl",nullptr, "VS", "vs_5_1", pVSMainByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl",nullptr, "PS", "ps_5_1", pPSMainByteCode);
 
 	CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 	
-	DXGI_FORMAT rtvFormats[]{ DXGI_FORMAT_R8G8B8A8_UNORM };
-	pso = std::make_unique<FDW::PipelineStateObject>(pRootSignature.Get(), layoutDesc.data(), layoutDesc.size(), 1, rtvFormats , DXGI_FORMAT_D24_UNORM_S8_UINT);
-	pso->SetVS(pVSByteCode.Get());
-	pso->SetPS(pPSByteCode.Get());
-	pso->SetRasterizerState(rasterizerDesc);
-	pso->CreatePSO(pDevice.Get());
+	DXGI_FORMAT rtvFormats[]{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT };
+	pso = CreatePSO(pRootSignFirstPass->GetRootSignature(), layoutDesc.data(), layoutDesc.size(), 3, rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT,
+		UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, pVSByteCode.Get(), pPSByteCode.Get(), nullptr, nullptr, nullptr,
+		rasterizerDesc);
+
+	rtvFormats[0] = GetMainRTVFormat();
+	mainpso = CreatePSO(pRootSignSecondPass->GetRootSignature(), layoutDesc.data(), layoutDesc.size(), 1, rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT,
+		UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, pVSMainByteCode.Get(), pPSMainByteCode.Get(), nullptr, nullptr, nullptr,
+		rasterizerDesc);
 
 
-	
 	eye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 0.0f);
 	at = dx::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	up = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -150,34 +157,24 @@ void myRender::UserLoop()
 	pConstantUploadBuffer->CpyData(0, cmb);
 
 	pCommandList->SetPipelineState(pso->GetPSO());
-	pCommandList->SetGraphicsRootSignature(pRootSignature.Get());
+	pCommandList->SetGraphicsRootSignature(pRootSignFirstPass->GetRootSignature());
 	
 	pCommandList->SetGraphicsRootConstantBufferView(0, pConstantUploadBuffer->GetResource()->GetGPUVirtualAddress());
 
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	///////////////////////
-	// MAIN RTV DRAW
-
-	ID3D12DescriptorHeap* dcHeaps[] =
-	{
-		srvPackRTV->GetResult()->GetDescriptorPtr(),
-		samplerPack->GetResult()->GetDescriptorPtr()
-	};
-	pCommandList->SetDescriptorHeaps(_countof(dcHeaps), dcHeaps);
-	pCommandList->SetGraphicsRootDescriptorTable(2, srvPackRTV->GetResult()->GetGPUDescriptorHandle(0));
-	pCommandList->SetGraphicsRootDescriptorTable(3, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
-	pCommandList->IASetVertexBuffers(0, 1, screenRes->GetVertexBufferView());
-	pCommandList->IASetIndexBuffer(screenRes->GetIndexBufferView());
-	pCommandList->DrawIndexedInstanced(std::get<2>(screenRes->GetObjectParameters(0)), 1, std::get<3>(screenRes->GetObjectParameters(0)), std::get<1>(screenRes->GetObjectParameters(0)), 0);
-
+	
 	///////////////////////
 	// USER RTV DRAW
-	rtv->StartDraw(pCommandList.Get());
+	rtvPos->StartDraw(pCommandList.Get());
+	rtvBase->StartDraw(pCommandList.Get());
+	rtvNormals->StartDraw(pCommandList.Get());
 	
 	pCommandList->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	pCommandList->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	pCommandList->OMSetRenderTargets(1, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
+	pCommandList->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(1), COLOR, 0, nullptr);
+	pCommandList->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(2), COLOR, 0, nullptr);
+	pCommandList->OMSetRenderTargets(3, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
 
 	pCommandList->IASetVertexBuffers(0, 1, scene->GetVertexBufferView());
 	pCommandList->IASetIndexBuffer(scene->GetIndexBufferView());
@@ -201,7 +198,29 @@ void myRender::UserLoop()
 		pCommandList->DrawIndexedInstanced(indexSize, 1, indexstart, vertexStart, 0);
 	}
 	
-	rtv->EndDraw(pCommandList.Get());
+	rtvPos->EndDraw(pCommandList.Get());
+	rtvBase->EndDraw(pCommandList.Get());
+	rtvNormals->EndDraw(pCommandList.Get());
+
+	///////////////////////
+	// MAIN RTV DRAW
+	pCommandList->OMSetRenderTargets(1, &FDW::keep(GetCurrBackBufferView()), true, &FDW::keep(GetDepthStencilView()));
+	pCommandList->SetPipelineState(mainpso->GetPSO());
+	pCommandList->SetGraphicsRootSignature(pRootSignSecondPass->GetRootSignature());
+
+	ID3D12DescriptorHeap* dcHeaps[] =
+	{
+		srvPackRTV->GetResult()->GetDescriptorPtr(),
+		samplerPack->GetResult()->GetDescriptorPtr()
+	};
+	pCommandList->SetDescriptorHeaps(_countof(dcHeaps), dcHeaps);
+	pCommandList->SetGraphicsRootDescriptorTable(0, srvPackRTV->GetResult()->GetGPUDescriptorHandle(0));
+	pCommandList->SetGraphicsRootDescriptorTable(1, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
+	pCommandList->IASetVertexBuffers(0, 1, screenRes->GetVertexBufferView());
+	pCommandList->IASetIndexBuffer(screenRes->GetIndexBufferView());
+	pCommandList->DrawIndexedInstanced(std::get<2>(screenRes->GetObjectParameters(0)), 1, std::get<3>(screenRes->GetObjectParameters(0)), std::get<1>(screenRes->GetObjectParameters(0)), 0);
+
+
 }
 
 void myRender::UserClose()
@@ -238,19 +257,19 @@ void myRender::UserKeyPressed(WPARAM wParam)
 	
 	if (wParam == 'W')
 	{
-		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(cameraDirection, 10.0f * 0.016f));
+		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(cameraDirection, 100.0f * 0.016f));
 	}
 	if (wParam == 'S')
 	{
-		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(cameraDirection, 10.0f * 0.016f));
+		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(cameraDirection, 100.0f * 0.016f));
 	}
 	if (wParam == 'D')
 	{
-		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(rightDirection, 10.0f * 0.016f));
+		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(rightDirection, 100.0f * 0.016f));
 	}
 	if (wParam == 'A')
 	{
-		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(rightDirection, 10.0f * 0.016f));
+		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(rightDirection, 100.0f * 0.016f));
 	}
 }
 

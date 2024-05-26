@@ -9,7 +9,7 @@ namespace FDW
 
 	
 	ResourcePacker::ResourcePacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: descriptorCount(descriptorsCount)
+		: descriptorCount(descriptorsCount), currentIndex(0)
 	{
 		InitBufferDescriptorHeap(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice);
 	}
@@ -34,7 +34,7 @@ namespace FDW
 
 	void SRVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("SRVPACKER ADDING RESOURCE"));
+		CONSOLE_MESSAGE(std::string("SRVPaker is adding resource"));
 
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -49,6 +49,11 @@ namespace FDW
 			&srvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
 	}
 
+	void SRVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
+	{
+		AddResource(resource, dimension, currentIndex++, pDevice);
+	}
+
 	SamplerPacker::SamplerPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
 	{
@@ -57,8 +62,13 @@ namespace FDW
 
 	void SamplerPacker::AddResource(D3D12_SAMPLER_DESC desc, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("SAMPLERPACKER ADDING RESOURCE"));
+		CONSOLE_MESSAGE(std::string("SAMPLERPaker is adding resource"));
 		pDevice->CreateSampler(&desc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+	}
+
+	void SamplerPacker::PushResource(D3D12_SAMPLER_DESC desc, ID3D12Device* pDevice)
+	{
+		AddResource(desc, currentIndex++, pDevice);
 	}
 
 	void SamplerPacker::AddDefaultSampler(const size_t index, ID3D12Device* pDevice)
@@ -78,6 +88,11 @@ namespace FDW
 		this->AddResource(desc, 0, pDevice);
 	}
 
+	void SamplerPacker::PushDefaultSampler(ID3D12Device* pDevice)
+	{
+		AddDefaultSampler(currentIndex++, pDevice);
+	}
+
 	CBVPacker::CBVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
 	{
@@ -86,11 +101,16 @@ namespace FDW
 
 	void CBVPacker::AddResource(ID3D12Resource* resource, UINT sizeInBytes, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("CBVPACKER ADDING RESOURCE"));
+		CONSOLE_MESSAGE(std::string("CBVPaker is adding resource"));
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = sizeInBytes;
 		pDevice->CreateConstantBufferView(&cbvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+	}
+
+	void CBVPacker::PushResource(ID3D12Resource* resource, UINT sizeInBytes, ID3D12Device* pDevice)
+	{
+		AddResource(resource, sizeInBytes, currentIndex++, pDevice);
 	}
 
 	RTVPacker::RTVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
@@ -100,9 +120,14 @@ namespace FDW
 
 	void RTVPacker::AddResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("RTVPACKER ADDING RESOURCE"));
+		CONSOLE_MESSAGE(std::string("RTVPaker is adding resource"));
 		pDevice->CreateRenderTargetView(resource, &rtvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
 
+	}
+
+	void RTVPacker::PushResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, ID3D12Device* pDevice)
+	{
+		AddResource(resource, rtvDesc, currentIndex++, pDevice);
 	}
 
 	DSVPacker::DSVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
@@ -112,9 +137,14 @@ namespace FDW
 
 	void DSVPacker::AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("DSVPACKER ADDING RESOURCE"));
+		CONSOLE_MESSAGE(std::string("DSVPaker is adding resource"));
 		pDevice->CreateDepthStencilView(resource, &dsvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
 
+	}
+
+	void DSVPacker::PushResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, ID3D12Device* pDevice)
+	{
+		AddResource(resource, dsvDesc, currentIndex++, pDevice);
 	}
 
 }

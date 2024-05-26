@@ -69,6 +69,11 @@ namespace FDW
 		return pDSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	}
 
+	DXGI_FORMAT DFW::GetMainRTVFormat() const noexcept
+	{
+		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	}
+
 	bool DFW::InitWindow()
 	{
 		CONSOLE_MESSAGE("Creating window");
@@ -157,6 +162,7 @@ namespace FDW
 		commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		HRESULT_ASSERT(pDevice->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(pCommandQueue.GetAddressOf())), "Command queue create error");
 
+		
 		HRESULT_ASSERT(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(pDirectAllocator.GetAddressOf())),
 			"Command allocator create error");
 
@@ -173,8 +179,8 @@ namespace FDW
 		swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		swapChainDesc.SampleDesc.Count = 1;           //MSAA DISABLED
-		swapChainDesc.SampleDesc.Quality = 0;         //MSAA DISABLED
+		swapChainDesc.SampleDesc.Count = SampleCount = 1;           //MSAA DISABLED
+		swapChainDesc.SampleDesc.Quality = Quality = 0;         //MSAA DISABLED
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapChainDesc.OutputWindow = hwnd;
 		swapChainDesc.BufferCount = BUFFERS_COUNT;
@@ -436,6 +442,21 @@ namespace FDW
 			lParam);
 	}
 
+	const UINT DFW::Get_CBV_SRV_UAV_DescriptorSize() const
+	{
+		return cbvsrvuavDescriptorSize;
+	}
+
+	const UINT DFW::Get_RTV_DescriptorSize() const
+	{
+		return rtvDescriptorSize;
+	}
+
+	const UINT DFW::Get_DSV_DescriptorSize() const
+	{
+		return dsvDescriptorSize;
+	}
+
 	void DFW::FlushCommandQueue()
 	{
 		auto nextFence = pFence->GetCompletedValue() + 1;
@@ -486,6 +507,112 @@ namespace FDW
 	LRESULT DFW::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		return DFW::GetDFWInstance()->MsgProc(hWnd, msg, wParam, lParam);
+	}
+
+	std::unique_ptr<RenderTarget> FDW::DFW::CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height)
+	{
+		CONSOLE_MESSAGE("DFW is creating RTV");
+		return std::make_unique<FDW::RenderTarget>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }));
+	}
+
+	std::unique_ptr<RTVPacker> DFW::CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating RTV pack");
+		return std::make_unique<RTVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
+	}
+
+	std::unique_ptr<DSVPacker> DFW::CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating DSV pack");
+		return std::make_unique<DSVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
+	}
+
+	std::unique_ptr<SRVPacker> DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating SRV pack");
+		return std::make_unique<SRVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+	}
+
+	std::unique_ptr<CBVPacker> DFW::CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating CBV pack");
+		return std::make_unique<CBVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+	}
+
+	std::unique_ptr<SamplerPacker> DFW::CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating Samplers pack");
+		return std::make_unique<SamplerPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+	}
+
+	std::unique_ptr<RootSingature> DFW::CreateRootSignature(CD3DX12_ROOT_PARAMETER* slotRootParameters, const UINT numParameters)
+	{
+		CONSOLE_MESSAGE("DFW is creating Root Signature");
+		std::unique_ptr<RootSingature> result = std::make_unique<RootSingature>(slotRootParameters, numParameters);
+		result->CreateRootSignature(pDevice.Get());
+		return std::move(result);
+	}
+
+	std::unique_ptr<PipelineStateObject> DFW::CreatePSO(ID3D12RootSignature* const pRootSignature, const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize, const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[], DXGI_FORMAT dsvFormat, const UINT SampleMask, const D3D12_PRIMITIVE_TOPOLOGY_TYPE type, ID3DBlob* vsByteCode, ID3DBlob* psByteCode, ID3DBlob* gsByteCode, ID3DBlob* dsByteCode, ID3DBlob* hsByteCode, D3D12_RASTERIZER_DESC rasterizerDesc, D3D12_BLEND_DESC blendDesc, D3D12_DEPTH_STENCIL_DESC dsvStateDesc)
+	{
+		CONSOLE_MESSAGE("DFW is creating Pipeline State");
+		std::unique_ptr<PipelineStateObject> result = std::make_unique<FDW::PipelineStateObject>(pRootSignature, layout, layoutSize, renderTargetsNum, rtvFormats, dsvFormat);
+		result->SetRasterizerState(rasterizerDesc);
+		result->SetBlendState(blendDesc);
+		result->SetDepthStencilState(dsvStateDesc);
+		result->SetSampleDesc(DXGI_SAMPLE_DESC({ SampleCount, Quality }));
+		
+		if (vsByteCode) result->SetVS(vsByteCode);
+		if (psByteCode) result->SetPS(psByteCode);
+		if (gsByteCode) result->SetGS(gsByteCode);
+		if (dsByteCode) result->SetDS(dsByteCode);
+		if (hsByteCode) result->SetHS(hsByteCode);
+
+		result->CreatePSO(pDevice.Get());
+
+		return std::move(result);
+	}
+
+	std::unique_ptr<DepthStencilView> DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const D3D12_DSV_FLAGS flags)
+	{
+		CONSOLE_MESSAGE("DFW is creating DSV");
+		return std::make_unique<DepthStencilView>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }), flags);
+	}
+
+	std::unique_ptr<Scene> DFW::CreateScene(std::string path, bool neverUpdate)
+	{
+		CONSOLE_MESSAGE("DFW is creating Scene");
+		return std::make_unique<Scene>(path, pDevice.Get(), pCommandList.Get(), neverUpdate);
+	}
+
+	std::unique_ptr<Rectangle> DFW::CreateRectangle(bool neverUpdate)
+	{
+		CONSOLE_MESSAGE("DFW is creating Rectangle");
+		return std::make_unique<Rectangle>(pDevice.Get(), pCommandList.Get(), neverUpdate);
+	}
+
+	std::unique_ptr<Cube> DFW::CreateCube(bool neverUpdate)
+	{
+		CONSOLE_MESSAGE("DFW is creating Cube");
+		return std::make_unique<Cube>(pDevice.Get(), pCommandList.Get(), neverUpdate);
+	}
+
+	std::unique_ptr<MaterialsManager> DFW::CreateMaterialMananger()
+	{
+		CONSOLE_MESSAGE("DFW is creating Materials Mananger");
+		return std::make_unique<MaterialsManager>();
+	}
+
+	std::unique_ptr<Material> DFW::CreateMaterial()
+	{
+		CONSOLE_MESSAGE("DFW is creating Material");
+		return std::make_unique<Material>();
+	}
+
+	std::unique_ptr<Texture> DFW::CreateTexture(std::string path)
+	{
+		CONSOLE_MESSAGE("DFW is creating Texture");
+		return std::make_unique<Texture>(path, pDevice.Get(), pCommandList.Get());
 	}
 
 }

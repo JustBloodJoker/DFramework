@@ -13,7 +13,7 @@ namespace FDW
 		ResourcePacker();
 	public:
 
-		ResourcePacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		ResourcePacker(const UINT descriptorSize, const  UINT descriptorsCount, const  UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		virtual ~ResourcePacker() = default;
 
 		std::unique_ptr<BufferDescriptorHeap>& GetResult();
@@ -23,9 +23,11 @@ namespace FDW
 		std::unique_ptr <BufferDescriptorHeap> descriptorHeap;
 
 		const size_t descriptorCount;
+		size_t currentIndex;
+
 	private:
 
-		void InitBufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		void InitBufferDescriptorHeap(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 
 	};
 
@@ -35,10 +37,10 @@ namespace FDW
 
 	public:
 
-		SRVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		SRVPacker(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 
 		void AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice);
-
+		void PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice);
 	};
 
 	class SamplerPacker
@@ -46,11 +48,13 @@ namespace FDW
 	{
 	public:
 
-		SamplerPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		SamplerPacker(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 
-		void AddResource(D3D12_SAMPLER_DESC desc, const size_t index, ID3D12Device* pDevice);
+		void AddResource(const D3D12_SAMPLER_DESC desc, const size_t index, ID3D12Device* pDevice);
+		void PushResource(const D3D12_SAMPLER_DESC desc, ID3D12Device* pDevice);
 		
 		void AddDefaultSampler(const size_t index, ID3D12Device* pDevice);
+		void PushDefaultSampler(ID3D12Device* pDevice);
 	
 	};
 
@@ -58,9 +62,10 @@ namespace FDW
 		: public ResourcePacker
 	{
 	public:
-		CBVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		CBVPacker(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 
-		void AddResource(ID3D12Resource* resource, UINT sizeInBytes, const size_t index, ID3D12Device* pDevice);
+		void AddResource(ID3D12Resource* resource, const UINT sizeInBytes, const size_t index, ID3D12Device* pDevice);
+		void PushResource(ID3D12Resource* resource, const UINT sizeInBytes, ID3D12Device* pDevice);
 
 
 	};
@@ -70,9 +75,9 @@ namespace FDW
 	{
 	public:
 		RTVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		
 		void AddResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, const size_t index, ID3D12Device* pDevice);
-
-
+		void PushResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, ID3D12Device* pDevice);
 	};
 
 	class DSVPacker
@@ -80,9 +85,9 @@ namespace FDW
 	{
 	public:
 		DSVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		
 		void AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice);
-
-
+		void PushResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, ID3D12Device* pDevice);
 	};
 
 }
