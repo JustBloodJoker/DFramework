@@ -49,7 +49,7 @@ void myRender::UserInit()
 	dsv->DepthWrite(pCommandList.Get());
 
 	screenRes = CreateRectangle(true);
-	scene = CreateScene("scene.gltf", true);
+	scene = CreateScene("sponza/sponza.gltf", true);
 	
 	pConstantUploadBuffer = CreateConstantBuffer<FDW::MatricesConstantBufferStructureFrameWork>(1);
 	pMaterialConstantBuffer = CreateConstantBuffer<FDW::MaterialFrameWork>(scene->GetMaterialSize());
@@ -100,15 +100,14 @@ void myRender::UserInit()
 	
 	pRootSignFirstPass = CreateRootSignature(slotRootParameter, _countof(slotRootParameter));
 
-
 	wrl::ComPtr<ID3DBlob> pVSByteCode;
 	wrl::ComPtr<ID3DBlob> pPSByteCode;
 	wrl::ComPtr<ID3DBlob> pVSMainByteCode;
 	wrl::ComPtr<ID3DBlob> pPSMainByteCode;
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl",nullptr, "VS", "vs_5_1", pVSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl",nullptr, "PS", "ps_5_1", pPSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl",nullptr, "VS", "vs_5_1", pVSMainByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl",nullptr, "PS", "ps_5_1", pPSMainByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl", nullptr, "VS", "vs_5_1", pVSMainByteCode);
+	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl", nullptr, "PS", "ps_5_1", pPSMainByteCode);
 
 	CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
@@ -156,16 +155,11 @@ void myRender::UserLoop()
 
 	pConstantUploadBuffer->CpyData(0, cmb);
 
-	pCommandList->SetPipelineState(pso->GetPSO());
-	pCommandList->SetGraphicsRootSignature(pRootSignFirstPass->GetRootSignature());
-	
-	pCommandList->SetGraphicsRootConstantBufferView(0, pConstantUploadBuffer->GetResource()->GetGPUVirtualAddress());
-
 	pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	
 	///////////////////////
 	// USER RTV DRAW
+
 	rtvPos->StartDraw(pCommandList.Get());
 	rtvBase->StartDraw(pCommandList.Get());
 	rtvNormals->StartDraw(pCommandList.Get());
@@ -175,6 +169,11 @@ void myRender::UserLoop()
 	pCommandList->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(1), COLOR, 0, nullptr);
 	pCommandList->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(2), COLOR, 0, nullptr);
 	pCommandList->OMSetRenderTargets(3, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+	pCommandList->SetPipelineState(pso->GetPSO());
+	pCommandList->SetGraphicsRootSignature(pRootSignFirstPass->GetRootSignature());
+
+	pCommandList->SetGraphicsRootConstantBufferView(0, pConstantUploadBuffer->GetGPULocation(0));
 
 	pCommandList->IASetVertexBuffers(0, 1, scene->GetVertexBufferView());
 	pCommandList->IASetIndexBuffer(scene->GetIndexBufferView());
@@ -189,7 +188,7 @@ void myRender::UserLoop()
 		pCommandList->SetGraphicsRootDescriptorTable(2, srvPacks[std::get<4>(scene->GetObjectParameters(ind))]->GetResult()->GetGPUDescriptorHandle(0));
 		pCommandList->SetGraphicsRootDescriptorTable(3, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
 
-		pCommandList->SetGraphicsRootConstantBufferView(1, pMaterialConstantBuffer->GetResource()->GetGPUVirtualAddress() + std::get<4>(scene->GetObjectParameters(ind)) * pMaterialConstantBuffer->GetDataSize());
+		pCommandList->SetGraphicsRootConstantBufferView(1, pMaterialConstantBuffer->GetGPULocation(std::get<4>(scene->GetObjectParameters(ind))));
 		
 		UINT indexSize = std::get<2>(scene->GetObjectParameters(ind));
 		UINT indexstart = std::get<3>(scene->GetObjectParameters(ind));
