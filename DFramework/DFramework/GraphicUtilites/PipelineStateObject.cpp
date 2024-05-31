@@ -101,4 +101,33 @@ namespace FDW
 		CONSOLE_MESSAGE("PSO created");
 	}
 
+	ComputePipelineStateObject::ComputePipelineStateObject(ID3D12RootSignature* const pRootSignature, const D3D12_PIPELINE_STATE_FLAGS flags, const UINT nodeMask )
+	{
+		cPsoDesc = {};
+		cPsoDesc.pRootSignature = pRootSignature;
+		cPsoDesc.NodeMask = nodeMask;
+		cPsoDesc.Flags = flags;
+	}
+
+	void ComputePipelineStateObject::SetCS(ID3DBlob* csByteCode)
+	{
+		cPsoDesc.CS = { csByteCode->GetBufferPointer(), csByteCode->GetBufferSize() };
+	}
+
+	void ComputePipelineStateObject::CreatePSO(ID3D12Device* pDevice)
+	{
+		HRESULT_ASSERT(pDevice->CreateComputePipelineState(&cPsoDesc, IID_PPV_ARGS(pPSO.GetAddressOf())), "Create PSO error");
+		CONSOLE_MESSAGE("Compute PSO created");
+	}
+
+	ID3D12PipelineState* ComputePipelineStateObject::GetPSO() const
+	{
+		return pPSO.Get();
+	}
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC ComputePipelineStateObject::GetDesc() const
+	{
+		return cPsoDesc;
+	}
+
 }

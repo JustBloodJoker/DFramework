@@ -33,9 +33,7 @@ namespace FDW
             {
                 int width, height, channels;
                 float* dat = stbi_loadf(path.c_str(), &width, &height, &channels, 0);
-                
-                channels < 3 ? channels = 3 : channels;
-                
+                    
                 CreateTextureBuffer(pDevice, 1, channels == 1 ? DXGI_FORMAT_R32_FLOAT : channels == 2 ? DXGI_FORMAT_R32G32_FLOAT : channels == 3 ? DXGI_FORMAT_R32G32B32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, DXGI_SAMPLE_DESC({1, 0}),D3D12_RESOURCE_DIMENSION_TEXTURE2D);
                 UploadData(pDevice, pCommandList, dat);
 
@@ -46,11 +44,11 @@ namespace FDW
         Texture::textures[path] = this;
 	}
 
-    Texture::Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_HEAP_FLAGS heapFlags, const UINT16 mipLevels)
+    Texture::Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
     {
         CONSOLE_MESSAGE(std::string("CREATING ANONIM TEXTURE"));
 
-        CreateTextureBuffer(pDevice, arraySize, format, width, height, sampleDesc, dimension, resourceFlags, heapFlags, mipLevels);
+        CreateTextureBuffer(pDevice, arraySize, format, width, height, sampleDesc, dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
     }
 
 	Texture::~Texture()
@@ -58,7 +56,7 @@ namespace FDW
         resource->Release();
 	}
 
-    void Texture::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_HEAP_FLAGS heapFlags, const UINT16 mipLevels)
+    void Texture::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
     {
         D3D12_RESOURCE_DESC txtDesc = {};
         txtDesc.MipLevels = mipLevels;
@@ -69,9 +67,10 @@ namespace FDW
         txtDesc.SampleDesc = sampleDesc;
         txtDesc.Dimension = dimension;
         txtDesc.Flags = resourceFlags;
+        txtDesc.Layout = layout;
 
         HRESULT_ASSERT(pDevice->CreateCommittedResource(
-            &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+            heapProperties,
             heapFlags,
             &txtDesc,
             D3D12_RESOURCE_STATE_COMMON,
@@ -95,7 +94,7 @@ namespace FDW
 
         upBuffer.reset(new UploadBuffer<char>(pDevice, uploadBufferSize, false));
 
-        ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
+        ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
         UpdateSubresources(pCommandList,
             resource.Get(),

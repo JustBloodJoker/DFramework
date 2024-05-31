@@ -18,6 +18,7 @@ namespace FDW
 		void ResetList();
 		void ResetList(ID3D12PipelineState* pPSO);
 
+		bool TryCloseList();
 		void CloseList();
 		
 		void ExecuteList(ID3D12CommandQueue* pCommandQueue); //NEED TO SYNCHRONIZE AFTER CALL METHOD

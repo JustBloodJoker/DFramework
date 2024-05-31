@@ -56,5 +56,19 @@ namespace FDW
 
 	};
 
+	class Point
+		: public SimpleObject
+	{
+	public:
+
+		Point(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
+		virtual ~Point() = default;
+
+	protected:
+
+
+
+
+	};
 
 }

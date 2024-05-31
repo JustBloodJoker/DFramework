@@ -10,6 +10,8 @@ namespace FDW
 		int height;
 		bool fullScreen;
 
+		std::wstring tittleName;
+
 		bool isResized;
 	};
 

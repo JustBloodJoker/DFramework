@@ -15,42 +15,49 @@ namespace FDW
 			DFW::instance = this;
 		}
 
-		pWndSettings = std::make_unique<WindowSettings>();
-		pWndSettings->fullScreen = fullScreen;
-		pWndSettings->height = height;
-		pWndSettings->width = width;
-		wndName = windowTittle;
+		wndSettings.fullScreen = fullScreen;
+		wndSettings.height = height;
+		wndSettings.width = width;
+		wndSettings.tittleName = windowTittle;
 		
 		PAUSEWORK = false;
 	}
 
 	DFW::~DFW()
 	{
-		if (pDevice)
-			FlushCommandQueue();
 		
 	}
 
 	void DFW::__START()
 	{
-		if (InitWindow())
-		{
-			CONSOLE_MESSAGE("Window created");
-		}
 
 		if (InitTimer())
 		{
 			CONSOLE_MESSAGE("TIMER OBJECT INITED");
 		}
 
+		auto start = std::chrono::high_resolution_clock::now();
+
+		if (InitWindow())
+		{
+			CONSOLE_MESSAGE("Window created");
+		}
+
+
 		if (InitD3D())
 		{
 			CONSOLE_MESSAGE("Render inited");
 		}
 
-		HRESULT_ASSERT(pCommandList->Reset(pDirectAllocator.Get(), nullptr), "command list reset error");
+		//HRESULT_ASSERT(pCommandList->Reset(pDirectAllocator.Get(), nullptr), "command list reset error");
 
 		UserInit();
+
+		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
+
+		CONSOLE_MESSAGE(std::to_string(duration.count()) + "ms     ---------- Init Time");
+
+		pTimer->Reset();
 
 		Loop();
 
@@ -64,14 +71,51 @@ namespace FDW
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIndex, rtvDescriptorSize);
 	}
 
-	D3D12_CPU_DESCRIPTOR_HANDLE DFW::GetDepthStencilView() const noexcept
-	{
-		return pDSVDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	}
 
 	DXGI_FORMAT DFW::GetMainRTVFormat() const noexcept
 	{
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	}
+
+	void DFW::PresentSwapchain()
+	{
+		HRESULT_ASSERT(pSwapChain->Present(0, 0), "Swapchain present error");
+		currentBackBufferIndex = (currentBackBufferIndex + 1) % BUFFERS_COUNT;
+	}
+
+	void DFW::BeginDraw(ID3D12GraphicsCommandList* pCommandList)
+	{
+		pCommandList->ResourceBarrier(1, &keep(CD3DX12_RESOURCE_BARRIER::Transition(pSwapChainRTV[currentBackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
+	}
+
+	void DFW::EndDraw(ID3D12GraphicsCommandList* pCommandList)
+	{
+		pCommandList->ResourceBarrier(1, &keep(CD3DX12_RESOURCE_BARRIER::Transition(pSwapChainRTV[currentBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
+	}
+
+	void DFW::BindMainViewPort(ID3D12GraphicsCommandList* pCommandList)
+	{
+		pCommandList->RSSetViewports(1, &mainVP);
+	}
+
+	void DFW::BindMainRect(ID3D12GraphicsCommandList* pCommandList)
+	{
+		pCommandList->RSSetScissorRects(1, &mainRect);
+	}
+
+	void DFW::BindListToMainQueue(CommandList* pCommandList)
+	{
+		pCommandQueue->BindCommandList(pCommandList);
+	}
+
+	void DFW::UnbindListFromMainQueue(CommandList* pCommandList)
+	{
+		pCommandQueue->UnbindCommandList(pCommandList);
+	}
+
+	void DFW::ExecuteMainQueue()
+	{
+		pCommandQueue->ExecuteQueue(true);
 	}
 
 	bool DFW::InitWindow()
@@ -96,10 +140,10 @@ namespace FDW
 
 		hwnd = CreateWindowEx(NULL,
 			L"wndClass",
-			this->wndName.c_str(),
+			this->wndSettings.tittleName.c_str(),
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT,
-			this->pWndSettings->width, this->pWndSettings->height,
+			this->wndSettings.width, this->wndSettings.height,
 			NULL,
 			NULL,
 			NULL,
@@ -137,12 +181,11 @@ namespace FDW
 
 			HRESULT_ASSERT(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(pDevice.GetAddressOf())), "Device create error");
 		}
-
-		HRESULT_ASSERT(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFence.GetAddressOf())), "Fence create error");
-
 		rtvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		cbvsrvuavDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		dsvDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+		pCommandQueue = CreateQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 		//MSAA 4x
 		/*D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
@@ -156,24 +199,12 @@ namespace FDW
 		MSAA4xQualitySupport = qualityLevels.NumQualityLevels;
 		HRESULT_ASSERT(MSAA4xQualitySupport > 0, "MSAA quality error");*/
 
-
-		D3D12_COMMAND_QUEUE_DESC commandQueueDesc = {};
-		commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-		commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-		HRESULT_ASSERT(pDevice->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(pCommandQueue.GetAddressOf())), "Command queue create error");
-
 		
-		HRESULT_ASSERT(pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(pDirectAllocator.GetAddressOf())),
-			"Command allocator create error");
 
-		HRESULT_ASSERT(pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, pDirectAllocator.Get(), nullptr, IID_PPV_ARGS(pCommandList.GetAddressOf())),
-			"Command list create error");
-		pCommandList->Close();
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
-
-		swapChainDesc.BufferDesc.Width = pWndSettings->width;
-		swapChainDesc.BufferDesc.Height = pWndSettings->height;
+		swapChainDesc.BufferDesc.Width = wndSettings.width;
+		swapChainDesc.BufferDesc.Height = wndSettings.height;
 		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 		swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
@@ -184,11 +215,11 @@ namespace FDW
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapChainDesc.OutputWindow = hwnd;
 		swapChainDesc.BufferCount = BUFFERS_COUNT;
-		swapChainDesc.Windowed = !pWndSettings->fullScreen;
+		swapChainDesc.Windowed = !wndSettings.fullScreen;
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		HRESULT_ASSERT(pFactory->CreateSwapChain(pCommandQueue.Get(), &swapChainDesc, pSwapChain.GetAddressOf()), "Swapchain create error");
+		HRESULT_ASSERT(pFactory->CreateSwapChain(pCommandQueue->GetQueue(), &swapChainDesc, pSwapChain.GetAddressOf()), "Swapchain create error");
 
 		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 		rtvHeapDesc.NumDescriptors = BUFFERS_COUNT;
@@ -196,13 +227,6 @@ namespace FDW
 		rtvHeapDesc.NodeMask = 0;
 		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(pRTVDescriptorHeap.GetAddressOf())), "RTV descriptor heap create error");
-
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc;
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		dsvHeapDesc.NodeMask = 0;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(pDSVDescriptorHeap.GetAddressOf())), "DSV descriptor heap create error");
 
 		currentBackBufferIndex = 0;
 
@@ -217,39 +241,17 @@ namespace FDW
 			rtvHeap.Offset(1, rtvDescriptorSize);
 		}
 
-		D3D12_RESOURCE_DESC dsvDesc;
-		dsvDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-		dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		dsvDesc.Alignment = 0;
-		dsvDesc.Width = pWndSettings->width;
-		dsvDesc.Height = pWndSettings->height;
-		dsvDesc.DepthOrArraySize = 1;
-		dsvDesc.MipLevels = 1;
-		dsvDesc.SampleDesc.Count = 1;
-		dsvDesc.SampleDesc.Quality = 0;
-		dsvDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-		dsvDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-
-		CD3DX12_HEAP_PROPERTIES heapProp = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-		HRESULT_ASSERT(pDevice->CreateCommittedResource(&heapProp, D3D12_HEAP_FLAG_NONE, &dsvDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(pDepthStencilBuffer.GetAddressOf())), "Depth stencil buffer create error");
-
-		pDevice->CreateDepthStencilView(pDepthStencilBuffer.Get(), nullptr, GetDepthStencilView());
-
-		CD3DX12_RESOURCE_BARRIER resBar = CD3DX12_RESOURCE_BARRIER::Transition(pDepthStencilBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE);
-		pCommandList->ResourceBarrier(1, &resBar);
-
-		mainVP.Height = static_cast<float>(pWndSettings->height);
-		mainVP.Width = static_cast<float>(pWndSettings->width);
+		mainVP.Height = static_cast<float>(wndSettings.height);
+		mainVP.Width = static_cast<float>(wndSettings.width);
 		mainVP.MaxDepth = 1.0f;
 		mainVP.MinDepth = 0.0f;
 		mainVP.TopLeftX = 0.0f;
 		mainVP.TopLeftY = 0.0f;
 
 		mainRect.left = 0;
-		mainRect.right = pWndSettings->width;
+		mainRect.right = wndSettings.width;
 		mainRect.top = 0;
-		mainRect.bottom = pWndSettings->height;
+		mainRect.bottom = wndSettings.height;
 
 		return true;
 	}
@@ -279,48 +281,17 @@ namespace FDW
 
 	void DFW::Update()
 	{
-		CD3DX12_RESOURCE_BARRIER barrier;
-
-		HRESULT_ASSERT(pDirectAllocator->Reset(), "Command allocator reset error");
-
-		HRESULT_ASSERT(pCommandList->Reset(pDirectAllocator.Get(), nullptr), "Command list reset error");
-
-		pCommandList->RSSetViewports(1, &mainVP);
-		pCommandList->RSSetScissorRects(1, &mainRect);
-
-		pCommandList->ResourceBarrier(1, &keep(CD3DX12_RESOURCE_BARRIER::Transition(pSwapChainRTV[currentBackBufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)));
-
-		static FLOAT clearColor[4] = { 0.2f,0.2f,0.2f,1.0f };
-
-		pCommandList->ClearRenderTargetView(GetCurrBackBufferView(), clearColor, 0, nullptr);
-		pCommandList->ClearDepthStencilView(GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-		pCommandList->OMSetRenderTargets(1, &keep(GetCurrBackBufferView()), true, &keep(GetDepthStencilView()));
-		
-
+	
 		/////////////////// 
 		// USER DRAW
 		UserLoop();
 		//////////////////
 
+		pCommandQueue->ExecuteQueue(false);
 
+		PresentSwapchain();
 
-		pCommandList->ResourceBarrier(1, &keep(CD3DX12_RESOURCE_BARRIER::Transition(pSwapChainRTV[currentBackBufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT)));
-		hr = pCommandList->Close();
-		HRESULT_ASSERT(hr, "Command list close error");
-
-		pCommandListsToExecute.push_back(pCommandList.Get());
-
-		pCommandQueue->ExecuteCommandLists(pCommandListsToExecute.size(), &pCommandListsToExecute[0]);
-
-
-		HRESULT_ASSERT(pSwapChain->Present(0, 0), "Swapchain present error");
-
-		currentBackBufferIndex = (currentBackBufferIndex + 1) % BUFFERS_COUNT;
-
-		FlushCommandQueue();
-
-		pCommandListsToExecute.clear();
+		pCommandQueue->FlushQueue();
 	}
 
 	void DFW::Release()
@@ -335,16 +306,30 @@ namespace FDW
 
 	void DFW::SetFullScreen()
 	{
-		if (!pWndSettings->fullScreen)
+		if (!wndSettings.fullScreen)
 		{
-			pWndSettings->fullScreen = true;
+			wndSettings.fullScreen = true;
 			HMONITOR hmon = MonitorFromWindow(hwnd,
 				MONITOR_DEFAULTTONEAREST);
 			MONITORINFO mi = { sizeof(mi) };
 			GetMonitorInfo(hmon, &mi);
-			pWndSettings->width = mi.rcMonitor.right - mi.rcMonitor.left;
-			pWndSettings->height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+			wndSettings.width = mi.rcMonitor.right - mi.rcMonitor.left;
+			wndSettings.height = mi.rcMonitor.bottom - mi.rcMonitor.top;
 		}
+	}
+
+	void DFW::ResizeUpdate()
+	{
+		pSwapChain->ResizeBuffers(BUFFERS_COUNT, wndSettings.width, wndSettings.height, GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+		mainVP.Height = static_cast<float>(wndSettings.height);
+		mainVP.Width = static_cast<float>(wndSettings.width);
+
+		mainRect.left = 0;
+		mainRect.right = wndSettings.width;
+		mainRect.top = 0;
+		mainRect.bottom = wndSettings.height;
+
+		UserResizeUpdate();
 	}
 
 	LRESULT DFW::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -391,7 +376,7 @@ namespace FDW
 
 			CONSOLE_MESSAGE("WM_SIZE ACTIVE");
 
-			mainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2, pWndSettings->width / pWndSettings->height, 1.0f, 10000.0f);
+			mainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2, wndSettings.width / wndSettings.height, 1.0f, 10000.0f);
 
 			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
 
@@ -408,6 +393,8 @@ namespace FDW
 			CONSOLE_MESSAGE("WM_EXITSIZE ACTIVE");
 
 			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
+
+			ResizeUpdate();
 
 			return 0;
 		}
@@ -442,62 +429,50 @@ namespace FDW
 			lParam);
 	}
 
-	const UINT DFW::Get_CBV_SRV_UAV_DescriptorSize() const
+	const UINT DFW::Get_CBV_SRV_UAV_DescriptorSize() const noexcept
 	{
 		return cbvsrvuavDescriptorSize;
 	}
 
-	const UINT DFW::Get_RTV_DescriptorSize() const
+	const UINT DFW::Get_RTV_DescriptorSize() const noexcept
 	{
 		return rtvDescriptorSize;
 	}
 
-	const UINT DFW::Get_DSV_DescriptorSize() const
+	const UINT DFW::Get_DSV_DescriptorSize() const noexcept
 	{
 		return dsvDescriptorSize;
 	}
 
-	void DFW::FlushCommandQueue()
+	ID3D12Device* DFW::GetDevice() const noexcept
 	{
-		auto nextFence = pFence->GetCompletedValue() + 1;
-		HRESULT_ASSERT(pCommandQueue->Signal(pFence.Get(),
-			nextFence), "Fence signal error");
-
-		if (pFence->GetCompletedValue() < nextFence)
-		{
-			HANDLE eventHandle = CreateEventEx(nullptr, L"", false, EVENT_ALL_ACCESS);
-			HRESULT_ASSERT(pFence->SetEventOnCompletion(nextFence, eventHandle), "Fence set event error");
-			WaitForSingleObject(eventHandle, INFINITE);
-			CloseHandle(eventHandle);
-		}
+		return pDevice.Get();
 	}
 
-	void DFW::ImmediateExecuteQueue(ID3D12CommandList** commandLists, size_t commandListsCount)
+	HWND DFW::GetMainHWND() const noexcept
 	{
-		pCommandQueue->ExecuteCommandLists(commandListsCount, commandLists);
-		FlushCommandQueue();
+		return hwnd;
 	}
 
-	void DFW::ImmediateExecuteQueue(ID3D12GraphicsCommandList* commandList)
+	WindowSettings DFW::GetMainWNDSettings() const noexcept
 	{
-		ID3D12CommandList* cmdLists[] = { commandList };
-		ImmediateExecuteQueue(cmdLists, 1);
+		return wndSettings;
 	}
 
-	void DFW::PushCommandListToExecute(ID3D12GraphicsCommandList* commandList)
+	dx::XMMATRIX DFW::GetMainProjectionMatrix() const noexcept
 	{
-		auto el = std::find(pCommandListsToExecute.begin(), pCommandListsToExecute.end(), commandList);
-
-		if (el == pCommandListsToExecute.end())
-			pCommandListsToExecute.push_back(commandList);
-
+		return mainProjectionMatrix;
 	}
 
-	void DFW::SetMainRenderTarget(ID3D12GraphicsCommandList* pCommandList)
+	D3D12_VIEWPORT DFW::GetMainViewPort() const noexcept
 	{
-		pCommandList->OMSetRenderTargets(1, &keep(GetCurrBackBufferView()), true, &keep(GetDepthStencilView()));
+		return mainVP;
 	}
 
+	D3D12_RECT DFW::GetMainRect() const noexcept
+	{
+		return mainRect;
+	}
 
 	DFW* DFW::GetDFWInstance()
 	{
@@ -509,40 +484,46 @@ namespace FDW
 		return DFW::GetDFWInstance()->MsgProc(hWnd, msg, wParam, lParam);
 	}
 
-	std::unique_ptr<RenderTarget> FDW::DFW::CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height)
+	std::unique_ptr<RenderTarget> DFW::CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height)
 	{
 		CONSOLE_MESSAGE("DFW is creating RTV");
-		return std::make_unique<FDW::RenderTarget>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }));
+		return std::make_unique<RenderTarget>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }));
 	}
 
 	std::unique_ptr<RTVPacker> DFW::CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("DFW is creating RTV pack");
-		return std::make_unique<RTVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
+		return std::make_unique<RTVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
 	}
 
 	std::unique_ptr<DSVPacker> DFW::CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("DFW is creating DSV pack");
-		return std::make_unique<DSVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
+		return std::make_unique<DSVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, pDevice.Get());
 	}
 
 	std::unique_ptr<SRVPacker> DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("DFW is creating SRV pack");
-		return std::make_unique<SRVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+		return std::make_unique<SRVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
 	}
 
 	std::unique_ptr<CBVPacker> DFW::CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("DFW is creating CBV pack");
-		return std::make_unique<CBVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+		return std::make_unique<CBVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+	}
+
+	std::unique_ptr<UAVPacker> DFW::CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating UAV pack");
+		return std::make_unique<UAVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
 	}
 
 	std::unique_ptr<SamplerPacker> DFW::CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("DFW is creating Samplers pack");
-		return std::make_unique<SamplerPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
+		return std::make_unique<SamplerPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, pDevice.Get());
 	}
 
 	std::unique_ptr<RootSingature> DFW::CreateRootSignature(CD3DX12_ROOT_PARAMETER* slotRootParameters, const UINT numParameters)
@@ -556,7 +537,7 @@ namespace FDW
 	std::unique_ptr<PipelineStateObject> DFW::CreatePSO(ID3D12RootSignature* const pRootSignature, const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize, const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[], DXGI_FORMAT dsvFormat, const UINT SampleMask, const D3D12_PRIMITIVE_TOPOLOGY_TYPE type, ID3DBlob* vsByteCode, ID3DBlob* psByteCode, ID3DBlob* gsByteCode, ID3DBlob* dsByteCode, ID3DBlob* hsByteCode, D3D12_RASTERIZER_DESC rasterizerDesc, D3D12_BLEND_DESC blendDesc, D3D12_DEPTH_STENCIL_DESC dsvStateDesc)
 	{
 		CONSOLE_MESSAGE("DFW is creating Pipeline State");
-		std::unique_ptr<PipelineStateObject> result = std::make_unique<FDW::PipelineStateObject>(pRootSignature, layout, layoutSize, renderTargetsNum, rtvFormats, dsvFormat);
+		std::unique_ptr<PipelineStateObject> result = std::make_unique<PipelineStateObject>(pRootSignature, layout, layoutSize, renderTargetsNum, rtvFormats, dsvFormat);
 		result->SetRasterizerState(rasterizerDesc);
 		result->SetBlendState(blendDesc);
 		result->SetDepthStencilState(dsvStateDesc);
@@ -573,28 +554,82 @@ namespace FDW
 		return std::move(result);
 	}
 
+	std::unique_ptr<ComputePipelineStateObject> DFW::CreateComputePSO(ID3D12RootSignature* const pRootSignature, ID3DBlob* csByteCode, const D3D12_PIPELINE_STATE_FLAGS flags, const UINT nodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating Compute Pipeline State");
+		std::unique_ptr<ComputePipelineStateObject> result = std::make_unique<ComputePipelineStateObject>(pRootSignature, flags, nodeMask);
+		
+		if (csByteCode) result->SetCS(csByteCode);
+
+		result->CreatePSO(pDevice.Get());
+
+		return std::move(result);
+	}
+
+	std::unique_ptr<CommandList> DFW::CreateList(const D3D12_COMMAND_LIST_TYPE type)
+	{
+		CONSOLE_MESSAGE("DFW is creating Command List");
+		return std::make_unique<CommandList>(pDevice.Get(), type);
+	}
+
+	std::unique_ptr<CommandQueue> DFW::CreateQueue(const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, size_t priority, size_t nodeMask)
+	{
+		CONSOLE_MESSAGE("DFW is creating Command Queue");
+		return std::make_unique<CommandQueue>(pDevice.Get(), type, flags, priority, nodeMask);
+	}
+
 	std::unique_ptr<DepthStencilView> DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const D3D12_DSV_FLAGS flags)
 	{
 		CONSOLE_MESSAGE("DFW is creating DSV");
 		return std::make_unique<DepthStencilView>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }), flags);
 	}
 
-	std::unique_ptr<Scene> DFW::CreateScene(std::string path, bool neverUpdate)
+	size_t DFW::GetIndexSize(Object* obj, const size_t index) const
+	{
+		return std::get<2>(obj->GetObjectParameters(0));
+	}
+
+	size_t DFW::GetIndexStartPos(Object* obj, const size_t index) const
+	{
+		return std::get<3>(obj->GetObjectParameters(0));
+	}
+
+	size_t DFW::GetVertexStartPos(Object* obj, const size_t index) const
+	{
+		return std::get<1>(obj->GetObjectParameters(0));
+	}
+
+	size_t DFW::GetVertexSize(Object* obj, const size_t index) const
+	{
+		return std::get<0>(obj->GetObjectParameters(0));
+	}
+
+	size_t DFW::GetMaterialIndex(Object* obj, const size_t index) const
+	{
+		return std::get<4>(obj->GetObjectParameters(0));
+	}
+
+	std::unique_ptr<Scene> DFW::CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("DFW is creating Scene");
-		return std::make_unique<Scene>(path, pDevice.Get(), pCommandList.Get(), neverUpdate);
+		return std::make_unique<Scene>(path, pDevice.Get(), list, neverUpdate);
 	}
 
-	std::unique_ptr<Rectangle> DFW::CreateRectangle(bool neverUpdate)
+	std::unique_ptr<Rectangle> DFW::CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("DFW is creating Rectangle");
-		return std::make_unique<Rectangle>(pDevice.Get(), pCommandList.Get(), neverUpdate);
+		return std::make_unique<Rectangle>(pDevice.Get(), list, neverUpdate);
 	}
 
-	std::unique_ptr<Cube> DFW::CreateCube(bool neverUpdate)
+	std::unique_ptr<Cube> DFW::CreateCube(bool neverUpdate, ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("DFW is creating Cube");
-		return std::make_unique<Cube>(pDevice.Get(), pCommandList.Get(), neverUpdate);
+		return std::make_unique<Cube>(pDevice.Get(), list, neverUpdate);
+	}
+
+	std::unique_ptr<Point> DFW::CreatePoint(bool neverUpdate, ID3D12GraphicsCommandList* list)
+	{
+		return std::make_unique<Point>(pDevice.Get(), list, neverUpdate);
 	}
 
 	std::unique_ptr<MaterialsManager> DFW::CreateMaterialMananger()
@@ -609,10 +644,10 @@ namespace FDW
 		return std::make_unique<Material>();
 	}
 
-	std::unique_ptr<Texture> DFW::CreateTexture(std::string path)
+	std::unique_ptr<Texture> DFW::CreateTexture(std::string path, ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("DFW is creating Texture");
-		return std::make_unique<Texture>(path, pDevice.Get(), pCommandList.Get());
+		return std::make_unique<Texture>(path, pDevice.Get(), list);
 	}
 
 }

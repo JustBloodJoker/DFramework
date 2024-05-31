@@ -3,11 +3,7 @@
 struct VERTEX_OUTPUT
 {
     float4 pos : SV_Position;
-    float3 worldPos : POSITION0;
-    float3 normal : NORMAL;
-    float2 texCoord : TEXCOORD;
-    float3 tangent : TANGENT;
-    float3 bitangent : BITANGENT;
+    uint instance : SV_InstanceID;
 };
 
 struct PIXEL_OUTPUT
@@ -16,27 +12,28 @@ struct PIXEL_OUTPUT
 };
 
 ConstantBuffer<Matrices> objMatrices : register(b0);
-ConstantBuffer<Materials> materialsObject : register(b1);
 
-SamplerState ss : register(s0);
-Texture2D texPos : register(t0);
-Texture2D texBase : register(t1);
-Texture2D texNormals : register(t2);
+struct Particle
+{
+    float3 position;
+    float velocity;
+    float4 color;
+};
 
-VERTEX_OUTPUT VS(VERTEX_INPUT vsIn)
+StructuredBuffer<Particle> particles : register(t0);
+
+VERTEX_OUTPUT VS(VERTEX_INPUT vsIn, uint instance : SV_InstanceID )
 {
     VERTEX_OUTPUT vsOut;
-    vsOut.pos = mul(float4(vsIn.pos, 1.0f), objMatrices.WorldMatrix);
-    
-    vsOut.worldPos = vsOut.pos.xyz;
+    float3 tmpPos = vsIn.pos + particles[instance].position;
+
+
+    vsOut.pos = mul(float4(tmpPos, 1.0f), objMatrices.WorldMatrix);
     
     vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);
     vsOut.pos = mul(vsOut.pos, objMatrices.ProjectionMatrix);
 
-    vsOut.texCoord = vsIn.texCoord;
-    vsOut.normal = normalize(vsIn.normal);
-    vsOut.tangent = vsIn.tangent;
-    vsOut.bitangent = vsIn.bitangent;
+    vsOut.instance = instance;
 
     return vsOut;
 }
@@ -44,7 +41,6 @@ VERTEX_OUTPUT VS(VERTEX_INPUT vsIn)
 PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 {
     PIXEL_OUTPUT psOut;
-    psOut.result = texBase.Sample( ss, vsOut.texCoord );//materialsObject.diffuse;
-    clip(psOut.result.a < 0.1f ? -1 : 1);
+    psOut.result = particles[vsOut.instance].color;
     return psOut;
 }

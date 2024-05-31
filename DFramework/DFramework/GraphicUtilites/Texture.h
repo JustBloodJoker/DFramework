@@ -32,7 +32,9 @@ namespace FDW
 			const UINT64 width, const UINT64 height, 
 			DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, 
 			const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE,
-			const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE,
+			const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+			const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE, 
+			const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 			const UINT16 mipLevels = 1);
 		
 		~Texture();
@@ -46,7 +48,18 @@ namespace FDW
 
 	private:
 
-		void CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE, const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE, const UINT16 mipLevels = 1);
+		void CreateTextureBuffer(ID3D12Device* pDevice,
+			const UINT16 arraySize, 
+			const DXGI_FORMAT format, 
+			const UINT64 width, 
+			const UINT64 height, 
+			DXGI_SAMPLE_DESC sampleDesc, 
+			const D3D12_RESOURCE_DIMENSION dimension, 
+			const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE, 
+			const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN, 
+			const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE, 
+			const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+			const UINT16 mipLevels = 1);
 		
 		D3D12_RESOURCE_STATES currState;
 

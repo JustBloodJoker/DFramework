@@ -46,7 +46,7 @@ namespace FDW
 
 	void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
 	{
-        CONSOLE_MESSAGE(std::string("INITING CUSTOM RTV DESC"));
+        CONSOLE_MESSAGE(std::string("INITING CUSTOM DSV DESC"));
 
         ZeroMemory(&dsvDesc, sizeof(dsvDesc));
 
@@ -96,7 +96,7 @@ namespace FDW
             textureDimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
             break;
         }
-        dsvTexture = std::make_unique<Texture>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
+        dsvTexture = std::make_unique<Texture>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
 
 	}
 

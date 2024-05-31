@@ -147,6 +147,7 @@
     <ClInclude Include="GraphicUtilites\BufferDescriptorHeap.h" />
     <ClInclude Include="GraphicUtilites\BufferMananger.h" />
     <ClInclude Include="GraphicUtilites\CommandList.h" />
+    <ClInclude Include="GraphicUtilites\CommandQueue.h" />
     <ClInclude Include="GraphicUtilites\DepthStencilView.h" />
     <ClInclude Include="GraphicUtilites\InputLayout.h" />
     <ClInclude Include="GraphicUtilites\Materials.h" />
@@ -176,6 +177,9 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GraphicUtilites\CommandList.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="GraphicUtilites\CommandQueue.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GraphicUtilites\DepthStencilView.cpp">

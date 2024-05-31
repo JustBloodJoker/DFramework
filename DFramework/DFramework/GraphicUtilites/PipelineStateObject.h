@@ -48,4 +48,27 @@ namespace FDW
 	};
 
 
+	class ComputePipelineStateObject
+	{
+
+	public:
+
+		ComputePipelineStateObject() = delete;
+		~ComputePipelineStateObject() = default;
+		
+		ComputePipelineStateObject(ID3D12RootSignature* const pRootSignature, const D3D12_PIPELINE_STATE_FLAGS flags = D3D12_PIPELINE_STATE_FLAG_NONE, const UINT nodeMask = 0);
+		void SetCS(ID3DBlob* csByteCode);
+		
+		void CreatePSO(ID3D12Device* pDevice);
+	
+		ID3D12PipelineState* GetPSO() const;
+		D3D12_COMPUTE_PIPELINE_STATE_DESC GetDesc() const;
+
+	private:
+
+		D3D12_COMPUTE_PIPELINE_STATE_DESC cPsoDesc;
+		wrl::ComPtr<ID3D12PipelineState> pPSO;
+
+	};
+
 }

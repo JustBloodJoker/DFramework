@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <chrono>
 
 #define _XM_NO_INTRINSICS_
 #include <iostream>
@@ -13,9 +13,17 @@
 #include <unordered_map>
 #include <filesystem>
 #include <set>
+#include <random>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>
+
+//MULTITHREAD
+
+#include <thread>
+#include <future>
+#include <mutex>
+
 
 //ASSIMP
 #include <assimp/Importer.hpp>

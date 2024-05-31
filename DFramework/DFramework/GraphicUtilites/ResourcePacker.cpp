@@ -26,8 +26,8 @@ namespace FDW
 	}
 
 
-	SRVPacker::SRVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
+	SRVPacker::SRVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
 	{
 
 	}
@@ -54,8 +54,8 @@ namespace FDW
 		AddResource(resource, dimension, currentIndex++, pDevice);
 	}
 
-	SamplerPacker::SamplerPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
+	SamplerPacker::SamplerPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask,  D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, flags, pDevice)
 	{
 
 	}
@@ -93,8 +93,8 @@ namespace FDW
 		AddDefaultSampler(currentIndex++, pDevice);
 	}
 
-	CBVPacker::CBVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
+	CBVPacker::CBVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
 	{
 
 	}
@@ -113,8 +113,8 @@ namespace FDW
 		AddResource(resource, sizeInBytes, currentIndex++, pDevice);
 	}
 
-	RTVPacker::RTVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
+	RTVPacker::RTVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, flags, pDevice)
 	{
 	}
 
@@ -130,8 +130,8 @@ namespace FDW
 		AddResource(resource, rtvDesc, currentIndex++, pDevice);
 	}
 
-	DSVPacker::DSVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice)
+	DSVPacker::DSVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, flags, pDevice)
 	{
 	}
 
@@ -146,5 +146,33 @@ namespace FDW
 	{
 		AddResource(resource, dsvDesc, currentIndex++, pDevice);
 	}
+
+	UAVPacker::UAVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
+	{
+	}
+
+	void UAVPacker::AddResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElement, size_t stride, size_t offsetBytes, const size_t index, ID3D12Device* pDevice)
+	{
+		CONSOLE_MESSAGE(std::string("UAVPaker is adding resource"));
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc;
+		ZeroMemory(&uavDesc, sizeof(uavDesc));
+		uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+		uavDesc.Buffer.FirstElement = firstElement;
+		uavDesc.Buffer.NumElements = numElements;
+		uavDesc.Buffer.StructureByteStride = stride;
+		uavDesc.Buffer.CounterOffsetInBytes = offsetBytes;
+		uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+
+		pDevice->CreateUnorderedAccessView(resource, counterResource, &uavDesc, descriptorHeap->GetCPUDescriptorHandle(index));
+	}
+
+	void UAVPacker::PushResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElement, size_t stride, size_t offsetBytes, ID3D12Device* pDevice)
+	{
+		AddResource(resource, counterResource, numElements, firstElement, stride, offsetBytes, currentIndex++, pDevice);
+	}
+
 
 }

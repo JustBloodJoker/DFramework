@@ -10,7 +10,7 @@
 
 #include "GraphicUtilites/BufferMananger.h"
 #include "GraphicUtilites/Shader.h"
-#include "GraphicUtilites/CommandList.h"
+#include "GraphicUtilites/CommandQueue.h"
 #include "GraphicUtilites/Texture.h"
 #include "GraphicUtilites/ResourcePacker.h"
 #include "GraphicUtilites/PipelineStateObject.h"
@@ -46,7 +46,7 @@ namespace FDW
 		virtual void UserMouseUp(WPARAM btnState, int x, int y) = 0;
 		virtual void UserMouseMoved(WPARAM btnState, int x, int y) = 0;
 		virtual void UserKeyPressed(WPARAM wParam) = 0;
-		
+		virtual void UserResizeUpdate() = 0;
 
 	private:  //METHODS
 		
@@ -59,6 +59,8 @@ namespace FDW
 
 		void SetFullScreen();
 
+		void ResizeUpdate();
+
 		LRESULT CALLBACK MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	private:
@@ -68,23 +70,22 @@ namespace FDW
 		std::unique_ptr <Timer> pTimer;
 
 		// WINDOW
-		
-		std::wstring wndName;
-		std::unique_ptr <WindowSettings> pWndSettings;
+
+		HWND hwnd;
+		WindowSettings wndSettings;
+		dx::XMMATRIX mainProjectionMatrix;
+		D3D12_VIEWPORT mainVP;
+		D3D12_RECT mainRect;
 
 		//D3D12
 		
+		wrl::ComPtr<ID3D12Device> pDevice;
 		wrl::ComPtr<IDXGIFactory4> pFactory;
-		wrl::ComPtr<ID3D12Fence> pFence;
-		wrl::ComPtr<ID3D12CommandQueue> pCommandQueue;
 		wrl::ComPtr<IDXGISwapChain> pSwapChain;
 		wrl::ComPtr<ID3D12DescriptorHeap> pRTVDescriptorHeap;
-		wrl::ComPtr<ID3D12DescriptorHeap> pDSVDescriptorHeap;
 		wrl::ComPtr<ID3D12Resource> pSwapChainRTV[BUFFERS_COUNT];
-		wrl::ComPtr<ID3D12Resource> pDepthStencilBuffer;
 
-		D3D12_VIEWPORT mainVP;
-		D3D12_RECT mainRect;
+		std::unique_ptr<FDW::CommandQueue> pCommandQueue;
 
 		//////////////////////////
 
@@ -96,10 +97,6 @@ namespace FDW
 		//////////////////////////
 		
 
-		
-		
-		std::vector<ID3D12CommandList*> pCommandListsToExecute;
-
 		UINT rtvDescriptorSize;
 		UINT dsvDescriptorSize;
 		UINT cbvsrvuavDescriptorSize;
@@ -109,49 +106,51 @@ namespace FDW
 
 	protected:
 
-		const UINT Get_CBV_SRV_UAV_DescriptorSize() const;
-		const UINT Get_RTV_DescriptorSize() const;
-		const UINT Get_DSV_DescriptorSize() const;
+		const UINT					Get_CBV_SRV_UAV_DescriptorSize()	const noexcept;
+		const UINT					Get_RTV_DescriptorSize()			const noexcept;
+		const UINT					Get_DSV_DescriptorSize()			const noexcept;
+		ID3D12Device*				GetDevice()							const noexcept;
+		HWND						GetMainHWND()						const noexcept;
+		WindowSettings				GetMainWNDSettings()				const noexcept;
+		dx::XMMATRIX				GetMainProjectionMatrix()			const noexcept;
+		D3D12_VIEWPORT				GetMainViewPort()					const noexcept;
+		D3D12_RECT					GetMainRect()						const noexcept;
+		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
+		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 
-		wrl::ComPtr<ID3D12Device> pDevice;
+
+		void				PresentSwapchain();
+		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
+		void				EndDraw(ID3D12GraphicsCommandList* pCommandList);
+		void				BindMainViewPort(ID3D12GraphicsCommandList* pCommandList);
+		void				BindMainRect(ID3D12GraphicsCommandList* pCommandList);
+		void				BindListToMainQueue(CommandList* pCommandList);
+		void				UnbindListFromMainQueue(CommandList* pCommandList);
+		void				ExecuteMainQueue();
 
 
-		dx::XMMATRIX mainProjectionMatrix;
-		HWND hwnd;
-	
-		void FlushCommandQueue();
-
-		virtual void ImmediateExecuteQueue(ID3D12CommandList** commandLists, size_t commandListsCount) final;
-		virtual void ImmediateExecuteQueue(ID3D12GraphicsCommandList* commandList) final;
-		virtual void PushCommandListToExecute(ID3D12GraphicsCommandList* commandList) final;
-		void SetMainRenderTarget(ID3D12GraphicsCommandList* pCommandList);
-
-		wrl::ComPtr<ID3D12GraphicsCommandList> pCommandList;
-		wrl::ComPtr<ID3D12CommandAllocator> pDirectAllocator;
-
-		//std::unique_ptr<CommandList> pcmdList;
-
-		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView() const noexcept;
-		D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() const noexcept;
-
-		DXGI_FORMAT GetMainRTVFormat() const noexcept;
+		
 
 		////////////////////////////////////
 		// FACADE
+		size_t GetIndexSize(Object* obj, const size_t index)		const;
+		size_t GetIndexStartPos(Object* obj, const size_t index)	const;
+		size_t GetVertexStartPos(Object* obj, const size_t index)	const;
+		size_t GetVertexSize(Object* obj, const size_t index)		const;
+		size_t GetMaterialIndex(Object* obj, const size_t index)    const;
 
-		std::unique_ptr<Scene> CreateScene(std::string path, bool neverUpdate);
-		std::unique_ptr<Rectangle> CreateRectangle(bool neverUpdate);
-		std::unique_ptr<Cube> CreateCube(bool neverUpdate);
+		std::unique_ptr<Scene>				CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Rectangle>			CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Cube>				CreateCube(bool neverUpdate, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Point>				CreatePoint(bool neverUpdate, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<MaterialsManager>	CreateMaterialMananger();
+		std::unique_ptr<Material>			CreateMaterial();
+		std::unique_ptr<Texture>			CreateTexture(std::string path, ID3D12GraphicsCommandList* list);
 		
-		std::unique_ptr<MaterialsManager> CreateMaterialMananger();
-		std::unique_ptr<Material> CreateMaterial();
-		std::unique_ptr<Texture> CreateTexture(std::string path);
-		
-		std::unique_ptr<RenderTarget> CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
-			const UINT width, const UINT height);
-
-		std::unique_ptr<DepthStencilView> CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
-			const UINT width, const UINT height, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
+																const UINT width, const UINT height);
+		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
+																const UINT width, const UINT height, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 
 		template<typename T>
 		std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t elementCount);
@@ -160,6 +159,7 @@ namespace FDW
 		std::unique_ptr<DSVPacker> CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<SRVPacker> CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<CBVPacker> CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
+		std::unique_ptr<UAVPacker> CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<SamplerPacker> CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 
 		std::unique_ptr<RootSingature> CreateRootSignature(CD3DX12_ROOT_PARAMETER* slotRootParameters, const UINT numParameters);
@@ -175,6 +175,13 @@ namespace FDW
 			D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT), 
 			D3D12_DEPTH_STENCIL_DESC dsvStateDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT)
 			);
+
+		std::unique_ptr<ComputePipelineStateObject> CreateComputePSO(ID3D12RootSignature* const pRootSignature,
+			ID3DBlob* csByteCode = nullptr, const D3D12_PIPELINE_STATE_FLAGS flags = D3D12_PIPELINE_STATE_FLAG_NONE, const UINT nodeMask = 0);
+
+		std::unique_ptr<CommandList> CreateList(const D3D12_COMMAND_LIST_TYPE type);
+		std::unique_ptr<CommandQueue> CreateQueue(const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags = D3D12_COMMAND_QUEUE_FLAG_NONE, size_t priority = 0, size_t nodeMask = 0);
+
 		//
 		////////////////////////////////////
 		
