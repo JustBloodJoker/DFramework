@@ -5,6 +5,8 @@
 namespace FDW
 {
 
+	static std::vector<FDW::VertexFrameWork> vertices;
+	static std::vector<std::uint16_t> indices;
 
 	Cube::Cube(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{

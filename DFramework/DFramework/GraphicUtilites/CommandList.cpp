@@ -56,7 +56,12 @@ namespace FDW
 		return pCommandList.Get();
 	}
 
-	ID3D12GraphicsCommandList* const* CommandList::GetAdressCommandList()
+	CommandList::operator ID3D12GraphicsCommandList* () const
+	{
+		return pCommandList.Get();
+	}
+
+	ID3D12GraphicsCommandList* const* CommandList::GetAdressCommandList() const
 	{
 		return pCommandList.GetAddressOf();
 	}

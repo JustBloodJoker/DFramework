@@ -27,18 +27,23 @@ namespace FDW
 		Material();
 		~Material();
 
-		ID3D12Resource* GetResourceTexture(TEXTURE_TYPE type) const;
+		ID3D12Resource* GetResourceTexture(TextureType type) const;
 		MaterialFrameWork GetMaterialDesc() const;
-		void SetMaterialDesc(MaterialFrameWork&& materialDesc);
-		void SetMaterialDesc(const MaterialFrameWork& materialDesc);
-		void SetTexture(std::string& texturePath, TEXTURE_TYPE type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
-		bool IsHaveTexture(TEXTURE_TYPE type) const;
+		template<typename MaterialFW>
+		void SetMaterialDesc(MaterialFW&& matdesc)
+		{
+			material = std::forward<decltype(matdesc)>(matdesc);
+		}
+
+		void SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+
+		bool IsHaveTexture(TextureType type) const;
 
 	private:
 
 		MaterialFrameWork material;
-		std::unordered_map<TEXTURE_TYPE, std::unique_ptr<Texture>> textureMap;
+		std::unordered_map<TextureType, std::shared_ptr<Texture>> textureMap;
 
 
 	};

@@ -3,31 +3,37 @@
 
 #include "../GraphicUtilites/BufferMananger.h"
 
+
+
 namespace FDW
 {
 
-	enum TEXTURE_TYPE
+	namespace TEXTURETYPE
 	{
-		BASE,
-		NORMAL,
-		ROUGHNESS,
-		METALNESS,
-		HEIGHT,
-		SPECULAR,
-		OPACITY,
-		BUMP,
-		EMISSIVE
-	};
-
+		enum TEXTURE_TYPE
+		{
+			BASE,
+			NORMAL,
+			ROUGHNESS,
+			METALNESS,
+			HEIGHT,
+			SPECULAR,
+			OPACITY,
+			BUMP,
+			EMISSIVE
+		};
+	}
 
 	class Texture
 	{
 
-		static std::unordered_map<std::string, Texture*> textures;
-
+		static std::unordered_map<std::string, std::weak_ptr<Texture>> textures;
+		
 	public:
+				
+		static std::shared_ptr<Texture> CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+		Texture(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);//NOT RECOMENDED TO USE
 
-		Texture(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 		Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format,
 			const UINT64 width, const UINT64 height, 
 			DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, 
@@ -42,9 +48,11 @@ namespace FDW
 		ID3D12Resource* GetResource() const;
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
-		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData);
+		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation = false);
 
-		static void ReleaseUploadBuffers();
+		bool DeleteUploadBuffer();
+
+		static void ReleaseUploadBuffers();//CLEAR ALL UPLOAD BUFFERS
 
 	private:
 
@@ -69,3 +77,6 @@ namespace FDW
 	};
 
 }
+
+namespace TextureTypeSpace = FDW::TEXTURETYPE;
+using TextureType = FDW::TEXTURETYPE::TEXTURE_TYPE;

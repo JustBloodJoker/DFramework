@@ -5,6 +5,8 @@
 
 #include "MaterialsMananger.h"
 
+
+
 namespace FDW
 {
 
@@ -32,11 +34,9 @@ namespace FDW
 		std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t>> objectParameters;
 
 		wrl::ComPtr<ID3D12Resource> vertexBuffer;
-		std::unique_ptr<FDW::UploadBuffer<FDW::VertexFrameWork>> pVertexUploadBuffer;
 		std::unique_ptr<D3D12_VERTEX_BUFFER_VIEW> vertexBufferView;
 
 		wrl::ComPtr<ID3D12Resource> indexBuffer;
-		std::unique_ptr<FDW::UploadBuffer<std::uint16_t>> pIndexUploadBuffer;
 		std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> indexBufferView;
 
 

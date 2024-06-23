@@ -117,7 +117,7 @@ namespace FDW
 		D3D12_RECT					GetMainRect()						const noexcept;
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
-
+		Timer*						GetTimer()							const noexcept;
 
 		void				PresentSwapchain();
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
@@ -145,15 +145,21 @@ namespace FDW
 		std::unique_ptr<Point>				CreatePoint(bool neverUpdate, ID3D12GraphicsCommandList* list);
 		std::unique_ptr<MaterialsManager>	CreateMaterialMananger();
 		std::unique_ptr<Material>			CreateMaterial();
-		std::unique_ptr<Texture>			CreateTexture(std::string path, ID3D12GraphicsCommandList* list);
-		
+		std::shared_ptr<Texture>			CreateTexture(std::string path, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Texture>			CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format,
+																const UINT64 width, const UINT64 height,
+																const D3D12_RESOURCE_DIMENSION dimension,
+																const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE,
+																const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
+																const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE,
+																const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+																const UINT16 mipLevels = 1);
+		std::unique_ptr<Texture>			CreateSimpleStructuredBuffer(const UINT64 width);
+
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height);
 		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
-
-		template<typename T>
-		std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t elementCount);
 
 		std::unique_ptr<RTVPacker> CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<DSVPacker> CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
@@ -185,13 +191,29 @@ namespace FDW
 		//
 		////////////////////////////////////
 		
+
+		////////////////////////////////////
+		//              TEMPLATES
+		template<typename T, typename ...Args>
+		inline std::unique_ptr<T> MakePointer(Args && ...arguments)
+		{
+			return std::make_unique<T>((arguments)...);
+		}
+
+		template<typename T>
+		inline std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t&& elementCount)
+		{
+			CONSOLE_MESSAGE("DFW is creating Constant Buffer");
+			return std::make_unique<UploadBuffer<T>>(pDevice.Get(), std::forward<decltype(elementCount)>(elementCount), true);
+		}
+
+
 	};
 
-	template<typename T>
-	inline std::unique_ptr<UploadBuffer<T>> DFW::CreateConstantBuffer(const size_t elementCount)
-	{
-		CONSOLE_MESSAGE("DFW is creating Constant Buffer");
-		return std::make_unique<UploadBuffer<T>>(pDevice.Get(), elementCount, true);
-	}
+	
+
+
+
+
 
 }

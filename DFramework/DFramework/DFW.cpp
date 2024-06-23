@@ -49,15 +49,11 @@ namespace FDW
 			CONSOLE_MESSAGE("Render inited");
 		}
 
-		//HRESULT_ASSERT(pCommandList->Reset(pDirectAllocator.Get(), nullptr), "command list reset error");
-
 		UserInit();
 
 		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
 
 		CONSOLE_MESSAGE(std::to_string(duration.count()) + "ms     ---------- Init Time");
-
-		pTimer->Reset();
 
 		Loop();
 
@@ -75,6 +71,11 @@ namespace FDW
 	DXGI_FORMAT DFW::GetMainRTVFormat() const noexcept
 	{
 		return DXGI_FORMAT_R8G8B8A8_UNORM;
+	}
+
+	Timer* DFW::GetTimer() const noexcept
+	{
+		return pTimer.get();
 	}
 
 	void DFW::PresentSwapchain()
@@ -281,7 +282,8 @@ namespace FDW
 
 	void DFW::Update()
 	{
-	
+		
+
 		/////////////////// 
 		// USER DRAW
 		UserLoop();
@@ -586,27 +588,27 @@ namespace FDW
 
 	size_t DFW::GetIndexSize(Object* obj, const size_t index) const
 	{
-		return std::get<2>(obj->GetObjectParameters(0));
+		return std::get<2>(obj->GetObjectParameters(index));
 	}
 
 	size_t DFW::GetIndexStartPos(Object* obj, const size_t index) const
 	{
-		return std::get<3>(obj->GetObjectParameters(0));
+		return std::get<3>(obj->GetObjectParameters(index));
 	}
 
 	size_t DFW::GetVertexStartPos(Object* obj, const size_t index) const
 	{
-		return std::get<1>(obj->GetObjectParameters(0));
+		return std::get<1>(obj->GetObjectParameters(index));
 	}
 
 	size_t DFW::GetVertexSize(Object* obj, const size_t index) const
 	{
-		return std::get<0>(obj->GetObjectParameters(0));
+		return std::get<0>(obj->GetObjectParameters(index));
 	}
 
 	size_t DFW::GetMaterialIndex(Object* obj, const size_t index) const
 	{
-		return std::get<4>(obj->GetObjectParameters(0));
+		return std::get<4>(obj->GetObjectParameters(index));
 	}
 
 	std::unique_ptr<Scene> DFW::CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list)
@@ -644,10 +646,20 @@ namespace FDW
 		return std::make_unique<Material>();
 	}
 
-	std::unique_ptr<Texture> DFW::CreateTexture(std::string path, ID3D12GraphicsCommandList* list)
+	std::shared_ptr<Texture> DFW::CreateTexture(std::string path, ID3D12GraphicsCommandList* list)
 	{
-		CONSOLE_MESSAGE("DFW is creating Texture");
-		return std::make_unique<Texture>(path, pDevice.Get(), list);
+		return Texture::CreateTextureFromPath(path, pDevice.Get(), list);
+	}
+
+	std::unique_ptr<Texture> DFW::CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+	{
+		CONSOLE_MESSAGE("DFW is creating Anonim Texture");
+		return std::make_unique<Texture>(pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({SampleCount, Quality}), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
+	}
+
+	std::unique_ptr<Texture> DFW::CreateSimpleStructuredBuffer(const UINT64 width)
+	{
+		return CreateAnonimTexture(1u, DXGI_FORMAT_UNKNOWN,width, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
 	}
 
 }

@@ -14,9 +14,8 @@ namespace FDW
 		materials.push_back(std::make_unique<Material>());
 	}
 
-	void MaterialsManager::SetTexture(std::string& texturePath, TEXTURE_TYPE type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::size_t index)
+	void MaterialsManager::SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::size_t index)
 	{
-
 		if (index < materials.size() && index >= 0)
 		{
 			CONSOLE_MESSAGE(std::string("SET TEXTURE TO THE MATERIAL WITH INDEX " + std::to_string(index)).c_str());
@@ -71,7 +70,7 @@ namespace FDW
 		pMaterial->SetMaterialDesc(materialDesc);
 	}
 
-	void MaterialsManager::SetTexture(std::unique_ptr<Material>& pMaterial, std::string& texturePath, TEXTURE_TYPE type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
+	void MaterialsManager::SetTexture(std::unique_ptr<Material>& pMaterial, std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
 		pMaterial->SetTexture(texturePath, type, pDevice, pCommandList);
 	}

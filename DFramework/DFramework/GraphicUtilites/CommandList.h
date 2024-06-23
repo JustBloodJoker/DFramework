@@ -23,8 +23,13 @@ namespace FDW
 		
 		void ExecuteList(ID3D12CommandQueue* pCommandQueue); //NEED TO SYNCHRONIZE AFTER CALL METHOD
 
-		ID3D12GraphicsCommandList* const* GetAdressCommandList();
+		ID3D12GraphicsCommandList* const* GetAdressCommandList() const;
 		ID3D12GraphicsCommandList* GetPtrCommandList() const;
+
+		/////////////////////////
+		//		OPERATORS
+
+		operator ID3D12GraphicsCommandList* () const;
 
 	private:
 

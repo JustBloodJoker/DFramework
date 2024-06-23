@@ -20,11 +20,11 @@ namespace FDW
 	{
 		for(auto &el : textureMap)
 		{
-			el.second.release();
+			el.second.reset();
 		}
 	}
 
-	ID3D12Resource* Material::GetResourceTexture(TEXTURE_TYPE type) const
+	ID3D12Resource* Material::GetResourceTexture(TextureType type) const
 	{
 		return textureMap.at(type)->GetResource();
 	}
@@ -34,22 +34,12 @@ namespace FDW
 		return material;
 	}
 
-	void Material::SetMaterialDesc(MaterialFrameWork&& materialDesc)
+	void Material::SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
-		material = std::move(materialDesc);
-	}
-	void Material::SetMaterialDesc(const MaterialFrameWork& materialDesc)
-	{
-		material = materialDesc;
+		textureMap.emplace(type,Texture::CreateTextureFromPath(texturePath,pDevice, pCommandList));
 	}
 
-	void Material::SetTexture(std::string& texturePath, TEXTURE_TYPE type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
-	{
-		
-		textureMap[type] = std::make_unique<Texture>(texturePath,pDevice, pCommandList);
-	}
-
-	bool Material::IsHaveTexture(TEXTURE_TYPE type) const
+	bool Material::IsHaveTexture(TextureType type) const
 	{
 		return textureMap.find(type) != textureMap.end();
 	}

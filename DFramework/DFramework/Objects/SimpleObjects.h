@@ -16,11 +16,11 @@ namespace FDW
 		
 	protected:
 
-		std::vector<FDW::VertexFrameWork> vertices;
-		std::vector<std::uint16_t> indices;
-
 		void DeleteParameterVectors();
 
+
+		std::unique_ptr<FDW::UploadBuffer<FDW::VertexFrameWork>> pVertexUploadBuffer;
+		std::unique_ptr<FDW::UploadBuffer<std::uint16_t>> pIndexUploadBuffer;
 	};
 
 
