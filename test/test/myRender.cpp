@@ -36,8 +36,6 @@ void myRender::UserInit()
 	samplerPack = CreateSamplerPack(1u);
 	samplerPack->PushDefaultSampler(device);
 
-
-
 	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);	
 	dsvPack = CreateDSVPack(1u);
 	dsvPack->PushResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), device);
@@ -86,7 +84,7 @@ void myRender::UserInit()
 	FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
 
 	DXGI_FORMAT rtvFormats[]{ GetMainRTVFormat() };
-	pso = CreatePSO(pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), scenelayoutDesc.size(),
+	pso = CreatePSO(pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), (UINT)scenelayoutDesc.size(),
 		_countof(rtvFormats), rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT, UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
 		pVSByteCode.Get(), pPSByteCode.Get(), nullptr, nullptr, nullptr, rasterizerDesc);
 		
@@ -135,9 +133,9 @@ void myRender::UserLoop()
 	pcml->IASetIndexBuffer(bird->GetIndexBufferView());
 	for (size_t ind = 0; ind < bird->GetObjectBuffersCount(); ind++)
 	{
-		ID3D12DescriptorHeap* heaps[] = { srvPacks[std::get<4>(bird->GetObjectParameters(ind))]->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
+		ID3D12DescriptorHeap* heaps[] = { srvPacks[GetMaterialIndex(bird.get(), ind)]->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
 		pcml->SetDescriptorHeaps(_countof(heaps), heaps);
-		pcml->SetGraphicsRootDescriptorTable(1, srvPacks[std::get<4>(bird->GetObjectParameters(ind))]->GetResult()->GetGPUDescriptorHandle(0));
+		pcml->SetGraphicsRootDescriptorTable(1, srvPacks[GetMaterialIndex(bird.get(), ind)]->GetResult()->GetGPUDescriptorHandle(0));
 		pcml->SetGraphicsRootDescriptorTable(2, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
 		
 		pcml->DrawIndexedInstanced(GetIndexSize(bird.get(), ind), 1, GetIndexStartPos(bird.get(), ind), GetVertexStartPos(bird.get(), ind), 0);
@@ -165,12 +163,12 @@ void myRender::UserMouseMoved(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0 && ((x != mLastMousePos.x) || (y != mLastMousePos.y)))
 	{
-		camYaw += (mLastMousePos.x - x) * 0.002;
-		camPitch += (mLastMousePos.y - y) * 0.002;
+		camYaw += (mLastMousePos.x - x) * 0.002f;
+		camPitch += (mLastMousePos.y - y) * 0.002f;
 	}
 	if ((btnState & MK_RBUTTON) != 0 && ((x != mLastMousePos.x) || (y != mLastMousePos.y)))
 	{
-		camRoll += (mLastMousePos.x - x) * 0.002;
+		camRoll += (mLastMousePos.x - x) * 0.002f;
 	}
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;

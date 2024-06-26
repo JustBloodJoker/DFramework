@@ -375,7 +375,7 @@ namespace FDW
 
 			CONSOLE_MESSAGE("WM_SIZE ACTIVE");
 
-			mainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2, wndSettings.width / wndSettings.height, 1.0f, 10000.0f);
+			mainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)wndSettings.width / wndSettings.height, 1.0f, 10000.0f);
 
 			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
 
@@ -583,29 +583,29 @@ namespace FDW
 		return std::make_unique<DepthStencilView>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }), flags);
 	}
 
-	size_t DFW::GetIndexSize(Object* obj, const size_t index) const
+	UINT DFW::GetIndexSize(Object* obj, const size_t index) const
 	{
-		return std::get<2>(obj->GetObjectParameters(index));
+		return (UINT)obj->GetObjectParameters(index).indicesCount;
 	}
 
-	size_t DFW::GetIndexStartPos(Object* obj, const size_t index) const
+	UINT DFW::GetIndexStartPos(Object* obj, const size_t index) const
 	{
-		return std::get<3>(obj->GetObjectParameters(index));
+		return (UINT)obj->GetObjectParameters(index).indicesOffset;
 	}
 
-	size_t DFW::GetVertexStartPos(Object* obj, const size_t index) const
+	UINT DFW::GetVertexStartPos(Object* obj, const size_t index) const
 	{
-		return std::get<1>(obj->GetObjectParameters(index));
+		return (UINT)obj->GetObjectParameters(index).verticesOffset;
 	}
 
-	size_t DFW::GetVertexSize(Object* obj, const size_t index) const
+	UINT DFW::GetVertexSize(Object* obj, const size_t index) const
 	{
-		return std::get<0>(obj->GetObjectParameters(index));
+		return (UINT)obj->GetObjectParameters(index).verticesCount;
 	}
 
-	size_t DFW::GetMaterialIndex(Object* obj, const size_t index) const
+	UINT DFW::GetMaterialIndex(Object* obj, const size_t index) const
 	{
-		return std::get<4>(obj->GetObjectParameters(index));
+		return (UINT)obj->GetObjectParameters(index).materialIndex;
 	}
 
 	std::unique_ptr<Scene> DFW::CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list)

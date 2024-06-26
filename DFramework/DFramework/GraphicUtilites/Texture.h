@@ -60,7 +60,7 @@ namespace FDW
 			const UINT16 arraySize, 
 			const DXGI_FORMAT format, 
 			const UINT64 width, 
-			const UINT64 height, 
+			const UINT height, 
 			DXGI_SAMPLE_DESC sampleDesc, 
 			const D3D12_RESOURCE_DIMENSION dimension, 
 			const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE, 

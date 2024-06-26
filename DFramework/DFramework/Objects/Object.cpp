@@ -32,9 +32,9 @@ namespace FDW
 		return objectParameters.size();
 	}
 
-	std::tuple<size_t, size_t, size_t, size_t, size_t> Object::GetObjectParameters(size_t index) const
+	ObjectDesc Object::GetObjectParameters(size_t index) const
 	{
-		return index < objectParameters.size() ? objectParameters[index] : std::tuple<size_t, size_t, size_t, size_t, size_t>();
+		return index < objectParameters.size() ? objectParameters[index] : ObjectDesc();
 	}
 
 	MaterialsManager* Object::GetMaterialMananger() const
@@ -45,6 +45,19 @@ namespace FDW
 	size_t Object::GetMaterialSize() const
 	{
 		return matMananger->GetMaterialSize();
+	}
+
+	bool Object::EraseObjectFromBuffer(size_t index)
+	{
+		if (index >= objectParameters.size())
+		{
+			CONSOLE_ERROR_MESSAGE("CAN'T ERASE OBJECT FROM BUFFER | INDEX > OBJECTS SIZE! ");
+			return false;
+		}
+
+		// future
+
+		return true;
 	}
 
 }

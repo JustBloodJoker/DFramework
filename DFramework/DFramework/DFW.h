@@ -133,11 +133,11 @@ namespace FDW
 
 		////////////////////////////////////
 		// FACADE
-		size_t GetIndexSize(Object* obj, const size_t index)		const;
-		size_t GetIndexStartPos(Object* obj, const size_t index)	const;
-		size_t GetVertexStartPos(Object* obj, const size_t index)	const;
-		size_t GetVertexSize(Object* obj, const size_t index)		const;
-		size_t GetMaterialIndex(Object* obj, const size_t index)    const;
+		UINT GetIndexSize(Object* obj, const size_t index)		const;
+		UINT GetIndexStartPos(Object* obj, const size_t index)	const;
+		UINT GetVertexStartPos(Object* obj, const size_t index)	const;
+		UINT GetVertexSize(Object* obj, const size_t index)		const;
+		UINT GetMaterialIndex(Object* obj, const size_t index)    const;
 
 		std::unique_ptr<Scene>				CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list);
 		std::unique_ptr<Rectangle>			CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list);

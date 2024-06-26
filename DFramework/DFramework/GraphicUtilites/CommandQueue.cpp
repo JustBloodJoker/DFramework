@@ -5,7 +5,7 @@ namespace FDW
 {
 
 
-	CommandQueue::CommandQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, size_t priority, size_t nodeMask)
+	CommandQueue::CommandQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, INT priority, UINT nodeMask)
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 		queueDesc.Flags = flags;

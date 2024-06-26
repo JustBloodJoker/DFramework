@@ -29,7 +29,6 @@ namespace FDW
 		std::unordered_map<std::string, BoneTransformations> transformations = {};
 	};
 
-
 	class Scene
 		: public Object
 	{
@@ -40,7 +39,7 @@ namespace FDW
 		Scene() = default;
 		virtual ~Scene();
 
-		std::vector<dx::XMMATRIX> PlayAnimation(double time, std::string animationName);
+		std::vector<dx::XMMATRIX> PlayAnimation(float time, std::string animationName);
 
 		size_t GetBonesCount() const;
 
@@ -59,7 +58,7 @@ namespace FDW
 
 		dx::XMMATRIX globalInverseTransform;
 		Bone mainBone;
-		unsigned bonesCount;
+		size_t bonesCount;
 
 		std::unordered_map<std::string, Animation> animationsMap;
 		std::vector<dx::XMMATRIX> resultBones;

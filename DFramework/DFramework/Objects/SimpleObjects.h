@@ -16,9 +16,6 @@ namespace FDW
 		
 	protected:
 
-		void DeleteParameterVectors();
-
-
 		std::unique_ptr<FDW::UploadBuffer<FDW::VertexFrameWork>> pVertexUploadBuffer;
 		std::unique_ptr<FDW::UploadBuffer<std::uint16_t>> pIndexUploadBuffer;
 	};
@@ -33,9 +30,6 @@ namespace FDW
 		virtual ~Cube() = default;
 
 	protected:
-
-		
-
 
 	};
 
@@ -52,8 +46,6 @@ namespace FDW
 
 	protected:
 
-
-
 	};
 
 	class Point
@@ -65,9 +57,6 @@ namespace FDW
 		virtual ~Point() = default;
 
 	protected:
-
-
-
 
 	};
 

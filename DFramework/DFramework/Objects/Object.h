@@ -9,7 +9,14 @@
 
 namespace FDW
 {
-
+	struct ObjectDesc
+	{
+		size_t verticesCount;
+		size_t verticesOffset;
+		size_t indicesCount;
+		size_t indicesOffset;
+		size_t materialIndex;
+	};
 
 	class Object
 	{
@@ -22,16 +29,18 @@ namespace FDW
 		D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() const;
 		size_t GetObjectBuffersCount() const;
-		std::tuple<size_t, size_t, size_t, size_t, size_t> GetObjectParameters(size_t index) const;
+		ObjectDesc GetObjectParameters(size_t index) const;
 
 		MaterialsManager* GetMaterialMananger() const;
 		size_t GetMaterialSize() const;
+
+		bool EraseObjectFromBuffer(size_t index);
 
 	protected:
 
 		std::unique_ptr<MaterialsManager> matMananger;
 
-		std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t>> objectParameters;
+		std::vector<ObjectDesc> objectParameters;
 
 		wrl::ComPtr<ID3D12Resource> vertexBuffer;
 		std::unique_ptr<D3D12_VERTEX_BUFFER_VIEW> vertexBufferView;

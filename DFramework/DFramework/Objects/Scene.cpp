@@ -18,7 +18,7 @@ namespace FDW
 	{
 	}
 
-	std::vector<dx::XMMATRIX> Scene::PlayAnimation(double time, std::string animationName)
+	std::vector<dx::XMMATRIX> Scene::PlayAnimation(float time, std::string animationName)
 	{
 		auto animation = animationsMap.find(animationName);
 		if (animation == animationsMap.end())
@@ -43,19 +43,19 @@ namespace FDW
 	{
 		ParseScene(path, pDevice, pCommandList);
 
-		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), vertices.size(), vertexBuffer, pVertexUploadBuffer);
+		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), vertexBuffer, pVertexUploadBuffer);
 
 		vertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
 		vertexBufferView->BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-		vertexBufferView->SizeInBytes = vertices.size() * sizeof(SceneVertexFrameWork);
+		vertexBufferView->SizeInBytes =(UINT)(vertices.size() * sizeof(SceneVertexFrameWork));
 		vertexBufferView->StrideInBytes = sizeof(SceneVertexFrameWork);
 
-		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, indices.data(), indices.size(), indexBuffer, pIndexUploadBuffer);
+		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, indices.data(), (UINT)indices.size(), indexBuffer, pIndexUploadBuffer);
 
 		indexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		indexBufferView->BufferLocation = indexBuffer->GetGPUVirtualAddress();
 		indexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		indexBufferView->SizeInBytes = indices.size() * sizeof(decltype(indices[0]));
+		indexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
 
 		if (neverUpdate)
 		{
@@ -83,19 +83,19 @@ namespace FDW
 			aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace );
 		SAFE_ASSERT(scene, std::string("SCENE PATH: " + file + "  READ ERROR || ASSIMP ERROR INFO: " + importer.GetErrorString()).c_str());
 
-		int verticesSize = 0;
-		int offsetVertices = 0;
-		int indicesSize = 0;
+		size_t verticesSize = 0;
+		size_t offsetVertices = 0;
+		size_t indicesSize = 0;
 		
 		std::unordered_map<std::string, Bone> bonesMap;
 
-		for (int i = 0; i < scene->mNumMeshes; i++)
+		for (size_t i = 0; i < scene->mNumMeshes; i++)
 		{
 			const aiMesh* mesh = scene->mMeshes[i];
 			
 			offsetVertices += verticesSize;
 			vertices.insert(vertices.end(), mesh->mNumVertices, SceneVertexFrameWork());
-			for (int j = 0; j < mesh->mNumVertices; j++)
+			for (size_t j = 0; j < mesh->mNumVertices; j++)
 			{
 				
 				vertices[j + offsetVertices].pos.x = mesh->mVertices[j].x;
@@ -128,7 +128,7 @@ namespace FDW
 			}
 			verticesSize = vertices.size() - offsetVertices;
 			indicesSize = mesh->mNumFaces * 3;
-			for (int j = 0; j < mesh->mNumFaces; j++)
+			for (size_t j = 0; j < mesh->mNumFaces; j++)
 			{
 				indices.push_back(mesh->mFaces[j].mIndices[0]);
 				indices.push_back(mesh->mFaces[j].mIndices[1]);
@@ -147,7 +147,7 @@ namespace FDW
 						bonesMap.emplace(bone->mName.C_Str(), Bone{"", ind, ConvertFromAIMatrix4x4(bone->mOffsetMatrix)});
 					}
 
-					for (int j = 0; j < bone->mNumWeights; j++)
+					for (unsigned j = 0; j < bone->mNumWeights; j++)
 					{
 						auto& currvertexWeightIndex = weightsCurrIndex[bone->mWeights[j].mVertexId];
 						if (bone->mWeights[j].mWeight == 0.0f || currvertexWeightIndex >= NUM_BONES_PER_VEREX) continue;
@@ -157,15 +157,10 @@ namespace FDW
 				}
 			}
 
-			objectParameters.push_back(std::make_tuple<size_t, size_t, size_t, size_t, size_t>(verticesSize,
-				offsetVertices,
-				indicesSize,
-				indices.size() - indicesSize,
-				mesh->mMaterialIndex));
-			
+			objectParameters.push_back(ObjectDesc{ verticesSize, offsetVertices, indicesSize, indices.size() - indicesSize, mesh->mMaterialIndex }); 
 		}
 
-		for (int i = 0; i < scene->mNumMaterials; i++)
+		for (size_t i = 0; i < scene->mNumMaterials; i++)
 		{
 			MaterialFrameWork matDesc;
 			float opacity = 1.0f;
@@ -194,7 +189,7 @@ namespace FDW
 			}
 			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_SPECULAR_FACTOR, matDesc.specular.w))
 			{
-				matDesc.specular.w != 1.0f;
+				matDesc.specular.w = 1.0f;
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->Get(AI_MATKEY_COLOR_EMISSIVE, tColor))
 			{
@@ -277,31 +272,31 @@ namespace FDW
 
 				Animation animation;
 
-				if (anim->mTicksPerSecond != 0.0f)
-					animation.ticksPerSecond = anim->mTicksPerSecond;
+				if (anim->mTicksPerSecond != 0.0)
+					animation.ticksPerSecond = (float)anim->mTicksPerSecond;
 				else
-					animation.ticksPerSecond = 1;
+					animation.ticksPerSecond = 1.0f;
 
-				animation.duration = anim->mDuration * anim->mTicksPerSecond;
+				animation.duration = (float)(anim->mDuration * anim->mTicksPerSecond);
 				animation.transformations = {};
 
-				for (int i = 0; i < anim->mNumChannels; i++) 
+				for (size_t i = 0; i < anim->mNumChannels; i++)
 				{	
 					aiNodeAnim* channel = anim->mChannels[i];
 					BoneTransformations transformation;
-					for (int j = 0; j < channel->mNumPositionKeys; j++) 
+					for (size_t j = 0; j < channel->mNumPositionKeys; j++)
 					{
-						transformation.positionTimestamps.push_back(channel->mPositionKeys[j].mTime);
+						transformation.positionTimestamps.push_back((float)channel->mPositionKeys[j].mTime);
 						transformation.positions.push_back(ConvertFromAIVector3D(channel->mPositionKeys[j].mValue));
 					}
-					for (int j = 0; j < channel->mNumRotationKeys; j++) 
+					for (size_t j = 0; j < channel->mNumRotationKeys; j++)
 					{
-						transformation.rotationTimestamps.push_back(channel->mRotationKeys[j].mTime);
+						transformation.rotationTimestamps.push_back((float)channel->mRotationKeys[j].mTime);
 						transformation.rotations.push_back(ConvertFromAIQuaternion(channel->mRotationKeys[j].mValue));
 					}
-					for (int j = 0; j < channel->mNumScalingKeys; j++) 
+					for (size_t j = 0; j < channel->mNumScalingKeys; j++)
 					{
-						transformation.scaleTimestamps.push_back(channel->mScalingKeys[j].mTime);
+						transformation.scaleTimestamps.push_back((float)channel->mScalingKeys[j].mTime);
 						transformation.scales.push_back(ConvertFromAIVector3D(channel->mScalingKeys[j].mValue));
 					}
 					animation.transformations.emplace(channel->mNodeName.C_Str(), transformation);
@@ -354,7 +349,7 @@ namespace FDW
 			dx::XMVECTOR rotation;
 			dx::XMVECTOR scale;
 
-			fp = GetTimeKeyAndFrac(bt.positionTimestamps, dt, animation.ticksPerSecond, animation.duration); CONSOLE_MESSAGE(fp.first);
+			fp = GetTimeKeyAndFrac(bt.positionTimestamps, dt, animation.ticksPerSecond, animation.duration);
 			if (bt.positionTimestamps.size() > 1)
 			{
 				dx::XMVECTOR position1 = bt.positions[fp.first - 1];
@@ -399,8 +394,8 @@ namespace FDW
 			dx::XMMATRIX localTransform = positionMat * rotationMat * scaleMat;
 			globalTransform = localTransform * parentTransform;
 		}
-		output[skeletion.index] =  dx::XMMatrixTranspose(skeletion.offset * globalTransform );
-		
+		output[skeletion.index] =  dx::XMMatrixTranspose(skeletion.offset * globalTransform ); // * globalInverseTransform  why this doesn't need here? ((
+																							   // and why some animations incorrect (
 		for (Bone& child : skeletion.children) 
 		{
 			GetPose(animation, child, dt, output, globalTransform);
@@ -409,9 +404,9 @@ namespace FDW
 
 	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<float>& times, float& dt, const float& animTick, const float& duration)
 	{
-		double ticksPerSecond = animTick != 0.0f ? animTick : 25.0f;
-		double timeInTicks = dt * ticksPerSecond;
-		double animationTime = fmod(timeInTicks, duration);
+		float ticksPerSecond = animTick != 0.0f ? animTick : 25.0f;
+		float timeInTicks = dt * ticksPerSecond;
+		float animationTime = fmod(timeInTicks, duration);
 
 		float frac = 1.0f;
 		unsigned segment = 0;
@@ -444,7 +439,7 @@ namespace FDW
 			boneOutput.index = bonesMap[boneOutput.name].index;
 			boneOutput.offset = bonesMap[boneOutput.name].offset;
 
-			for (int i = 0; i < node->mNumChildren; i++) {
+			for (unsigned i = 0; i < node->mNumChildren; i++) {
 				Bone child;
 				ReadSkeleton(child, node->mChildren[i], bonesMap);
 				boneOutput.children.push_back(child);
@@ -452,7 +447,7 @@ namespace FDW
 			return true;
 		}
 		else {
-			for (int i = 0; i < node->mNumChildren; i++) {
+			for (unsigned i = 0; i < node->mNumChildren; i++) {
 				if (ReadSkeleton(boneOutput, node->mChildren[i], bonesMap)) {
 					return true;
 				}

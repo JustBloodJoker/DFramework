@@ -5,11 +5,11 @@
 namespace FDW
 {
 
-	static std::vector<FDW::VertexFrameWork> vertices;
-	static std::vector<std::uint16_t> indices;
-
 	Cube::Cube(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
+		std::vector<FDW::VertexFrameWork> vertices;
+		std::vector<std::uint16_t> indices;
+
 		vertices.emplace_back(FDW::VertexFrameWork());
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(-1.0f, -1.0f, -1.0f);
 
@@ -75,13 +75,13 @@ namespace FDW
 			pVertexUploadBuffer.release();
 		}
 
-		objectParameters.emplace_back(std::tuple<size_t, size_t, size_t, size_t, size_t>(vertices.size(), 0, indices.size(), 0, 0));
-
-		DeleteParameterVectors();
+		objectParameters.emplace_back(ObjectDesc{ vertices.size(), 0, indices.size(), 0, 0 });
 	}
 
 	Rectangle::Rectangle(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
+		std::vector<FDW::VertexFrameWork> vertices;
+		std::vector<std::uint16_t> indices;
 
 		vertices.emplace_back(FDW::VertexFrameWork());
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(-1.0f, -1.0f, 0.0f);
@@ -125,22 +125,14 @@ namespace FDW
 			pVertexUploadBuffer.release();
 		}
 
-		objectParameters.emplace_back(std::tuple<size_t, size_t, size_t, size_t, size_t>(vertices.size(), 0, indices.size(), 0, 0));
-
-
-		DeleteParameterVectors();
-	}
-
-	void SimpleObject::DeleteParameterVectors()
-	{
-		vertices.clear();
-		vertices.shrink_to_fit();
-		indices.clear();
-		indices.shrink_to_fit();
+		objectParameters.emplace_back(ObjectDesc{ vertices.size(), 0, indices.size(), 0, 0 });
 	}
 
 	Point::Point(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
+		std::vector<FDW::VertexFrameWork> vertices;
+		std::vector<std::uint16_t> indices;
+
 		vertices.emplace_back(FDW::VertexFrameWork());
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		indices = { 0 };
@@ -165,9 +157,7 @@ namespace FDW
 			pVertexUploadBuffer.release();
 		}
 
-		objectParameters.emplace_back(std::tuple<size_t, size_t, size_t, size_t, size_t>(vertices.size(), 0, indices.size(), 0, 0));
-
-		DeleteParameterVectors();
+		objectParameters.emplace_back(ObjectDesc{ vertices.size(), 0, indices.size(), 0, 0 });
 	}
 
 }
