@@ -7,7 +7,7 @@
 #endif
 
 #ifndef NUM_BONES_PER_VEREX
-#define NUM_BONES_PER_VEREX 5
+#define NUM_BONES_PER_VEREX 13
 #endif
 
 static HRESULT hr = S_OK;

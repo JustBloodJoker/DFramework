@@ -9,7 +9,6 @@ namespace FDW
 
 	DFW::DFW(std::wstring windowTittle, int width, int height, bool fullScreen)
 	{
-
 		if (!DFW::instance)
 		{
 			DFW::instance = this;
@@ -282,8 +281,6 @@ namespace FDW
 
 	void DFW::Update()
 	{
-		
-
 		/////////////////// 
 		// USER DRAW
 		UserLoop();

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Draenei World Of Warcraft
+* source:	https://sketchfab.com/3d-models/draenei-world-of-warcraft-fe2ca78a60e94349a870b6c4b173335b
+* author:	Warcraft-3D-Models (https://sketchfab.com/Warcraft-3D-Models)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Draenei World Of Warcraft" (https://sketchfab.com/3d-models/draenei-world-of-warcraft-fe2ca78a60e94349a870b6c4b173335b) by Warcraft-3D-Models (https://sketchfab.com/Warcraft-3D-Models) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -61,13 +61,12 @@ void myRender::UserInit()
 		scenelayoutDesc.emplace_back(D3D12_INPUT_ELEMENT_DESC({ "WEIGHT_BONES", (UINT)i, DXGI_FORMAT_R32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }));
 	}
 
+	structureBufferBones = CreateSimpleStructuredBuffer(bird->GetBonesCount() * sizeof(dx::XMMATRIX));
 
 	eye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
 	at = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	startUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	pMatricesBuffer = CreateConstantBuffer<FDW::MatricesConstantBufferStructureFrameWork>(1);
-
-	structureBufferBones = CreateSimpleStructuredBuffer(bird->GetBonesCount() * sizeof(dx::XMMATRIX));
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 	slotRootParameter[0].InitAsConstantBufferView(0);
@@ -107,9 +106,8 @@ void myRender::UserLoop()
 
 	up = dx::XMVector3Normalize(dx::XMVector3TransformCoord(startUp, dx::XMMatrixRotationRollPitchYaw(0, 0, camRoll)));
 	view = dx::XMMatrixLookAtLH(eye, at, up);
-	world = dx::XMMatrixIdentity() * dx::XMMatrixRotationX(dx::XM_PIDIV2);
+	world = dx::XMMatrixIdentity();
 
-	
 	auto resultVector = bird->PlayAnimation(timer->GetTime(), "Take 001");
 	structureBufferBones->UploadData(GetDevice(), pcml, resultVector.data());
 

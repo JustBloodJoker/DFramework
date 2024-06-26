@@ -1,7 +1,7 @@
 #include "Structures.hlsli"
 #include "Utilits.hlsli"
 
-#define NUM_BONES_PER_VEREX 5
+#define NUM_BONES_PER_VEREX 13
 
 
 struct ANIMVERTEX_INPUT

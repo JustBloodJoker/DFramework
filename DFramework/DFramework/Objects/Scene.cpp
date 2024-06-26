@@ -349,34 +349,57 @@ namespace FDW
 			BoneTransformations& bt = animation.transformations[skeletion.name];
 
 			std::pair<unsigned, float> fp;
-			fp = GetTimeKeyAndFrac(bt.positionTimestamps, dt, animation.ticksPerSecond, animation.duration);
 
-			dx::XMVECTOR position1 = bt.positions[fp.first - 1];
-			dx::XMVECTOR position2 = bt.positions[fp.first];
-			
-			dx::XMVECTOR position = dx::XMVectorLerp(position1, position2, fp.second);
+			dx::XMVECTOR position;
+			dx::XMVECTOR rotation;
+			dx::XMVECTOR scale;
+
+			fp = GetTimeKeyAndFrac(bt.positionTimestamps, dt, animation.ticksPerSecond, animation.duration); CONSOLE_MESSAGE(fp.first);
+			if (bt.positionTimestamps.size() > 1)
+			{
+				dx::XMVECTOR position1 = bt.positions[fp.first - 1];
+				dx::XMVECTOR position2 = bt.positions[fp.first];
+
+				position = dx::XMVectorLerp(position1, position2, fp.second);
+			}
+			else
+			{
+				position = bt.positions[fp.first];
+			}
 
 			fp = GetTimeKeyAndFrac(bt.rotationTimestamps, dt, animation.ticksPerSecond, animation.duration);
-
-			dx::XMVECTOR rotation1 = bt.rotations[fp.first - 1];
-			dx::XMVECTOR rotation2 = bt.rotations[fp.first];
-
-			dx::XMVECTOR rotation = dx::XMQuaternionSlerp(rotation1, rotation2, fp.second);
+			if (bt.rotationTimestamps.size() > 1)
+			{
+				dx::XMVECTOR rotation1 = bt.rotations[fp.first - 1];
+				dx::XMVECTOR rotation2 = bt.rotations[fp.first];
+				
+				rotation = dx::XMQuaternionSlerp(rotation1, rotation2, fp.second);
+			}
+			else
+			{
+				rotation = bt.rotations[fp.first];
+			}
 
 			fp = GetTimeKeyAndFrac(bt.scaleTimestamps, dt, animation.ticksPerSecond, animation.duration);
-			
-			dx::XMVECTOR scale1 = bt.scales[fp.first - 1];
-			dx::XMVECTOR scale2 = bt.scales[fp.first];
+			if (bt.scaleTimestamps.size() > 1)
+			{
+				dx::XMVECTOR scale1 = bt.scales[fp.first - 1];
+				dx::XMVECTOR scale2 = bt.scales[fp.first];
 
-			dx::XMVECTOR scale = dx::XMVectorLerp(scale1, scale2, fp.second);
-
+				scale = dx::XMVectorLerp(scale1, scale2, fp.second);
+			}
+			else
+			{
+				scale = bt.scales[fp.first];
+			}
+		
 			dx::XMMATRIX positionMat = dx::XMMatrixTranslation(position.vector4_f32[0], position.vector4_f32[1], position.vector4_f32[2]);
 			dx::XMMATRIX rotationMat = dx::XMMatrixRotationQuaternion(rotation);
 			dx::XMMATRIX scaleMat = dx::XMMatrixScaling(scale.vector4_f32[0], scale.vector4_f32[1], scale.vector4_f32[2]);
 			dx::XMMATRIX localTransform = positionMat * rotationMat * scaleMat;
 			globalTransform = localTransform * parentTransform;
 		}
-		output[skeletion.index] =  dx::XMMatrixTranspose(skeletion.offset * globalTransform * globalInverseTransform );
+		output[skeletion.index] =  dx::XMMatrixTranspose(skeletion.offset * globalTransform );
 		
 		for (Bone& child : skeletion.children) 
 		{
@@ -390,7 +413,9 @@ namespace FDW
 		double timeInTicks = dt * ticksPerSecond;
 		double animationTime = fmod(timeInTicks, duration);
 
+		float frac = 1.0f;
 		unsigned segment = 0;
+		
 		float mod = animationTime / times[times.size() - 1];
 		mod = mod - std::floor(mod);
 		float tempDT = times[times.size() - 1] * mod;
@@ -399,10 +424,16 @@ namespace FDW
 			segment++;
 		
 		if (!segment) segment++;
-
-		float start = times[segment - 1];
-		float end = times[segment];
-		float frac = (tempDT - start) / (end - start);
+		if (times.size() > 1)
+		{
+			float start = times[segment - 1];
+			float end = times[segment];
+			float frac = (tempDT - start) / (end - start);
+		}
+		else
+		{
+			segment = 0;
+		}
 		return { segment, frac };
 	}
 
