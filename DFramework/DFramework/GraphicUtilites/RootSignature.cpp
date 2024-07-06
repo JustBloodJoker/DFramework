@@ -35,7 +35,7 @@ namespace FDW
 			HRESULT_ASSERT(hr, "D3D12 Serialize Root Signature Error");
 		}
 
-		HRESULT_ASSERT(pDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(pRootSignature.GetAddressOf())), "Root signature create error");
+		HRESULT_ASSERT(pDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(pRootSignature.ReleaseAndGetAddressOf())), "Root signature create error");
 		CONSOLE_MESSAGE("Root Signature created");
 	}
 

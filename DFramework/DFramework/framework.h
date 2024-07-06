@@ -19,11 +19,9 @@
 #include <cmath>
 
 //MULTITHREAD
-
 #include <thread>
 #include <future>
 #include <mutex>
-
 
 //ASSIMP
 #include <assimp/Importer.hpp>
@@ -33,6 +31,7 @@
 #include <assimp/anim.h>
 #include <assimp/light.h>
 #include <assimp/postprocess.h>
+
 //WINAPI
 #include <Windows.h>
 #include <Windowsx.h>
@@ -50,6 +49,12 @@
 #include "include/d3dx12.h"
 #include <DirectXMath.h>
 
+//DATABASE
+#include <sqlite3.h>
+
+// SOUND
+#include <xaudio2.h>
+#include <xaudio2fx.h>
 
 //NAMESPACES
 namespace wrl = Microsoft::WRL;

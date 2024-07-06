@@ -27,6 +27,29 @@ static HRESULT hr = S_OK;
 
 #define CONSOLE_MESSAGE(text) { }
 #define CONSOLE_MESSAGE_NO_PREF(text) { }
-
+#define CONSOLE_ERROR_MESSAGE(text) { }
+#endif
+									
+#ifdef _XBOX 
+#define fourccRIFF 'RIFF'
+#define fourccDATA 'data'
+#define fourccFMT 'fmt '
+#define fourccWAVE 'WAVE'
+#else
+#define fourccRIFF 'FFIR'
+#define fourccDATA 'atad'
+#define fourccFMT  ' tmf'
+#define fourccWAVE 'EVAW'
 #endif
 
+/*
+
+	NOT USE NOW
+
+#define fourccXWMA 'XWMA'
+#define fourccDPDS 'dpds'
+
+#define fourccXWMA 'AMWX'
+#define fourccDPDS 'sdpd'
+
+*/

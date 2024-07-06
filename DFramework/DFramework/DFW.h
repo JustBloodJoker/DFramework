@@ -19,6 +19,8 @@
 #include "GraphicUtilites/DepthStencilView.h"
 #include "GraphicUtilites/InputLayout.h"
 
+#include "Utilites/AudioMananger.h"
+
 namespace FDW
 {
 
@@ -35,7 +37,7 @@ namespace FDW
 	public:
 
 		DFW(std::wstring windowTittle, int width, int height, bool fullScreen);
-		~DFW();
+		virtual ~DFW()=default;
 
 		virtual void __START() final;
 
@@ -52,6 +54,7 @@ namespace FDW
 		
 		bool InitWindow();
 		bool InitTimer();
+		bool InitAudioMananger();
 		bool InitD3D();
 		void Loop();
 		void Update();
@@ -68,6 +71,7 @@ namespace FDW
 		bool PAUSEWORK;
 
 		std::unique_ptr <Timer> pTimer;
+		std::unique_ptr<FDW::AudioMananger> pAudioMananger;
 
 		// WINDOW
 
@@ -118,6 +122,7 @@ namespace FDW
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 		Timer*						GetTimer()							const noexcept;
+		AudioMananger*				GetAudioMananger()					const noexcept;
 
 		void				PresentSwapchain();
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
@@ -187,6 +192,8 @@ namespace FDW
 
 		std::unique_ptr<CommandList> CreateList(const D3D12_COMMAND_LIST_TYPE type);
 		std::unique_ptr<CommandQueue> CreateQueue(const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags = D3D12_COMMAND_QUEUE_FLAG_NONE, size_t priority = 0, size_t nodeMask = 0);
+
+		std::unique_ptr<Audio>		CreateAudio(const std::wstring& path);
 
 		//
 		////////////////////////////////////

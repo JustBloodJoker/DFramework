@@ -18,8 +18,6 @@ namespace FDW
 
 		HRESULT_ASSERT(pDevice->CreateCommandList(0, type, pListAllocator.Get(), nullptr, IID_PPV_ARGS(pCommandList.GetAddressOf())),
 			"Command list create error");
-		
-	//	CloseList();
 	}
 
 	void CommandList::ResetList()

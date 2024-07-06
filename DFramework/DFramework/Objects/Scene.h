@@ -37,7 +37,7 @@ namespace FDW
 
 		Scene(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
 		Scene() = default;
-		virtual ~Scene();
+		virtual ~Scene() = default;;
 
 		std::vector<dx::XMMATRIX> PlayAnimation(float time, std::string animationName);
 

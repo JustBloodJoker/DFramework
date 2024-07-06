@@ -47,17 +47,4 @@ namespace FDW
 		return matMananger->GetMaterialSize();
 	}
 
-	bool Object::EraseObjectFromBuffer(size_t index)
-	{
-		if (index >= objectParameters.size())
-		{
-			CONSOLE_ERROR_MESSAGE("CAN'T ERASE OBJECT FROM BUFFER | INDEX > OBJECTS SIZE! ");
-			return false;
-		}
-
-		// future
-
-		return true;
-	}
-
 }

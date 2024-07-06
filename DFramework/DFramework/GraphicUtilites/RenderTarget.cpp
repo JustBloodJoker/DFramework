@@ -79,11 +79,6 @@ namespace FDW
 		InitRTV(pDevice, format, dimension, width, height, sampleDesc, arrSize);
 	}
 
-	RenderTarget::~RenderTarget()
-	{
-		rtvTexture.reset();
-	}
-
 	ID3D12Resource* RenderTarget::GetRTVResource() const
 	{
 		return rtvTexture->GetResource();

@@ -13,6 +13,7 @@ namespace FDW
 	public:
 
 		Timer();
+		~Timer() = default;;
 
 		float GetTime() const; 
 		float GetDeltaTime() const;

@@ -65,7 +65,6 @@ namespace FDW
 
 	Texture::~Texture()
 	{
-        resource->Release();
 	}
 
     void Texture::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
@@ -104,7 +103,7 @@ namespace FDW
 
             if (uploadBufferSize != myCalculationsSize)
             {
-                CONSOLE_MESSAGE("INCORRECT UPLOAD BUFFER SIZE CALC // TRY TO USE MY CALCULATIONS! ");
+                CONSOLE_ERROR_MESSAGE("INCORRECT UPLOAD BUFFER SIZE CALC // TRY TO USE MY CALCULATIONS! ");
                 uploadBufferSize = myCalculationsSize;
             }
         }

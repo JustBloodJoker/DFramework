@@ -15,6 +15,9 @@ myRender::~myRender()
 
 void myRender::UserInit()
 {
+	music = CreateAudio(L"322.wav");
+	music->SetVolume(0.01f);
+
 	timer = GetTimer();
 	auto device = GetDevice();
 
@@ -72,7 +75,7 @@ void myRender::UserInit()
 	slotRootParameter[2].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
 	slotRootParameter[3].InitAsShaderResourceView(1);
 
-	pRootSignnatureRender = CreateRootSignature(slotRootParameter, _countof(slotRootParameter));
+	pRootSignnatureRender = CreateRootSignature(slotRootParameter, ARRAYSIZE(slotRootParameter));
 
 	CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
@@ -80,8 +83,14 @@ void myRender::UserInit()
 
 	wrl::ComPtr<ID3DBlob> pVSByteCode;
 	wrl::ComPtr<ID3DBlob> pPSByteCode;
-	FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
+	
+	//FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
+	//FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
+ 	//FDW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
+	//FDW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
+
+	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
+	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
 
 	DXGI_FORMAT rtvFormats[]{ GetMainRTVFormat() };
 	pso = CreatePSO(pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), (UINT)scenelayoutDesc.size(),
@@ -94,6 +103,8 @@ void myRender::UserInit()
 
 void myRender::UserLoop()
 {
+	music->Play();
+
 	pCommandList->ResetList();
 	BeginDraw(pcml);
 	BindMainViewPort(pcml);

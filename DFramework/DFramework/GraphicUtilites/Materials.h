@@ -25,7 +25,7 @@ namespace FDW
 		Material(MaterialFrameWork&& materialDesc);
 		Material(const MaterialFrameWork& materialDesc);
 		Material();
-		~Material();
+		~Material()=default;
 
 		ID3D12Resource* GetResourceTexture(TextureType type) const;
 		MaterialFrameWork GetMaterialDesc() const;

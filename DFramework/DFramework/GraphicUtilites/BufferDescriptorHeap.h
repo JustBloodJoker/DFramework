@@ -15,7 +15,7 @@ namespace FDW
 
 		BufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		
-		~BufferDescriptorHeap();
+		~BufferDescriptorHeap()=default;
 
 		ID3D12DescriptorHeap* GetDescriptorPtr() const noexcept;
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(UINT offset) const noexcept;

@@ -17,10 +17,6 @@ namespace FDW
 		HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(pDescriptorHeap.GetAddressOf())), "Create descriptor heap error");
 	}
 
-	BufferDescriptorHeap::~BufferDescriptorHeap()
-	{
-	}
-
 	ID3D12DescriptorHeap* FDW::BufferDescriptorHeap::GetDescriptorPtr() const noexcept
 	{
 		return pDescriptorHeap.Get();

@@ -22,26 +22,24 @@ namespace FDW
 		PAUSEWORK = false;
 	}
 
-	DFW::~DFW()
-	{
-		
-	}
-
 	void DFW::__START()
 	{
+		auto start = std::chrono::high_resolution_clock::now();
 
 		if (InitTimer())
 		{
 			CONSOLE_MESSAGE("TIMER OBJECT INITED");
 		}
 
-		auto start = std::chrono::high_resolution_clock::now();
+		if (InitAudioMananger())
+		{
+			CONSOLE_MESSAGE("AUDIO MANANGER OBJECT INITED");
+		}
 
 		if (InitWindow())
 		{
 			CONSOLE_MESSAGE("Window created");
 		}
-
 
 		if (InitD3D())
 		{
@@ -75,6 +73,11 @@ namespace FDW
 	Timer* DFW::GetTimer() const noexcept
 	{
 		return pTimer.get();
+	}
+
+	AudioMananger* DFW::GetAudioMananger() const noexcept
+	{
+		return pAudioMananger.get();
 	}
 
 	void DFW::PresentSwapchain()
@@ -160,6 +163,12 @@ namespace FDW
 	{
 		pTimer = std::make_unique<Timer>();
 		return pTimer ? true : false;
+	}
+
+	bool DFW::InitAudioMananger()
+	{
+		pAudioMananger = std::make_unique<AudioMananger>();
+		return pAudioMananger ? true : false;
 	}
 
 	bool DFW::InitD3D()
@@ -575,6 +584,11 @@ namespace FDW
 	{
 		CONSOLE_MESSAGE("DFW is creating Command Queue");
 		return std::make_unique<CommandQueue>(pDevice.Get(), type, flags, priority, nodeMask);
+	}
+
+	std::unique_ptr<Audio> DFW::CreateAudio(const std::wstring& path)
+	{
+		return std::unique_ptr<Audio>(pAudioMananger->CreateAudio(path));
 	}
 
 	std::unique_ptr<DepthStencilView> DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const D3D12_DSV_FLAGS flags)

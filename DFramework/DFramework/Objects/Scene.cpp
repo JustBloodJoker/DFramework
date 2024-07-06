@@ -14,10 +14,6 @@ namespace FDW
 		CONSOLE_MESSAGE(std::string("SCENE WITH PATH: " + path + " INITED!"));
 	}
 
-	Scene::~Scene()
-	{
-	}
-
 	std::vector<dx::XMMATRIX> Scene::PlayAnimation(float time, std::string animationName)
 	{
 		auto animation = animationsMap.find(animationName);
@@ -405,8 +401,8 @@ namespace FDW
 	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<float>& times, float& dt, const float& animTick, const float& duration)
 	{
 		float ticksPerSecond = animTick != 0.0f ? animTick : 25.0f;
-		float timeInTicks = dt * ticksPerSecond;
-		float animationTime = fmod(timeInTicks, duration);
+		double timeInTicks = dt * ticksPerSecond;
+		double animationTime = fmod(timeInTicks, duration);
 
 		float frac = 1.0f;
 		unsigned segment = 0;
@@ -423,7 +419,7 @@ namespace FDW
 		{
 			float start = times[segment - 1];
 			float end = times[segment];
-			float frac = (tempDT - start) / (end - start);
+			frac = (tempDT - start) / (end - start);
 		}
 		else
 		{

@@ -12,7 +12,7 @@ namespace FDW
 		queueDesc.Priority = priority;
 		queueDesc.NodeMask = nodeMask;
 		queueDesc.Type = type;
-
+		
 		HRESULT_ASSERT(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(pCommandQueue.ReleaseAndGetAddressOf())), "Command queue create error");
 		HRESULT_ASSERT(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFence.ReleaseAndGetAddressOf())), "Fence create error");
 	}

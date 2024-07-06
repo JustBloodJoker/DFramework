@@ -15,7 +15,7 @@ namespace FDW
 		RenderTarget(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
 			const UINT width, const UINT height,
 			const DXGI_SAMPLE_DESC sampleDesc);
-		~RenderTarget();
+		~RenderTarget() = default;
 
 		ID3D12Resource* GetRTVResource() const;
 		D3D12_RENDER_TARGET_VIEW_DESC GetRTVDesc() const;

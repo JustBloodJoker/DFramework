@@ -1,5 +1,6 @@
 #pragma once
-#include "DFW.h"
+#include <DFW.h>
+#include <Utilites/AudioMananger.h>
 
 class myRender 
 	: public FDW::DFW
@@ -21,6 +22,9 @@ public:
 	void UserResizeUpdate()				override;
 
 private:
+
+	std::unique_ptr<FDW::Audio> music;
+	
 
 	/////////////////////////////////////
 	// 

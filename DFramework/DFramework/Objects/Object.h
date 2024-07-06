@@ -34,8 +34,7 @@ namespace FDW
 		MaterialsManager* GetMaterialMananger() const;
 		size_t GetMaterialSize() const;
 
-		bool EraseObjectFromBuffer(size_t index);
-
+		
 	protected:
 
 		std::unique_ptr<MaterialsManager> matMananger;
@@ -47,7 +46,6 @@ namespace FDW
 
 		wrl::ComPtr<ID3D12Resource> indexBuffer;
 		std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> indexBufferView;
-
 
 
 	private:

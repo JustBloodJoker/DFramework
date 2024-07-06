@@ -5,18 +5,9 @@
 namespace FDW
 {
 
-
-
-
-
 	DepthStencilView::DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags)
 	{
         InitDSV(pDevice, format, dimension, width, height, sampleDesc, arrSize, flags);
-	}
-
-	DepthStencilView::~DepthStencilView()
-	{
-        dsvTexture.reset();
 	}
 
 	ID3D12Resource* DepthStencilView::GetDSVResource() const

@@ -10,7 +10,6 @@ namespace FDW
 	{
 		wrl::ComPtr<ID3DBlob> errors;
 
-		
 		UINT compileFlags = 0;
 #if defined _DEBUG
 		compileFlags = D3DCOMPILE_DEBUG |
@@ -36,12 +35,12 @@ namespace FDW
 
 	void Shader::LoadBytecode(const std::wstring& filename, wrl::ComPtr<ID3DBlob>& result)
 	{
-		std::ifstream file(filename, std::ios::binary);
+		std::fstream file(filename, std::ios::binary | std::ios::in);
 
-		SAFE_ASSERT(!file.is_open(), "file with shader bytecode doesn't open");
+		SAFE_ASSERT(file.is_open(), "file with shader bytecode doesn't open");
 
 		file.seekg(0, std::ios_base::end);
-		std::ifstream::pos_type size = static_cast<int>(file.tellg());
+		std::fstream::pos_type size = static_cast<int>(file.tellg());
 		file.seekg(0, std::ios_base::beg);
 
 		HRESULT_ASSERT(D3DCreateBlob(size, result.GetAddressOf()), "Create blob error");
@@ -49,6 +48,19 @@ namespace FDW
 		file.read((char*)result->GetBufferPointer(), size);
 
 		CONSOLE_MESSAGE_NO_PREF(std::string("BYTECODE FILE " + std::string(filename.begin(), filename.end()) + " success gave data"));
+	}
+
+	void Shader::SaveBytecode(const std::wstring& filename, wrl::ComPtr<ID3DBlob>& inByteCode)
+	{
+		std::fstream file(filename, std::ios::binary | std::ios::out);
+
+		SAFE_ASSERT(file.is_open(), "file with shader bytecode doesn't open");
+
+		file.write((char*)inByteCode->GetBufferPointer(), inByteCode->GetBufferSize());
+
+		CONSOLE_MESSAGE_NO_PREF(std::string("BYTECODE FILE " + std::string(filename.begin(), filename.end()) + " created! "));
+
+		file.close();
 	}
 
 

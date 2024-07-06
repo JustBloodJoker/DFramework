@@ -5,10 +5,6 @@
 namespace FDW
 {
 
-
-
-	
-
 	void MaterialsManager::AddMaterial()
 	{
 		materials.push_back(std::make_unique<Material>());

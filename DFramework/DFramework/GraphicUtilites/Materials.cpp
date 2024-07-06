@@ -16,14 +16,6 @@ namespace FDW
 	{
 	}
 
-	Material::~Material()
-	{
-		for(auto &el : textureMap)
-		{
-			el.second.reset();
-		}
-	}
-
 	ID3D12Resource* Material::GetResourceTexture(TextureType type) const
 	{
 		return textureMap.at(type)->GetResource();
