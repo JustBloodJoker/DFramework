@@ -79,7 +79,7 @@ namespace FDW
         txtDesc.Dimension = dimension;
         txtDesc.Flags = resourceFlags;
         txtDesc.Layout = layout;
-
+        
         HRESULT_ASSERT(pDevice->CreateCommittedResource(
             heapProperties,
             heapFlags,

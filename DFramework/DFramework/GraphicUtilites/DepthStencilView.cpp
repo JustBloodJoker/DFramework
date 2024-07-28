@@ -62,20 +62,28 @@ namespace FDW
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE2D:
-            dsvDesc.Texture2D.MipSlice = 0;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            break;
-
-        case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
-            dsvDesc.Texture2DArray.MipSlice = 0;
-            dsvDesc.Texture2DArray.FirstArraySlice = 0;
-            dsvDesc.Texture2DArray.ArraySize = arrSize;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            break;
+            if (sampleDesc.Count == 1)
+            {
+                dsvDesc.Texture2D.MipSlice = 0;
+                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                break;
+            }
+            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DMS:
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
+
+        case D3D12_DSV_DIMENSION_TEXTURE2DARRAY: 
+            if (sampleDesc.Count == 1)
+            {
+                dsvDesc.Texture2DArray.MipSlice = 0;
+                dsvDesc.Texture2DArray.FirstArraySlice = 0;
+                dsvDesc.Texture2DArray.ArraySize = arrSize;
+                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                break;
+            }
+            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
             dsvDesc.Texture2DMSArray.FirstArraySlice = 0;

@@ -121,6 +121,22 @@ namespace FDW
 		pCommandQueue->ExecuteQueue(true);
 	}
 
+	UINT DFW::GetMSAAQualitySupport(const UINT msaaSamples) const
+	{
+		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
+		qualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		qualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
+		qualityLevels.NumQualityLevels = 0;
+		qualityLevels.SampleCount = msaaSamples;
+
+		HRESULT_ASSERT(pDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &qualityLevels, sizeof(qualityLevels)), "MSAA check quality error");
+
+		if (!qualityLevels.NumQualityLevels) 
+			CONSOLE_ERROR_MESSAGE("INCORRECT QUALITY MSAA LEVEL! CHECK INPUTS");
+
+		return qualityLevels.NumQualityLevels;
+	}
+
 	bool DFW::InitWindow()
 	{
 		CONSOLE_MESSAGE("Creating window");
@@ -196,19 +212,7 @@ namespace FDW
 
 		pCommandQueue = CreateQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-		//MSAA 4x
-		/*D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
-		qualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-		qualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-		qualityLevels.NumQualityLevels = 0;
-		qualityLevels.SampleCount = 4;
 
-		HRESULT_ASSERT(pDevice->CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &qualityLevels, sizeof(qualityLevels)), "MSAAx4 check error");
-
-		MSAA4xQualitySupport = qualityLevels.NumQualityLevels;
-		HRESULT_ASSERT(MSAA4xQualitySupport > 0, "MSAA quality error");*/
-
-		
 
 
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
@@ -492,10 +496,10 @@ namespace FDW
 		return DFW::GetDFWInstance()->MsgProc(hWnd, msg, wParam, lParam);
 	}
 
-	std::unique_ptr<RenderTarget> DFW::CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height)
+	std::unique_ptr<RenderTarget> DFW::CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const UINT msaaSampleCount)
 	{
 		CONSOLE_MESSAGE("DFW is creating RTV");
-		return std::make_unique<RenderTarget>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }));
+		return std::make_unique<RenderTarget>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ msaaSampleCount, Quality }));
 	}
 
 	std::unique_ptr<RTVPacker> DFW::CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask)
@@ -591,10 +595,10 @@ namespace FDW
 		return std::unique_ptr<Audio>(pAudioMananger->CreateAudio(path));
 	}
 
-	std::unique_ptr<DepthStencilView> DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const D3D12_DSV_FLAGS flags)
+	std::unique_ptr<DepthStencilView> DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const UINT msaaSampleCount, const D3D12_DSV_FLAGS flags)
 	{
 		CONSOLE_MESSAGE("DFW is creating DSV");
-		return std::make_unique<DepthStencilView>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ SampleCount, Quality }), flags);
+		return std::make_unique<DepthStencilView>(pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ msaaSampleCount, Quality }), flags);
 	}
 
 	UINT DFW::GetIndexSize(Object* obj, const size_t index) const
@@ -665,7 +669,7 @@ namespace FDW
 	std::unique_ptr<Texture> DFW::CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
 	{
 		CONSOLE_MESSAGE("DFW is creating Anonim Texture");
-		return std::make_unique<Texture>(pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({SampleCount, Quality}), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
+		return std::make_unique<Texture>(pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({1, 0}), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
 	}
 
 	std::unique_ptr<Texture> DFW::CreateSimpleStructuredBuffer(const UINT64 width)

@@ -50,6 +50,8 @@ namespace FDW
 		virtual void UserKeyPressed(WPARAM wParam) = 0;
 		virtual void UserResizeUpdate() = 0;
 
+		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
+
 	private:  //METHODS
 		
 		bool InitWindow();
@@ -67,6 +69,8 @@ namespace FDW
 		LRESULT CALLBACK MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	private:
+
+		DXGI_FORMAT msaaSettings;
 
 		bool PAUSEWORK;
 
@@ -133,7 +137,7 @@ namespace FDW
 		void				UnbindListFromMainQueue(CommandList* pCommandList);
 		void				ExecuteMainQueue();
 
-
+		void				SetMSAAParams(UINT SamplesCount);
 		
 
 		////////////////////////////////////
@@ -162,9 +166,9 @@ namespace FDW
 		std::unique_ptr<Texture>			CreateSimpleStructuredBuffer(const UINT64 width);
 
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
-																const UINT width, const UINT height);
+																const UINT width, const UINT height, const UINT msaaSampleCount);
 		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
-																const UINT width, const UINT height, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+																const UINT width, const UINT height, const UINT msaaSampleCount = 1u, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 
 		std::unique_ptr<RTVPacker> CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<DSVPacker> CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask = 0);

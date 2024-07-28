@@ -15,11 +15,11 @@ myRender::~myRender()
 
 void myRender::UserInit()
 {
-	music = CreateAudio(L"322.wav");
-	music->SetVolume(0.01f);
-
 	timer = GetTimer();
 	auto device = GetDevice();
+	
+	music = CreateAudio(L"322.wav");
+	music->SetVolume(0.01f);
 
 	pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	pcml = pCommandList->GetPtrCommandList();
@@ -39,7 +39,9 @@ void myRender::UserInit()
 	samplerPack = CreateSamplerPack(1u);
 	samplerPack->PushDefaultSampler(device);
 
-	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);	
+	auto rtv = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, 100, 100, 4u);
+
+	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	dsvPack = CreateDSVPack(1u);
 	dsvPack->PushResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), device);
 	dsv->DepthWrite(pcml);

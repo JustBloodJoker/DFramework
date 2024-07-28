@@ -35,22 +35,30 @@ namespace FDW
             break;
 
         case D3D12_RTV_DIMENSION_TEXTURE2D:
-            rtvDesc.Texture2D.MipSlice = 0;
-            rtvDesc.Texture2D.PlaneSlice = 0;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            break;
-
-        case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
-            rtvDesc.Texture2DArray.MipSlice = 0;
-            rtvDesc.Texture2DArray.PlaneSlice = 0;
-            rtvDesc.Texture2DArray.FirstArraySlice = 0;
-            rtvDesc.Texture2DArray.ArraySize = arrSize;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-            break;
+            if (sampleDesc.Count == 1)
+            {
+                rtvDesc.Texture2D.MipSlice = 0;
+                rtvDesc.Texture2D.PlaneSlice = 0;
+                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                break;
+            }
+            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
 
         case D3D12_RTV_DIMENSION_TEXTURE2DMS:
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
+
+        case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
+            if (sampleDesc.Count == 1)
+            {
+                rtvDesc.Texture2DArray.MipSlice = 0;
+                rtvDesc.Texture2DArray.PlaneSlice = 0;
+                rtvDesc.Texture2DArray.FirstArraySlice = 0;
+                rtvDesc.Texture2DArray.ArraySize = arrSize;
+                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+                break;
+            }
+            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 
         case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
             rtvDesc.Texture2DMSArray.FirstArraySlice = 0;
