@@ -340,6 +340,8 @@ namespace FDW
 		mainRect.right = wndSettings.width;
 		mainRect.top = 0;
 		mainRect.bottom = wndSettings.height;
+		
+		mainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)wndSettings.width / wndSettings.height, 1.0f, 10000.0f);
 
 		UserResizeUpdate();
 	}
