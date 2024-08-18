@@ -52,6 +52,17 @@ namespace FDW
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
 
+
+	protected:
+		
+		///////////////////
+		//		IN PROGRESS (NOT WORKING NOW!!!!)
+		bool InitNGX(CommandList* pCommandList);   // for DLSS
+		
+		// use this on resizing window IN PROGRESS (NOT WORKING NOW!!!!)
+		void OnResizeDLSS(CommandList* pCommandList); // for DLSS
+
+
 	private:  //METHODS
 		
 		bool InitWindow();
@@ -70,8 +81,6 @@ namespace FDW
 
 	private:
 
-		DXGI_FORMAT msaaSettings;
-
 		bool PAUSEWORK;
 
 		std::unique_ptr <Timer> pTimer;
@@ -86,7 +95,7 @@ namespace FDW
 		D3D12_RECT mainRect;
 
 		//D3D12
-		
+
 		wrl::ComPtr<ID3D12Device> pDevice;
 		wrl::ComPtr<IDXGIFactory4> pFactory;
 		wrl::ComPtr<IDXGISwapChain> pSwapChain;
@@ -95,6 +104,13 @@ namespace FDW
 
 		std::unique_ptr<FDW::CommandQueue> pCommandQueue;
 
+		bool vSync = false;
+
+		//NGX
+
+		NVSDK_NGX_Parameter* pNGXParams;
+		NVSDK_NGX_Handle* pNGXHandle;
+		NVSDK_NGX_PerfQuality_Value value = NVSDK_NGX_PerfQuality_Value_MaxPerf;
 		//////////////////////////
 
 		
@@ -128,6 +144,13 @@ namespace FDW
 		Timer*						GetTimer()							const noexcept;
 		AudioMananger*				GetAudioMananger()					const noexcept;
 
+		//////////////////
+		//		DLSS
+		NVSDK_NGX_Parameter*		GetNGXParameter()					const noexcept;
+		NVSDK_NGX_Handle*			GetNGXHandle()						const noexcept;
+		NVSDK_NGX_PerfQuality_Value	GetDLSSQualityValue()				const noexcept;
+		//////////////////
+
 		void				PresentSwapchain();
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
 		void				EndDraw(ID3D12GraphicsCommandList* pCommandList);
@@ -136,8 +159,9 @@ namespace FDW
 		void				BindListToMainQueue(CommandList* pCommandList);
 		void				UnbindListFromMainQueue(CommandList* pCommandList);
 		void				ExecuteMainQueue();
-
-		void				SetMSAAParams(UINT SamplesCount);
+		void				SetVSync(bool enable);
+		//IN PROGRESS (NOT WORKING NOW!!!!)
+		void				SetDLSS(UINT SamplesCount);
 		
 
 		////////////////////////////////////
@@ -166,7 +190,7 @@ namespace FDW
 		std::unique_ptr<Texture>			CreateSimpleStructuredBuffer(const UINT64 width);
 
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
-																const UINT width, const UINT height, const UINT msaaSampleCount);
+																const UINT width, const UINT height, const UINT msaaSampleCount = 1u);
 		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height, const UINT msaaSampleCount = 1u, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 

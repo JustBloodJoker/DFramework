@@ -15,19 +15,29 @@ myRender::~myRender()
 
 void myRender::UserInit()
 {
-	timer = GetTimer();
-	auto device = GetDevice();
-	
-	music = CreateAudio(L"demoncore.wav");
-	music->SetVolume(0.1f);
+	SetVSync(true);
 
 	pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	pcml = pCommandList->GetPtrCommandList();
 
+
+//	if (InitNGX(pCommandList.get()))
+//	{
+//		CONSOLE_MESSAGE("NGX inited");
+//	}
+
+
+	timer = GetTimer();
+	auto device = GetDevice();
+	
+	music = CreateAudio(L"322.wav");
+	music->SetVolume(0.1f);
+
+	
 	BindListToMainQueue(pCommandList.get());
 
 	bird = CreateScene("sampleModels/bird/scene.gltf", true, pcml);
-
+	
 	for (size_t ind = 0; ind < bird->GetMaterialSize(); ind++)
 	{
 		srvPacks.push_back(CreateSRVPack(1u));
@@ -92,11 +102,67 @@ void myRender::UserInit()
 	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
 	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
 
-	DXGI_FORMAT rtvFormats[]{ GetMainRTVFormat() };
+
+	auto wndSettins = GetMainWNDSettings();
+	rtv = CreateRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.width, wndSettins.height); //wndSettins.dlssWidth, wndSettins.dlssHeight)
+	rtvPack = CreateRTVPack(1u);
+	rtvPack->PushResource(rtv->GetRTVResource(), rtv->GetRTVDesc(), device);
+	rtvSrvPack = CreateSRVPack(1u);
+	rtvSrvPack->PushResource(rtv->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+
+	sceneViewPort.MaxDepth = 1.0f;
+	sceneViewPort.MaxDepth = 0.0f;
+	sceneViewPort.Height = wndSettins.height; //wndSettins.dlssHeight
+	sceneViewPort.Width = wndSettins.width;//wndSettins.dlssWidth;
+	sceneViewPort.TopLeftX = 0;
+	sceneViewPort.TopLeftY = 0;
+
+	sceneRect.left = 0;
+	sceneRect.right = wndSettins.width; //wndSettins.dlssWidth
+	sceneRect.top = 0;
+	sceneRect.bottom = wndSettins.height; //wndSettins.dlssHeight;
+
+	DXGI_FORMAT rtvFormats[]{ rtv->GetRTVDesc().Format };
 	pso = CreatePSO(pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), (UINT)scenelayoutDesc.size(),
 		_countof(rtvFormats), rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT, UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
 		pVSByteCode.Get(), pPSByteCode.Get(), nullptr, nullptr, nullptr, rasterizerDesc);
-		
+
+
+	screen = CreateRectangle(true, pcml);
+
+	wrl::ComPtr<ID3DBlob> pVSByteCode1;
+	wrl::ComPtr<ID3DBlob> pPSByteCode1;
+
+//	FDW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode1);
+//	FDW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode1);
+//	FDW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
+//	FDW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
+
+	FDW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
+	FDW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
+
+
+	CD3DX12_ROOT_PARAMETER slotRootParameter1[2];
+	slotRootParameter1[0].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
+	slotRootParameter1[1].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
+	rootScreen = CreateRootSignature(slotRootParameter1, _countof(slotRootParameter1));
+
+	std::vector<D3D12_INPUT_ELEMENT_DESC> ScreenlayoutDesc =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	DXGI_FORMAT rtvFormats1[]{ GetMainRTVFormat() };
+	psoScreen = CreatePSO(rootScreen->GetRootSignature(), ScreenlayoutDesc.data(), (UINT)ScreenlayoutDesc.size(),
+		_countof(rtvFormats1), rtvFormats1, DXGI_FORMAT_D24_UNORM_S8_UINT, UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
+		pVSByteCode1.Get(), pPSByteCode1.Get(), nullptr, nullptr, nullptr, rasterizerDesc);
+
+
+
 	ExecuteMainQueue();
 	FDW::Texture::ReleaseUploadBuffers();
 }
@@ -106,10 +172,9 @@ void myRender::UserLoop()
 	music->Play();
 
 	pCommandList->ResetList();
-	BeginDraw(pcml);
-	BindMainViewPort(pcml);
-	BindMainRect(pcml);
 	
+
+
 	at = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
 		dx::XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0))), eye);
 
@@ -129,10 +194,16 @@ void myRender::UserLoop()
 	pcml->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
-	// MAIN RTV DRAW
+	//			SCENE RTV DRAW
+	rtv->StartDraw(pcml);
+
+
+	pcml->RSSetScissorRects(1, &sceneRect);
+	pcml->RSSetViewports(1, &sceneViewPort);
+
 	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	pcml->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(1, &FDW::keep(GetCurrBackBufferView()), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
+	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+	pcml->OMSetRenderTargets(1, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
 
 	pcml->SetPipelineState(pso->GetPSO());
 	pcml->SetGraphicsRootSignature(pRootSignnatureRender->GetRootSignature());
@@ -151,6 +222,37 @@ void myRender::UserLoop()
 		
 		pcml->DrawIndexedInstanced(GetIndexSize(bird.get(), ind), 1, GetIndexStartPos(bird.get(), ind), GetVertexStartPos(bird.get(), ind), 0);
 	}
+
+	rtv->EndDraw(pcml);
+
+	///
+	///////////////////////////
+
+	//////////////////////////
+	//			MAIN RTV
+
+	BeginDraw(pcml);
+	BindMainViewPort(pcml);
+	BindMainRect(pcml);
+
+	pcml->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
+	pcml->OMSetRenderTargets(1, &FDW::keep(GetCurrBackBufferView()), true, nullptr);
+
+	pcml->SetPipelineState(psoScreen->GetPSO());
+	pcml->SetGraphicsRootSignature(rootScreen->GetRootSignature());
+
+	pcml->IASetVertexBuffers(0, 1, screen->GetVertexBufferView());
+	pcml->IASetIndexBuffer(screen->GetIndexBufferView());
+
+	pcml->SetGraphicsRootShaderResourceView(0, rtv->GetRTVResource()->GetGPUVirtualAddress());
+	ID3D12DescriptorHeap* heaps[] = { rtvSrvPack->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
+	pcml->SetDescriptorHeaps(_countof(heaps), heaps);
+
+	pcml->SetGraphicsRootDescriptorTable(0, rtvSrvPack->GetResult()->GetGPUDescriptorHandle(0));
+	pcml->SetGraphicsRootDescriptorTable(1, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
+
+	pcml->DrawIndexedInstanced(GetIndexSize(screen.get(), 0), 1, GetIndexStartPos(screen.get(), 0), GetVertexStartPos(screen.get(), 0), 0);
+
 	EndDraw(pcml);
 }
 
@@ -215,7 +317,7 @@ void myRender::UserKeyPressed(WPARAM wParam)
 
 void myRender::UserResizeUpdate()
 {
-
+	//OnResizeDLSS(pCommandList.get());
 }
 
 

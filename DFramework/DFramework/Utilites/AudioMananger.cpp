@@ -38,7 +38,7 @@ namespace FDW
         DWORD filetype; 
         HRESULT_ASSERT(ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition), "Read chunk error");
         if (filetype != fourccWAVE) 
-            SAFE_ASSERT(0, "3");
+            SAFE_ASSERT(0, "Audio file isn't WAVE");
 
         //WAVE  " fmt"  size formatData  
         HRESULT_ASSERT(FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition), "Find chunk error");

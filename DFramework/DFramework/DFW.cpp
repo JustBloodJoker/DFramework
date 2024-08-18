@@ -80,9 +80,24 @@ namespace FDW
 		return pAudioMananger.get();
 	}
 
+	NVSDK_NGX_Parameter* DFW::GetNGXParameter() const noexcept
+	{
+		return pNGXParams;
+	}
+
+	NVSDK_NGX_Handle* DFW::GetNGXHandle() const noexcept
+	{
+		return pNGXHandle;
+	}
+
+	NVSDK_NGX_PerfQuality_Value DFW::GetDLSSQualityValue() const noexcept
+	{
+		return value;
+	}
+
 	void DFW::PresentSwapchain()
 	{
-		HRESULT_ASSERT(pSwapChain->Present(0, 0), "Swapchain present error");
+		HRESULT_ASSERT(pSwapChain->Present(UINT(vSync), 0), "Swapchain present error");
 		currentBackBufferIndex = (currentBackBufferIndex + 1) % BUFFERS_COUNT;
 	}
 
@@ -119,6 +134,24 @@ namespace FDW
 	void DFW::ExecuteMainQueue()
 	{
 		pCommandQueue->ExecuteQueue(true);
+	}
+
+	void DFW::SetVSync(bool enable)
+	{
+		if (enable) 
+		{
+			CONSOLE_MESSAGE_NO_PREF("VSYNC ENABLED");
+		}
+		else
+		{
+			CONSOLE_MESSAGE_NO_PREF("VSYNC DISABLED");
+		}
+		vSync = enable;
+	}
+
+	// FUTURE
+	void DFW::SetDLSS(UINT SamplesCount)
+	{
 	}
 
 	UINT DFW::GetMSAAQualitySupport(const UINT msaaSamples) const
@@ -441,6 +474,79 @@ namespace FDW
 			msg,
 			wParam,
 			lParam);
+	}
+
+	void DFW::OnResizeDLSS(CommandList* pCommandList)
+	{
+		if (value)
+		{
+			UINT renderWMax, renderHMax, renderWMin, renderHMin;
+			float sharpness = 0.0F;
+
+			NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(pNGXParams, wndSettings.width, wndSettings.height, value, &wndSettings.dlssWidth, &wndSettings.dlssHeight, &renderWMax, &renderHMax, &renderWMin, &renderHMin, &sharpness);
+			if (result != NVSDK_NGX_Result_Success) {
+				return;
+			}
+
+			NVSDK_NGX_DLSS_Create_Params featureDesc = {};
+			featureDesc.Feature.InWidth = wndSettings.dlssWidth;
+			featureDesc.Feature.InHeight = wndSettings.dlssHeight;
+			featureDesc.Feature.InTargetWidth = wndSettings.width;
+			featureDesc.Feature.InTargetHeight = wndSettings.height;
+			featureDesc.Feature.InPerfQualityValue = value;
+			featureDesc.InFeatureCreateFlags = NVSDK_NGX_DLSS_Feature_Flags_AutoExposure
+				| NVSDK_NGX_DLSS_Feature_Flags_MVLowRes
+				| NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
+
+			if(!pCommandList->TryCloseList())
+				pCommandList->ResetList();
+			
+			result = NGX_D3D12_CREATE_DLSS_EXT(pCommandList->GetPtrCommandList(), 1, 1, &pNGXHandle, pNGXParams, &featureDesc);
+			if (result != NVSDK_NGX_Result_Success) {
+				return;
+			}
+
+			pCommandList->ExecuteList(pCommandQueue->GetQueue());
+			pCommandQueue->FlushQueue();
+		}
+	}
+
+	bool DFW::InitNGX(CommandList* pCommandList)
+	{
+		int updateDriver = 0;
+		UINT minDriverMajorI = 0;
+		UINT minDriverMinorI = 0;
+		UINT dlssSupported = 0;
+
+		NVSDK_NGX_Result result = NVSDK_NGX_D3D12_Init_with_ProjectID("a0f57b54-1daf-4934-90ae-c4035c19df04", NVSDK_NGX_ENGINE_TYPE_CUSTOM, "DebugVersion", L"", pDevice.Get());
+		if (result != NVSDK_NGX_Result_Success)
+			return false;
+
+		result = NVSDK_NGX_D3D12_GetCapabilityParameters(&pNGXParams);
+		if (result != NVSDK_NGX_Result_Success)
+			return false;
+
+		result = pNGXParams->Get(NVSDK_NGX_Parameter_SuperSampling_NeedsUpdatedDriver, &updateDriver);
+		NVSDK_NGX_Result minDriverMajor = pNGXParams->Get(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMajor, &minDriverMajorI);
+		NVSDK_NGX_Result minDriverMinor = pNGXParams->Get(NVSDK_NGX_Parameter_SuperSampling_MinDriverVersionMinor, &minDriverMinorI);
+		if (NVSDK_NGX_SUCCEED(result) && updateDriver && NVSDK_NGX_SUCCEED(minDriverMajor) && NVSDK_NGX_SUCCEED(minDriverMinor))
+		{
+			return false;
+		}
+
+		result = pNGXParams->Get(NVSDK_NGX_Parameter_SuperSampling_Available, &dlssSupported);
+		if (NVSDK_NGX_FAILED(result) || !dlssSupported)
+			return false;
+		
+		result = pNGXParams->Get(NVSDK_NGX_Parameter_SuperSampling_FeatureInitResult, &dlssSupported);
+		if (NVSDK_NGX_FAILED(result) || !dlssSupported)
+			return false;
+
+		value = NVSDK_NGX_PerfQuality_Value(dlssSupported);
+		
+		OnResizeDLSS(pCommandList);
+
+		return true;
 	}
 
 	const UINT DFW::Get_CBV_SRV_UAV_DescriptorSize() const noexcept

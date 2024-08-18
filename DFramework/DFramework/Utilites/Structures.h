@@ -13,6 +13,9 @@ namespace FDW
 		std::wstring tittleName;
 
 		bool isResized;
+
+		unsigned dlssWidth;
+		unsigned dlssHeight;
 	};
 
 	struct VertexFrameWork

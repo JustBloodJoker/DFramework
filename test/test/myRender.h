@@ -30,12 +30,29 @@ private:
 	// 
 	std::unique_ptr<FDW::Scene> bird;
 
+	std::unique_ptr<FDW::RenderTarget> rtv;
+	std::unique_ptr<FDW::RTVPacker> rtvPack;
+	std::unique_ptr<FDW::SRVPacker> rtvSrvPack;
+
 	std::unique_ptr<FDW::DepthStencilView> dsv;
 	std::unique_ptr<FDW::DSVPacker> dsvPack;
 
 	std::unique_ptr<FDW::UploadBuffer<FDW::MatricesConstantBufferStructureFrameWork>> pMatricesBuffer;
 	dx::XMMATRIX view;
 	dx::XMMATRIX world;
+
+	////////////
+	// DLSS / AA
+	
+	D3D12_VIEWPORT sceneViewPort;
+	D3D12_RECT sceneRect;
+
+	std::unique_ptr<FDW::Rectangle> screen;
+	std::unique_ptr<FDW::RootSingature> rootScreen;
+	std::unique_ptr<FDW::PipelineStateObject> psoScreen;
+
+	//
+	////////////
 
 	float camYaw;
 	float camPitch;
