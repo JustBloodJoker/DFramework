@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -160,6 +161,8 @@
     <ClInclude Include="GraphicUtilites\InputLayout.h" />
     <ClInclude Include="GraphicUtilites\Materials.h" />
     <ClInclude Include="GraphicUtilites\PipelineStateObject.h" />
+    <ClInclude Include="GraphicUtilites\PostProcessing.h" />
+    <ClInclude Include="GraphicUtilites\PostProcessingAlgorithms.cuh" />
     <ClInclude Include="GraphicUtilites\RenderTarget.h" />
     <ClInclude Include="GraphicUtilites\ResourcePacker.h" />
     <ClInclude Include="GraphicUtilites\RootSignature.h" />
@@ -212,6 +215,9 @@
     <ClCompile Include="GraphicUtilites\PipelineStateObject.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="GraphicUtilites\PostProcessing.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="GraphicUtilites\RenderTarget.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
@@ -268,7 +274,11 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="GraphicUtilites\PostProcessingAlgorithms.cu" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.targets" />
   </ImportGroup>
 </Project>

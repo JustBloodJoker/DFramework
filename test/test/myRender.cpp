@@ -52,7 +52,6 @@ void myRender::UserInit()
 	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	dsvPack = CreateDSVPack(1u);
 	dsvPack->PushResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), device);
-	dsv->DepthWrite(pcml);
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> scenelayoutDesc =
 	{
@@ -104,14 +103,14 @@ void myRender::UserInit()
 
 
 	auto wndSettins = GetMainWNDSettings();
-	rtv = CreateRenderTarget(DXGI_FORMAT_R16G16B16A16_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.width, wndSettins.height); //wndSettins.dlssWidth, wndSettins.dlssHeight)
+	rtv = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.width, wndSettins.height); //wndSettins.dlssWidth, wndSettins.dlssHeight)
 	rtvPack = CreateRTVPack(1u);
 	rtvPack->PushResource(rtv->GetRTVResource(), rtv->GetRTVDesc(), device);
 	rtvSrvPack = CreateSRVPack(1u);
 	rtvSrvPack->PushResource(rtv->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
 	sceneViewPort.MaxDepth = 1.0f;
-	sceneViewPort.MaxDepth = 0.0f;
+	sceneViewPort.MinDepth = 0.0f;
 	sceneViewPort.Height = wndSettins.height; //wndSettins.dlssHeight
 	sceneViewPort.Width = wndSettins.width;//wndSettins.dlssWidth;
 	sceneViewPort.TopLeftX = 0;
@@ -165,6 +164,8 @@ void myRender::UserInit()
 
 	ExecuteMainQueue();
 	FDW::Texture::ReleaseUploadBuffers();
+
+	pp = std::make_unique<FDW::PostProcessing>( rtv->GetRTVResource() );
 }
 
 void myRender::UserLoop()
@@ -201,7 +202,7 @@ void myRender::UserLoop()
 	pcml->RSSetScissorRects(1, &sceneRect);
 	pcml->RSSetViewports(1, &sceneViewPort);
 
-	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
 	pcml->OMSetRenderTargets(1, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
 
@@ -225,9 +226,13 @@ void myRender::UserLoop()
 
 	rtv->EndDraw(pcml);
 
+	ExecuteMainQueue();
+	pCommandList->ResetList();
+
+	pp->InverseEffect(GetDevice());
 	///
 	///////////////////////////
-
+	
 	//////////////////////////
 	//			MAIN RTV
 
@@ -243,8 +248,7 @@ void myRender::UserLoop()
 
 	pcml->IASetVertexBuffers(0, 1, screen->GetVertexBufferView());
 	pcml->IASetIndexBuffer(screen->GetIndexBufferView());
-
-	pcml->SetGraphicsRootShaderResourceView(0, rtv->GetRTVResource()->GetGPUVirtualAddress());
+	
 	ID3D12DescriptorHeap* heaps[] = { rtvSrvPack->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
 	pcml->SetDescriptorHeaps(_countof(heaps), heaps);
 
@@ -319,170 +323,4 @@ void myRender::UserResizeUpdate()
 {
 	//OnResizeDLSS(pCommandList.get());
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	/*CD3DX12_ROOT_PARAMETER slotMainRootParameter[2];
-
-	CD3DX12_DESCRIPTOR_RANGE srvMainTable;
-	srvMainTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0);
-	slotMainRootParameter[0].InitAsDescriptorTable(1, &srvMainTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	CD3DX12_DESCRIPTOR_RANGE samplerTable;
-	samplerTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-	slotMainRootParameter[1].InitAsDescriptorTable(1, &samplerTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	pRootSignSecondPass = CreateRootSignature(slotMainRootParameter, _countof(slotMainRootParameter));
-
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
-	slotRootParameter[0].InitAsConstantBufferView(0);
-	slotRootParameter[1].InitAsConstantBufferView(1);
-
-	CD3DX12_DESCRIPTOR_RANGE srvTable;
-	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-	slotRootParameter[2].InitAsDescriptorTable(1, &srvTable, D3D12_SHADER_VISIBILITY_PIXEL);
-	slotRootParameter[3].InitAsDescriptorTable(1, &samplerTable, D3D12_SHADER_VISIBILITY_PIXEL);
-
-	pRootSignFirstPass = CreateRootSignature(slotRootParameter, _countof(slotRootParameter));
-
-	wrl::ComPtr<ID3DBlob> pVSByteCode;
-	wrl::ComPtr<ID3DBlob> pPSByteCode;
-	wrl::ComPtr<ID3DBlob> pVSMainByteCode;
-	wrl::ComPtr<ID3DBlob> pPSMainByteCode;
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredFirstPass.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl", nullptr, "VS", "vs_5_1", pVSMainByteCode);
-	FDW::Shader::GenerateBytecode(L"shaders/DeferredSecondPass.hlsl", nullptr, "PS", "ps_5_1", pPSMainByteCode);*/
-
-	/*CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
-	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-
-	DXGI_FORMAT rtvFormats[]{ DXGI_FORMAT_R32G32B32A32_FLOAT, DXGI_FORMAT_R32G32B32A32_FLOAT,DXGI_FORMAT_R32G32B32A32_FLOAT };
-	pso = CreatePSO(pRootSignFirstPass->GetRootSignature(), layoutDesc.data(), layoutDesc.size(), 3, rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT,
-		UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, pVSByteCode.Get(), pPSByteCode.Get(), nullptr, nullptr, nullptr,
-		rasterizerDesc);
-
-	rtvFormats[0] = GetMainRTVFormat();
-	mainpso = CreatePSO(pRootSignSecondPass->GetRootSignature(), layoutDesc.data(), layoutDesc.size(), 1, rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT,
-		UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, pVSMainByteCode.Get(), pPSMainByteCode.Get(), nullptr, nullptr, nullptr,
-		rasterizerDesc);*/
-		//FDW::Texture::ReleaseUploadBuffers();
-
-
-///////////////////////
-	// USER RTV DRAW
-
-	/*rtvPos->StartDraw(pcml);
-	rtvBase->StartDraw(pcml);
-	rtvNormals->StartDraw(pcml);
-
-	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	dsv->DepthWrite(pcml);
-	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(1), COLOR, 0, nullptr);
-	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(2), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(3, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-	pcml->SetPipelineState(pso->GetPSO());
-	pcml->SetGraphicsRootSignature(pRootSignFirstPass->GetRootSignature());
-
-	pcml->SetGraphicsRootConstantBufferView(0, pConstantUploadBuffer->GetGPULocation(0));
-
-	pcml->IASetVertexBuffers(0, 1, scene->GetVertexBufferView());
-	pcml->IASetIndexBuffer(scene->GetIndexBufferView());
-	for (size_t ind = 0; ind < scene->GetObjectBuffersCount(); ind++)
-	{
-		ID3D12DescriptorHeap* dcHeaps[] =
-		{
-			srvPacks[std::get<4>(scene->GetObjectParameters(ind))]->GetResult()->GetDescriptorPtr(),
-			samplerPack->GetResult()->GetDescriptorPtr()
-		};
-		pcml->SetDescriptorHeaps(_countof(dcHeaps), dcHeaps);
-		pcml->SetGraphicsRootDescriptorTable(2, srvPacks[std::get<4>(scene->GetObjectParameters(ind))]->GetResult()->GetGPUDescriptorHandle(0));
-		pcml->SetGraphicsRootDescriptorTable(3, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
-
-		pcml->SetGraphicsRootConstantBufferView(1, pMaterialConstantBuffer->GetGPULocation(std::get<4>(scene->GetObjectParameters(ind))));
-
-		UINT indexSize = std::get<2>(scene->GetObjectParameters(ind));
-		UINT indexstart = std::get<3>(scene->GetObjectParameters(ind));
-		UINT vertexStart = std::get<1>(scene->GetObjectParameters(ind));
-
-		pcml->DrawIndexedInstanced(indexSize, 1, indexstart, vertexStart, 0);
-	}
-
-	rtvPos->EndDraw(pcml);
-	rtvBase->EndDraw(pcml);
-	rtvNormals->EndDraw(pcml);*/
-
-	//	pcml->SetPipelineState(mainpso->GetPSO());
-	//	pcml->SetGraphicsRootSignature(pRootSignSecondPass->GetRootSignature());
-
-	//	ID3D12DescriptorHeap* dcHeaps[] =
-	//	{
-	//		srvPackRTV->GetResult()->GetDescriptorPtr(),
-	//		samplerPack->GetResult()->GetDescriptorPtr()
-	//	};
-	//	pcml->SetDescriptorHeaps(_countof(dcHeaps), dcHeaps);
-	//	pcml->SetGraphicsRootDescriptorTable(0, srvPackRTV->GetResult()->GetGPUDescriptorHandle(0));
-	//	pcml->SetGraphicsRootDescriptorTable(1, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
-	//	pcml->IASetVertexBuffers(0, 1, screenRes->GetVertexBufferView());
-	//	pcml->IASetIndexBuffer(screenRes->GetIndexBufferView());
-	//	pcml->DrawIndexedInstanced(std::get<2>(screenRes->GetObjectParameters(0)), 1, std::get<3>(screenRes->GetObjectParameters(0)), std::get<1>(screenRes->GetObjectParameters(0)), 0);
+ 

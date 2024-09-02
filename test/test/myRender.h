@@ -1,5 +1,6 @@
 #pragma once
 #include <DFW.h>
+#include <GraphicUtilites/PostProcessing.h>
 #include <Utilites/AudioMananger.h>
 
 class myRender 
@@ -28,6 +29,8 @@ private:
 
 	/////////////////////////////////////
 	// 
+	std::unique_ptr<FDW::PostProcessing> pp;
+
 	std::unique_ptr<FDW::Scene> bird;
 
 	std::unique_ptr<FDW::RenderTarget> rtv;

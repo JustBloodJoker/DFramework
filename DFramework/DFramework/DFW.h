@@ -140,6 +140,7 @@ namespace FDW
 		D3D12_VIEWPORT				GetMainViewPort()					const noexcept;
 		D3D12_RECT					GetMainRect()						const noexcept;
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
+		ID3D12Resource*				GetCurrBackBufferResource()			noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 		Timer*						GetTimer()							const noexcept;
 		AudioMananger*				GetAudioMananger()					const noexcept;
@@ -211,8 +212,8 @@ namespace FDW
 			const D3D12_PRIMITIVE_TOPOLOGY_TYPE type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, 
 			ID3DBlob* vsByteCode = nullptr, ID3DBlob* psByteCode = nullptr, ID3DBlob* gsByteCode = nullptr, ID3DBlob* dsByteCode = nullptr, ID3DBlob* hsByteCode = nullptr,
 			D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT),
-			D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT), 
-			D3D12_DEPTH_STENCIL_DESC dsvStateDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT)
+			D3D12_DEPTH_STENCIL_DESC dsvStateDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT),
+			D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT)
 			);
 
 		std::unique_ptr<ComputePipelineStateObject> CreateComputePSO(ID3D12RootSignature* const pRootSignature,

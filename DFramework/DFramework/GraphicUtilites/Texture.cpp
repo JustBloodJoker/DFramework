@@ -82,7 +82,7 @@ namespace FDW
         
         HRESULT_ASSERT(pDevice->CreateCommittedResource(
             heapProperties,
-            heapFlags,
+            heapFlags | D3D12_HEAP_FLAG_SHARED, //for post processing
             &txtDesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,

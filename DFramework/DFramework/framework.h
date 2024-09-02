@@ -35,6 +35,7 @@
 //WINAPI
 #include <Windows.h>
 #include <Windowsx.h>
+#include <winbase.h>
 #include <wrl/client.h>
 
 //DIRECT3D12
@@ -43,6 +44,8 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "nvsdk_ngx_d_dbg.lib")
+#pragma comment(lib, "cuda.lib")
+#pragma comment(lib, "cudart.lib")
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -55,6 +58,7 @@
 #include "include/DLSS/nvsdk_ngx_defs.h"
 #include "include/DLSS/nvsdk_ngx_params.h"
 #include "include/DLSS/nvsdk_ngx_helpers.h"
+
 
 //DATABASE
 #include <sqlite3.h>

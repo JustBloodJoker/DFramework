@@ -64,6 +64,11 @@ namespace FDW
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIndex, rtvDescriptorSize);
 	}
 
+	ID3D12Resource* DFW::GetCurrBackBufferResource() noexcept
+	{
+		return pSwapChainRTV[currentBackBufferIndex].Get();
+	}
+
 
 	DXGI_FORMAT DFW::GetMainRTVFormat() const noexcept
 	{
@@ -332,11 +337,9 @@ namespace FDW
 		UserLoop();
 		//////////////////
 
-		pCommandQueue->ExecuteQueue(false);
+		ExecuteMainQueue();
 
 		PresentSwapchain();
-
-		pCommandQueue->FlushQueue();
 	}
 
 	void DFW::Release()
@@ -654,7 +657,7 @@ namespace FDW
 		return std::move(result);
 	}
 
-	std::unique_ptr<PipelineStateObject> DFW::CreatePSO(ID3D12RootSignature* const pRootSignature, const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize, const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[], DXGI_FORMAT dsvFormat, const UINT SampleMask, const D3D12_PRIMITIVE_TOPOLOGY_TYPE type, ID3DBlob* vsByteCode, ID3DBlob* psByteCode, ID3DBlob* gsByteCode, ID3DBlob* dsByteCode, ID3DBlob* hsByteCode, D3D12_RASTERIZER_DESC rasterizerDesc, D3D12_BLEND_DESC blendDesc, D3D12_DEPTH_STENCIL_DESC dsvStateDesc)
+	std::unique_ptr<PipelineStateObject> DFW::CreatePSO(ID3D12RootSignature* const pRootSignature, const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize, const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[], DXGI_FORMAT dsvFormat, const UINT SampleMask, const D3D12_PRIMITIVE_TOPOLOGY_TYPE type, ID3DBlob* vsByteCode, ID3DBlob* psByteCode, ID3DBlob* gsByteCode, ID3DBlob* dsByteCode, ID3DBlob* hsByteCode, D3D12_RASTERIZER_DESC rasterizerDesc, D3D12_DEPTH_STENCIL_DESC dsvStateDesc, D3D12_BLEND_DESC blendDesc)
 	{
 		CONSOLE_MESSAGE("DFW is creating Pipeline State");
 		std::unique_ptr<PipelineStateObject> result = std::make_unique<PipelineStateObject>(pRootSignature, layout, layoutSize, renderTargetsNum, rtvFormats, dsvFormat);

@@ -42,6 +42,11 @@ static HRESULT hr = S_OK;
 #define fourccWAVE 'EVAW'
 #endif
 
+
+#define _CRT_SECURE_NO_WARNIGNS
+
+#define PRINTF_FDW(text) printf("\n %s \n", text);
+
 /*
 
 	NOT USE NOW

@@ -96,6 +96,12 @@
     <ClInclude Include="Utilites\AudioMananger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GraphicUtilites\PostProcessing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicUtilites\PostProcessingAlgorithms.cuh">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -164,5 +170,13 @@
     <ClCompile Include="Utilites\AudioMananger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GraphicUtilites\PostProcessing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="GraphicUtilites\PostProcessingAlgorithms.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
