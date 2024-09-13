@@ -91,6 +91,12 @@ namespace FDW
 	{
 		return rtvTexture->GetResource();
 	}
+    
+    Texture* RenderTarget::GetTexture() const
+    {
+        return rtvTexture.get();
+    }
+
 	D3D12_RENDER_TARGET_VIEW_DESC RenderTarget::GetRTVDesc() const
 	{
 		return rtvDesc;

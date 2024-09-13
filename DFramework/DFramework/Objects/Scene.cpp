@@ -269,11 +269,11 @@ namespace FDW
 				Animation animation;
 
 				if (anim->mTicksPerSecond != 0.0)
-					animation.ticksPerSecond = (float)anim->mTicksPerSecond;
+					animation.ticksPerSecond = anim->mTicksPerSecond;
 				else
-					animation.ticksPerSecond = 1.0f;
+					animation.ticksPerSecond = 1.0;
 
-				animation.duration = (float)(anim->mDuration * anim->mTicksPerSecond);
+				animation.duration = anim->mDuration * anim->mTicksPerSecond;
 				animation.transformations = {};
 
 				for (size_t i = 0; i < anim->mNumChannels; i++)
@@ -282,17 +282,17 @@ namespace FDW
 					BoneTransformations transformation;
 					for (size_t j = 0; j < channel->mNumPositionKeys; j++)
 					{
-						transformation.positionTimestamps.push_back((float)channel->mPositionKeys[j].mTime);
+						transformation.positionTimestamps.push_back(channel->mPositionKeys[j].mTime);
 						transformation.positions.push_back(ConvertFromAIVector3D(channel->mPositionKeys[j].mValue));
 					}
 					for (size_t j = 0; j < channel->mNumRotationKeys; j++)
 					{
-						transformation.rotationTimestamps.push_back((float)channel->mRotationKeys[j].mTime);
+						transformation.rotationTimestamps.push_back(channel->mRotationKeys[j].mTime);
 						transformation.rotations.push_back(ConvertFromAIQuaternion(channel->mRotationKeys[j].mValue));
 					}
 					for (size_t j = 0; j < channel->mNumScalingKeys; j++)
 					{
-						transformation.scaleTimestamps.push_back((float)channel->mScalingKeys[j].mTime);
+						transformation.scaleTimestamps.push_back(channel->mScalingKeys[j].mTime);
 						transformation.scales.push_back(ConvertFromAIVector3D(channel->mScalingKeys[j].mValue));
 					}
 					animation.transformations.emplace(channel->mNodeName.C_Str(), transformation);
@@ -331,7 +331,7 @@ namespace FDW
 		CONSOLE_MESSAGE(std::string("END PARSING SCENE WITH PATH: " + file));
 	}
 
-	void Scene::GetPose(Animation& animation, Bone& skeletion, float dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform)
+	void Scene::GetPose(Animation& animation, Bone& skeletion, double dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform)
 	{
 		auto iter = animation.transformations.find(skeletion.name);
 		dx::XMMATRIX globalTransform = dx::XMMatrixIdentity();
@@ -398,18 +398,18 @@ namespace FDW
 		}
 	}
 
-	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<float>& times, float& dt, const float& animTick, const float& duration)
+	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& duration)
 	{
-		float ticksPerSecond = animTick != 0.0f ? animTick : 25.0f;
+		double ticksPerSecond = animTick != 0.0 ? animTick : 25.0;
 		double timeInTicks = dt * ticksPerSecond;
 		double animationTime = fmod(timeInTicks, duration);
 
-		float frac = 1.0f;
+		double frac = 1.0;
 		unsigned segment = 0;
 		
-		float mod = animationTime / times[times.size() - 1];
+		double mod = animationTime / times[times.size() - 1];
 		mod = mod - std::floor(mod);
-		float tempDT = times[times.size() - 1] * mod;
+		double tempDT = times[times.size() - 1] * mod;
 
 		while (tempDT > times[segment])
 			segment++;
@@ -417,15 +417,15 @@ namespace FDW
 		if (!segment) segment++;
 		if (times.size() > 1)
 		{
-			float start = times[segment - 1];
-			float end = times[segment];
+			double start = times[segment - 1];
+			double end = times[segment];
 			frac = (tempDT - start) / (end - start);
 		}
 		else
 		{
 			segment = 0;
 		}
-		return { segment, frac };
+		return { segment, (float)frac };
 	}
 
 	bool Scene::ReadSkeleton(Bone& boneOutput, aiNode* node, std::unordered_map<std::string, Bone>& bonesMap) 

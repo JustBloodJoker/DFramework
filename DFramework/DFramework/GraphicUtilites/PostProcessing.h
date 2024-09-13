@@ -8,14 +8,19 @@ namespace FDW {
 	public:
 
 		PostProcessing(ID3D12Resource* texture);
-		PostProcessing()=delete;
-		~PostProcessing()=default;
+		PostProcessing()=default;
+		virtual ~PostProcessing()=default;
 
 		void InverseEffect(ID3D12Device* device, bool deleteAfter=false);
+		void GreyColorEffect(ID3D12Device* device, bool deleteAfter=false);
+		void SharpnessColorEffect(ID3D12Device* device, bool deleteAfter=false);
+		void BlurColorEffect(ID3D12Device* device, bool deleteAfter=false);
 
-		void SaveTexture();
+		void SetResource(ID3D12Resource* texture);
 
 	private:
+
+		void TextureCheckAssert();
 
 		ID3D12Resource* pTexture;
 

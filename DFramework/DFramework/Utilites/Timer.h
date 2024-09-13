@@ -13,7 +13,7 @@ namespace FDW
 	public:
 
 		Timer();
-		~Timer() = default;;
+		virtual ~Timer() = default;;
 
 		float GetTime() const; 
 		float GetDeltaTime() const;
@@ -26,7 +26,7 @@ namespace FDW
 
 		double secondPerTick;
 		double deltaTime;
-
+		
 		__int64 baseTime;
 		__int64 pauseTime;
 		__int64 stopTime;

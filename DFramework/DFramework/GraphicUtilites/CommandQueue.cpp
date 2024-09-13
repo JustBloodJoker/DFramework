@@ -26,7 +26,7 @@ namespace FDW
 			executedlists.push_back(el->GetPtrCommandList());
 		}
 
-		pCommandQueue->ExecuteCommandLists(executedlists.size(), executedlists.data());
+		pCommandQueue->ExecuteCommandLists((UINT)executedlists.size(), executedlists.data());
 
 		executedlists.clear();
 

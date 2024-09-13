@@ -140,7 +140,7 @@ namespace FDW
 		D3D12_VIEWPORT				GetMainViewPort()					const noexcept;
 		D3D12_RECT					GetMainRect()						const noexcept;
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
-		ID3D12Resource*				GetCurrBackBufferResource()			noexcept;
+		ID3D12Resource*			    GetCurrBackBufferResource()			const noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 		Timer*						GetTimer()							const noexcept;
 		AudioMananger*				GetAudioMananger()					const noexcept;

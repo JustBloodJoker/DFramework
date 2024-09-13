@@ -102,8 +102,8 @@ namespace FDW
 		UAVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		virtual ~UAVPacker() = default;
 
-		void AddResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElements, size_t stride, size_t offsetBytes, const size_t index, ID3D12Device* pDevice);
-		void PushResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElements, size_t stride, size_t offsetBytes, ID3D12Device* pDevice);
+		void AddResource(ID3D12Resource* resource, ID3D12Resource* counterResource, UINT numElements, UINT firstElements, UINT stride, UINT offsetBytes, const size_t index, ID3D12Device* pDevice);
+		void PushResource(ID3D12Resource* resource, ID3D12Resource* counterResource, UINT numElements, UINT firstElements, UINT stride, UINT offsetBytes, ID3D12Device* pDevice);
 	};
 
 }

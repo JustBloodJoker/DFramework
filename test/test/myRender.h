@@ -29,8 +29,6 @@ private:
 
 	/////////////////////////////////////
 	// 
-	std::unique_ptr<FDW::PostProcessing> pp;
-
 	std::unique_ptr<FDW::Scene> bird;
 
 	std::unique_ptr<FDW::RenderTarget> rtv;

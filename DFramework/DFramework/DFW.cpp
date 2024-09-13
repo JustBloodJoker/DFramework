@@ -64,7 +64,7 @@ namespace FDW
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), currentBackBufferIndex, rtvDescriptorSize);
 	}
 
-	ID3D12Resource* DFW::GetCurrBackBufferResource() noexcept
+	ID3D12Resource* DFW::GetCurrBackBufferResource() const noexcept
 	{
 		return pSwapChainRTV[currentBackBufferIndex].Get();
 	}

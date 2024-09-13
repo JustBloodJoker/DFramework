@@ -14,9 +14,9 @@ namespace FDW
 	};
 
 	struct BoneTransformations {
-		std::vector<float> positionTimestamps = {};
-		std::vector<float> rotationTimestamps = {};
-		std::vector<float> scaleTimestamps = {};
+		std::vector<double> positionTimestamps = {};
+		std::vector<double> rotationTimestamps = {};
+		std::vector<double> scaleTimestamps = {};
 
 		std::vector<dx::XMVECTOR> positions = {};
 		std::vector<dx::XMVECTOR> rotations = {};
@@ -24,8 +24,8 @@ namespace FDW
 	};
 
 	struct Animation {
-		float duration = 0.0f;
-		float ticksPerSecond = 1.0f;
+		double duration = 0.0;
+		double ticksPerSecond = 1.0;
 		std::unordered_map<std::string, BoneTransformations> transformations = {};
 	};
 
@@ -45,8 +45,8 @@ namespace FDW
 
 	protected:
 
-		std::pair<unsigned, float> GetTimeKeyAndFrac(std::vector<float>& times, float& dt, const float& animTick, const float& duration);
-		void GetPose(Animation& animation, Bone& skeletion, float dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform);
+		std::pair<unsigned, float> GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& duration);
+		void GetPose(Animation& animation, Bone& skeletion, double dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform);
 
 		bool ReadSkeleton(Bone& boneOutput, aiNode* node, std::unordered_map<std::string, Bone>& bonesMap);
 		

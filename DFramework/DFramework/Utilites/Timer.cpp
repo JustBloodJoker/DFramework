@@ -17,7 +17,7 @@ namespace FDW
 
 	float Timer::GetTime() const
 	{
-		return isStopped ? static_cast<float>(stopTime - pauseTime - baseTime) * secondPerTick : static_cast<float>(currTime - pauseTime - baseTime) * secondPerTick;
+		return isStopped ? static_cast<float>((stopTime - pauseTime - baseTime) * secondPerTick) : static_cast<float>((currTime - pauseTime - baseTime) * secondPerTick);
 	}
 
 	float Timer::GetDeltaTime() const

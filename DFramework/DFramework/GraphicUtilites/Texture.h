@@ -2,6 +2,7 @@
 #include "../pch.h"
 
 #include "../GraphicUtilites/BufferMananger.h"
+#include "../GraphicUtilites/PostProcessing.h"
 
 
 
@@ -24,7 +25,7 @@ namespace FDW
 		};
 	}
 
-	class Texture
+	class Texture : virtual public PostProcessing, virtual public std::enable_shared_from_this<Texture>
 	{
 
 		static std::unordered_map<std::string, std::weak_ptr<Texture>> textures;
@@ -34,8 +35,10 @@ namespace FDW
 		static std::shared_ptr<Texture> CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 		Texture(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);//NOT RECOMENDED TO USE
 
+		std::shared_ptr<Texture> GetSharedFromThis();
+
 		Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format,
-			const UINT64 width, const UINT64 height, 
+			const UINT width, const UINT height,
 			DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, 
 			const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE,
 			const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
@@ -59,8 +62,8 @@ namespace FDW
 		void CreateTextureBuffer(ID3D12Device* pDevice,
 			const UINT16 arraySize, 
 			const DXGI_FORMAT format, 
-			const UINT64 width, 
-			const UINT height, 
+			const UINT width,
+			const UINT height,
 			DXGI_SAMPLE_DESC sampleDesc, 
 			const D3D12_RESOURCE_DIMENSION dimension, 
 			const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE, 
@@ -71,9 +74,10 @@ namespace FDW
 		
 		D3D12_RESOURCE_STATES currState;
 
-		wrl::ComPtr<ID3D12Resource> resource;
+		wrl::ComPtr<ID3D12Resource> pResource;
 		std::unique_ptr<UploadBuffer<char>> upBuffer;
 
+		std::string Path;
 	};
 
 }

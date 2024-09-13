@@ -164,13 +164,11 @@ void myRender::UserInit()
 
 	ExecuteMainQueue();
 	FDW::Texture::ReleaseUploadBuffers();
-
-	pp = std::make_unique<FDW::PostProcessing>( rtv->GetRTVResource() );
 }
 
 void myRender::UserLoop()
 {
-	music->Play();
+	//music->Play();
 
 	pCommandList->ResetList();
 	
@@ -229,7 +227,7 @@ void myRender::UserLoop()
 	ExecuteMainQueue();
 	pCommandList->ResetList();
 
-	pp->InverseEffect(GetDevice());
+	rtv->GetTexture()->GreyColorEffect(GetDevice());
 	///
 	///////////////////////////
 	

@@ -34,11 +34,11 @@ namespace FDW
 		vertices.emplace_back(FDW::VertexFrameWork());
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(+1.0f, -1.0f, +1.0f);
 
-		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), vertices.size(), vertexBuffer, pVertexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), vertexBuffer, pVertexUploadBuffer);
 
 		vertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
 		vertexBufferView->BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-		vertexBufferView->SizeInBytes = vertices.size() * sizeof(FDW::VertexFrameWork);
+		vertexBufferView->SizeInBytes = (UINT)vertices.size() * sizeof(FDW::VertexFrameWork);
 		vertexBufferView->StrideInBytes = sizeof(FDW::VertexFrameWork);
 
 		indices =
@@ -62,12 +62,12 @@ namespace FDW
 			4, 3, 7
 		};
 
-		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), indices.size(), indexBuffer, pIndexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), indexBuffer, pIndexUploadBuffer);
 
 		indexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		indexBufferView->BufferLocation = indexBuffer->GetGPUVirtualAddress();
 		indexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		indexBufferView->SizeInBytes = indices.size() * sizeof(std::uint16_t);
+		indexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
 
 		if (neverUpdate)
 		{
@@ -99,11 +99,11 @@ namespace FDW
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(+1.0f, +1.0f, 0.0f);
 		(*vertices.rbegin()).texCoord = dx::XMFLOAT2(1.0f, 0.0f);
 
-		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), vertices.size(), vertexBuffer, pVertexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), vertexBuffer, pVertexUploadBuffer);
 
 		vertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
 		vertexBufferView->BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-		vertexBufferView->SizeInBytes = vertices.size() * sizeof(FDW::VertexFrameWork);
+		vertexBufferView->SizeInBytes = (UINT)vertices.size() * sizeof(FDW::VertexFrameWork);
 		vertexBufferView->StrideInBytes = sizeof(FDW::VertexFrameWork);
 
 		indices =
@@ -112,12 +112,12 @@ namespace FDW
 			1, 2, 3,
 		};
 
-		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), indices.size(), indexBuffer, pIndexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), indexBuffer, pIndexUploadBuffer);
 
 		indexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		indexBufferView->BufferLocation = indexBuffer->GetGPUVirtualAddress();
 		indexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		indexBufferView->SizeInBytes = indices.size() * sizeof(std::uint16_t);
+		indexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
 
 		if (neverUpdate)
 		{
@@ -137,19 +137,19 @@ namespace FDW
 		(*vertices.rbegin()).pos = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		indices = { 0 };
 
-		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), vertices.size(), vertexBuffer, pVertexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), vertexBuffer, pVertexUploadBuffer);
 
 		vertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
 		vertexBufferView->BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-		vertexBufferView->SizeInBytes = vertices.size() * sizeof(FDW::VertexFrameWork);
+		vertexBufferView->SizeInBytes = (UINT)vertices.size() * sizeof(FDW::VertexFrameWork);
 		vertexBufferView->StrideInBytes = sizeof(FDW::VertexFrameWork);
 
-		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), indices.size(), indexBuffer, pIndexUploadBuffer);
+		FDW::BufferMananger::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), indexBuffer, pIndexUploadBuffer);
 
 		indexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		indexBufferView->BufferLocation = indexBuffer->GetGPUVirtualAddress();
 		indexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		indexBufferView->SizeInBytes = indices.size() * sizeof(std::uint16_t);
+		indexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
 
 		if (neverUpdate)
 		{

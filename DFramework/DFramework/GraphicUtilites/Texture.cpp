@@ -10,6 +10,7 @@ namespace FDW
 
 	Texture::Texture(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
+        Path = path;
         auto it = textures.find(path);
         if (it != textures.end())
         {
@@ -40,6 +41,17 @@ namespace FDW
         }
 	}
 
+    std::shared_ptr<Texture> Texture::GetSharedFromThis()
+    {
+        auto ret = shared_from_this();
+        if (textures.find(Path) == textures.end()) 
+        {
+            textures.emplace(Path, std::weak_ptr<Texture>(ret));
+        }
+
+        return ret;
+    }
+
     std::shared_ptr<Texture> Texture::CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
     {
         auto iter = textures.find(path);
@@ -56,7 +68,7 @@ namespace FDW
         return ptr;
     }
 
-    Texture::Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+    Texture::Texture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
     {
         CONSOLE_MESSAGE(std::string("CREATING ANONIM TEXTURE"));
 
@@ -67,7 +79,7 @@ namespace FDW
 	{
 	}
 
-    void Texture::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+    void Texture::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
     {
         D3D12_RESOURCE_DESC txtDesc = {};
         txtDesc.MipLevels = mipLevels;
@@ -86,14 +98,16 @@ namespace FDW
             &txtDesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
-            IID_PPV_ARGS(resource.ReleaseAndGetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
+            IID_PPV_ARGS(pResource.GetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
+
+        SetResource(pResource.Get());
 
         currState = D3D12_RESOURCE_STATE_COMMON;
     }
 
     void Texture::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation)
     {
-        auto uresource = resource.Get();
+        auto uresource = pResource.Get();
         auto uresourceDesc = uresource->GetDesc();
         UINT64 uploadBufferSize = GetRequiredIntermediateSize(uresource, 0, uresourceDesc.DepthOrArraySize * uresourceDesc.MipLevels);
         if (checkCalculation) 
@@ -109,16 +123,16 @@ namespace FDW
         }
         D3D12_SUBRESOURCE_DATA textureData = {};
         textureData.pData = pData;
-        textureData.RowPitch = static_cast<LONG_PTR>(uploadBufferSize / resource.Get()->GetDesc().Height);
+        textureData.RowPitch = static_cast<LONG_PTR>(uploadBufferSize / pResource.Get()->GetDesc().Height);
         textureData.SlicePitch = uploadBufferSize;
 
         if (!upBuffer)
-            upBuffer.reset(new UploadBuffer<char>(pDevice, uploadBufferSize, false));
+            upBuffer.reset(new UploadBuffer<char>(pDevice, (UINT)uploadBufferSize, false));
 
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
         UpdateSubresources(pCommandList,
-            resource.Get(),
+            pResource.Get(),
             upBuffer->GetResource(),
             0, 0, 1, &textureData);
 
@@ -136,7 +150,7 @@ namespace FDW
         if (currState != resourceStateAfter)
         {
             pCommandList->ResourceBarrier(1,
-                &keep(CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(),
+                &keep(CD3DX12_RESOURCE_BARRIER::Transition(pResource.Get(),
                     currState,
                     resourceStateAfter)));
 
@@ -146,7 +160,7 @@ namespace FDW
 
     ID3D12Resource* Texture::GetResource() const
     {
-        return resource.Get();
+        return pResource.Get();
     }
 
     void Texture::ReleaseUploadBuffers() 

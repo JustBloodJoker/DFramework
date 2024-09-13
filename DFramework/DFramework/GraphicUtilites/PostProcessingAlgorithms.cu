@@ -24,7 +24,7 @@ struct CUDASURFACEDATA {
 std::unordered_map<ID3D12Resource*, CUDASURFACEDATA> surfacesMap;
 
 
-__global__ void invertColorsKernel(cudaSurfaceObject_t surface, unsigned int width, unsigned int height) {
+__global__ void InvertColorsKernel(cudaSurfaceObject_t surface, unsigned int width, unsigned int height) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -40,6 +40,89 @@ __global__ void invertColorsKernel(cudaSurfaceObject_t surface, unsigned int wid
 	surf2Dwrite(pixel, surface, x * sizeof(float4), y );
 }
 
+__global__ void GreyColorsKernel(cudaSurfaceObject_t surface, unsigned int width, unsigned int height) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if (x >= width || y >= height) return;
+	float4 pixel;
+
+	surf2Dread(&pixel, surface, x * sizeof(float4), y);
+
+	float average = (pixel.x + pixel.y + pixel.z) / 3.0;
+	pixel = make_float4(average, average, average, pixel.w);
+
+	surf2Dwrite(pixel, surface, x * sizeof(float4), y);
+}
+
+__global__ void SharpnessColorsKernel(cudaSurfaceObject_t surface, unsigned int width, unsigned int height) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if (x >= width-1 || y >= height-1 || x < 1 || y < 1) return;
+	
+
+	int kernel[3][3] = { { 0, -1,  0 },
+						 { -1,  5, -1 },
+						 { 0, -1,  0 } };
+
+	float4 pixel, outputPixel = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+	int2 texSize = make_int2(width, height);
+
+	for (int ky = -1; ky <= 1; ky++) {
+		for (int kx = -1; kx <= 1; kx++) {
+			int2 neighborPos = make_int2(min(max(x + kx, 0), texSize.x - 1),
+				min(max(y + ky, 0), texSize.y - 1));
+
+			surf2Dread(&pixel, surface, neighborPos.x * sizeof(float4), neighborPos.y);
+
+			outputPixel.x += kernel[ky + 1][kx + 1] * pixel.x;
+			outputPixel.y += kernel[ky + 1][kx + 1] * pixel.y;
+			outputPixel.z += kernel[ky + 1][kx + 1] * pixel.z;
+		}
+	}
+
+	outputPixel.x = min(max(outputPixel.x, 0.0f), 1.0f);
+	outputPixel.y = min(max(outputPixel.y, 0.0f), 1.0f);
+	outputPixel.z = min(max(outputPixel.z, 0.0f), 1.0f);
+	outputPixel.w = 1.0f;
+
+	surf2Dwrite(outputPixel, surface, x * sizeof(float4), y);
+}
+
+__global__ void BlurColorKernel(cudaSurfaceObject_t surface, unsigned int width, unsigned int height) {
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+	if (x >= width - 1 || y >= height - 1 || x < 1 || y < 1) return;
+
+	float kernel[3][3] = { { 1.0f / 16, 2.0f / 16, 1.0f / 16 },
+						   { 2.0f / 16, 4.0f / 16, 2.0f / 16 },
+						   { 1.0f / 16, 2.0f / 16, 1.0f / 16 } };
+
+	float4 pixel, outputPixel = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+	int2 texSize = make_int2(width, height);
+
+	for (int ky = -1; ky <= 1; ky++) {
+		for (int kx = -1; kx <= 1; kx++) {
+			int2 neighborPos = make_int2(min(max(x + kx, 0), texSize.x - 1),
+				min(max(y + ky, 0), texSize.y - 1));
+
+			surf2Dread(&pixel, surface, neighborPos.x * sizeof(float4), neighborPos.y);
+
+			outputPixel.x += kernel[ky + 1][kx + 1] * pixel.x;
+			outputPixel.y += kernel[ky + 1][kx + 1] * pixel.y;
+			outputPixel.z += kernel[ky + 1][kx + 1] * pixel.z;
+		}
+	}
+
+	outputPixel.x = min(max(outputPixel.x, 0.0f), 1.0f);
+	outputPixel.y = min(max(outputPixel.y, 0.0f), 1.0f);
+	outputPixel.z = min(max(outputPixel.z, 0.0f), 1.0f);
+	outputPixel.w = 1.0f;
+
+	surf2Dwrite(outputPixel, surface, x * sizeof(float4), y);
+}
 
 CUDASURFACEDATA CreateSurfaceObject(ID3D12Resource* texture, ID3D12Device* device) {
 	CUDASURFACEDATA data{};
@@ -68,7 +151,6 @@ CUDASURFACEDATA CreateSurfaceObject(ID3D12Resource* texture, ID3D12Device* devic
 	cudaArray_t cuArray{};
 	CheckCudaErrors(cudaGetMipmappedArrayLevel(&cuArray, data.cuMipArray, 0));
 
-	cudaSurfaceObject_t cuSurface{};
 	cudaResourceDesc cuResDesc{};
 	cuResDesc.resType = cudaResourceTypeArray;
 	cuResDesc.res.array.array = cuArray;
@@ -85,10 +167,70 @@ void InverseTexture(ID3D12Resource* texture, ID3D12Device* device)
 	}
 
 	D3D12_RESOURCE_DESC texDesc = texture->GetDesc();
+	unsigned width = (unsigned)texDesc.Width;
+	unsigned height = (unsigned)texDesc.Height;
+
 	dim3 blockSize(16, 16);
-	dim3 gridSize((texDesc.Width + blockSize.x - 1) / blockSize.x,
-		(texDesc.Height + blockSize.y - 1) / blockSize.y);
-	invertColorsKernel<<<gridSize, blockSize>>>(surfacesMap[texture].surface, texDesc.Width, texDesc.Height);
+	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
+		(height + blockSize.y - 1) / blockSize.y);
+	GreyColorsKernel <<<gridSize, blockSize>>>(surfacesMap[texture].surface, width, height);
+
+	cudaError_t err = cudaDeviceSynchronize();
+}
+
+void GreyEffect(ID3D12Resource* texture, ID3D12Device* device) 
+{
+	if (!FindInMap(texture)) {
+		PRINTF_FDW("CANT FIND TEXTURE SURFACE /// CALL INIT TO MAP");
+		InitToMap(texture, device);
+	}
+
+	D3D12_RESOURCE_DESC texDesc = texture->GetDesc();
+	unsigned width = (unsigned)texDesc.Width;
+	unsigned height = (unsigned)texDesc.Height;
+
+	dim3 blockSize(16, 16);
+	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
+		(height + blockSize.y - 1) / blockSize.y);
+	GreyColorsKernel <<<gridSize, blockSize>>>(surfacesMap[texture].surface, width, height);
+
+	cudaError_t err = cudaDeviceSynchronize();
+}
+
+void SharpnessEffect(ID3D12Resource* texture, ID3D12Device* device)
+{
+	if (!FindInMap(texture)) {
+		PRINTF_FDW("CANT FIND TEXTURE SURFACE /// CALL INIT TO MAP");
+		InitToMap(texture, device);
+	}
+
+	D3D12_RESOURCE_DESC texDesc = texture->GetDesc();
+	unsigned width = (unsigned)texDesc.Width;
+	unsigned height = (unsigned)texDesc.Height;
+
+	dim3 blockSize(16, 16);
+	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
+		(height + blockSize.y - 1) / blockSize.y);
+	SharpnessColorsKernel <<<gridSize, blockSize>>>(surfacesMap[texture].surface, width, height);
+
+	cudaError_t err = cudaDeviceSynchronize();
+}
+
+void BlurEffect(ID3D12Resource* texture, ID3D12Device* device)
+{
+	if (!FindInMap(texture)) {
+		PRINTF_FDW("CANT FIND TEXTURE SURFACE /// CALL INIT TO MAP");
+		InitToMap(texture, device);
+	}
+
+	D3D12_RESOURCE_DESC texDesc = texture->GetDesc();
+	unsigned width = (unsigned)texDesc.Width;
+	unsigned height = (unsigned)texDesc.Height;
+
+	dim3 blockSize(16, 16);
+	dim3 gridSize((width + blockSize.x - 1) / blockSize.x,
+		(height + blockSize.y - 1) / blockSize.y);
+	BlurColorKernel <<<gridSize, blockSize>>>(surfacesMap[texture].surface, width, height);
 
 	cudaError_t err = cudaDeviceSynchronize();
 }

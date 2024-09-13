@@ -21,7 +21,7 @@ namespace FDW
 			const UINT SampleMask = UINT_MAX,
 			const D3D12_PRIMITIVE_TOPOLOGY_TYPE type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE);
 		
-		~PipelineStateObject() = default;
+		virtual ~PipelineStateObject() = default;
 
 		void SetRasterizerState(D3D12_RASTERIZER_DESC rasterizerDesc);
 		void SetBlendState(D3D12_BLEND_DESC blendDesc);

@@ -18,6 +18,7 @@ namespace FDW
 		~RenderTarget() = default;
 
 		ID3D12Resource* GetRTVResource() const;
+		Texture* GetTexture() const;
 		D3D12_RENDER_TARGET_VIEW_DESC GetRTVDesc() const;
 
 		void StartDraw(ID3D12GraphicsCommandList* pCommandList);

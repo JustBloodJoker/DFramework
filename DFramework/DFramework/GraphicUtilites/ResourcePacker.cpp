@@ -46,7 +46,7 @@ namespace FDW
 		srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 		pDevice->CreateShaderResourceView(resource,
-			&srvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+			&srvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 	}
 
 	void SRVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
@@ -63,7 +63,7 @@ namespace FDW
 	void SamplerPacker::AddResource(D3D12_SAMPLER_DESC desc, const size_t index, ID3D12Device* pDevice)
 	{
 		CONSOLE_MESSAGE(std::string("SAMPLERPaker is adding resource"));
-		pDevice->CreateSampler(&desc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+		pDevice->CreateSampler(&desc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 	}
 
 	void SamplerPacker::PushResource(D3D12_SAMPLER_DESC desc, ID3D12Device* pDevice)
@@ -105,7 +105,7 @@ namespace FDW
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = sizeInBytes;
-		pDevice->CreateConstantBufferView(&cbvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+		pDevice->CreateConstantBufferView(&cbvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 	}
 
 	void CBVPacker::PushResource(ID3D12Resource* resource, UINT sizeInBytes, ID3D12Device* pDevice)
@@ -121,7 +121,7 @@ namespace FDW
 	void RTVPacker::AddResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, const size_t index, ID3D12Device* pDevice)
 	{
 		CONSOLE_MESSAGE(std::string("RTVPaker is adding resource"));
-		pDevice->CreateRenderTargetView(resource, &rtvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+		pDevice->CreateRenderTargetView(resource, &rtvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 
 	}
 
@@ -138,7 +138,7 @@ namespace FDW
 	void DSVPacker::AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice)
 	{
 		CONSOLE_MESSAGE(std::string("DSVPaker is adding resource"));
-		pDevice->CreateDepthStencilView(resource, &dsvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? index : 0));
+		pDevice->CreateDepthStencilView(resource, &dsvDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 
 	}
 
@@ -152,7 +152,7 @@ namespace FDW
 	{
 	}
 
-	void UAVPacker::AddResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElement, size_t stride, size_t offsetBytes, const size_t index, ID3D12Device* pDevice)
+	void UAVPacker::AddResource(ID3D12Resource* resource, ID3D12Resource* counterResource, UINT numElements, UINT firstElement, UINT stride, UINT offsetBytes, const size_t index, ID3D12Device* pDevice)
 	{
 		CONSOLE_MESSAGE(std::string("UAVPaker is adding resource"));
 
@@ -166,10 +166,10 @@ namespace FDW
 		uavDesc.Buffer.CounterOffsetInBytes = offsetBytes;
 		uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
 
-		pDevice->CreateUnorderedAccessView(resource, counterResource, &uavDesc, descriptorHeap->GetCPUDescriptorHandle(index));
+		pDevice->CreateUnorderedAccessView(resource, counterResource, &uavDesc, descriptorHeap->GetCPUDescriptorHandle(index < descriptorCount ? (UINT)index : 0));
 	}
 
-	void UAVPacker::PushResource(ID3D12Resource* resource, ID3D12Resource* counterResource, size_t numElements, size_t firstElement, size_t stride, size_t offsetBytes, ID3D12Device* pDevice)
+	void UAVPacker::PushResource(ID3D12Resource* resource, ID3D12Resource* counterResource, UINT numElements, UINT firstElement, UINT stride, UINT offsetBytes, ID3D12Device* pDevice)
 	{
 		AddResource(resource, counterResource, numElements, firstElement, stride, offsetBytes, currentIndex++, pDevice);
 	}
