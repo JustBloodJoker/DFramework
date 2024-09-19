@@ -1,10 +1,10 @@
 #pragma once
-#include <DFW.h>
+#include <D3DFW.h>
 #include <GraphicUtilites/PostProcessing.h>
 #include <Utilites/AudioMananger.h>
 
 class myRender 
-	: public FDW::DFW
+	: public FD3DW::D3DFW
 {
 
 public:
@@ -24,21 +24,21 @@ public:
 
 private:
 
-	std::unique_ptr<FDW::Audio> music;
+	std::unique_ptr<FD3DW::Audio> music;
 	
 
 	/////////////////////////////////////
 	// 
-	std::unique_ptr<FDW::Scene> bird;
+	std::unique_ptr<FD3DW::Scene> bird;
 
-	std::unique_ptr<FDW::RenderTarget> rtv;
-	std::unique_ptr<FDW::RTVPacker> rtvPack;
-	std::unique_ptr<FDW::SRVPacker> rtvSrvPack;
+	std::unique_ptr<FD3DW::RenderTarget> rtv;
+	std::unique_ptr<FD3DW::RTVPacker> rtvPack;
+	std::unique_ptr<FD3DW::SRVPacker> rtvSrvPack;
 
-	std::unique_ptr<FDW::DepthStencilView> dsv;
-	std::unique_ptr<FDW::DSVPacker> dsvPack;
+	std::unique_ptr<FD3DW::DepthStencilView> dsv;
+	std::unique_ptr<FD3DW::DSVPacker> dsvPack;
 
-	std::unique_ptr<FDW::UploadBuffer<FDW::MatricesConstantBufferStructureFrameWork>> pMatricesBuffer;
+	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> pMatricesBuffer;
 	dx::XMMATRIX view;
 	dx::XMMATRIX world;
 
@@ -48,9 +48,9 @@ private:
 	D3D12_VIEWPORT sceneViewPort;
 	D3D12_RECT sceneRect;
 
-	std::unique_ptr<FDW::Rectangle> screen;
-	std::unique_ptr<FDW::RootSingature> rootScreen;
-	std::unique_ptr<FDW::PipelineStateObject> psoScreen;
+	std::unique_ptr<FD3DW::Rectangle> screen;
+	std::unique_ptr<FD3DW::RootSingature> rootScreen;
+	std::unique_ptr<FD3DW::PipelineStateObject> psoScreen;
 
 	//
 	////////////
@@ -64,16 +64,16 @@ private:
 	dx::XMVECTOR startUp;
 	dx::XMVECTOR at;
 
-	std::unique_ptr<FDW::PipelineStateObject> pso;
-	std::unique_ptr<FDW::RootSingature> pRootSignnatureRender;
+	std::unique_ptr<FD3DW::PipelineStateObject> pso;
+	std::unique_ptr<FD3DW::RootSingature> pRootSignnatureRender;
 
-	std::unique_ptr<FDW::CommandList> pCommandList;
+	std::unique_ptr<FD3DW::CommandList> pCommandList;
 	ID3D12GraphicsCommandList* pcml;
 
-	FDW::Timer* timer;
+	FDWWIN::Timer* timer;
 
-	std::unique_ptr<FDW::SamplerPacker> samplerPack;
-	std::vector<std::unique_ptr<FDW::SRVPacker>> srvPacks;
+	std::unique_ptr<FD3DW::SamplerPacker> samplerPack;
+	std::vector<std::unique_ptr<FD3DW::SRVPacker>> srvPacks;
 
-	std::unique_ptr<FDW::Texture> structureBufferBones;
+	std::unique_ptr<FD3DW::FResource> structureBufferBones;
 };

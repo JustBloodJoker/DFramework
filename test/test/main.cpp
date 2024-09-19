@@ -1,4 +1,4 @@
-#pragma comment(lib, "DFramework.lib")
+#pragma comment(lib, "D3DFramework.lib")
 #include "myRender.h"
 
 int main()

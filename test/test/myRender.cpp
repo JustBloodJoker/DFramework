@@ -3,7 +3,7 @@
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
 myRender::myRender()
-	: DFW(L"MaybeF", 1024, 1024, false)
+	: WinWindow(L"MaybeF", 1024, 1024, false)
 {
 
 }
@@ -15,7 +15,7 @@ myRender::~myRender()
 
 void myRender::UserInit()
 {
-	SetVSync(true);
+	//SetVSync(true);
 
 	pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	pcml = pCommandList->GetPtrCommandList();
@@ -76,12 +76,12 @@ void myRender::UserInit()
 	eye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
 	at = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	startUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	pMatricesBuffer = CreateConstantBuffer<FDW::MatricesConstantBufferStructureFrameWork>(1);
+	pMatricesBuffer = CreateConstantBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>(1);
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 	slotRootParameter[0].InitAsConstantBufferView(0);
-	slotRootParameter[1].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
-	slotRootParameter[2].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
+	slotRootParameter[1].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
+	slotRootParameter[2].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
 	slotRootParameter[3].InitAsShaderResourceView(1);
 
 	pRootSignnatureRender = CreateRootSignature(slotRootParameter, ARRAYSIZE(slotRootParameter));
@@ -93,13 +93,13 @@ void myRender::UserInit()
 	wrl::ComPtr<ID3DBlob> pVSByteCode;
 	wrl::ComPtr<ID3DBlob> pPSByteCode;
 	
-	//FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
-	//FDW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
- 	//FDW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
-	//FDW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
+	//FD3DW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode);
+	//FD3DW::Shader::GenerateBytecode(L"shaders/simpleShader.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode);
+ 	//FD3DW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
+	//FD3DW::Shader::SaveBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
 
-	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
-	FDW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
+	FD3DW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderPS.shader", pPSByteCode);
+	FD3DW::Shader::LoadBytecode(L"shaderBytecode/simpleShaderVS.shader", pVSByteCode);
 
 
 	auto wndSettins = GetMainWNDSettings();
@@ -132,18 +132,18 @@ void myRender::UserInit()
 	wrl::ComPtr<ID3DBlob> pVSByteCode1;
 	wrl::ComPtr<ID3DBlob> pPSByteCode1;
 
-//	FDW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode1);
-//	FDW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode1);
-//	FDW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
-//	FDW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
+//	FD3DW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "VS", "vs_5_1", pVSByteCode1);
+//	FD3DW::Shader::GenerateBytecode(L"shaders/ScreenPostProcess.hlsl", nullptr, "PS", "ps_5_1", pPSByteCode1);
+//	FD3DW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
+//	FD3DW::Shader::SaveBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
 
-	FDW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
-	FDW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
+	FD3DW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessPS.shader", pPSByteCode1);
+	FD3DW::Shader::LoadBytecode(L"shaderBytecode/ScreenPostProcessVS.shader", pVSByteCode1);
 
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter1[2];
-	slotRootParameter1[0].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
-	slotRootParameter1[1].InitAsDescriptorTable(1, &FDW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
+	slotRootParameter1[0].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
+	slotRootParameter1[1].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
 	rootScreen = CreateRootSignature(slotRootParameter1, _countof(slotRootParameter1));
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> ScreenlayoutDesc =
@@ -163,7 +163,7 @@ void myRender::UserInit()
 
 
 	ExecuteMainQueue();
-	FDW::Texture::ReleaseUploadBuffers();
+	FD3DW::FResource::ReleaseUploadBuffers();
 }
 
 void myRender::UserLoop()
@@ -184,7 +184,7 @@ void myRender::UserLoop()
 	auto resultVector = bird->PlayAnimation(timer->GetTime(), "Take 001");
 	structureBufferBones->UploadData(GetDevice(), pcml, resultVector.data());
 
-	FDW::MatricesConstantBufferStructureFrameWork cmb;
+	FD3DW::MatricesConstantBufferStructureFrameWork cmb;
 	cmb.projection = dx::XMMatrixTranspose(GetMainProjectionMatrix());
 	cmb.view = dx::XMMatrixTranspose(view);
 	cmb.world = dx::XMMatrixTranspose(world);
@@ -202,7 +202,7 @@ void myRender::UserLoop()
 
 	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(1, &FDW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FDW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
+	pcml->OMSetRenderTargets(1, &FD3DW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
 
 	pcml->SetPipelineState(pso->GetPSO());
 	pcml->SetGraphicsRootSignature(pRootSignnatureRender->GetRootSignature());
@@ -239,7 +239,7 @@ void myRender::UserLoop()
 	BindMainRect(pcml);
 
 	pcml->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(1, &FDW::keep(GetCurrBackBufferView()), true, nullptr);
+	pcml->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
 
 	pcml->SetPipelineState(psoScreen->GetPSO());
 	pcml->SetGraphicsRootSignature(rootScreen->GetRootSignature());
@@ -266,12 +266,10 @@ void myRender::UserMouseDown(WPARAM btnState, int x, int y)
 {
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
-	SetCapture(GetMainHWND());
 }
 
 void myRender::UserMouseUp(WPARAM btnState, int x, int y)
 {
-	ReleaseCapture();
 }
 
 void myRender::UserMouseMoved(WPARAM btnState, int x, int y)
