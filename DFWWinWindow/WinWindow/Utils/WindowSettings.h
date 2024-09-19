@@ -2,11 +2,11 @@
 
 struct WindowSettings
 {
-	int width;
-	int height;
-	bool fullScreen;
+	int width = 600;
+	int height = 600;
+	bool fullScreen = false;
 
-	std::wstring tittleName;
+	std::wstring tittleName = L"WinTest";
 
 	bool isResized;
 

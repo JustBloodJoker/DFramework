@@ -16,7 +16,7 @@ namespace FDWWIN
 
 	public:
 
-		WinWindow() = delete;
+		WinWindow()=default;
 		WinWindow(std::wstring windowTittle, int width, int height, bool fullScreen);
 		virtual ~WinWindow() = default;
 
@@ -73,7 +73,7 @@ namespace FDWWIN
 		//	WINDOW
 		WindowSettings wndSettings;
 		HWND hwnd;
-		bool PAUSEWORK;
+		bool PAUSEWORK = false;
 
 		///////////////
 		//	TIMER
