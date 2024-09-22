@@ -9,18 +9,21 @@ namespace FD2DW
 	{
 	public:
 		D2DFW()=default;
-		virtual ~D2DFW() = default;
+		virtual ~D2DFW() =default;
 
 	public:
-		///////////////////////////
-		//		WINWINDOW
-		
-	protected:
 
 
-
+		virtual void UserAfterD2DInit() =0;
+		virtual void UserD2DLoop() =0;
+		virtual void UserD2DClose() =0;
 
 	protected:
+		virtual bool InitD2D() = 0;
+		virtual void ChildBeforeUserLoop() = 0;
+		virtual void ChildAfterUserLoop() = 0;
+
+	private:
 		virtual bool ChildInit() override;
 		virtual void ChildLoop() override;
 		virtual void ChildRelease() override;

@@ -30,10 +30,16 @@
     <ClInclude Include="Utilites\Structures.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D2DFWStandalone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D2DFW.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFWStandalone.cpp">
+      <Filter>Header Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -65,6 +65,19 @@ namespace FDWWIN
 		hwnd = this->hwnd;
 	}
 
+	HWND WinWindow::GETHWND() const
+	{
+		return hwnd;
+	}
+
+	void WinWindow::HideCMD()
+	{
+		HWND Stealth;
+		AllocConsole();
+		Stealth = FindWindowA("ConsoleWindowClass", NULL);
+		ShowWindow(Stealth, 0);
+	}
+
 	void WinWindow::Release() {
 		ChildRelease();
 

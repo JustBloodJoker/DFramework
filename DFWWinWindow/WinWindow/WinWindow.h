@@ -23,10 +23,11 @@ namespace FDWWIN
 		virtual void __START() final;
 
 		void SETHWND(HWND& hwnd);
+		HWND GETHWND() const;
 
 	protected:
 		
-
+		void HideCMD();
 
 		//////////////////////////
 		////////	CHILD INITS

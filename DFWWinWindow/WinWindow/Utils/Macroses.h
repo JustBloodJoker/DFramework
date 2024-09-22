@@ -15,8 +15,8 @@ static HRESULT hr = S_OK;
 
 #else
 
-#define SAFE_ASSERT(cond, text) { }
-#define HRESULT_ASSERT(cond, text) { }
+#define SAFE_ASSERT(cond, text) { cond; }
+#define HRESULT_ASSERT(cond, text) { hr = cond; }
 #define CONSOLE_MESSAGE(text) { }
 #define CONSOLE_ERROR_MESSAGE(text) { }
 #define CONSOLE_MESSAGE_NO_PREF(text) { }

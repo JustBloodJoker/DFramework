@@ -32,3 +32,7 @@
 
 #include "Utils/Macroses.h"
 #include "Utils/WindowSettings.h"
+
+
+
+namespace wrl = Microsoft::WRL;

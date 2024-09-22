@@ -43,9 +43,14 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3dcompiler.lib")
-#pragma comment(lib, "nvsdk_ngx_d_dbg.lib")
 #pragma comment(lib, "cuda.lib")
 #pragma comment(lib, "cudart.lib")
+
+#ifdef _DEBUG 
+#pragma comment(lib, "nvsdk_ngx_d_dbg.lib")
+#else
+#pragma comment(lib, "nvsdk_ngx_d.lib")
+#endif
 
 #include <d3d12.h>
 #include <dxgi1_4.h>

@@ -131,12 +131,14 @@
   <ItemGroup>
     <ClInclude Include="d2dframework.h" />
     <ClInclude Include="D2DFW.h" />
+    <ClInclude Include="D2DFWStandalone.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Utilites\Macroses.h" />
     <ClInclude Include="Utilites\Structures.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D2DFW.cpp" />
+    <ClCompile Include="D2DFWStandalone.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
