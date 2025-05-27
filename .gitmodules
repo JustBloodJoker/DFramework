@@ -1,0 +1,3 @@
+[submodule "FDW/FDW/D2DFramework"]
+	path = FDW/FDW/D2DFramework
+	url = https://github.com/JustBloodJoker/D2DFramework.git
