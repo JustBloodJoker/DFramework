@@ -3,6 +3,8 @@
 #include <D3DFramework/D3DFW.h>
 #include "D2DFWDXGI.h"
 
+#pragma warning(disable : 4250)
+
 namespace FDW {
 
 	using namespace FD2DW;

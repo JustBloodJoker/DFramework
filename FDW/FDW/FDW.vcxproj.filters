@@ -123,21 +123,6 @@
     <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
-    <ClInclude Include="WinWindow\pch.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\Utils\Macroses.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\Utils\Timer.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\Utils\WindowSettings.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
     <ClInclude Include="DFWCombine\D2DFWDXGI.h">
       <Filter>combineFDW</Filter>
     </ClInclude>
@@ -149,6 +134,21 @@
     </ClInclude>
     <ClInclude Include="DFWCombine\pch.h">
       <Filter>combineFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow\pch.h">
+      <Filter>winwindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow\WinWindow.h">
+      <Filter>winwindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow\Utils\Macroses.h">
+      <Filter>winwindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow\Utils\Timer.h">
+      <Filter>winwindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow\Utils\WindowSettings.h">
+      <Filter>winwindow</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -221,17 +221,17 @@
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
-    <ClCompile Include="WinWindow\WinWindow.cpp">
-      <Filter>winwindow</Filter>
-    </ClCompile>
-    <ClCompile Include="WinWindow\Utils\Timer.cpp">
-      <Filter>winwindow</Filter>
-    </ClCompile>
     <ClCompile Include="DFWCombine\D2DFWDXGI.cpp">
       <Filter>combineFDW</Filter>
     </ClCompile>
     <ClCompile Include="DFWCombine\DFW.cpp">
       <Filter>combineFDW</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\WinWindow\WinWindow.cpp">
+      <Filter>winwindow</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\WinWindow\Utils\Timer.cpp">
+      <Filter>winwindow</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
