@@ -7,10 +7,10 @@ namespace FD3DW
 
 
 
-	Object::Object() : matMananger(std::make_unique<MaterialsManager>())
+	Object::Object() : m_pMaterialManager(std::make_unique<MaterialsManager>())
 	{
-		ZeroMemory(&vertexBufferView, sizeof(vertexBufferView));
-		ZeroMemory(&indexBufferView, sizeof(indexBufferView));
+		ZeroMemory(&m_pVertexBufferView, sizeof(m_pVertexBufferView));
+		ZeroMemory(&m_pIndexBufferView, sizeof(m_pIndexBufferView));
 	}
 
 	Object::~Object()
@@ -19,32 +19,32 @@ namespace FD3DW
 
 	D3D12_VERTEX_BUFFER_VIEW* Object::GetVertexBufferView() const
 	{
-		return vertexBufferView.get();
+		return m_pVertexBufferView.get();
 	}
 
 	D3D12_INDEX_BUFFER_VIEW* Object::GetIndexBufferView() const
 	{
-		return indexBufferView.get();
+		return m_pIndexBufferView.get();
 	}
 
 	size_t Object::GetObjectBuffersCount() const
 	{
-		return objectParameters.size();
+		return m_vObjectParameters.size();
 	}
 
 	ObjectDesc Object::GetObjectParameters(size_t index) const
 	{
-		return index < objectParameters.size() ? objectParameters[index] : ObjectDesc();
+		return index < m_vObjectParameters.size() ? m_vObjectParameters[index] : ObjectDesc();
 	}
 
 	MaterialsManager* Object::GetMaterialMananger() const
 	{
-		return matMananger.get();
+		return m_pMaterialManager.get();
 	}
 
 	size_t Object::GetMaterialSize() const
 	{
-		return matMananger->GetMaterialSize();
+		return m_pMaterialManager->GetMaterialSize();
 	}
 
 }

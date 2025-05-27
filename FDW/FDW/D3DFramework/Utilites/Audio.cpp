@@ -8,22 +8,22 @@ namespace FD3DW
 
 	Audio::Audio(IXAudio2SourceVoice* source)
 	{
-        this->pSourceVoice = source;
+        this->m_pSourceVoice = source;
 	}
 
     void Audio::SetVolume(float volume)
     {
-        pSourceVoice->SetVolume(volume);
+        m_pSourceVoice->SetVolume(volume);
     }
 
     void Audio::Stop(UINT flags)
     {
-        pSourceVoice->Stop(flags);
+        m_pSourceVoice->Stop(flags);
     }
 
     void Audio::Play(UINT flags)
     {
-        pSourceVoice->Start(flags);
+        m_pSourceVoice->Start(flags);
     }
 
 }

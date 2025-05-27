@@ -22,7 +22,7 @@ namespace FD3DW {
 
 		void TextureCheckAssert();
 
-		ID3D12Resource* pTexture;
+		ID3D12Resource* m_pTexture;
 
 	};
 

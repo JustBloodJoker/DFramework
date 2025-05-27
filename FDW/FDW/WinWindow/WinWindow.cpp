@@ -3,11 +3,11 @@
 
 namespace FDWWIN 
 {
-	WinWindow* WinWindow::instance = nullptr;
+	WinWindow* WinWindow::s_pInstance = nullptr;
 
 	WinWindow* WinWindow::GetWINInstance()
 	{
-		return instance;
+		return s_pInstance;
 	}
 
 	LRESULT WinWindow::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -15,19 +15,19 @@ namespace FDWWIN
 		return WinWindow::GetWINInstance()->MsgProc(hWnd, msg, wParam, lParam);
 	}
 	
-	WinWindow::WinWindow(std::wstring windowTittle, int width, int height, bool fullScreen)
+	WinWindow::WinWindow(std::wstring windowTittle, int Width, int height, bool FullScreen)
 	{
-		if (!WinWindow::instance)
+		if (!WinWindow::s_pInstance)
 		{
-			WinWindow::instance = this;
+			WinWindow::s_pInstance = this;
 		}
 
-		wndSettings.fullScreen = fullScreen;
-		wndSettings.height = height;
-		wndSettings.width = width;
-		wndSettings.tittleName = windowTittle;
+		m_xWndSettings.FullScreen = FullScreen;
+		m_xWndSettings.Height = height;
+		m_xWndSettings.Width = Width;
+		m_xWndSettings.TittleName = windowTittle;
 
-		PAUSEWORK = false;
+		m_bPAUSEWORK = false;
 	}
 	
 	void WinWindow::__START()
@@ -60,14 +60,14 @@ namespace FDWWIN
 		Release();
 	}
 
-	void WinWindow::SETHWND(HWND& hwnd)
+	void WinWindow::SETHWND(HWND& m_xHWND)
 	{
-		hwnd = this->hwnd;
+		m_xHWND = this->m_xHWND;
 	}
 
 	HWND WinWindow::GETHWND() const
 	{
-		return hwnd;
+		return m_xHWND;
 	}
 
 	void WinWindow::HideCMD()
@@ -81,21 +81,21 @@ namespace FDWWIN
 	void WinWindow::Release() {
 		ChildRelease();
 
-		pTimer.release();
+		m_pTimer.release();
 		CONSOLE_MESSAGE("WINWINDOW RELEASE");
 	}
 
 	void WinWindow::SetFullScreen()
 	{
-		if (!wndSettings.fullScreen)
+		if (!m_xWndSettings.FullScreen)
 		{
-			wndSettings.fullScreen = true;
-			HMONITOR hmon = MonitorFromWindow(hwnd,
+			m_xWndSettings.FullScreen = true;
+			HMONITOR hmon = MonitorFromWindow(m_xHWND,
 				MONITOR_DEFAULTTONEAREST);
 			MONITORINFO mi = { sizeof(mi) };
 			GetMonitorInfo(hmon, &mi);
-			wndSettings.width = mi.rcMonitor.right - mi.rcMonitor.left;
-			wndSettings.height = mi.rcMonitor.bottom - mi.rcMonitor.top;
+			m_xWndSettings.Width = mi.rcMonitor.right - mi.rcMonitor.left;
+			m_xWndSettings.Height = mi.rcMonitor.bottom - mi.rcMonitor.top;
 		}
 	}
 
@@ -119,28 +119,28 @@ namespace FDWWIN
 
 		SAFE_ASSERT(RegisterClassEx(&wc), "Register wnd class error");
 
-		hwnd = CreateWindowEx(NULL,
+		m_xHWND = CreateWindowEx(NULL,
 			L"wndClass",
-			this->wndSettings.tittleName.c_str(),
+			this->m_xWndSettings.TittleName.c_str(),
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT,
-			this->wndSettings.width, this->wndSettings.height,
+			this->m_xWndSettings.Width, this->m_xWndSettings.Height,
 			NULL,
 			NULL,
 			NULL,
 			NULL);
 
-		SAFE_ASSERT(hwnd, "Create hwnd error");
+		SAFE_ASSERT(m_xHWND, "Create m_xHWND error");
 
-		ShowWindow(hwnd, 1);
-		UpdateWindow(hwnd);
+		ShowWindow(m_xHWND, 1);
+		UpdateWindow(m_xHWND);
 		return true;
 	}
 
 	bool WinWindow::InitTimer()
 	{
-		pTimer = std::make_unique<Timer>();
-		return pTimer ? true : false;
+		m_pTimer = std::make_unique<Timer>();
+		return m_pTimer ? true : false;
 	}
 	
 	void WinWindow::Loop()
@@ -148,18 +148,18 @@ namespace FDWWIN
 		MSG msg;
 		ZeroMemory(&msg, sizeof(MSG));
 
-		while (IsWindowEnabled(hwnd))
+		while (IsWindowEnabled(m_xHWND))
 		{
-			if (PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE))
+			if (PeekMessage(&msg, m_xHWND, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
 				DispatchMessage(&msg);
 			}
 			else
 			{
-				if (!PAUSEWORK)
+				if (!m_bPAUSEWORK)
 				{
-					pTimer->Tick();
+					m_pTimer->Tick();
 					ChildLoop();
 				}
 			}
@@ -171,16 +171,16 @@ namespace FDWWIN
 	}
 
 	bool WinWindow::ISPAUSED() const {
-		return PAUSEWORK;
+		return m_bPAUSEWORK;
 	}
 
 	WindowSettings WinWindow::WNDSettings() const {
-		return wndSettings;
+		return m_xWndSettings;
 	}
 
 	Timer* WinWindow::GetTimer() const
 	{
-		return pTimer.get();
+		return m_pTimer.get();
 	}
 
 	LRESULT WinWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -193,11 +193,11 @@ namespace FDWWIN
 
 			if (LOWORD(wParam) == WA_INACTIVE)
 			{
-				PAUSEWORK = true;
+				m_bPAUSEWORK = true;
 			}
 			else
 			{
-				PAUSEWORK = false;
+				m_bPAUSEWORK = false;
 			}
 			return 0;
 		}

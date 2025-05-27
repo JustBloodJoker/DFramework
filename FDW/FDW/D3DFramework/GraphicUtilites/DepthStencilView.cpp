@@ -12,63 +12,63 @@ namespace FD3DW
 
 	ID3D12Resource* DepthStencilView::GetDSVResource() const
 	{
-		return dsvTexture->GetResource();
+		return m_pDSVTexture->GetResource();
 	}
 
     D3D12_DEPTH_STENCIL_VIEW_DESC DepthStencilView::GetDSVDesc() const
 	{
-		return dsvDesc;
+		return m_xDSVDesc;
 	}
 
     void DepthStencilView::DepthWrite(ID3D12GraphicsCommandList* pCommandList)
     {
-        dsvTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     }
 
     void DepthStencilView::DepthRead(ID3D12GraphicsCommandList* pCommandList)
     {
-        dsvTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_READ);
+        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_READ);
     }
 
     void DepthStencilView::SRVPass(ID3D12GraphicsCommandList* pCommandList)
     {
-        dsvTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
 	void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
 	{
         CONSOLE_MESSAGE(std::string("INITING CUSTOM DSV DESC"));
 
-        ZeroMemory(&dsvDesc, sizeof(dsvDesc));
+        ZeroMemory(&m_xDSVDesc, sizeof(m_xDSVDesc));
 
-        dsvDesc.Flags = flags;
-        dsvDesc.Format = format;
-        dsvDesc.ViewDimension = dimension;
+        m_xDSVDesc.Flags = flags;
+        m_xDSVDesc.Format = format;
+        m_xDSVDesc.ViewDimension = dimension;
 
         D3D12_RESOURCE_DIMENSION textureDimension;
 
         switch (dimension)
         {
         case D3D12_DSV_DIMENSION_TEXTURE1D:
-            dsvDesc.Texture1D.MipSlice = 0;
+            m_xDSVDesc.Texture1D.MipSlice = 0;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
-            dsvDesc.Texture1DArray.MipSlice = 0;
-            dsvDesc.Texture1DArray.FirstArraySlice = 0;
-            dsvDesc.Texture1DArray.ArraySize = arrSize;
+            m_xDSVDesc.Texture1DArray.MipSlice = 0;
+            m_xDSVDesc.Texture1DArray.FirstArraySlice = 0;
+            m_xDSVDesc.Texture1DArray.ArraySize = arrSize;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE2D:
             if (sampleDesc.Count == 1)
             {
-                dsvDesc.Texture2D.MipSlice = 0;
+                m_xDSVDesc.Texture2D.MipSlice = 0;
                 textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
-            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+            m_xDSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DMS:
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -77,17 +77,17 @@ namespace FD3DW
         case D3D12_DSV_DIMENSION_TEXTURE2DARRAY: 
             if (sampleDesc.Count == 1)
             {
-                dsvDesc.Texture2DArray.MipSlice = 0;
-                dsvDesc.Texture2DArray.FirstArraySlice = 0;
-                dsvDesc.Texture2DArray.ArraySize = arrSize;
+                m_xDSVDesc.Texture2DArray.MipSlice = 0;
+                m_xDSVDesc.Texture2DArray.FirstArraySlice = 0;
+                m_xDSVDesc.Texture2DArray.ArraySize = arrSize;
                 textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
-            dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
+            m_xDSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
-            dsvDesc.Texture2DMSArray.FirstArraySlice = 0;
-            dsvDesc.Texture2DMSArray.ArraySize = arrSize;
+            m_xDSVDesc.Texture2DMSArray.FirstArraySlice = 0;
+            m_xDSVDesc.Texture2DMSArray.ArraySize = arrSize;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
         default:
@@ -95,7 +95,7 @@ namespace FD3DW
             textureDimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
             break;
         }
-        dsvTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
+        m_pDSVTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
 
 	}
 

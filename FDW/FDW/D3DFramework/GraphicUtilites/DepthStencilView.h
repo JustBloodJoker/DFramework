@@ -31,8 +31,8 @@ namespace FD3DW
 			const UINT width, const UINT height,
 			const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags);
 
-		std::unique_ptr<FResource> dsvTexture;
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+		std::unique_ptr<FResource> m_pDSVTexture;
+		D3D12_DEPTH_STENCIL_VIEW_DESC m_xDSVDesc;
 	};
 
 

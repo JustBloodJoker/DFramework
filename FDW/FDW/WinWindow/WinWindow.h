@@ -8,7 +8,7 @@ namespace FDWWIN
 
 	class WinWindow
 	{
-		static WinWindow* instance;
+		static WinWindow* s_pInstance;
 		static WinWindow* GetWINInstance();
 
 		static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -72,13 +72,13 @@ namespace FDWWIN
 
 		////////////////
 		//	WINDOW
-		WindowSettings wndSettings;
-		HWND hwnd;
-		bool PAUSEWORK = false;
+		WindowSettings m_xWndSettings;
+		HWND m_xHWND;
+		bool m_bPAUSEWORK = false;
 
 		///////////////
 		//	TIMER
-		std::unique_ptr <Timer> pTimer;
+		std::unique_ptr <Timer> m_pTimer;
 	};
 
 }

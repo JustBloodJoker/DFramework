@@ -24,7 +24,7 @@ namespace FD3DW
         void SetMaterialDesc(std::unique_ptr<Material>& pMaterial, const MaterialFrameWork& materialDesc);
         void SetTexture(std::unique_ptr<Material>& pMaterial, std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
-        std::vector<std::unique_ptr<Material>> materials;
+        std::vector<std::unique_ptr<Material>> m_vMaterials;
     };
 
 

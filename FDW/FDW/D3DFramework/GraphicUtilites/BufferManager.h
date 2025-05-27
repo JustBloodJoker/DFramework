@@ -27,21 +27,21 @@ namespace FD3DW
 
 	private:
 
-		BYTE* pData;
-		UINT dataSize;
-		wrl::ComPtr<ID3D12Resource> pUploadBuffer;
+		BYTE* m_pData;
+		UINT m_uDataSize;
+		wrl::ComPtr<ID3D12Resource> m_pUploadBuffer;
 
 	};
 
 
 
-	class BufferMananger
+	class BufferManager
 	{
 
 	public:
 
 		template<typename BUFFER_STRUCTURE_TYPE>
-		static bool CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& pUploadBuffer);
+		static bool CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer);
 
 		
 	private:
@@ -60,61 +60,61 @@ namespace FD3DW
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::UploadBuffer(ID3D12Device* pDevice, UINT elementNum, bool isCBBuffer)
 	{
-		isCBBuffer ? dataSize = UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::CalculateConstantBufferSize(sizeof(BUFFER_STRUCTURE_DESC_TYPE)) : dataSize = sizeof(BUFFER_STRUCTURE_DESC_TYPE);
+		isCBBuffer ? m_uDataSize = UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::CalculateConstantBufferSize(sizeof(BUFFER_STRUCTURE_DESC_TYPE)) : m_uDataSize = sizeof(BUFFER_STRUCTURE_DESC_TYPE);
 
-		if (pUploadBuffer)
-			pUploadBuffer->Release();
+		if (m_pUploadBuffer)
+			m_pUploadBuffer->Release();
 
 		HRESULT_ASSERT(pDevice->CreateCommittedResource(
 			&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)),
 			D3D12_HEAP_FLAG_NONE,
-			&keep(CD3DX12_RESOURCE_DESC::Buffer(elementNum * dataSize)),
+			&keep(CD3DX12_RESOURCE_DESC::Buffer(elementNum * m_uDataSize)),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
-			IID_PPV_ARGS(pUploadBuffer.GetAddressOf())),
+			IID_PPV_ARGS(m_pUploadBuffer.GetAddressOf())),
 			"upload buffer create error");
 
-		HRESULT_ASSERT(pUploadBuffer->Map(0, nullptr,
-			reinterpret_cast<void**>(&pData)), "Map upload buffer error");
+		HRESULT_ASSERT(m_pUploadBuffer->Map(0, nullptr,
+			reinterpret_cast<void**>(&m_pData)), "Map upload buffer error");
 	}
 
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::~UploadBuffer()
 	{
-		if (pUploadBuffer)
-			pUploadBuffer->Unmap(0, nullptr);
+		if (m_pUploadBuffer)
+			m_pUploadBuffer->Unmap(0, nullptr);
 
-		pData = nullptr;
+		m_pData = nullptr;
 	}
 
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline D3D12_GPU_VIRTUAL_ADDRESS UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetGPULocation(const size_t index) const
 	{
-		return pUploadBuffer->GetGPUVirtualAddress() + dataSize * index;
+		return m_pUploadBuffer->GetGPUVirtualAddress() + m_uDataSize * index;
 	}
 
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline ID3D12Resource* UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetResource() const
 	{
-		return pUploadBuffer.Get();
+		return m_pUploadBuffer.Get();
 	}
 
 
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline void UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::CpyData(int index, const BUFFER_STRUCTURE_DESC_TYPE& data)
 	{
-		memcpy(&pData[index * dataSize], &data, sizeof(BUFFER_STRUCTURE_DESC_TYPE));
+		memcpy(&m_pData[index * m_uDataSize], &data, sizeof(BUFFER_STRUCTURE_DESC_TYPE));
 	}
 
 	template<typename BUFFER_STRUCTURE_DESC_TYPE>
 	inline UINT UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetDataSize() const
 	{
-		return dataSize;
+		return m_uDataSize;
 	}
 
 
 	template<typename BUFFER_STRUCTURE_TYPE>
-	inline bool BufferMananger::CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& pUploadBuffer)
+	inline bool BufferManager::CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer)
 	{
 		if (dstBuffer)
 			dstBuffer->Release();
@@ -127,10 +127,10 @@ namespace FD3DW
 			IID_PPV_ARGS(dstBuffer.GetAddressOf())),
 			"Result Default Buffer create error");
 
-		if (pUploadBuffer)
-			pUploadBuffer.release();
+		if (m_pUploadBuffer)
+			m_pUploadBuffer.release();
 
-		pUploadBuffer = std::make_unique<UploadBuffer<BUFFER_STRUCTURE_TYPE>>(pDevice, elementCount, false);
+		m_pUploadBuffer = std::make_unique<UploadBuffer<BUFFER_STRUCTURE_TYPE>>(pDevice, elementCount, false);
 		
 		D3D12_SUBRESOURCE_DATA subResourceData = {};
 		subResourceData.pData = pInitData;
@@ -145,7 +145,7 @@ namespace FD3DW
 
 		UpdateSubresources<1>(pCommandList,
 			dstBuffer.Get(),
-			pUploadBuffer->GetResource(),
+			m_pUploadBuffer->GetResource(),
 			0, 0, 1, &subResourceData);
 
 		pCommandList->ResourceBarrier(1,

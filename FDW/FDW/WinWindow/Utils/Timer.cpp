@@ -7,31 +7,31 @@ namespace FDWWIN
 
 
 	Timer::Timer()
-		: secondPerTick(0.0), deltaTime(-1.0), baseTime(0), pauseTime(0), prevTime(0), currTime(0), stopTime(0), isStopped(false)
+		: m_dSecondPerTick(0.0), m_dDeltaTime(-1.0), m_iBaseTime(0), m_iPauseTime(0), m_iPrevTime(0), m_iCurrTime(0), m_iStopTime(0), m_bIsStopped(false)
 	{
 		__int64 countsPerSec;
 		QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSec);
 
-		secondPerTick = 1.0 / static_cast<double>(countsPerSec);
+		m_dSecondPerTick = 1.0 / static_cast<double>(countsPerSec);
 	}
 
 	float Timer::GetTime() const
 	{
-		return isStopped ? static_cast<float>((stopTime - pauseTime - baseTime) * secondPerTick) : static_cast<float>((currTime - pauseTime - baseTime) * secondPerTick);
+		return m_bIsStopped ? static_cast<float>((m_iStopTime - m_iPauseTime - m_iBaseTime) * m_dSecondPerTick) : static_cast<float>((m_iCurrTime - m_iPauseTime - m_iBaseTime) * m_dSecondPerTick);
 	}
 
 	float Timer::GetDeltaTime() const
 	{
-		return static_cast<float>(deltaTime);
+		return static_cast<float>(m_dDeltaTime);
 	}
 
 	void Timer::Reset()
 	{
-		QueryPerformanceCounter((LARGE_INTEGER*)&prevTime);
+		QueryPerformanceCounter((LARGE_INTEGER*)&m_iPrevTime);
 
-		baseTime = prevTime;
-		stopTime = 0;
-		isStopped = false;
+		m_iBaseTime = m_iPrevTime;
+		m_iStopTime = 0;
+		m_bIsStopped = false;
 	}
 
 	void Timer::Start()
@@ -39,43 +39,43 @@ namespace FDWWIN
 		__int64 startTime;
 		QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
 
-		if (isStopped)
+		if (m_bIsStopped)
 		{
-			pauseTime += (startTime - stopTime);
-			prevTime = startTime;
-			stopTime = 0;
-			isStopped = false;
+			m_iPauseTime += (startTime - m_iStopTime);
+			m_iPrevTime = startTime;
+			m_iStopTime = 0;
+			m_bIsStopped = false;
 		}
 
-		isStopped = false;
+		m_bIsStopped = false;
 	}
 
 	void Timer::Stop()
 	{
-		if (!isStopped)
+		if (!m_bIsStopped)
 		{
-			QueryPerformanceCounter((LARGE_INTEGER*)&stopTime);
-			isStopped = true;
+			QueryPerformanceCounter((LARGE_INTEGER*)&m_iStopTime);
+			m_bIsStopped = true;
 		}
 	}
 
 	void Timer::Tick()
 	{
-		if (isStopped)
+		if (m_bIsStopped)
 		{
-			deltaTime = 0.0;
+			m_dDeltaTime = 0.0;
 			return;
 		}
 
-		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
+		QueryPerformanceCounter((LARGE_INTEGER*)&m_iCurrTime);
 
-		deltaTime = (currTime - prevTime) * secondPerTick;
+		m_dDeltaTime = (m_iCurrTime - m_iPrevTime) * m_dSecondPerTick;
 
-		prevTime = currTime;
+		m_iPrevTime = m_iCurrTime;
 
-		if (deltaTime < 0.0)
+		if (m_dDeltaTime < 0.0)
 		{
-			deltaTime = 0.0;
+			m_dDeltaTime = 0.0;
 		}
 	}
 

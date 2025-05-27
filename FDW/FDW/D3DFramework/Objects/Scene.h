@@ -7,26 +7,26 @@ namespace FD3DW
 {
 	struct Bone
 	{
-		std::string name = "";
-		unsigned index = 0;
-		dx::XMMATRIX offset = dx::XMMatrixIdentity();
-		std::vector<Bone> children = {};
+		std::string Name = "";
+		unsigned Index = 0;
+		dx::XMMATRIX Offset = dx::XMMatrixIdentity();
+		std::vector<Bone> Children = {};
 	};
 
 	struct BoneTransformations {
-		std::vector<double> positionTimestamps = {};
-		std::vector<double> rotationTimestamps = {};
-		std::vector<double> scaleTimestamps = {};
+		std::vector<double> PositionTimestamps = {};
+		std::vector<double> RotationTimestamps = {};
+		std::vector<double> ScaleTimestamps = {};
 
-		std::vector<dx::XMVECTOR> positions = {};
-		std::vector<dx::XMVECTOR> rotations = {};
-		std::vector<dx::XMVECTOR> scales = {};
+		std::vector<dx::XMVECTOR> Positions = {};
+		std::vector<dx::XMVECTOR> Rotations = {};
+		std::vector<dx::XMVECTOR> Scales = {};
 	};
 
 	struct Animation {
-		double duration = 0.0;
-		double ticksPerSecond = 1.0;
-		std::unordered_map<std::string, BoneTransformations> transformations = {};
+		double Duration = 0.0;
+		double TicksPerSecond = 1.0;
+		std::unordered_map<std::string, BoneTransformations> Transformations = {};
 	};
 
 	class Scene
@@ -53,15 +53,15 @@ namespace FD3DW
 		void InitScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
 		void ParseScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
-		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::SceneVertexFrameWork>> pVertexUploadBuffer;
-		std::unique_ptr<FD3DW::UploadBuffer<std::uint16_t>> pIndexUploadBuffer;
+		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::SceneVertexFrameWork>> m_pVertexUploadBuffer;
+		std::unique_ptr<FD3DW::UploadBuffer<std::uint16_t>> m_pIndexUploadBuffer;
 
-		dx::XMMATRIX globalInverseTransform;
-		Bone mainBone;
-		size_t bonesCount;
+		dx::XMMATRIX m_xGlobalInverseTransform;
+		Bone m_xMainBone;
+		size_t m_uBonesCount;
 
-		std::unordered_map<std::string, Animation> animationsMap;
-		std::vector<dx::XMMATRIX> resultBones;
+		std::unordered_map<std::string, Animation> m_mAnimationsMap;
+		std::vector<dx::XMMATRIX> m_vResultBones;
 	};
 
 }

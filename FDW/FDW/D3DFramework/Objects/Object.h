@@ -1,9 +1,9 @@
 #pragma once
 #include "../pch.h"
 
-#include "../GraphicUtilites/BufferMananger.h"
+#include "../GraphicUtilites/BufferManager.h"
 
-#include "MaterialsMananger.h"
+#include "MaterialsManager.h"
 
 
 
@@ -11,11 +11,11 @@ namespace FD3DW
 {
 	struct ObjectDesc
 	{
-		size_t verticesCount;
-		size_t verticesOffset;
-		size_t indicesCount;
-		size_t indicesOffset;
-		size_t materialIndex;
+		size_t VerticesCount;
+		size_t VerticesOffset;
+		size_t IndicesCount;
+		size_t IndicesOffset;
+		size_t MaterialIndex;
 	};
 
 	class Object
@@ -37,15 +37,15 @@ namespace FD3DW
 		
 	protected:
 
-		std::unique_ptr<MaterialsManager> matMananger;
+		std::unique_ptr<MaterialsManager> m_pMaterialManager;
 
-		std::vector<ObjectDesc> objectParameters;
+		std::vector<ObjectDesc> m_vObjectParameters;
 
-		wrl::ComPtr<ID3D12Resource> vertexBuffer;
-		std::unique_ptr<D3D12_VERTEX_BUFFER_VIEW> vertexBufferView;
+		wrl::ComPtr<ID3D12Resource> m_pVertexBuffer;
+		std::unique_ptr<D3D12_VERTEX_BUFFER_VIEW> m_pVertexBufferView;
 
-		wrl::ComPtr<ID3D12Resource> indexBuffer;
-		std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> indexBufferView;
+		wrl::ComPtr<ID3D12Resource> m_pIndexBuffer;
+		std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> m_pIndexBufferView;
 
 
 	private:

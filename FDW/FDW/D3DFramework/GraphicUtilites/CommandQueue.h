@@ -28,10 +28,10 @@ namespace FD3DW
 	private:
 
 
-		std::vector<ID3D12CommandList*> executedlists;
-		std::vector<CommandList*> bindedLists;
-		wrl::ComPtr<ID3D12CommandQueue> pCommandQueue;
-		wrl::ComPtr<ID3D12Fence> pFence;
+		std::vector<ID3D12CommandList*> m_vExecutedlists;
+		std::vector<CommandList*> m_vBindedLists;
+		wrl::ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+		wrl::ComPtr<ID3D12Fence> m_pFence;
 	};
 
 }

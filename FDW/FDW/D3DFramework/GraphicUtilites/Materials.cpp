@@ -4,36 +4,36 @@
 namespace FD3DW
 {
 
-	Material::Material(MaterialFrameWork&& materialDesc) : material(std::move(materialDesc))
+	Material::Material(MaterialFrameWork&& materialDesc) : m_xMaterial(std::move(materialDesc))
 	{
 	}
 
-	Material::Material(const MaterialFrameWork& materialDesc) : material(materialDesc)
+	Material::Material(const MaterialFrameWork& materialDesc) : m_xMaterial(materialDesc)
 	{
 	}
 
-	Material::Material() : material(MaterialFrameWork())
+	Material::Material() : m_xMaterial(MaterialFrameWork())
 	{
 	}
 
 	ID3D12Resource* Material::GetResourceTexture(TextureType type) const
 	{
-		return textureMap.at(type)->GetResource();
+		return m_mTextureMap.at(type)->GetResource();
 	}
 
 	MaterialFrameWork Material::GetMaterialDesc() const
 	{
-		return material;
+		return m_xMaterial;
 	}
 
 	void Material::SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
-		textureMap.emplace(type,FResource::CreateTextureFromPath(texturePath,pDevice, pCommandList));
+		m_mTextureMap.emplace(type,FResource::CreateTextureFromPath(texturePath,pDevice, pCommandList));
 	}
 
 	bool Material::IsHaveTexture(TextureType type) const
 	{
-		return textureMap.find(type) != textureMap.end();
+		return m_mTextureMap.find(type) != m_mTextureMap.end();
 	}
 
 }

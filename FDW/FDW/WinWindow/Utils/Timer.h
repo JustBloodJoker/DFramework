@@ -24,16 +24,16 @@ namespace FDWWIN
 
 	private:
 
-		double secondPerTick;
-		double deltaTime;
+		double m_dSecondPerTick;
+		double m_dDeltaTime;
 		
-		__int64 baseTime;
-		__int64 pauseTime;
-		__int64 stopTime;
-		__int64 prevTime;
-		__int64 currTime;
+		__int64 m_iBaseTime;
+		__int64 m_iPauseTime;
+		__int64 m_iStopTime;
+		__int64 m_iPrevTime;
+		__int64 m_iCurrTime;
 
-		bool isStopped;
+		bool m_bIsStopped;
 
 	};
 

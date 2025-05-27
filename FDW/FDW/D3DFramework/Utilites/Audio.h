@@ -21,7 +21,7 @@ namespace FD3DW
 	
 	private:
 
-		IXAudio2SourceVoice* pSourceVoice;
+		IXAudio2SourceVoice* m_pSourceVoice;
 
 	};
 

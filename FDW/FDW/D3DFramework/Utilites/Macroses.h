@@ -26,16 +26,3 @@
 #define fourccFMT  ' tmf'
 #define fourccWAVE 'EVAW'
 #endif
-
-
-/*
-
-	NOT USE NOW
-
-#define fourccXWMA 'XWMA'
-#define fourccDPDS 'dpds'
-
-#define fourccXWMA 'AMWX'
-#define fourccDPDS 'sdpd'
-
-*/

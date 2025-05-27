@@ -17,41 +17,34 @@ void myRender::UserInit()
 {
 	//SetVSync(true);
 
-	pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	pcml = pCommandList->GetPtrCommandList();
+	m_pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pPCML = m_pCommandList->GetPtrCommandList();
 
-
-//	if (InitNGX(pCommandList.get()))
-//	{
-//		CONSOLE_MESSAGE("NGX inited");
-//	}
-
-
-	timer = GetTimer();
+	m_pTimer = GetTimer();
 	auto device = GetDevice();
 	
-	music = CreateAudio(L"322.wav");
-	music->SetVolume(0.1f);
+	m_pMusic = CreateAudio(L"322.wav");
+	m_pMusic->SetVolume(0.1f);
 
 	
-	BindListToMainQueue(pCommandList.get());
+	BindListToMainQueue(m_pCommandList.get());
 
-	bird = CreateScene("sampleModels/bird/scene.gltf", true, pcml);
+	m_pBird = CreateScene("sampleModels/bird/scene.gltf", true, m_pPCML);
 	
-	for (size_t ind = 0; ind < bird->GetMaterialSize(); ind++)
+	for (size_t ind = 0; ind < m_pBird->GetMaterialSize(); ind++)
 	{
-		srvPacks.push_back(CreateSRVPack(1u));
-		if (bird->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(TextureType::BASE))
+		m_vSRVPacks.push_back(CreateSRVPack(1u));
+		if (m_pBird->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(TextureType::BASE))
 		{
-			(*srvPacks.rbegin())->PushResource(bird->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+			(*m_vSRVPacks.rbegin())->PushResource(m_pBird->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 		}
 	}
-	samplerPack = CreateSamplerPack(1u);
-	samplerPack->PushDefaultSampler(device);
+	m_pSamplerPack = CreateSamplerPack(1u);
+	m_pSamplerPack->PushDefaultSampler(device);
 
-	dsv = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
-	dsvPack = CreateDSVPack(1u);
-	dsvPack->PushResource(dsv->GetDSVResource(), dsv->GetDSVDesc(), device);
+	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	m_pDSVPack = CreateDSVPack(1u);
+	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> scenelayoutDesc =
 	{
@@ -71,12 +64,12 @@ void myRender::UserInit()
 		scenelayoutDesc.emplace_back(D3D12_INPUT_ELEMENT_DESC({ "WEIGHT_BONES", (UINT)i, DXGI_FORMAT_R32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }));
 	}
 
-	structureBufferBones = CreateSimpleStructuredBuffer(bird->GetBonesCount() * sizeof(dx::XMMATRIX));
+	m_pStructureBufferBones = CreateSimpleStructuredBuffer(m_pBird->GetBonesCount() * sizeof(dx::XMMATRIX));
 
-	eye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
-	at = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	startUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	pMatricesBuffer = CreateConstantBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>(1);
+	m_xEye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	m_pMatricesBuffer = CreateConstantBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>(1);
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 	slotRootParameter[0].InitAsConstantBufferView(0);
@@ -84,7 +77,7 @@ void myRender::UserInit()
 	slotRootParameter[2].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
 	slotRootParameter[3].InitAsShaderResourceView(1);
 
-	pRootSignnatureRender = CreateRootSignature(slotRootParameter, ARRAYSIZE(slotRootParameter));
+	m_pRootSignnatureRender = CreateRootSignature(slotRootParameter, ARRAYSIZE(slotRootParameter));
 
 	CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
@@ -103,31 +96,31 @@ void myRender::UserInit()
 
 
 	auto wndSettins = GetMainWNDSettings();
-	rtv = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.width, wndSettins.height); //wndSettins.dlssWidth, wndSettins.dlssHeight)
-	rtvPack = CreateRTVPack(1u);
-	rtvPack->PushResource(rtv->GetRTVResource(), rtv->GetRTVDesc(), device);
-	rtvSrvPack = CreateSRVPack(1u);
-	rtvSrvPack->PushResource(rtv->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+	m_pRTV = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height); 
+	m_pRTVPack = CreateRTVPack(1u);
+	m_pRTVPack->PushResource(m_pRTV->GetRTVResource(), m_pRTV->GetRTVDesc(), device);
+	m_pRTV_SRVPack = CreateSRVPack(1u);
+	m_pRTV_SRVPack->PushResource(m_pRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
-	sceneViewPort.MaxDepth = 1.0f;
-	sceneViewPort.MinDepth = 0.0f;
-	sceneViewPort.Height = wndSettins.height; //wndSettins.dlssHeight
-	sceneViewPort.Width = wndSettins.width;//wndSettins.dlssWidth;
-	sceneViewPort.TopLeftX = 0;
-	sceneViewPort.TopLeftY = 0;
+	m_xSceneViewPort.MaxDepth = 1.0f;
+	m_xSceneViewPort.MinDepth = 0.0f;
+	m_xSceneViewPort.Height = wndSettins.Height;
+	m_xSceneViewPort.Width = wndSettins.Width;
+	m_xSceneViewPort.TopLeftX = 0;
+	m_xSceneViewPort.TopLeftY = 0;
 
-	sceneRect.left = 0;
-	sceneRect.right = wndSettins.width; //wndSettins.dlssWidth
-	sceneRect.top = 0;
-	sceneRect.bottom = wndSettins.height; //wndSettins.dlssHeight;
+	m_xSceneRect.left = 0;
+	m_xSceneRect.right = wndSettins.Width;
+	m_xSceneRect.top = 0;
+	m_xSceneRect.bottom = wndSettins.Height;
 
-	DXGI_FORMAT rtvFormats[]{ rtv->GetRTVDesc().Format };
-	pso = CreatePSO(pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), (UINT)scenelayoutDesc.size(),
+	DXGI_FORMAT rtvFormats[]{ m_pRTV->GetRTVDesc().Format };
+	m_pPSO = CreatePSO(m_pRootSignnatureRender->GetRootSignature(), scenelayoutDesc.data(), (UINT)scenelayoutDesc.size(),
 		_countof(rtvFormats), rtvFormats, DXGI_FORMAT_D24_UNORM_S8_UINT, UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
 		pVSByteCode.Get(), pPSByteCode.Get(), nullptr, nullptr, nullptr, rasterizerDesc);
 
 
-	screen = CreateRectangle(true, pcml);
+	m_pScreen = CreateRectangle(true, m_pPCML);
 
 	wrl::ComPtr<ID3DBlob> pVSByteCode1;
 	wrl::ComPtr<ID3DBlob> pPSByteCode1;
@@ -144,7 +137,7 @@ void myRender::UserInit()
 	CD3DX12_ROOT_PARAMETER slotRootParameter1[2];
 	slotRootParameter1[0].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0)));
 	slotRootParameter1[1].InitAsDescriptorTable(1, &FD3DW::keep(CD3DX12_DESCRIPTOR_RANGE(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0)));
-	rootScreen = CreateRootSignature(slotRootParameter1, _countof(slotRootParameter1));
+	m_pRootScreen = CreateRootSignature(slotRootParameter1, _countof(slotRootParameter1));
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> ScreenlayoutDesc =
 	{
@@ -156,7 +149,7 @@ void myRender::UserInit()
 	};
 
 	DXGI_FORMAT rtvFormats1[]{ GetMainRTVFormat() };
-	psoScreen = CreatePSO(rootScreen->GetRootSignature(), ScreenlayoutDesc.data(), (UINT)ScreenlayoutDesc.size(),
+	m_pPSOScreen = CreatePSO(m_pRootScreen->GetRootSignature(), ScreenlayoutDesc.data(), (UINT)ScreenlayoutDesc.size(),
 		_countof(rtvFormats1), rtvFormats1, DXGI_FORMAT_D24_UNORM_S8_UINT, UINT_MAX, D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE,
 		pVSByteCode1.Get(), pPSByteCode1.Get(), nullptr, nullptr, nullptr, rasterizerDesc);
 
@@ -168,94 +161,94 @@ void myRender::UserInit()
 
 void myRender::UserLoop()
 {
-	//music->Play();
+	//m_pMusic->Play();
 
-	pCommandList->ResetList();
+	m_pCommandList->ResetList();
 	
 
 
-	at = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
-		dx::XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0))), eye);
+	m_xAt = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
+		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), m_xEye);
 
-	up = dx::XMVector3Normalize(dx::XMVector3TransformCoord(startUp, dx::XMMatrixRotationRollPitchYaw(0, 0, camRoll)));
-	view = dx::XMMatrixLookAtLH(eye, at, up);
-	world = dx::XMMatrixIdentity();
+	m_xUp = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
+	m_xView = dx::XMMatrixLookAtLH(m_xEye, m_xAt, m_xUp);
+	m_xWorld = dx::XMMatrixIdentity();
 
-	auto resultVector = bird->PlayAnimation(timer->GetTime(), "Take 001");
-	structureBufferBones->UploadData(GetDevice(), pcml, resultVector.data());
+	auto resultVector = m_pBird->PlayAnimation(m_pTimer->GetTime(), "Take 001");
+	m_pStructureBufferBones->UploadData(GetDevice(), m_pPCML, resultVector.data());
 
 	FD3DW::MatricesConstantBufferStructureFrameWork cmb;
-	cmb.projection = dx::XMMatrixTranspose(GetMainProjectionMatrix());
-	cmb.view = dx::XMMatrixTranspose(view);
-	cmb.world = dx::XMMatrixTranspose(world);
-	pMatricesBuffer->CpyData(0, cmb);
+	cmb.Projection = dx::XMMatrixTranspose(GetMainProjectionMatrix());
+	cmb.View = dx::XMMatrixTranspose(m_xView);
+	cmb.World = dx::XMMatrixTranspose(m_xWorld);
+	m_pMatricesBuffer->CpyData(0, cmb);
 
-	pcml->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
 	//			SCENE RTV DRAW
-	rtv->StartDraw(pcml);
+	m_pRTV->StartDraw(m_pPCML);
 
 
-	pcml->RSSetScissorRects(1, &sceneRect);
-	pcml->RSSetViewports(1, &sceneViewPort);
+	m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+	m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
-	pcml->ClearDepthStencilView(dsvPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	pcml->ClearRenderTargetView(rtvPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(1, &FD3DW::keep(rtvPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(dsvPack->GetResult()->GetCPUDescriptorHandle(0)));
+	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
-	pcml->SetPipelineState(pso->GetPSO());
-	pcml->SetGraphicsRootSignature(pRootSignnatureRender->GetRootSignature());
+	m_pPCML->SetPipelineState(m_pPSO->GetPSO());
+	m_pPCML->SetGraphicsRootSignature(m_pRootSignnatureRender->GetRootSignature());
 
-	pcml->SetGraphicsRootConstantBufferView(0, pMatricesBuffer->GetGPULocation(0));
-	pcml->SetGraphicsRootShaderResourceView(3, structureBufferBones->GetResource()->GetGPUVirtualAddress());
+	m_pPCML->SetGraphicsRootConstantBufferView(0, m_pMatricesBuffer->GetGPULocation(0));
+	m_pPCML->SetGraphicsRootShaderResourceView(3, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
 
-	pcml->IASetVertexBuffers(0, 1, bird->GetVertexBufferView());
-	pcml->IASetIndexBuffer(bird->GetIndexBufferView());
-	for (size_t ind = 0; ind < bird->GetObjectBuffersCount(); ind++)
+	m_pPCML->IASetVertexBuffers(0, 1, m_pBird->GetVertexBufferView());
+	m_pPCML->IASetIndexBuffer(m_pBird->GetIndexBufferView());
+	for (size_t ind = 0; ind < m_pBird->GetObjectBuffersCount(); ind++)
 	{
-		ID3D12DescriptorHeap* heaps[] = { srvPacks[GetMaterialIndex(bird.get(), ind)]->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
-		pcml->SetDescriptorHeaps(_countof(heaps), heaps);
-		pcml->SetGraphicsRootDescriptorTable(1, srvPacks[GetMaterialIndex(bird.get(), ind)]->GetResult()->GetGPUDescriptorHandle(0));
-		pcml->SetGraphicsRootDescriptorTable(2, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
+		ID3D12DescriptorHeap* heaps[] = { m_vSRVPacks[GetMaterialIndex(m_pBird.get(), ind)]->GetResult()->GetDescriptorPtr(), m_pSamplerPack->GetResult()->GetDescriptorPtr() };
+		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
+		m_pPCML->SetGraphicsRootDescriptorTable(1, m_vSRVPacks[GetMaterialIndex(m_pBird.get(), ind)]->GetResult()->GetGPUDescriptorHandle(0));
+		m_pPCML->SetGraphicsRootDescriptorTable(2, m_pSamplerPack->GetResult()->GetGPUDescriptorHandle(0));
 		
-		pcml->DrawIndexedInstanced(GetIndexSize(bird.get(), ind), 1, GetIndexStartPos(bird.get(), ind), GetVertexStartPos(bird.get(), ind), 0);
+		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pBird.get(), ind), 1, GetIndexStartPos(m_pBird.get(), ind), GetVertexStartPos(m_pBird.get(), ind), 0);
 	}
 
-	rtv->EndDraw(pcml);
+	m_pRTV->EndDraw(m_pPCML);
 
 	ExecuteMainQueue();
-	pCommandList->ResetList();
+	m_pCommandList->ResetList();
 
-	rtv->GetTexture()->GreyColorEffect(GetDevice());
+	///m_pRTV->GetTexture()->InverseEffect(GetDevice());
 	///
 	///////////////////////////
 	
 	//////////////////////////
 	//			MAIN RTV
 
-	BeginDraw(pcml);
-	BindMainViewPort(pcml);
-	BindMainRect(pcml);
+	BeginDraw(m_pPCML);
+	BindMainViewPort(m_pPCML);
+	BindMainRect(m_pPCML);
 
-	pcml->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-	pcml->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
+	m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
+	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
 
-	pcml->SetPipelineState(psoScreen->GetPSO());
-	pcml->SetGraphicsRootSignature(rootScreen->GetRootSignature());
+	m_pPCML->SetPipelineState(m_pPSOScreen->GetPSO());
+	m_pPCML->SetGraphicsRootSignature(m_pRootScreen->GetRootSignature());
 
-	pcml->IASetVertexBuffers(0, 1, screen->GetVertexBufferView());
-	pcml->IASetIndexBuffer(screen->GetIndexBufferView());
+	m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+	m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
 	
-	ID3D12DescriptorHeap* heaps[] = { rtvSrvPack->GetResult()->GetDescriptorPtr(), samplerPack->GetResult()->GetDescriptorPtr() };
-	pcml->SetDescriptorHeaps(_countof(heaps), heaps);
+	ID3D12DescriptorHeap* heaps[] = { m_pRTV_SRVPack->GetResult()->GetDescriptorPtr(), m_pSamplerPack->GetResult()->GetDescriptorPtr() };
+	m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
 
-	pcml->SetGraphicsRootDescriptorTable(0, rtvSrvPack->GetResult()->GetGPUDescriptorHandle(0));
-	pcml->SetGraphicsRootDescriptorTable(1, samplerPack->GetResult()->GetGPUDescriptorHandle(0));
+	m_pPCML->SetGraphicsRootDescriptorTable(0, m_pRTV_SRVPack->GetResult()->GetGPUDescriptorHandle(0));
+	m_pPCML->SetGraphicsRootDescriptorTable(1, m_pSamplerPack->GetResult()->GetGPUDescriptorHandle(0));
 
-	pcml->DrawIndexedInstanced(GetIndexSize(screen.get(), 0), 1, GetIndexStartPos(screen.get(), 0), GetVertexStartPos(screen.get(), 0), 0);
+	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
-	EndDraw(pcml);
+	EndDraw(m_pPCML);
 }
 
 void myRender::UserClose()
@@ -264,8 +257,8 @@ void myRender::UserClose()
 
 void myRender::UserMouseDown(WPARAM btnState, int x, int y)
 {
-	mLastMousePos.x = x;
-	mLastMousePos.y = y;
+	m_xLastMousePos.x = x;
+	m_xLastMousePos.y = y;
 }
 
 void myRender::UserMouseUp(WPARAM btnState, int x, int y)
@@ -274,49 +267,49 @@ void myRender::UserMouseUp(WPARAM btnState, int x, int y)
 
 void myRender::UserMouseMoved(WPARAM btnState, int x, int y)
 {
-	if ((btnState & MK_LBUTTON) != 0 && ((x != mLastMousePos.x) || (y != mLastMousePos.y)))
+	if ((btnState & MK_LBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
 	{
-		camYaw += (mLastMousePos.x - x) * 0.002f;
-		camPitch += (mLastMousePos.y - y) * 0.002f;
+		m_fCamYaw += (m_xLastMousePos.x - x) * 0.002f;
+		m_fCamPitch += (m_xLastMousePos.y - y) * 0.002f;
 	}
-	if ((btnState & MK_RBUTTON) != 0 && ((x != mLastMousePos.x) || (y != mLastMousePos.y)))
+	if ((btnState & MK_RBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
 	{
-		camRoll += (mLastMousePos.x - x) * 0.002f;
+		m_fCamRoll += (m_xLastMousePos.x - x) * 0.002f;
 	}
-	mLastMousePos.x = x;
-	mLastMousePos.y = y;
+	m_xLastMousePos.x = x;
+	m_xLastMousePos.y = y;
 }
 
 void myRender::UserKeyPressed(WPARAM wParam)
 {
-	dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(at, eye));
-	dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(up, cameraDirection));
+	dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(m_xAt, m_xEye));
+	dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, cameraDirection));
 	
 	if (wParam == 'W')
 	{
-		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
 	}
 	if (wParam == 'S')
 	{
-		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
 	}
 	if (wParam == 'D')
 	{
-		eye = dx::XMVectorAdd(eye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
 	}
 	if (wParam == 'A')
 	{
-		eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
 	}
 
 	if (wParam == 'R')
 	{
-		camRoll = 0.0f;
+		m_fCamRoll = 0.0f;
 	}
 }
 
 void myRender::UserResizeUpdate()
 {
-	//OnResizeDLSS(pCommandList.get());
+	//OnResizeDLSS(m_pCommandList.get());
 }
  

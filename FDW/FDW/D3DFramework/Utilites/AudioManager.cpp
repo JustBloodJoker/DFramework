@@ -1,16 +1,16 @@
 #include "../pch.h"
-#include "AudioMananger.h"
+#include "AudioManager.h"
 
 namespace FD3DW
 {
 
 
-	AudioMananger::AudioMananger()
+	AudioManager::AudioManager()
 	{
 		InitXAudio();
 	}
 
-    Audio* AudioMananger::CreateAudio(const std::wstring& path)
+    Audio* AudioManager::CreateAudio(const std::wstring& path)
     {
         HANDLE hFile = CreateFile(
             path.c_str(),
@@ -53,26 +53,26 @@ namespace FD3DW
         buffer.pAudioData = pDataBuffer;
         buffer.Flags = XAUDIO2_END_OF_STREAM;
 
-        HRESULT_ASSERT(pAudio->CreateSourceVoice(&sourceVoice, (WAVEFORMATEX*)&wfx), "Create Source Voice error");
+        HRESULT_ASSERT(m_pAudio->CreateSourceVoice(&sourceVoice, (WAVEFORMATEX*)&wfx), "Create Source Voice error");
         HRESULT_ASSERT(sourceVoice->SubmitSourceBuffer(&buffer), "Submit buffer error");
 
         return new Audio(sourceVoice);
     }
 
-	void AudioMananger::InitXAudio()
+	void AudioManager::InitXAudio()
 	{
 		HRESULT_ASSERT(CoInitializeEx(NULL, COINITBASE_MULTITHREADED), "Com init error");
 
 		IXAudio2* tempAudio;
 		HRESULT_ASSERT(XAudio2Create(&tempAudio, 0, XAUDIO2_DEFAULT_PROCESSOR), "XAudio2 create error");
-		pAudio = std::unique_ptr<IXAudio2>(tempAudio);
+        m_pAudio = std::unique_ptr<IXAudio2>(tempAudio);
 
 		IXAudio2MasteringVoice* tempMasteringVoice;
-		HRESULT_ASSERT(pAudio->CreateMasteringVoice(&tempMasteringVoice, XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_MAX_SAMPLE_RATE), "MasteringVoice create error");
-		pMasterVoice = std::unique_ptr<IXAudio2MasteringVoice>(tempMasteringVoice);
+		HRESULT_ASSERT(m_pAudio->CreateMasteringVoice(&tempMasteringVoice, XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_MAX_SAMPLE_RATE), "MasteringVoice create error");
+        m_pMasterVoice = std::unique_ptr<IXAudio2MasteringVoice>(tempMasteringVoice);
 	}
 
-	HRESULT FD3DW::AudioMananger::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
+	HRESULT FD3DW::AudioManager::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
 	{
         hr = S_OK;
         if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
@@ -125,7 +125,7 @@ namespace FD3DW
 
         return S_OK;
 	}
-	HRESULT AudioMananger::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
+	HRESULT AudioManager::ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
 	{
         HRESULT hr = S_OK;
         if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))

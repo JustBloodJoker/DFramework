@@ -1,7 +1,7 @@
 #pragma once
 #include "../pch.h"
 
-#include "../GraphicUtilites/BufferMananger.h"
+#include "../GraphicUtilites/BufferManager.h"
 #include "../GraphicUtilites/PostProcessing.h"
 
 
@@ -28,7 +28,7 @@ namespace FD3DW
 	class FResource : virtual public PostProcessing, virtual public std::enable_shared_from_this<FResource>
 	{
 
-		static std::unordered_map<std::string, std::weak_ptr<FResource>> textures;
+		static std::unordered_map<std::string, std::weak_ptr<FResource>> s_vTextures;
 		
 	public:
 				
@@ -72,12 +72,12 @@ namespace FD3DW
 			const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 			const UINT16 mipLevels = 1);
 		
-		D3D12_RESOURCE_STATES currState;
+		D3D12_RESOURCE_STATES m_xCurrState;
 
-		wrl::ComPtr<ID3D12Resource> pResource;
-		std::unique_ptr<UploadBuffer<char>> upBuffer;
+		wrl::ComPtr<ID3D12Resource> m_pResource;
+		std::unique_ptr<UploadBuffer<char>> m_pUploadBuffer;
 
-		std::string Path;
+		std::string m_sPath;
 	};
 
 }

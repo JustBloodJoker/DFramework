@@ -16,8 +16,8 @@ namespace FD3DW
 		
 	protected:
 
-		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::VertexFrameWork>> pVertexUploadBuffer;
-		std::unique_ptr<FD3DW::UploadBuffer<std::uint16_t>> pIndexUploadBuffer;
+		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::VertexFrameWork>> m_pVertexUploadBuffer;
+		std::unique_ptr<FD3DW::UploadBuffer<std::uint16_t>> m_pIndexUploadBuffer;
 	};
 
 

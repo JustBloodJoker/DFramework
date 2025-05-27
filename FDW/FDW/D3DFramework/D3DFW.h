@@ -12,7 +12,7 @@
 #include "Objects/SimpleObjects.h"
 #include "Objects/Scene.h"
 
-#include "GraphicUtilites/BufferMananger.h"
+#include "GraphicUtilites/BufferManager.h"
 #include "GraphicUtilites/Shader.h"
 #include "GraphicUtilites/CommandQueue.h"
 #include "GraphicUtilites/FResource.h"
@@ -23,7 +23,7 @@
 #include "GraphicUtilites/DepthStencilView.h"
 #include "GraphicUtilites/InputLayout.h"
 
-#include "Utilites/AudioMananger.h"
+#include "Utilites/AudioManager.h"
 
 namespace FD3DW
 {
@@ -47,17 +47,6 @@ namespace FD3DW
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
 
-
-	protected:
-		
-		///////////////////
-		//		IN PROGRESS (NOT WORKING NOW!!!!)
-		bool InitNGX(CommandList* pCommandList);   // for DLSS
-		
-		// use this on resizing window IN PROGRESS (NOT WORKING NOW!!!!)
-		void OnResizeDLSS(CommandList* pCommandList); // for DLSS
-
-
 	private:  //METHODS
 
 		////////////////////////////
@@ -79,46 +68,38 @@ namespace FD3DW
 
 	private:
 
-		std::unique_ptr<AudioMananger> pAudioMananger;
+		std::unique_ptr<AudioManager> m_pAudioMananger;
 
 		// WINDOW
-		dx::XMMATRIX mainProjectionMatrix;
-		D3D12_VIEWPORT mainVP;
-		D3D12_RECT mainRect;
+		dx::XMMATRIX m_xMainProjectionMatrix;
+		D3D12_VIEWPORT m_xMainVP;
+		D3D12_RECT m_xMainRect;
 
 		//D3D12
 
-		wrl::ComPtr<ID3D12Device> pDevice;
-		wrl::ComPtr<IDXGIFactory4> pFactory;
-		wrl::ComPtr<IDXGISwapChain> pSwapChain;
-		wrl::ComPtr<ID3D12DescriptorHeap> pRTVDescriptorHeap;
-		wrl::ComPtr<ID3D12Resource> pSwapChainRTV[BUFFERS_COUNT];
+		wrl::ComPtr<ID3D12Device> m_pDevice;
+		wrl::ComPtr<IDXGIFactory4> m_pFactory;
+		wrl::ComPtr<IDXGISwapChain> m_pSwapChain;
+		wrl::ComPtr<ID3D12DescriptorHeap> m_pRTVDescriptorHeap;
+		wrl::ComPtr<ID3D12Resource> m_aSwapChainRTV[BUFFERS_COUNT];
 
-		std::unique_ptr<CommandQueue> pCommandQueue;
+		std::unique_ptr<CommandQueue> m_pCommandQueue;
 
-		bool vSync = false;
+		bool m_bVSync = false;
 
-		//NGX
-
-		NVSDK_NGX_Parameter* pNGXParams;
-		NVSDK_NGX_Handle* pNGXHandle;
-		NVSDK_NGX_PerfQuality_Value value = NVSDK_NGX_PerfQuality_Value_MaxPerf;
 		//////////////////////////
 
-		
-		//////////////////////////
-
-		UINT currentBackBufferIndex;
+		UINT m_uCurrentBackBufferIndex;
 
 		//////////////////////////
 		
 
-		UINT rtvDescriptorSize;
-		UINT dsvDescriptorSize;
-		UINT cbvsrvuavDescriptorSize;
+		UINT m_uRTVDescriptorSize;
+		UINT m_uDSVDescriptorSize;
+		UINT m_uCBV_SRV_UAVDescriptorSize;
 
-		UINT SampleCount;
-		UINT Quality;
+		UINT m_uSampleCount;
+		UINT m_uQuality;
 
 	protected:
 
@@ -133,14 +114,7 @@ namespace FD3DW
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
 		ID3D12Resource*			    GetCurrBackBufferResource()			const noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
-		AudioMananger*				GetAudioMananger()					const noexcept;
-
-		//////////////////
-		//		DLSS
-		NVSDK_NGX_Parameter*		GetNGXParameter()					const noexcept;
-		NVSDK_NGX_Handle*			GetNGXHandle()						const noexcept;
-		NVSDK_NGX_PerfQuality_Value	GetDLSSQualityValue()				const noexcept;
-		//////////////////
+		AudioManager*				GetAudioMananger()					const noexcept;
 
 		void				PresentSwapchain();
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
@@ -151,8 +125,6 @@ namespace FD3DW
 		void				UnbindListFromMainQueue(CommandList* pCommandList);
 		void				ExecuteMainQueue();
 		void				SetVSync(bool enable);
-		//IN PROGRESS (NOT WORKING NOW!!!!)
-		void				SetDLSS(UINT SamplesCount);
 		
 
 		////////////////////////////////////
@@ -230,7 +202,7 @@ namespace FD3DW
 		inline std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t&& elementCount)
 		{
 			CONSOLE_MESSAGE("D3DFW is creating Constant Buffer");
-			return std::make_unique<UploadBuffer<T>>(pDevice.Get(), std::forward<decltype(elementCount)>(elementCount), true);
+			return std::make_unique<UploadBuffer<T>>(m_pDevice.Get(), std::forward<decltype(elementCount)>(elementCount), true);
 		}
 
 

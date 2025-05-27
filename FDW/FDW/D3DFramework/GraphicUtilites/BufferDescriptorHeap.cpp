@@ -6,7 +6,7 @@ namespace FD3DW
 {
 
 
-	BufferDescriptorHeap::BufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice) : descriptorSize(descriptorSize), descriptorsCount(descriptorsCount)
+	BufferDescriptorHeap::BufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice) : m_uDescriptorSize(descriptorSize), m_uDescriptorsCount(descriptorsCount)
 	{
 		D3D12_DESCRIPTOR_HEAP_DESC heapDesc;
 		heapDesc.NumDescriptors = descriptorsCount;
@@ -14,25 +14,25 @@ namespace FD3DW
 		heapDesc.Flags = flags;
 		heapDesc.NodeMask = NodeMask;
 
-		HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(pDescriptorHeap.GetAddressOf())), "Create descriptor heap error");
+		HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(m_pDescriptorHeap.GetAddressOf())), "Create descriptor heap error");
 	}
 
 	ID3D12DescriptorHeap* FD3DW::BufferDescriptorHeap::GetDescriptorPtr() const noexcept
 	{
-		return pDescriptorHeap.Get();
+		return m_pDescriptorHeap.Get();
 	}
 
 	D3D12_GPU_DESCRIPTOR_HANDLE BufferDescriptorHeap::GetGPUDescriptorHandle(UINT offset) const noexcept
 	{
-		CD3DX12_GPU_DESCRIPTOR_HANDLE pdhHandle(pDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-		pdhHandle.Offset(offset < descriptorsCount ? offset :  0, descriptorSize);
+		CD3DX12_GPU_DESCRIPTOR_HANDLE pdhHandle(m_pDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+		pdhHandle.Offset(offset < m_uDescriptorsCount ? offset :  0, m_uDescriptorSize);
 		return pdhHandle;
 	}
 
 	D3D12_CPU_DESCRIPTOR_HANDLE BufferDescriptorHeap::GetCPUDescriptorHandle(UINT offset) const noexcept
 	{
-		CD3DX12_CPU_DESCRIPTOR_HANDLE pdhHandle(pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-		pdhHandle.Offset(offset < descriptorsCount ? offset : 0, descriptorSize);
+		CD3DX12_CPU_DESCRIPTOR_HANDLE pdhHandle(m_pDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		pdhHandle.Offset(offset < m_uDescriptorsCount ? offset : 0, m_uDescriptorSize);
 		return pdhHandle;
 	}
 

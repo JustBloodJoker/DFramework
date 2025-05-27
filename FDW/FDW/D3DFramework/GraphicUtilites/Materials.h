@@ -11,10 +11,10 @@ namespace FD3DW
 		{
 			ZeroMemory(this, sizeof(MaterialFrameWork));
 		}
-		dx::XMFLOAT4 diffuse;
-		dx::XMFLOAT4 ambient;
-		dx::XMFLOAT4 emissive;
-		dx::XMFLOAT4 specular;
+		dx::XMFLOAT4 Diffuse;
+		dx::XMFLOAT4 Ambient;
+		dx::XMFLOAT4 Emissive;
+		dx::XMFLOAT4 Specular;
 	};
 
 	class Material
@@ -33,7 +33,7 @@ namespace FD3DW
 		template<typename MaterialFW>
 		void SetMaterialDesc(MaterialFW&& matdesc)
 		{
-			material = std::forward<decltype(matdesc)>(matdesc);
+			m_xMaterial = std::forward<decltype(matdesc)>(matdesc);
 		}
 
 		void SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
@@ -42,8 +42,8 @@ namespace FD3DW
 
 	private:
 
-		MaterialFrameWork material;
-		std::unordered_map<TextureType, std::shared_ptr<FResource>> textureMap;
+		MaterialFrameWork m_xMaterial;
+		std::unordered_map<TextureType, std::shared_ptr<FResource>> m_mTextureMap;
 
 
 	};

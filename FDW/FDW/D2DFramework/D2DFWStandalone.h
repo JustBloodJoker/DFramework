@@ -36,7 +36,7 @@ namespace FD2DW
 		///////////////////////////
 		void EndDrawMainRenderTarget();
 		///////////////////////////
-	
+		
 
 	private:
 		virtual bool ChildInit() override;
@@ -51,11 +51,11 @@ namespace FD2DW
 		virtual void ChildMOUSEDOWN(WPARAM btnState, int x, int y) override;
 
 	private:
-		wrl::ComPtr<ID2D1Factory> pFactory;
-		wrl::ComPtr<ID2D1HwndRenderTarget> pRenderTarget;
-		wrl::ComPtr<ID2D1SolidColorBrush> pBrush;
+		wrl::ComPtr<ID2D1Factory> m_pFactory;
+		wrl::ComPtr<ID2D1HwndRenderTarget> m_pRenderTarget;
+		wrl::ComPtr<ID2D1SolidColorBrush> m_pBrush;
 
-		RECT mainRect;
+		RECT m_xMainRect;
 	};
 
 }

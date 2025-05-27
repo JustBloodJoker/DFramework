@@ -5,17 +5,17 @@
 namespace FD3DW {
 
 
-	PostProcessing::PostProcessing(ID3D12Resource* texture) : pTexture(texture) {}
+	PostProcessing::PostProcessing(ID3D12Resource* texture) : m_pTexture(texture) {}
 
 	void PostProcessing::InverseEffect(ID3D12Device* device, bool deleteAfter)
 	{
 		TextureCheckAssert();
 
-		InverseTexture(pTexture, device);
+		InverseTexture(m_pTexture, device);
 
 		if (deleteAfter)
 		{
-			ClearFromMap(pTexture);
+			ClearFromMap(m_pTexture);
 		}
 	}
 
@@ -23,11 +23,11 @@ namespace FD3DW {
 	{
 		TextureCheckAssert();
 
-		GreyEffect(pTexture, device);
+		GreyEffect(m_pTexture, device);
 
 		if (deleteAfter)
 		{
-			ClearFromMap(pTexture);
+			ClearFromMap(m_pTexture);
 		}
 	}
 
@@ -35,11 +35,11 @@ namespace FD3DW {
 	{
 		TextureCheckAssert();
 
-		SharpnessEffect(pTexture, device);
+		SharpnessEffect(m_pTexture, device);
 
 		if (deleteAfter)
 		{
-			ClearFromMap(pTexture);
+			ClearFromMap(m_pTexture);
 		}
 	}
 
@@ -47,22 +47,22 @@ namespace FD3DW {
 	{
 		TextureCheckAssert();
 
-		BlurEffect(pTexture, device);
+		BlurEffect(m_pTexture, device);
 
 		if (deleteAfter)
 		{
-			ClearFromMap(pTexture);
+			ClearFromMap(m_pTexture);
 		}
 	}
 
 	void PostProcessing::SetResource(ID3D12Resource* texture)
 	{
-		pTexture = texture;
+		m_pTexture = texture;
 	}
 
 	void PostProcessing::TextureCheckAssert()
 	{
-		if (!pTexture)
+		if (!m_pTexture)
 		{
 			CONSOLE_ERROR_MESSAGE("NOT HAVE TEXTURE TO USE POST PROCESSING!");
 			SAFE_ASSERT(true, "NOT HAVE TEXTURE TO USE POST PROCESSING!");

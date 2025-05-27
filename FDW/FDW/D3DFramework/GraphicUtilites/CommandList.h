@@ -33,8 +33,8 @@ namespace FD3DW
 
 	private:
 
-		wrl::ComPtr<ID3D12GraphicsCommandList> pCommandList;
-		wrl::ComPtr<ID3D12CommandAllocator> pListAllocator;
+		wrl::ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+		wrl::ComPtr<ID3D12CommandAllocator> m_pListAllocator;
 
 	};
 

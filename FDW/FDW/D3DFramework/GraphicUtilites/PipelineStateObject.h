@@ -42,8 +42,8 @@ namespace FD3DW
 	private:
 
 
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-		wrl::ComPtr<ID3D12PipelineState> pPSO;
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC m_xPSODesc;
+		wrl::ComPtr<ID3D12PipelineState> m_pPSO;
 
 	};
 
@@ -66,8 +66,8 @@ namespace FD3DW
 
 	private:
 
-		D3D12_COMPUTE_PIPELINE_STATE_DESC cPsoDesc;
-		wrl::ComPtr<ID3D12PipelineState> pPSO;
+		D3D12_COMPUTE_PIPELINE_STATE_DESC m_xPSODesc;
+		wrl::ComPtr<ID3D12PipelineState> m_pPSO;
 
 	};
 

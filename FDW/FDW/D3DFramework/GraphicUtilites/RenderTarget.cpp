@@ -13,36 +13,36 @@ namespace FD3DW
 	{
         CONSOLE_MESSAGE(std::string("INITING CUSTOM RTV DESC"));
 
-		ZeroMemory(&rtvDesc, sizeof(rtvDesc));
+		ZeroMemory(&m_xRTVDesc, sizeof(m_xRTVDesc));
 
-		rtvDesc.Format = format;
-		rtvDesc.ViewDimension = dimension;
+		m_xRTVDesc.Format = format;
+		m_xRTVDesc.ViewDimension = dimension;
 
         D3D12_RESOURCE_DIMENSION textureDimension;
 
         switch (dimension)
         {
         case D3D12_RTV_DIMENSION_TEXTURE1D:
-            rtvDesc.Texture1D.MipSlice = 0;
+            m_xRTVDesc.Texture1D.MipSlice = 0;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_RTV_DIMENSION_TEXTURE1DARRAY:
-            rtvDesc.Texture1DArray.MipSlice = 0;
-            rtvDesc.Texture1DArray.FirstArraySlice = 0;
-            rtvDesc.Texture1DArray.ArraySize = arrSize;
+            m_xRTVDesc.Texture1DArray.MipSlice = 0;
+            m_xRTVDesc.Texture1DArray.FirstArraySlice = 0;
+            m_xRTVDesc.Texture1DArray.ArraySize = arrSize;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_RTV_DIMENSION_TEXTURE2D:
             if (sampleDesc.Count == 1)
             {
-                rtvDesc.Texture2D.MipSlice = 0;
-                rtvDesc.Texture2D.PlaneSlice = 0;
+                m_xRTVDesc.Texture2D.MipSlice = 0;
+                m_xRTVDesc.Texture2D.PlaneSlice = 0;
                 textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
-            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
+            m_xRTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS;
 
         case D3D12_RTV_DIMENSION_TEXTURE2DMS:
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -51,25 +51,25 @@ namespace FD3DW
         case D3D12_RTV_DIMENSION_TEXTURE2DARRAY:
             if (sampleDesc.Count == 1)
             {
-                rtvDesc.Texture2DArray.MipSlice = 0;
-                rtvDesc.Texture2DArray.PlaneSlice = 0;
-                rtvDesc.Texture2DArray.FirstArraySlice = 0;
-                rtvDesc.Texture2DArray.ArraySize = arrSize;
+                m_xRTVDesc.Texture2DArray.MipSlice = 0;
+                m_xRTVDesc.Texture2DArray.PlaneSlice = 0;
+                m_xRTVDesc.Texture2DArray.FirstArraySlice = 0;
+                m_xRTVDesc.Texture2DArray.ArraySize = arrSize;
                 textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
-            rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
+            m_xRTVDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
 
         case D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY:
-            rtvDesc.Texture2DMSArray.FirstArraySlice = 0;
-            rtvDesc.Texture2DMSArray.ArraySize = arrSize;
+            m_xRTVDesc.Texture2DMSArray.FirstArraySlice = 0;
+            m_xRTVDesc.Texture2DMSArray.ArraySize = arrSize;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
 
         case D3D12_RTV_DIMENSION_TEXTURE3D:
-            rtvDesc.Texture3D.MipSlice = 0;
-            rtvDesc.Texture3D.FirstWSlice = 1;
-            rtvDesc.Texture3D.WSize = -1;
+            m_xRTVDesc.Texture3D.MipSlice = 0;
+            m_xRTVDesc.Texture3D.FirstWSlice = 1;
+            m_xRTVDesc.Texture3D.WSize = -1;
             textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
             break;
 
@@ -77,7 +77,7 @@ namespace FD3DW
             textureDimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
             break;
         }
-		rtvTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
+		m_pRTVTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
         
 	}
 
@@ -89,26 +89,26 @@ namespace FD3DW
 
 	ID3D12Resource* RenderTarget::GetRTVResource() const
 	{
-		return rtvTexture->GetResource();
+		return m_pRTVTexture->GetResource();
 	}
     
     FResource* RenderTarget::GetTexture() const
     {
-        return rtvTexture.get();
+        return m_pRTVTexture.get();
     }
 
 	D3D12_RENDER_TARGET_VIEW_DESC RenderTarget::GetRTVDesc() const
 	{
-		return rtvDesc;
+		return m_xRTVDesc;
 	}
     
     void RenderTarget::StartDraw(ID3D12GraphicsCommandList* pCommandList)
     {
-        rtvTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        m_pRTVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_RENDER_TARGET);
     }
 
     void RenderTarget::EndDraw(ID3D12GraphicsCommandList* pCommandList)
     {
-        rtvTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        m_pRTVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 }

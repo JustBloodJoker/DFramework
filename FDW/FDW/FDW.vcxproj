@@ -27,11 +27,8 @@
     <ClInclude Include="D2DFramework\Utilites\Structures.h" />
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
-    <ClInclude Include="D3DFramework\DB\DBCore.h" />
-    <ClInclude Include="D3DFramework\EasyD3DFW\EasyD3DFW.h" />
-    <ClInclude Include="D3DFramework\EasyD3DFW\EasyMacroses.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferMananger.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
@@ -44,13 +41,13 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h" />
-    <ClInclude Include="D3DFramework\Objects\MaterialsMananger.h" />
+    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
     <ClInclude Include="D3DFramework\Objects\Object.h" />
     <ClInclude Include="D3DFramework\Objects\Scene.h" />
     <ClInclude Include="D3DFramework\Objects\SimpleObjects.h" />
     <ClInclude Include="D3DFramework\pch.h" />
     <ClInclude Include="D3DFramework\Utilites\Audio.h" />
-    <ClInclude Include="D3DFramework\Utilites\AudioMananger.h" />
+    <ClInclude Include="D3DFramework\Utilites\AudioManager.h" />
     <ClInclude Include="D3DFramework\Utilites\Macroses.h" />
     <ClInclude Include="D3DFramework\Utilites\Structures.h" />
     <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h" />
@@ -68,10 +65,8 @@
     <ClCompile Include="D2DFramework\D2DFW.cpp" />
     <ClCompile Include="D2DFramework\D2DFWStandalone.cpp" />
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
-    <ClCompile Include="D3DFramework\DB\DBCore.cpp" />
-    <ClCompile Include="D3DFramework\EasyD3DFW\EasyD3DFW.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferMananger.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
@@ -83,13 +78,13 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp" />
-    <ClCompile Include="D3DFramework\Objects\MaterialsMananger.cpp" />
+    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
     <ClCompile Include="D3DFramework\Objects\Object.cpp" />
     <ClCompile Include="D3DFramework\Objects\Scene.cpp" />
     <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp" />
     <ClCompile Include="D3DFramework\pch.cpp" />
     <ClCompile Include="D3DFramework\Utilites\Audio.cpp" />
-    <ClCompile Include="D3DFramework\Utilites\AudioMananger.cpp" />
+    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
     <ClCompile Include="DFWCombine\D2DFWDXGI.cpp" />
     <ClCompile Include="DFWCombine\DFW.cpp" />
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
@@ -196,7 +191,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>..\include\DLSS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Verbose>true</Verbose>
     </Lib>
   </ItemDefinitionGroup>

@@ -20,10 +20,10 @@ namespace FD3DW
 
 	protected:
 
-		std::unique_ptr <BufferDescriptorHeap> descriptorHeap;
+		std::unique_ptr <BufferDescriptorHeap> m_pDescriptorHeap;
 
-		const size_t descriptorCount;
-		size_t currentIndex;
+		const size_t m_uDescriptorCount;
+		size_t m_uCurrentIndex;
 
 	private:
 

@@ -24,9 +24,9 @@ namespace FD3DW
 
 	private:
 
-		wrl::ComPtr<ID3D12DescriptorHeap> pDescriptorHeap;
-		UINT descriptorsCount;
-		UINT descriptorSize;
+		wrl::ComPtr<ID3D12DescriptorHeap> m_pDescriptorHeap;
+		UINT m_uDescriptorsCount;
+		UINT m_uDescriptorSize;
 
 	};
 

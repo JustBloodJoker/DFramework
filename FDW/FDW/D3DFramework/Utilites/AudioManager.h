@@ -5,13 +5,13 @@
 namespace FD3DW
 {
 
-	class AudioMananger // TO DO MP3 support 
+	class AudioManager // TO DO MP3 support 
 	{
 
 	public:
 
-		AudioMananger();
-		~AudioMananger()=default;
+		AudioManager();
+		~AudioManager()=default;
 
 		Audio* CreateAudio(const std::wstring& path);
 
@@ -19,8 +19,8 @@ namespace FD3DW
 
 		void InitXAudio();
 		
-		std::unique_ptr<IXAudio2> pAudio;
-		std::unique_ptr<IXAudio2MasteringVoice> pMasterVoice;
+		std::unique_ptr<IXAudio2> m_pAudio;
+		std::unique_ptr<IXAudio2MasteringVoice> m_pMasterVoice;
 
 	private:
 		//			WAV	CHUNKS

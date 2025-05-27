@@ -13,32 +13,32 @@ namespace FD3DW
 		queueDesc.NodeMask = nodeMask;
 		queueDesc.Type = type;
 		
-		HRESULT_ASSERT(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(pCommandQueue.ReleaseAndGetAddressOf())), "Command queue create error");
-		HRESULT_ASSERT(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(pFence.ReleaseAndGetAddressOf())), "Fence create error");
+		HRESULT_ASSERT(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_pCommandQueue.ReleaseAndGetAddressOf())), "Command queue create error");
+		HRESULT_ASSERT(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pFence.ReleaseAndGetAddressOf())), "Fence create error");
 	}
 
 	void CommandQueue::ExecuteQueue(bool synch)
 	{
 		
-		for (const auto& el : bindedLists)
+		for (const auto& el : m_vBindedLists)
 		{
 			el->TryCloseList();
-			executedlists.push_back(el->GetPtrCommandList());
+			m_vExecutedlists.push_back(el->GetPtrCommandList());
 		}
 
-		pCommandQueue->ExecuteCommandLists((UINT)executedlists.size(), executedlists.data());
+		m_pCommandQueue->ExecuteCommandLists((UINT)m_vExecutedlists.size(), m_vExecutedlists.data());
 
-		executedlists.clear();
+		m_vExecutedlists.clear();
 
 		synch ? FlushQueue() : (void)0 ;
 	}
 
 	void CommandQueue::BindCommandList(CommandList* pCommandList)
 	{
-		auto ptr = std::find(bindedLists.begin(), bindedLists.end(), pCommandList);
-		if (ptr == bindedLists.end())
+		auto ptr = std::find(m_vBindedLists.begin(), m_vBindedLists.end(), pCommandList);
+		if (ptr == m_vBindedLists.end())
 		{
-			bindedLists.push_back(pCommandList);
+			m_vBindedLists.push_back(pCommandList);
 			CONSOLE_MESSAGE("Command list is binding to Command Queue");
 		}
 		else
@@ -49,10 +49,10 @@ namespace FD3DW
 
 	void CommandQueue::UnbindCommandList(CommandList* pCommandList)
 	{
-		auto ptr = std::find(bindedLists.begin(), bindedLists.end(), pCommandList);
-		if (ptr != bindedLists.end())
+		auto ptr = std::find(m_vBindedLists.begin(), m_vBindedLists.end(), pCommandList);
+		if (ptr != m_vBindedLists.end())
 		{
-			bindedLists.erase(ptr);
+			m_vBindedLists.erase(ptr);
 			CONSOLE_MESSAGE("Command list is unbinding from Command Queue");
 		}
 		else
@@ -63,19 +63,19 @@ namespace FD3DW
 
 	ID3D12CommandQueue* CommandQueue::GetQueue() const
 	{
-		return pCommandQueue.Get();
+		return m_pCommandQueue.Get();
 	}
 
 	void CommandQueue::FlushQueue()
 	{
-		auto nextFence = pFence->GetCompletedValue() + 1;
-		HRESULT_ASSERT(pCommandQueue->Signal(pFence.Get(),
+		auto nextFence = m_pFence->GetCompletedValue() + 1;
+		HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(),
 			nextFence), "Fence signal error");
 
-		if (pFence->GetCompletedValue() < nextFence)
+		if (m_pFence->GetCompletedValue() < nextFence)
 		{
 			HANDLE eventHandle = CreateEventEx(nullptr, L"", false, EVENT_ALL_ACCESS);
-			HRESULT_ASSERT(pFence->SetEventOnCompletion(nextFence, eventHandle), "Fence set event error");
+			HRESULT_ASSERT(m_pFence->SetEventOnCompletion(nextFence, eventHandle), "Fence set event error");
 			WaitForSingleObject(eventHandle, INFINITE);
 			CloseHandle(eventHandle);
 		}

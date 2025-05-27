@@ -26,8 +26,8 @@ namespace FD3DW
 	private:
 
 		
-		std::vector<CD3DX12_ROOT_PARAMETER> slotRootParameters;
-		wrl::ComPtr<ID3D12RootSignature> pRootSignature;
+		std::vector<CD3DX12_ROOT_PARAMETER> m_vSlotRootParameters;
+		wrl::ComPtr<ID3D12RootSignature> m_pRootSignature;
 
 	};
 

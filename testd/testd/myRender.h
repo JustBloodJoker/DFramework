@@ -22,56 +22,50 @@ public:
 
 private:
 
-	std::unique_ptr<FD3DW::Audio> music;
+	std::unique_ptr<FD3DW::Audio> m_pMusic;
 	
 
 	/////////////////////////////////////
 	// 
-	std::unique_ptr<FD3DW::Scene> bird;
+	std::unique_ptr<FD3DW::Scene> m_pBird;
 
-	std::unique_ptr<FD3DW::RenderTarget> rtv;
-	std::unique_ptr<FD3DW::RTVPacker> rtvPack;
-	std::unique_ptr<FD3DW::SRVPacker> rtvSrvPack;
+	std::unique_ptr<FD3DW::RenderTarget> m_pRTV;
+	std::unique_ptr<FD3DW::RTVPacker> m_pRTVPack;
+	std::unique_ptr<FD3DW::SRVPacker> m_pRTV_SRVPack;
 
-	std::unique_ptr<FD3DW::DepthStencilView> dsv;
-	std::unique_ptr<FD3DW::DSVPacker> dsvPack;
+	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
+	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
-	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> pMatricesBuffer;
-	dx::XMMATRIX view;
-	dx::XMMATRIX world;
+	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> m_pMatricesBuffer;
+	dx::XMMATRIX m_xView;
+	dx::XMMATRIX m_xWorld;
 
-	////////////
-	// DLSS / AA
-	
-	D3D12_VIEWPORT sceneViewPort;
-	D3D12_RECT sceneRect;
+	D3D12_VIEWPORT m_xSceneViewPort;
+	D3D12_RECT m_xSceneRect;
 
-	std::unique_ptr<FD3DW::Rectangle> screen;
-	std::unique_ptr<FD3DW::RootSingature> rootScreen;
-	std::unique_ptr<FD3DW::PipelineStateObject> psoScreen;
+	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
+	std::unique_ptr<FD3DW::RootSingature> m_pRootScreen;
+	std::unique_ptr<FD3DW::PipelineStateObject> m_pPSOScreen;
 
-	//
-	////////////
+	float m_fCamYaw;
+	float m_fCamPitch;
+	float m_fCamRoll;
+	POINT m_xLastMousePos;
+	dx::XMVECTOR m_xEye;
+	dx::XMVECTOR m_xUp;
+	dx::XMVECTOR m_xStartUp;
+	dx::XMVECTOR m_xAt;
 
-	float camYaw;
-	float camPitch;
-	float camRoll;
-	POINT mLastMousePos;
-	dx::XMVECTOR eye;
-	dx::XMVECTOR up;
-	dx::XMVECTOR startUp;
-	dx::XMVECTOR at;
+	std::unique_ptr<FD3DW::PipelineStateObject> m_pPSO;
+	std::unique_ptr<FD3DW::RootSingature> m_pRootSignnatureRender;
 
-	std::unique_ptr<FD3DW::PipelineStateObject> pso;
-	std::unique_ptr<FD3DW::RootSingature> pRootSignnatureRender;
+	std::unique_ptr<FD3DW::CommandList> m_pCommandList;
+	ID3D12GraphicsCommandList* m_pPCML;
 
-	std::unique_ptr<FD3DW::CommandList> pCommandList;
-	ID3D12GraphicsCommandList* pcml;
+	FDWWIN::Timer* m_pTimer;
 
-	FDWWIN::Timer* timer;
+	std::unique_ptr<FD3DW::SamplerPacker> m_pSamplerPack;
+	std::vector<std::unique_ptr<FD3DW::SRVPacker>> m_vSRVPacks;
 
-	std::unique_ptr<FD3DW::SamplerPacker> samplerPack;
-	std::vector<std::unique_ptr<FD3DW::SRVPacker>> srvPacks;
-
-	std::unique_ptr<FD3DW::FResource> structureBufferBones;
+	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 };

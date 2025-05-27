@@ -6,13 +6,13 @@
 
 namespace FD3DW
 {
-    std::unordered_map<std::string, std::weak_ptr<FResource>> FResource::textures;
+    std::unordered_map<std::string, std::weak_ptr<FResource>> FResource::s_vTextures;
 
 	FResource::FResource(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
-        Path = path;
-        auto it = textures.find(path);
-        if (it != textures.end())
+        m_sPath = path;
+        auto it = s_vTextures.find(path);
+        if (it != s_vTextures.end())
         {
             CONSOLE_MESSAGE(std::string("TEXTURE WITH PATH: " + path + " ALREADY EXIST"));
         }
@@ -44,9 +44,9 @@ namespace FD3DW
     std::shared_ptr<FResource> FResource::GetSharedFromThis()
     {
         auto ret = shared_from_this();
-        if (textures.find(Path) == textures.end()) 
+        if (s_vTextures.find(m_sPath) == s_vTextures.end()) 
         {
-            textures.emplace(Path, std::weak_ptr<FResource>(ret));
+            s_vTextures.emplace(m_sPath, std::weak_ptr<FResource>(ret));
         }
 
         return ret;
@@ -54,17 +54,17 @@ namespace FD3DW
 
     std::shared_ptr<FResource> FResource::CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
     {
-        auto iter = textures.find(path);
+        auto iter = s_vTextures.find(path);
         std::shared_ptr<FResource> ptr;
-        if (iter != textures.end())
+        if (iter != s_vTextures.end())
         {
             if (ptr = iter->second.lock())
                 return ptr;
             else
-                textures.erase(iter);
+                s_vTextures.erase(iter);
         }
         ptr = std::shared_ptr<FResource>(new FResource(path, pDevice, pCommandList));
-        textures.emplace(path, std::weak_ptr<FResource>(ptr));
+        s_vTextures.emplace(path, std::weak_ptr<FResource>(ptr));
         return ptr;
     }
 
@@ -98,16 +98,16 @@ namespace FD3DW
             &txtDesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
-            IID_PPV_ARGS(pResource.GetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
+            IID_PPV_ARGS(m_pResource.GetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
 
-        SetResource(pResource.Get());
+        SetResource(m_pResource.Get());
 
-        currState = D3D12_RESOURCE_STATE_COMMON;
+        m_xCurrState = D3D12_RESOURCE_STATE_COMMON;
     }
 
     void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation)
     {
-        auto uresource = pResource.Get();
+        auto uresource = m_pResource.Get();
         auto uresourceDesc = uresource->GetDesc();
         UINT64 uploadBufferSize = GetRequiredIntermediateSize(uresource, 0, uresourceDesc.DepthOrArraySize * uresourceDesc.MipLevels);
         if (checkCalculation) 
@@ -123,17 +123,16 @@ namespace FD3DW
         }
         D3D12_SUBRESOURCE_DATA textureData = {};
         textureData.pData = pData;
-        textureData.RowPitch = static_cast<LONG_PTR>(uploadBufferSize / pResource.Get()->GetDesc().Height);
+        textureData.RowPitch = static_cast<LONG_PTR>(uploadBufferSize / m_pResource.Get()->GetDesc().Height);
         textureData.SlicePitch = uploadBufferSize;
 
-        if (!upBuffer)
-            upBuffer.reset(new UploadBuffer<char>(pDevice, (UINT)uploadBufferSize, false));
+        if (!m_pUploadBuffer) m_pUploadBuffer.reset(new UploadBuffer<char>(pDevice, (UINT)uploadBufferSize, false));
 
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_SOURCE);
 
         UpdateSubresources(pCommandList,
-            pResource.Get(),
-            upBuffer->GetResource(),
+            m_pResource.Get(),
+            m_pUploadBuffer->GetResource(),
             0, 0, 1, &textureData);
 
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -141,36 +140,36 @@ namespace FD3DW
 
     bool FResource::DeleteUploadBuffer()
     {
-        upBuffer.reset();
-        return !upBuffer;
+        m_pUploadBuffer.reset();
+        return !m_pUploadBuffer;
     }
     
     void FResource::ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter)
     {
-        if (currState != resourceStateAfter)
+        if (m_xCurrState != resourceStateAfter)
         {
             pCommandList->ResourceBarrier(1,
-                &keep(CD3DX12_RESOURCE_BARRIER::Transition(pResource.Get(),
-                    currState,
+                &keep(CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(),
+                    m_xCurrState,
                     resourceStateAfter)));
 
-            currState = resourceStateAfter;
+            m_xCurrState = resourceStateAfter;
         }
     }
 
     ID3D12Resource* FResource::GetResource() const
     {
-        return pResource.Get();
+        return m_pResource.Get();
     }
 
     void FResource::ReleaseUploadBuffers() 
     {
-        for (auto& el : FResource::textures)
+        for (auto& el : FResource::s_vTextures)
         {
             auto ptr = el.second.lock();
-            if (ptr && ptr->upBuffer) 
+            if (ptr && ptr->m_pUploadBuffer) 
             {
-                auto h = ptr->upBuffer.release();
+                auto h = ptr->m_pUploadBuffer.release();
                 delete h;
             }
         }

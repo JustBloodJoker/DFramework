@@ -16,8 +16,8 @@ namespace FD3DW
 
 	std::vector<dx::XMMATRIX> Scene::PlayAnimation(float time, std::string animationName)
 	{
-		auto animation = animationsMap.find(animationName);
-		if (animation == animationsMap.end())
+		auto animation = m_mAnimationsMap.find(animationName);
+		if (animation == m_mAnimationsMap.end())
 		{
 			CONSOLE_MESSAGE(std::string("ANIMATION MAP DOESN'T HAVE PARSED ANIMATION WITH NAME: ") + animationName);
 		}
@@ -25,38 +25,38 @@ namespace FD3DW
 		{
 			auto identity = dx::XMMatrixIdentity();
 			
-			GetPose(animation->second, mainBone, time, resultBones, identity);
+			GetPose(animation->second, m_xMainBone, time, m_vResultBones, identity);
 		}
-		return resultBones;
+		return m_vResultBones;
 	}
 
 	size_t Scene::GetBonesCount() const
 	{
-		return bonesCount;
+		return m_uBonesCount;
 	}
 
 	void Scene::InitScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		ParseScene(path, pDevice, pCommandList);
 
-		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), vertexBuffer, pVertexUploadBuffer);
+		BufferManager::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), m_pVertexBuffer, m_pVertexUploadBuffer);
 
-		vertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
-		vertexBufferView->BufferLocation = vertexBuffer->GetGPUVirtualAddress();
-		vertexBufferView->SizeInBytes =(UINT)(vertices.size() * sizeof(SceneVertexFrameWork));
-		vertexBufferView->StrideInBytes = sizeof(SceneVertexFrameWork);
+		m_pVertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
+		m_pVertexBufferView->BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+		m_pVertexBufferView->SizeInBytes =(UINT)(vertices.size() * sizeof(SceneVertexFrameWork));
+		m_pVertexBufferView->StrideInBytes = sizeof(SceneVertexFrameWork);
 
-		BufferMananger::CreateDefaultBuffer(pDevice, pCommandList, indices.data(), (UINT)indices.size(), indexBuffer, pIndexUploadBuffer);
+		BufferManager::CreateDefaultBuffer(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
 
-		indexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
-		indexBufferView->BufferLocation = indexBuffer->GetGPUVirtualAddress();
-		indexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		indexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
+		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
+		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
+		m_pIndexBufferView->Format = DXGI_FORMAT_R16_UNORM;
+		m_pIndexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
 
 		if (neverUpdate)
 		{
-			pIndexUploadBuffer.release();
-			pVertexUploadBuffer.release();
+			m_pIndexUploadBuffer.release();
+			m_pVertexUploadBuffer.release();
 			CONSOLE_MESSAGE(std::string("SCENE WITH PATH: " + path + " CLEARING UPLOAD BUFFERS!"));
 		}
 
@@ -94,31 +94,31 @@ namespace FD3DW
 			for (size_t j = 0; j < mesh->mNumVertices; j++)
 			{
 				
-				vertices[j + offsetVertices].pos.x = mesh->mVertices[j].x;
-				vertices[j + offsetVertices].pos.y = mesh->mVertices[j].y;
-				vertices[j + offsetVertices].pos.z = mesh->mVertices[j].z;
+				vertices[j + offsetVertices].Pos.x = mesh->mVertices[j].x;
+				vertices[j + offsetVertices].Pos.y = mesh->mVertices[j].y;
+				vertices[j + offsetVertices].Pos.z = mesh->mVertices[j].z;
 
 				if (mesh->HasTextureCoords(0))
 				{
-					vertices[j + offsetVertices].texCoord.x = mesh->mTextureCoords[0][j].x;
-					vertices[j + offsetVertices].texCoord.y = mesh->mTextureCoords[0][j].y;
+					vertices[j + offsetVertices].TexCoord.x = mesh->mTextureCoords[0][j].x;
+					vertices[j + offsetVertices].TexCoord.y = mesh->mTextureCoords[0][j].y;
 				}
 
-				vertices[j + offsetVertices].normal.x = mesh->mNormals[j].x;
-				vertices[j + offsetVertices].normal.y = mesh->mNormals[j].y;
-				vertices[j + offsetVertices].normal.z = mesh->mNormals[j].z;
+				vertices[j + offsetVertices].Normal.x = mesh->mNormals[j].x;
+				vertices[j + offsetVertices].Normal.y = mesh->mNormals[j].y;
+				vertices[j + offsetVertices].Normal.z = mesh->mNormals[j].z;
 
-				vertices[j + offsetVertices].tangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
-				vertices[j + offsetVertices].bitangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
+				vertices[j + offsetVertices].Tangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
+				vertices[j + offsetVertices].Bitangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
 				if (mesh->HasTangentsAndBitangents())
 				{
-					vertices[j + offsetVertices].tangent.x = mesh->mTangents[j].x;
-					vertices[j + offsetVertices].tangent.y = mesh->mTangents[j].y;
-					vertices[j + offsetVertices].tangent.z = mesh->mTangents[j].z;
+					vertices[j + offsetVertices].Tangent.x = mesh->mTangents[j].x;
+					vertices[j + offsetVertices].Tangent.y = mesh->mTangents[j].y;
+					vertices[j + offsetVertices].Tangent.z = mesh->mTangents[j].z;
 
-					vertices[j + offsetVertices].bitangent.x = mesh->mBitangents[j].x;
-					vertices[j + offsetVertices].bitangent.y = mesh->mBitangents[j].y;
-					vertices[j + offsetVertices].bitangent.z = mesh->mBitangents[j].z;
+					vertices[j + offsetVertices].Bitangent.x = mesh->mBitangents[j].x;
+					vertices[j + offsetVertices].Bitangent.y = mesh->mBitangents[j].y;
+					vertices[j + offsetVertices].Bitangent.z = mesh->mBitangents[j].z;
 				}
 
 			}
@@ -153,7 +153,7 @@ namespace FD3DW
 				}
 			}
 
-			objectParameters.push_back(ObjectDesc{ verticesSize, offsetVertices, indicesSize, indices.size() - indicesSize, mesh->mMaterialIndex }); 
+			m_vObjectParameters.push_back(ObjectDesc{ verticesSize, offsetVertices, indicesSize, indices.size() - indicesSize, mesh->mMaterialIndex }); 
 		}
 
 		for (size_t i = 0; i < scene->mNumMaterials; i++)
@@ -165,42 +165,42 @@ namespace FD3DW
 			prePathName == "" ? prePathName : prePathName += '/';
 			aiString pathname;
 
-			matMananger->AddMaterial();
+			m_pMaterialManager->AddMaterial();
 
-			if (scene->mMaterials[i]->Get(AI_MATKEY_OPACITY, matDesc.diffuse.w) != AI_SUCCESS)
+			if (scene->mMaterials[i]->Get(AI_MATKEY_OPACITY, matDesc.Diffuse.w) != AI_SUCCESS)
 			{
-				matDesc.diffuse.w = 1.0f;
+				matDesc.Diffuse.w = 1.0f;
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->Get(AI_MATKEY_COLOR_DIFFUSE, tColor))
 			{
-				matDesc.diffuse.x = tColor.r;
-				matDesc.diffuse.y = tColor.g;
-				matDesc.diffuse.z = tColor.b;
+				matDesc.Diffuse.x = tColor.r;
+				matDesc.Diffuse.y = tColor.g;
+				matDesc.Diffuse.z = tColor.b;
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->Get(AI_MATKEY_COLOR_SPECULAR, tColor))
 			{
-				matDesc.specular.x = tColor.r;
-				matDesc.specular.y = tColor.g;
-				matDesc.specular.z = tColor.b;
+				matDesc.Specular.x = tColor.r;
+				matDesc.Specular.y = tColor.g;
+				matDesc.Specular.z = tColor.b;
 			}
-			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_SPECULAR_FACTOR, matDesc.specular.w))
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_SPECULAR_FACTOR, matDesc.Specular.w))
 			{
-				matDesc.specular.w = 1.0f;
+				matDesc.Specular.w = 1.0f;
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->Get(AI_MATKEY_COLOR_EMISSIVE, tColor))
 			{
-				matDesc.emissive.x = tColor.r;
-				matDesc.emissive.y = tColor.g;
-				matDesc.emissive.z = tColor.b;
+				matDesc.Emissive.x = tColor.r;
+				matDesc.Emissive.y = tColor.g;
+				matDesc.Emissive.z = tColor.b;
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->Get(AI_MATKEY_COLOR_AMBIENT, tColor))
 			{
-				matDesc.ambient.x = tColor.r;
-				matDesc.ambient.y = tColor.g;
-				matDesc.ambient.z = tColor.b;
+				matDesc.Ambient.x = tColor.r;
+				matDesc.Ambient.y = tColor.g;
+				matDesc.Ambient.z = tColor.b;
 			}
 			
-			matMananger->SetMaterialDesc(matDesc);
+			m_pMaterialManager->SetMaterialDesc(matDesc);
 			//////////////////////////////////////////////////////////////////////////////////////
 			//									   TEXTURES
 			/////////////////////////////////////////////////////////////////////////////////////
@@ -208,47 +208,47 @@ namespace FD3DW
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::BASE, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::BASE, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType_NORMALS, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::NORMAL, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::NORMAL, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DIFFUSE_ROUGHNESS, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::ROUGHNESS, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::ROUGHNESS, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_EMISSIVE, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::EMISSIVE, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::EMISSIVE, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_SPECULAR, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::SPECULAR, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::SPECULAR, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_METALNESS, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::METALNESS, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::METALNESS, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_HEIGHT, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::HEIGHT, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::HEIGHT, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_OPACITY, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::OPACITY, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::OPACITY, pDevice, pCommandList);
 			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DISPLACEMENT, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				matMananger->SetTexture(name, TextureType::BUMP, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::BUMP, pDevice, pCommandList);
 			}
 		}
 		//////////////////////////////////////////////////////////////////////////////////////
@@ -263,18 +263,18 @@ namespace FD3DW
 			{
 				auto anim = scene->mAnimations[ind];
 
-				if (animationsMap.find(anim->mName.C_Str()) != animationsMap.end())
+				if (m_mAnimationsMap.find(anim->mName.C_Str()) != m_mAnimationsMap.end())
 					continue;
 
 				Animation animation;
 
 				if (anim->mTicksPerSecond != 0.0)
-					animation.ticksPerSecond = anim->mTicksPerSecond;
+					animation.TicksPerSecond = anim->mTicksPerSecond;
 				else
-					animation.ticksPerSecond = 1.0;
+					animation.TicksPerSecond = 1.0;
 
-				animation.duration = anim->mDuration * anim->mTicksPerSecond;
-				animation.transformations = {};
+				animation.Duration = anim->mDuration * anim->mTicksPerSecond;
+				animation.Transformations = {};
 
 				for (size_t i = 0; i < anim->mNumChannels; i++)
 				{	
@@ -282,23 +282,23 @@ namespace FD3DW
 					BoneTransformations transformation;
 					for (size_t j = 0; j < channel->mNumPositionKeys; j++)
 					{
-						transformation.positionTimestamps.push_back(channel->mPositionKeys[j].mTime);
-						transformation.positions.push_back(ConvertFromAIVector3D(channel->mPositionKeys[j].mValue));
+						transformation.PositionTimestamps.push_back(channel->mPositionKeys[j].mTime);
+						transformation.Positions.push_back(ConvertFromAIVector3D(channel->mPositionKeys[j].mValue));
 					}
 					for (size_t j = 0; j < channel->mNumRotationKeys; j++)
 					{
-						transformation.rotationTimestamps.push_back(channel->mRotationKeys[j].mTime);
-						transformation.rotations.push_back(ConvertFromAIQuaternion(channel->mRotationKeys[j].mValue));
+						transformation.RotationTimestamps.push_back(channel->mRotationKeys[j].mTime);
+						transformation.Rotations.push_back(ConvertFromAIQuaternion(channel->mRotationKeys[j].mValue));
 					}
 					for (size_t j = 0; j < channel->mNumScalingKeys; j++)
 					{
-						transformation.scaleTimestamps.push_back(channel->mScalingKeys[j].mTime);
-						transformation.scales.push_back(ConvertFromAIVector3D(channel->mScalingKeys[j].mValue));
+						transformation.ScaleTimestamps.push_back(channel->mScalingKeys[j].mTime);
+						transformation.Scales.push_back(ConvertFromAIVector3D(channel->mScalingKeys[j].mValue));
 					}
-					animation.transformations.emplace(channel->mNodeName.C_Str(), transformation);
+					animation.Transformations.emplace(channel->mNodeName.C_Str(), transformation);
 				}
 
-				animationsMap.emplace(anim->mName.C_Str(), animation);
+				m_mAnimationsMap.emplace(anim->mName.C_Str(), animation);
 			}
 		}
 
@@ -319,11 +319,11 @@ namespace FD3DW
 			}
 		}
 
-		bonesCount = bonesMap.size();
-		resultBones.assign(bonesCount, dx::XMMatrixIdentity());
-		ReadSkeleton(mainBone, scene->mRootNode, bonesMap);
+		m_uBonesCount = bonesMap.size();
+		m_vResultBones.assign(m_uBonesCount, dx::XMMatrixIdentity());
+		ReadSkeleton(m_xMainBone, scene->mRootNode, bonesMap);
 		
-		globalInverseTransform = ConvertFromAIMatrix4x4(scene->mRootNode->mTransformation);
+		m_xGlobalInverseTransform = ConvertFromAIMatrix4x4(scene->mRootNode->mTransformation);
 
 		importer.FreeScene();
 		scene = nullptr;
@@ -333,11 +333,11 @@ namespace FD3DW
 
 	void Scene::GetPose(Animation& animation, Bone& skeletion, double dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform)
 	{
-		auto iter = animation.transformations.find(skeletion.name);
+		auto iter = animation.Transformations.find(skeletion.Name);
 		dx::XMMATRIX globalTransform = dx::XMMatrixIdentity();
-		if (iter != animation.transformations.end())
+		if (iter != animation.Transformations.end())
 		{
-			BoneTransformations& bt = animation.transformations[skeletion.name];
+			BoneTransformations& bt = animation.Transformations[skeletion.Name];
 
 			std::pair<unsigned, float> fp;
 
@@ -345,43 +345,43 @@ namespace FD3DW
 			dx::XMVECTOR rotation;
 			dx::XMVECTOR scale;
 
-			fp = GetTimeKeyAndFrac(bt.positionTimestamps, dt, animation.ticksPerSecond, animation.duration);
-			if (bt.positionTimestamps.size() > 1)
+			fp = GetTimeKeyAndFrac(bt.PositionTimestamps, dt, animation.TicksPerSecond, animation.Duration);
+			if (bt.PositionTimestamps.size() > 1)
 			{
-				dx::XMVECTOR position1 = bt.positions[fp.first - 1];
-				dx::XMVECTOR position2 = bt.positions[fp.first];
+				dx::XMVECTOR position1 = bt.Positions[fp.first - 1];
+				dx::XMVECTOR position2 = bt.Positions[fp.first];
 
 				position = dx::XMVectorLerp(position1, position2, fp.second);
 			}
 			else
 			{
-				position = bt.positions[fp.first];
+				position = bt.Positions[fp.first];
 			}
 
-			fp = GetTimeKeyAndFrac(bt.rotationTimestamps, dt, animation.ticksPerSecond, animation.duration);
-			if (bt.rotationTimestamps.size() > 1)
+			fp = GetTimeKeyAndFrac(bt.RotationTimestamps, dt, animation.TicksPerSecond, animation.Duration);
+			if (bt.RotationTimestamps.size() > 1)
 			{
-				dx::XMVECTOR rotation1 = bt.rotations[fp.first - 1];
-				dx::XMVECTOR rotation2 = bt.rotations[fp.first];
+				dx::XMVECTOR rotation1 = bt.Rotations[fp.first - 1];
+				dx::XMVECTOR rotation2 = bt.Rotations[fp.first];
 				
 				rotation = dx::XMQuaternionSlerp(rotation1, rotation2, fp.second);
 			}
 			else
 			{
-				rotation = bt.rotations[fp.first];
+				rotation = bt.Rotations[fp.first];
 			}
 
-			fp = GetTimeKeyAndFrac(bt.scaleTimestamps, dt, animation.ticksPerSecond, animation.duration);
-			if (bt.scaleTimestamps.size() > 1)
+			fp = GetTimeKeyAndFrac(bt.ScaleTimestamps, dt, animation.TicksPerSecond, animation.Duration);
+			if (bt.ScaleTimestamps.size() > 1)
 			{
-				dx::XMVECTOR scale1 = bt.scales[fp.first - 1];
-				dx::XMVECTOR scale2 = bt.scales[fp.first];
+				dx::XMVECTOR scale1 = bt.Scales[fp.first - 1];
+				dx::XMVECTOR scale2 = bt.Scales[fp.first];
 
 				scale = dx::XMVectorLerp(scale1, scale2, fp.second);
 			}
 			else
 			{
-				scale = bt.scales[fp.first];
+				scale = bt.Scales[fp.first];
 			}
 		
 			dx::XMMATRIX positionMat = dx::XMMatrixTranslation(position.vector4_f32[0], position.vector4_f32[1], position.vector4_f32[2]);
@@ -390,19 +390,19 @@ namespace FD3DW
 			dx::XMMATRIX localTransform = positionMat * rotationMat * scaleMat;
 			globalTransform = localTransform * parentTransform;
 		}
-		output[skeletion.index] =  dx::XMMatrixTranspose(skeletion.offset * globalTransform ); // * globalInverseTransform  why this doesn't need here? ((
+		output[skeletion.Index] =  dx::XMMatrixTranspose(skeletion.Offset * globalTransform ); // * globalInverseTransform  why this doesn't need here? ((
 																							   // and why some animations incorrect (
-		for (Bone& child : skeletion.children) 
+		for (Bone& child : skeletion.Children) 
 		{
 			GetPose(animation, child, dt, output, globalTransform);
 		}
 	}
 
-	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& duration)
+	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& Duration)
 	{
-		double ticksPerSecond = animTick != 0.0 ? animTick : 25.0;
-		double timeInTicks = dt * ticksPerSecond;
-		double animationTime = fmod(timeInTicks, duration);
+		double TicksPerSecond = animTick != 0.0 ? animTick : 25.0;
+		double timeInTicks = dt * TicksPerSecond;
+		double animationTime = fmod(timeInTicks, Duration);
 
 		double frac = 1.0;
 		unsigned segment = 0;
@@ -431,14 +431,14 @@ namespace FD3DW
 	bool Scene::ReadSkeleton(Bone& boneOutput, aiNode* node, std::unordered_map<std::string, Bone>& bonesMap) 
 	{
 		if (bonesMap.find(node->mName.C_Str()) != bonesMap.end()) {
-			boneOutput.name = node->mName.C_Str();
-			boneOutput.index = bonesMap[boneOutput.name].index;
-			boneOutput.offset = bonesMap[boneOutput.name].offset;
+			boneOutput.Name = node->mName.C_Str();
+			boneOutput.Index = bonesMap[boneOutput.Name].Index;
+			boneOutput.Offset = bonesMap[boneOutput.Name].Offset;
 
 			for (unsigned i = 0; i < node->mNumChildren; i++) {
 				Bone child;
 				ReadSkeleton(child, node->mChildren[i], bonesMap);
-				boneOutput.children.push_back(child);
+				boneOutput.Children.push_back(child);
 			}
 			return true;
 		}

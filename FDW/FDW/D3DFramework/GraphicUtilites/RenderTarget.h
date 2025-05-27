@@ -30,8 +30,8 @@ namespace FD3DW
 			const UINT width, const UINT height,
 			const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize);
 
-		std::unique_ptr<FResource> rtvTexture;
-		D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+		std::unique_ptr<FResource> m_pRTVTexture;
+		D3D12_RENDER_TARGET_VIEW_DESC m_xRTVDesc;
 
 	};
 

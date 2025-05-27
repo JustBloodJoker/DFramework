@@ -54,19 +54,10 @@
     <ClInclude Include="D3DFramework\pch.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\DB\DBCore.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\EasyD3DFW\EasyD3DFW.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\EasyD3DFW\EasyMacroses.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferMananger.h">
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h">
@@ -105,7 +96,7 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\Objects\MaterialsMananger.h">
+    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
     <ClInclude Include="D3DFramework\Objects\Object.h">
@@ -120,7 +111,7 @@
     <ClInclude Include="D3DFramework\Utilites\Audio.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\AudioMananger.h">
+    <ClInclude Include="D3DFramework\Utilites\AudioManager.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
     <ClInclude Include="D3DFramework\Utilites\Macroses.h">
@@ -173,16 +164,10 @@
     <ClCompile Include="D3DFramework\pch.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\DB\DBCore.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\EasyD3DFW\EasyD3DFW.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferMananger.cpp">
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp">
@@ -218,7 +203,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\Objects\MaterialsMananger.cpp">
+    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\Objects\Object.cpp">
@@ -233,7 +218,7 @@
     <ClCompile Include="D3DFramework\Utilites\Audio.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\Utilites\AudioMananger.cpp">
+    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
     <ClCompile Include="WinWindow\WinWindow.cpp">

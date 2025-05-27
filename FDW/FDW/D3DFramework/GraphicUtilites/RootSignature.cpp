@@ -9,10 +9,10 @@ namespace FD3DW
 
 	RootSingature::RootSingature(UINT numParameters) 
 	{
-		slotRootParameters.reserve(numParameters);
+		m_vSlotRootParameters.reserve(numParameters);
 	}
 
-	RootSingature::RootSingature(CD3DX12_ROOT_PARAMETER* slotRootParameters, UINT numParameters) : slotRootParameters(slotRootParameters, slotRootParameters + numParameters)
+	RootSingature::RootSingature(CD3DX12_ROOT_PARAMETER* m_vSlotRootParameters, UINT numParameters) : m_vSlotRootParameters(m_vSlotRootParameters, m_vSlotRootParameters + numParameters)
 	{
 	}
 
@@ -21,8 +21,8 @@ namespace FD3DW
 		wrl::ComPtr<ID3DBlob> serializedRootSig;
 		wrl::ComPtr<ID3DBlob> errorBlob;
 
-		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(static_cast<UINT>(slotRootParameters.size()),
-			slotRootParameters.data(), samplersCount, samplers, flags);
+		CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(static_cast<UINT>(m_vSlotRootParameters.size()),
+			m_vSlotRootParameters.data(), samplersCount, samplers, flags);
 
 		hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1, serializedRootSig.ReleaseAndGetAddressOf(), errorBlob.ReleaseAndGetAddressOf());
 		
@@ -35,20 +35,20 @@ namespace FD3DW
 			HRESULT_ASSERT(hr, "D3D12 Serialize Root Signature Error");
 		}
 
-		HRESULT_ASSERT(pDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(pRootSignature.ReleaseAndGetAddressOf())), "Root signature create error");
+		HRESULT_ASSERT(pDevice->CreateRootSignature(0, serializedRootSig->GetBufferPointer(), serializedRootSig->GetBufferSize(), IID_PPV_ARGS(m_pRootSignature.ReleaseAndGetAddressOf())), "Root signature create error");
 		CONSOLE_MESSAGE("Root Signature created");
 	}
 
 	void RootSingature::AddRootParameter(const CD3DX12_ROOT_PARAMETER& rootParameter)
 	{
-		slotRootParameters.push_back(rootParameter);
+		m_vSlotRootParameters.push_back(rootParameter);
 	}
 
 	ID3D12RootSignature* RootSingature::GetRootSignature() const
 	{
-		SAFE_ASSERT(pRootSignature.Get(), "Root Signature not created. Use CreateRootSignature after set up Root Signature data");
+		SAFE_ASSERT(m_pRootSignature.Get(), "Root Signature not created. Use CreateRootSignature after set up Root Signature data");
 
-		return pRootSignature.Get();
+		return m_pRootSignature.Get();
 	}
 
 }
