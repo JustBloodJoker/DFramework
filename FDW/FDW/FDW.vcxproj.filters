@@ -13,92 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="d3dFDW">
-      <UniqueIdentifier>{b8377237-057e-4daa-8c46-0ee2844bd294}</UniqueIdentifier>
-    </Filter>
     <Filter Include="combineFDW">
       <UniqueIdentifier>{d4a37354-251f-43a5-8489-f47674608f50}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3DFramework\d3dframework.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\D3DFW.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\pch.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Objects\Object.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Objects\Scene.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Objects\SimpleObjects.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\Audio.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\AudioManager.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\Macroses.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\Structures.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h">
-      <Filter>d3dFDW</Filter>
-    </ClInclude>
     <ClInclude Include="DFWCombine\D2DFWDXGI.h">
       <Filter>combineFDW</Filter>
     </ClInclude>
@@ -113,82 +32,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D3DFramework\D3DFW.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\pch.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Objects\Object.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Objects\Scene.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Utilites\Audio.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
-      <Filter>d3dFDW</Filter>
-    </ClCompile>
     <ClCompile Include="DFWCombine\D2DFWDXGI.cpp">
       <Filter>combineFDW</Filter>
     </ClCompile>
     <ClCompile Include="DFWCombine\DFW.cpp">
       <Filter>combineFDW</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
-      <Filter>d3dFDW</Filter>
-    </CudaCompile>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh">
-      <Filter>d3dFDW</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

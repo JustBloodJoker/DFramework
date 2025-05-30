@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="D3DFramework">
+      <UniqueIdentifier>{8522955d-e187-4044-b4ba-fe7da8390012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFrameworkTest">
+      <UniqueIdentifier>{674e453b-6d43-4f63-b06b-a792fd74efb6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\GraphicUtilites">
+      <UniqueIdentifier>{11f5cea1-eaf1-4124-b340-fd7a2d4a61c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\include">
+      <UniqueIdentifier>{f1f85f37-2483-44bd-93f1-2d1eac40fe1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\Objects">
+      <UniqueIdentifier>{11d87b1a-79b4-403b-b7d2-d7c036541114}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\Utilites">
+      <UniqueIdentifier>{87f27dad-2760-44cc-86ab-a7bc04621f76}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D3DFramework\d3dframework.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\D3DFW.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\pch.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\include\d3dx12.h">
+      <Filter>D3DFramework\include</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\Object.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\Scene.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\SimpleObjects.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Audio.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\AudioManager.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Macroses.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Structures.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFrameworkTest\AnimationTestRender.h">
+      <Filter>D3DFrameworkTest</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D3DFramework\D3DFW.cpp">
+      <Filter>D3DFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\pch.cpp">
+      <Filter>D3DFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\Object.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\Scene.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Utilites\Audio.cpp">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFrameworkTest\main.cpp">
+      <Filter>D3DFrameworkTest</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFrameworkTest\AnimationTestRender.cpp">
+      <Filter>D3DFrameworkTest</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

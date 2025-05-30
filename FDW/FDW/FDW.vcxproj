@@ -19,67 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3DFramework\d3dframework.h" />
-    <ClInclude Include="D3DFramework\D3DFW.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h" />
-    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
-    <ClInclude Include="D3DFramework\Objects\Object.h" />
-    <ClInclude Include="D3DFramework\Objects\Scene.h" />
-    <ClInclude Include="D3DFramework\Objects\SimpleObjects.h" />
-    <ClInclude Include="D3DFramework\pch.h" />
-    <ClInclude Include="D3DFramework\Utilites\Audio.h" />
-    <ClInclude Include="D3DFramework\Utilites\AudioManager.h" />
-    <ClInclude Include="D3DFramework\Utilites\Macroses.h" />
-    <ClInclude Include="D3DFramework\Utilites\Structures.h" />
-    <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h" />
     <ClInclude Include="DFWCombine\D2DFWDXGI.h" />
     <ClInclude Include="DFWCombine\DFW.h" />
     <ClInclude Include="DFWCombine\framework.h" />
     <ClInclude Include="DFWCombine\pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D3DFramework\D3DFW.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp" />
-    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
-    <ClCompile Include="D3DFramework\Objects\Object.cpp" />
-    <ClCompile Include="D3DFramework\Objects\Scene.cpp" />
-    <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp" />
-    <ClCompile Include="D3DFramework\pch.cpp" />
-    <ClCompile Include="D3DFramework\Utilites\Audio.cpp" />
-    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
     <ClCompile Include="DFWCombine\D2DFWDXGI.cpp" />
     <ClCompile Include="DFWCombine\DFW.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -168,7 +115,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\FDW;..\FDW\WinWindow;..\FDW\D2DFramework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\FDW;..\FDW\WinWindow;..\FDW\D2DFramework;..\FDW\D3DFramework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>

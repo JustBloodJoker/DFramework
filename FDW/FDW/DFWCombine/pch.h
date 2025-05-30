@@ -6,5 +6,6 @@
 
 #pragma comment(lib, "WinWindow.lib")
 #pragma comment(lib, "D2DFramework.lib")
+#pragma comment(lib, "D3DFramework.lib")
 
 #include "framework.h"
