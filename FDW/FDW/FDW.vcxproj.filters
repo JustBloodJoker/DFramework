@@ -27,24 +27,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D2DFramework\d2dframework.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFW.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFWStandalone.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\pch.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\Utilites\Macroses.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\Utilites\Structures.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
     <ClInclude Include="D3DFramework\d3dframework.h">
       <Filter>d3dFDW</Filter>
     </ClInclude>
@@ -150,14 +132,26 @@
     <ClInclude Include="WinWindow\WinWindow\Utils\WindowSettings.h">
       <Filter>winwindow</Filter>
     </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\d2dframework.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\D2DFW.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\D2DFWStandalone.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\pch.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Macroses.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Structures.h">
+      <Filter>d2dFDW</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D2DFramework\D2DFW.cpp">
-      <Filter>d2dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D2DFramework\D2DFWStandalone.cpp">
-      <Filter>d2dFDW</Filter>
-    </ClCompile>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
       <Filter>d3dFDW</Filter>
     </ClCompile>
@@ -232,6 +226,12 @@
     </ClCompile>
     <ClCompile Include="WinWindow\WinWindow\Utils\Timer.cpp">
       <Filter>winwindow</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFramework\D2DFW.cpp">
+      <Filter>d2dFDW</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFramework\D2DFWStandalone.cpp">
+      <Filter>d2dFDW</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

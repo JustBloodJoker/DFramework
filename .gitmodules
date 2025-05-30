@@ -1,9 +1,0 @@
-[submodule "FDW/FDW/D2DFramework"]
-	path = FDW/FDW/D2DFramework
-	url = https://github.com/JustBloodJoker/D2DFramework.git
-[submodule "FDW/FDW/D3DFramework"]
-	path = FDW/FDW/D3DFramework
-	url = https://github.com/JustBloodJoker/D3DFramework.git
-[submodule "FDW/FDW/WinWindow"]
-	path = FDW/FDW/WinWindow
-	url = https://github.com/JustBloodJoker/WinWindow.git

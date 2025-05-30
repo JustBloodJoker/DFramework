@@ -19,89 +19,26 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D2DFramework\D2DFramework\d2dframework.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFW.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFWStandalone.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\pch.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Macroses.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Structures.h" />
-    <ClInclude Include="D3DFramework\d3dframework.h" />
-    <ClInclude Include="D3DFramework\D3DFW.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h" />
-    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
-    <ClInclude Include="D3DFramework\Objects\Object.h" />
-    <ClInclude Include="D3DFramework\Objects\Scene.h" />
-    <ClInclude Include="D3DFramework\Objects\SimpleObjects.h" />
-    <ClInclude Include="D3DFramework\pch.h" />
-    <ClInclude Include="D3DFramework\Utilites\Audio.h" />
-    <ClInclude Include="D3DFramework\Utilites\AudioManager.h" />
-    <ClInclude Include="D3DFramework\Utilites\Macroses.h" />
-    <ClInclude Include="D3DFramework\Utilites\Structures.h" />
-    <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h" />
-    <ClInclude Include="DFWCombine\D2DFWDXGI.h" />
-    <ClInclude Include="DFWCombine\DFW.h" />
-    <ClInclude Include="DFWCombine\framework.h" />
-    <ClInclude Include="DFWCombine\pch.h" />
-    <ClInclude Include="WinWindow\WinWindow\pch.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\Macroses.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\Timer.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\WindowSettings.h" />
-    <ClInclude Include="WinWindow\WinWindow\WinWindow.h" />
+    <ClInclude Include="WinWindowTest\TestBaseWindow.h" />
+    <ClInclude Include="WinWindow\pch.h" />
+    <ClInclude Include="WinWindow\Utils\Macroses.h" />
+    <ClInclude Include="WinWindow\Utils\Timer.h" />
+    <ClInclude Include="WinWindow\Utils\WindowSettings.h" />
+    <ClInclude Include="WinWindow\WinWindow.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFW.cpp" />
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFWStandalone.cpp" />
-    <ClCompile Include="D3DFramework\D3DFW.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp" />
-    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
-    <ClCompile Include="D3DFramework\Objects\Object.cpp" />
-    <ClCompile Include="D3DFramework\Objects\Scene.cpp" />
-    <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp" />
-    <ClCompile Include="D3DFramework\pch.cpp" />
-    <ClCompile Include="D3DFramework\Utilites\Audio.cpp" />
-    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
-    <ClCompile Include="DFWCombine\D2DFWDXGI.cpp" />
-    <ClCompile Include="DFWCombine\DFW.cpp" />
-    <ClCompile Include="WinWindow\WinWindow\Utils\Timer.cpp" />
-    <ClCompile Include="WinWindow\WinWindow\WinWindow.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
-      <FileType>Document</FileType>
-    </CudaCompile>
-    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh" />
+    <ClCompile Include="WinWindowTest\main.cpp" />
+    <ClCompile Include="WinWindowTest\TestBaseWindow.cpp" />
+    <ClCompile Include="WinWindow\Utils\Timer.cpp" />
+    <ClCompile Include="WinWindow\WinWindow.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{f48a9e6a-5470-4826-b0b7-4296c088d111}</ProjectGuid>
-    <RootNamespace>FDW</RootNamespace>
+    <ProjectGuid>{178d3b84-3784-4d06-b52c-02c36132e1a0}</ProjectGuid>
+    <RootNamespace>WinWindowTest</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>WinWindow</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -118,13 +55,13 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -132,7 +69,6 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -183,17 +119,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\FDW;..\FDW\WinWindow;..\FDW\D2DFramework;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>WinWindow;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <Verbose>true</Verbose>
-    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -203,8 +135,6 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\FDW;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -212,12 +142,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib>
-      <AdditionalLibraryDirectories>..\include\DLSS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.targets" />
   </ImportGroup>
 </Project>
