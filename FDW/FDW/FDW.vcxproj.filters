@@ -13,17 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="winwindow">
-      <UniqueIdentifier>{a6124035-9949-4f71-893f-fdd9650d1a39}</UniqueIdentifier>
-    </Filter>
     <Filter Include="d3dFDW">
       <UniqueIdentifier>{b8377237-057e-4daa-8c46-0ee2844bd294}</UniqueIdentifier>
     </Filter>
     <Filter Include="combineFDW">
       <UniqueIdentifier>{d4a37354-251f-43a5-8489-f47674608f50}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="d2dFDW">
-      <UniqueIdentifier>{2b59c1e6-82c1-4a0c-9392-bc26195f005f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -117,39 +111,6 @@
     <ClInclude Include="DFWCombine\pch.h">
       <Filter>combineFDW</Filter>
     </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow\pch.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow\WinWindow.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow\Utils\Macroses.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow\Utils\Timer.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\WinWindow\Utils\WindowSettings.h">
-      <Filter>winwindow</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\d2dframework.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFW.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFWStandalone.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\pch.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Macroses.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Structures.h">
-      <Filter>d2dFDW</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -220,18 +181,6 @@
     </ClCompile>
     <ClCompile Include="DFWCombine\DFW.cpp">
       <Filter>combineFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="WinWindow\WinWindow\WinWindow.cpp">
-      <Filter>winwindow</Filter>
-    </ClCompile>
-    <ClCompile Include="WinWindow\WinWindow\Utils\Timer.cpp">
-      <Filter>winwindow</Filter>
-    </ClCompile>
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFW.cpp">
-      <Filter>d2dFDW</Filter>
-    </ClCompile>
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFWStandalone.cpp">
-      <Filter>d2dFDW</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

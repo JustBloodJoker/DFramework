@@ -19,12 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D2DFramework\D2DFramework\d2dframework.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFW.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\D2DFWStandalone.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\pch.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Macroses.h" />
-    <ClInclude Include="D2DFramework\D2DFramework\Utilites\Structures.h" />
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
@@ -55,15 +49,8 @@
     <ClInclude Include="DFWCombine\DFW.h" />
     <ClInclude Include="DFWCombine\framework.h" />
     <ClInclude Include="DFWCombine\pch.h" />
-    <ClInclude Include="WinWindow\WinWindow\pch.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\Macroses.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\Timer.h" />
-    <ClInclude Include="WinWindow\WinWindow\Utils\WindowSettings.h" />
-    <ClInclude Include="WinWindow\WinWindow\WinWindow.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFW.cpp" />
-    <ClCompile Include="D2DFramework\D2DFramework\D2DFWStandalone.cpp" />
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
@@ -87,8 +74,6 @@
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
     <ClCompile Include="DFWCombine\D2DFWDXGI.cpp" />
     <ClCompile Include="DFWCombine\DFW.cpp" />
-    <ClCompile Include="WinWindow\WinWindow\Utils\Timer.cpp" />
-    <ClCompile Include="WinWindow\WinWindow\WinWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
@@ -191,7 +176,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>x64/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Verbose>true</Verbose>
     </Lib>
   </ItemDefinitionGroup>
