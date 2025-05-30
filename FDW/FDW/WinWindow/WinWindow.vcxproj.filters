@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="WinWindow\Utils\Timer.cpp">
+      <Filter>WinWindow\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\WinWindow.cpp">
+      <Filter>WinWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindowTest\TestBaseWindow.cpp">
+      <Filter>WinWindowTest</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindowTest\main.cpp">
+      <Filter>WinWindowTest</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WinWindow\Utils\Macroses.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\WindowSettings.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Timer.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\WinWindow.h">
+      <Filter>WinWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\pch.h">
+      <Filter>WinWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindowTest\TestBaseWindow.h">
+      <Filter>WinWindowTest</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="WinWindowTest">
+      <UniqueIdentifier>{5c39b50d-ef96-4931-be9a-11616255a734}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow">
+      <UniqueIdentifier>{fc852608-8882-49ca-ba77-589c72931555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow\Utils">
+      <UniqueIdentifier>{9e5525d3-b40b-4ce2-a216-7ea2a9f3d653}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

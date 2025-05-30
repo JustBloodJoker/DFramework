@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="D2DFramework">
+      <UniqueIdentifier>{61b8213c-29d8-4e9a-ba16-acf28f33d319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D2DFrameworkTest">
+      <UniqueIdentifier>{d6997843-cf3e-4bb0-a684-225c6849356f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D2DFramework\Utilites">
+      <UniqueIdentifier>{f114a82e-56e9-4c04-a7d3-360bbd55d038}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D2DFrameworkTest\BezierCurveTestRender.cpp">
+      <Filter>D2DFrameworkTest</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFrameworkTest\main.cpp">
+      <Filter>D2DFrameworkTest</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFW.cpp">
+      <Filter>D2DFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFWStandalone.cpp">
+      <Filter>D2DFramework</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D2DFrameworkTest\BezierCurveTestRender.h">
+      <Filter>D2DFrameworkTest</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\Utilites\Macroses.h">
+      <Filter>D2DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\Utilites\Structures.h">
+      <Filter>D2DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\d2dframework.h">
+      <Filter>D2DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFW.h">
+      <Filter>D2DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFWStandalone.h">
+      <Filter>D2DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\pch.h">
+      <Filter>D2DFramework</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
