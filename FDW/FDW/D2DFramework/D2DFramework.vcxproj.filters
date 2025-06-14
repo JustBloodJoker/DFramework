@@ -22,6 +22,9 @@
     <Filter Include="D2DFramework\UI\UIElements">
       <UniqueIdentifier>{409d7f98-42a0-4eab-808a-34ef9d0307e9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D2DFramework\D2DFWStandalone">
+      <UniqueIdentifier>{27a6a29e-95cb-4f2b-80e1-fc0b09088922}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D2DFrameworkTest\BezierCurveTestRender.cpp">
@@ -31,9 +34,6 @@
       <Filter>D2DFrameworkTest</Filter>
     </ClCompile>
     <ClCompile Include="D2DFramework\D2DFW.cpp">
-      <Filter>D2DFramework</Filter>
-    </ClCompile>
-    <ClCompile Include="D2DFramework\D2DFWStandalone.cpp">
       <Filter>D2DFramework</Filter>
     </ClCompile>
     <ClCompile Include="D2DFramework\UI\UIElements\UIButton.cpp">
@@ -66,11 +66,17 @@
     <ClCompile Include="D2DFramework\UI\Shapes\TriangleShape.cpp">
       <Filter>D2DFramework\UI\Shapes</Filter>
     </ClCompile>
-    <ClCompile Include="D2DFramework\D2DFWUI.cpp">
+    <ClCompile Include="D2DFramework\D2DFW_UIController.cpp">
       <Filter>D2DFramework</Filter>
     </ClCompile>
     <ClCompile Include="D2DFrameworkTest\MyUIApp.cpp">
       <Filter>D2DFrameworkTest</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFWStandalone\D2DFWStandalone.cpp">
+      <Filter>D2DFramework\D2DFWStandalone</Filter>
+    </ClCompile>
+    <ClCompile Include="D2DFramework\D2DFWStandalone\D2DFWUIStandalone.cpp">
+      <Filter>D2DFramework\D2DFWStandalone</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -89,13 +95,10 @@
     <ClInclude Include="D2DFramework\D2DFW.h">
       <Filter>D2DFramework</Filter>
     </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFWStandalone.h">
-      <Filter>D2DFramework</Filter>
-    </ClInclude>
     <ClInclude Include="D2DFramework\pch.h">
       <Filter>D2DFramework</Filter>
     </ClInclude>
-    <ClInclude Include="D2DFramework\D2DFWUI.h">
+    <ClInclude Include="D2DFramework\D2DFW_UIController.h">
       <Filter>D2DFramework</Filter>
     </ClInclude>
     <ClInclude Include="D2DFrameworkTest\MyUIApp.h">
@@ -133,6 +136,12 @@
     </ClInclude>
     <ClInclude Include="D2DFramework\UI\Core\UIElementBaseWithInput.h">
       <Filter>D2DFramework\UI\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFWStandalone\D2DFWStandalone.h">
+      <Filter>D2DFramework\D2DFWStandalone</Filter>
+    </ClInclude>
+    <ClInclude Include="D2DFramework\D2DFWStandalone\D2DFWUIStandalone.h">
+      <Filter>D2DFramework\D2DFWStandalone</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

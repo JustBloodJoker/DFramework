@@ -192,8 +192,9 @@
     </ClCompile>
     <ClCompile Include="D2DFrameworkTest\MyUIApp.cpp" />
     <ClCompile Include="D2DFramework\D2DFW.cpp" />
-    <ClCompile Include="D2DFramework\D2DFWStandalone.cpp" />
-    <ClCompile Include="D2DFramework\D2DFWUI.cpp" />
+    <ClCompile Include="D2DFramework\D2DFWStandalone\D2DFWStandalone.cpp" />
+    <ClCompile Include="D2DFramework\D2DFWStandalone\D2DFWUIStandalone.cpp" />
+    <ClCompile Include="D2DFramework\D2DFW_UIController.cpp" />
     <ClCompile Include="D2DFramework\UI\Core\BaseShape.cpp" />
     <ClCompile Include="D2DFramework\UI\Core\UIElementBase.cpp" />
     <ClCompile Include="D2DFramework\UI\Shapes\CircleShape.cpp" />
@@ -212,8 +213,9 @@
     <ClInclude Include="D2DFrameworkTest\MyUIApp.h" />
     <ClInclude Include="D2DFramework\d2dframework.h" />
     <ClInclude Include="D2DFramework\D2DFW.h" />
-    <ClInclude Include="D2DFramework\D2DFWStandalone.h" />
-    <ClInclude Include="D2DFramework\D2DFWUI.h" />
+    <ClInclude Include="D2DFramework\D2DFWStandalone\D2DFWStandalone.h" />
+    <ClInclude Include="D2DFramework\D2DFWStandalone\D2DFWUIStandalone.h" />
+    <ClInclude Include="D2DFramework\D2DFW_UIController.h" />
     <ClInclude Include="D2DFramework\pch.h" />
     <ClInclude Include="D2DFramework\UI\Core\BaseShape.h" />
     <ClInclude Include="D2DFramework\UI\Core\UIElementBase.h" />

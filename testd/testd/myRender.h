@@ -20,6 +20,8 @@ public:
 	void UserKeyPressed(WPARAM wParam)  override;
 	void UserResizeUpdate()				override;
 
+	virtual void UserUICreateFunction() override;
+
 private:
 
 	std::unique_ptr<FD3DW::Audio> m_pMusic;

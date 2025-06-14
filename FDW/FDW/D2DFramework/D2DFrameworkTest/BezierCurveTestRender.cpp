@@ -26,18 +26,16 @@ void BezierCurveTestRender::UserD2DLoop()
     }
 }
 
-void BezierCurveTestRender::UserD2DClose()
-{
-}
+void BezierCurveTestRender::UserD2DClose() { }
 
 void BezierCurveTestRender::ChildKeyPressed(WPARAM param)
 {
     if (param == VK_UP) {
-        ScaleFactor *= 1.1;
+        ScaleFactor *= 1.1f;
         Scale(ScaleFactor);
     }
     else if (param == VK_DOWN) {
-        ScaleFactor /= 1.1;
+        ScaleFactor /= 1.1f;
         Scale(ScaleFactor);
     }
     else if (param == VK_F1) {

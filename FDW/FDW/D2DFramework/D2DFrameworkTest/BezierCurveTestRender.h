@@ -1,6 +1,6 @@
 #pragma once
 #define _DISABLE_FDW_MACROSES
-#include <D2DFWStandalone.h>
+#include <D2DFWStandalone/D2DFWStandalone.h>
 
 class BezierCurveTestRender :
     public FD2DW::D2DFWStandalone

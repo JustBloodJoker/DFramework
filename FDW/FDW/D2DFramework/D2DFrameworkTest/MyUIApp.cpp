@@ -35,7 +35,7 @@ D2D1_RECT_F TickShape::GetBoundingRect() const {
     return D2D1::RectF(m_fX, m_fY, m_fX + m_fW, m_fY + m_fH);
 }
 
-void MyUIApp::UserAfterD2DInit() {
+void MyUIApp::UserUICreateFunction() {
     //rectange button
     auto rectShape = std::make_shared<FD2DW::RectShape>(50, 50, 120, 40, D2D1::ColorF(D2D1::ColorF::LightGray));
     auto button = std::make_shared<FD2DW::UIButton>(rectShape);
@@ -67,19 +67,7 @@ void MyUIApp::UserAfterD2DInit() {
         });
     AddUIElement(checkbox2);
 
-    // ComboBox with shapes (dropdown rendering)
-    auto comboShape = std::make_shared<FD2DW::RectShape>(50, 120, 120, 30, D2D1::ColorF(D2D1::ColorF::LightGray));
-    auto combo = std::make_shared<FD2DW::UIComboBox>(comboShape);
-    combo->AddItem(std::make_shared<FD2DW::RectShape>(0, 0, 20, 20, D2D1::ColorF(D2D1::ColorF::Red)));
-    combo->AddItem(std::make_shared<FD2DW::CircleShape>(10, 10, 10, D2D1::ColorF(D2D1::ColorF::Green)));
-    combo->AddItem(std::make_shared<FD2DW::TriangleShape>(D2D1::Point2F(0, 20), D2D1::Point2F(10, 0), D2D1::Point2F(20, 20), D2D1::ColorF(D2D1::ColorF::Blue)));
-    combo->SetOnSelect([](size_t idx) {
-        char buf[64];
-        sprintf_s(buf, "ComboBox selected: %zu", idx);
-        MessageBoxA(nullptr, buf, "ComboBox", MB_OK);
-        });
-    combo->SetDropOffset(0, 0);
-    AddUIElement(combo);
+   
 
     // Simple UI element (for rendering only)
     auto simpleShape = std::make_shared<FD2DW::RectShape>(250, 120, 60, 60, D2D1::ColorF(D2D1::ColorF::Yellow));
@@ -114,4 +102,18 @@ void MyUIApp::UserAfterD2DInit() {
         MessageBoxA(nullptr, buf, "Vertical Slider", MB_OK);
         });
     AddUIElement(sliderV);
+
+    // ComboBox with shapes (dropdown rendering)
+    auto comboShape = std::make_shared<FD2DW::RectShape>(50, 120, 120, 30, D2D1::ColorF(D2D1::ColorF::LightGray));
+    auto combo = std::make_shared<FD2DW::UIComboBox>(comboShape);
+    combo->AddItem(std::make_shared<FD2DW::RectShape>(0, 0, 20, 20, D2D1::ColorF(D2D1::ColorF::Red)));
+    combo->AddItem(std::make_shared<FD2DW::CircleShape>(10, 10, 10, D2D1::ColorF(D2D1::ColorF::Green)));
+    combo->AddItem(std::make_shared<FD2DW::TriangleShape>(D2D1::Point2F(0, 20), D2D1::Point2F(10, 0), D2D1::Point2F(20, 20), D2D1::ColorF(D2D1::ColorF::Blue)));
+    combo->SetOnSelect([](size_t idx) {
+        char buf[64];
+        sprintf_s(buf, "ComboBox selected: %zu", idx);
+        MessageBoxA(nullptr, buf, "ComboBox", MB_OK);
+        });
+    combo->SetDropOffset(0, 0);
+    AddUIElement(combo);
 }

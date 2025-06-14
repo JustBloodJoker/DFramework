@@ -58,6 +58,8 @@ namespace FD2DW
 		RECT m_xMainRect;
 	};
 
+
+
 }
 
 #endif // ! _DISABLE_D2DFW_STANDALONE

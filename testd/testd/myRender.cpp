@@ -312,4 +312,8 @@ void myRender::UserResizeUpdate()
 {
 	//OnResizeDLSS(m_pCommandList.get());
 }
+
+void myRender::UserUICreateFunction() {
+
+}
  

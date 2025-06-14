@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "D2DFWUI.h"
+#include "D2DFWStandalone/D2DFWUIStandalone.h"
 #include "UI/Shapes/RectShape.h"
 #include "UI/Shapes/CircleShape.h"
 #include "UI/Shapes/TriangleShape.h"
@@ -29,9 +29,9 @@ protected:
     D2D1_COLOR_F m_xColor = D2D1::ColorF(D2D1::ColorF::Black);
 };
 
-class MyUIApp : public FD2DW::D2DFWUI {
+class MyUIApp : public FD2DW::D2DFWUIStandalone {
 
 public:
-    void UserAfterD2DInit() override;
+    virtual void UserUICreateFunction() override;
 
 }; 
