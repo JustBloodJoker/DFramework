@@ -1,18 +1,25 @@
+#include "MyUIApp.h"
 #include "BezierCurveTestRender.h"
 
 
 void StandaloneTest() {
-	BezierCurveTestRender* ren = new BezierCurveTestRender();
+    BezierCurveTestRender* ren = new BezierCurveTestRender();
 
-	ren->__START();
+    ren->__START();
 
-	delete ren;
+    delete ren;
 }
 
+void UITest() {
+	MyUIApp* app = new MyUIApp();
+	app->__START();
+	delete app;
+}
 
 int main() {
-	StandaloneTest();
 
-
+    StandaloneTest();
+	UITest();
+	
 	return 0;
 }

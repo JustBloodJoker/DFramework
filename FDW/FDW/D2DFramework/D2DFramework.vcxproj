@@ -190,17 +190,42 @@
     <ClCompile Include="D2DFrameworkTest\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="D2DFrameworkTest\MyUIApp.cpp" />
     <ClCompile Include="D2DFramework\D2DFW.cpp" />
     <ClCompile Include="D2DFramework\D2DFWStandalone.cpp" />
+    <ClCompile Include="D2DFramework\D2DFWUI.cpp" />
+    <ClCompile Include="D2DFramework\UI\Core\BaseShape.cpp" />
+    <ClCompile Include="D2DFramework\UI\Core\UIElementBase.cpp" />
+    <ClCompile Include="D2DFramework\UI\Shapes\CircleShape.cpp" />
+    <ClCompile Include="D2DFramework\UI\Shapes\RectShape.cpp" />
+    <ClCompile Include="D2DFramework\UI\Shapes\TriangleShape.cpp" />
+    <ClCompile Include="D2DFramework\UI\UIElements\UIButton.cpp" />
+    <ClCompile Include="D2DFramework\UI\UIElements\UICheckBox.cpp" />
+    <ClCompile Include="D2DFramework\UI\UIElements\UIComboBox.cpp" />
+    <ClCompile Include="D2DFramework\UI\UIElements\UIElementSimple.cpp" />
+    <ClCompile Include="D2DFramework\UI\UIElements\UISlider.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D2DFrameworkTest\BezierCurveTestRender.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="D2DFrameworkTest\MyUIApp.h" />
     <ClInclude Include="D2DFramework\d2dframework.h" />
     <ClInclude Include="D2DFramework\D2DFW.h" />
     <ClInclude Include="D2DFramework\D2DFWStandalone.h" />
+    <ClInclude Include="D2DFramework\D2DFWUI.h" />
     <ClInclude Include="D2DFramework\pch.h" />
+    <ClInclude Include="D2DFramework\UI\Core\BaseShape.h" />
+    <ClInclude Include="D2DFramework\UI\Core\UIElementBase.h" />
+    <ClInclude Include="D2DFramework\UI\Core\UIElementBaseWithInput.h" />
+    <ClInclude Include="D2DFramework\UI\Shapes\CircleShape.h" />
+    <ClInclude Include="D2DFramework\UI\Shapes\RectShape.h" />
+    <ClInclude Include="D2DFramework\UI\Shapes\TriangleShape.h" />
+    <ClInclude Include="D2DFramework\UI\UIElements\UIButton.h" />
+    <ClInclude Include="D2DFramework\UI\UIElements\UICheckBox.h" />
+    <ClInclude Include="D2DFramework\UI\UIElements\UIComboBox.h" />
+    <ClInclude Include="D2DFramework\UI\UIElements\UIElementSimple.h" />
+    <ClInclude Include="D2DFramework\UI\UIElements\UISlider.h" />
     <ClInclude Include="D2DFramework\Utilites\Macroses.h" />
     <ClInclude Include="D2DFramework\Utilites\Structures.h" />
   </ItemGroup>

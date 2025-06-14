@@ -9,6 +9,7 @@
 #include <fstream>
 #include <tuple>
 #include <vector>
+#include <array>
 #include <unordered_map>
 #include <filesystem>
 #include <set>
@@ -33,6 +34,7 @@
 #include "Utils/Macroses.h"
 #include "Utils/WindowSettings.h"
 
-
+#undef max
+#undef min
 
 namespace wrl = Microsoft::WRL;
