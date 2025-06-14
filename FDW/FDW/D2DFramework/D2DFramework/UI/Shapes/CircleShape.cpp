@@ -11,8 +11,9 @@ namespace FD2DW {
     }
 
     void CircleShape::SetPosition(float x, float y) {
-        m_fCx = x;
-        m_fCy = y;
+        // Need to add the radius because this method sets the position at the top-left corner.
+        m_fCx = x + m_fRadius;
+        m_fCy = y + m_fRadius;
     }
 
     void CircleShape::SetSize(float width, float height) {
