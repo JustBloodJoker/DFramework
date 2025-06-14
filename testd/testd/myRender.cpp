@@ -166,7 +166,7 @@ void myRender::UserLoop()
 	m_pCommandList->ResetList();
 	
 
-
+	
 	m_xAt = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
 		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), m_xEye);
 

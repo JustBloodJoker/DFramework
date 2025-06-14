@@ -330,7 +330,7 @@ namespace FD3DW
 	std::unique_ptr<DSVPacker> D3DFW::CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating DSV pack");
-		return std::make_unique<DSVPacker>(Get_RTV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, m_pDevice.Get());
+		return std::make_unique<DSVPacker>(Get_DSV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, m_pDevice.Get());
 	}
 
 	std::unique_ptr<SRVPacker> D3DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
