@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="main">
+      <UniqueIdentifier>{42e43ee5-fa45-4ffb-9306-6156fbe83e87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mainRenderer">
+      <UniqueIdentifier>{7ac35956-5737-4f41-b4ca-1a91472497d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{c5a3cdc2-689b-4111-a102-8a0bab96fa83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{244b78f7-c25c-44f3-98f1-053ecb3a9c0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="__IMGUI">
+      <UniqueIdentifier>{29d2e9d5-4696-41b4-bc1c-07e4c797160d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="MainRenderer\MainRenderer.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\MainRenderer_UIComponent.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_demo.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_draw.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_tables.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\imgui_widgets.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\backends\imgui_impl_dx12.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="include\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>__IMGUI</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>main</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderer\MainRenderer.h">
+      <Filter>mainRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\MainRenderer_UIComponent.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
