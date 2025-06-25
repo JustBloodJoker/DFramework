@@ -48,7 +48,7 @@ namespace FDWWIN
 		virtual void ChildMOUSEUP(WPARAM btnState, int x, int y) = 0;
 		virtual void ChildMOUSEDOWN(WPARAM btnState, int x, int y) = 0;
 		virtual void ChildMOUSEMOVE(WPARAM btnState, int x, int y) = 0;
-		virtual bool IsContinueCheckDefaultMSGProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+		virtual void ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	protected:
 		virtual void EscapeKeyProc();

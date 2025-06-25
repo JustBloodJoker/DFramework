@@ -209,6 +209,8 @@ namespace FD3DW
 
 		m_xMainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
 
+		UpdateSwapchainRTVs();
+
 		UserResizeUpdate();
 	}
 
@@ -292,16 +294,7 @@ namespace FD3DW
 
 		m_uCurrentBackBufferIndex = 0;
 
-
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeap(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-		for (UINT index = 0; index < BUFFERS_COUNT; index++)
-		{
-			HRESULT_ASSERT(m_pSwapChain->GetBuffer(index, IID_PPV_ARGS(m_aSwapChainRTV[index].GetAddressOf())), "Swapchain buffer get error");
-			m_pDevice->CreateRenderTargetView(m_aSwapChainRTV[index].Get(), nullptr, rtvHeap);
-
-			rtvHeap.Offset(1, m_uRTVDescriptorSize);
-		}
+		UpdateSwapchainRTVs();
 
 		m_xMainVP.Height = static_cast<float>(WndSet.Height);
 		m_xMainVP.Width = static_cast<float>(WndSet.Width);
@@ -569,5 +562,24 @@ namespace FD3DW
 	{
 		return CreateAnonimTexture(1u, DXGI_FORMAT_UNKNOWN,width, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
 	}
+
+
+	void D3DFW::UpdateSwapchainRTVs()
+	{
+		for (auto i = 0; i < BUFFERS_COUNT; ++i)
+		{
+			m_aSwapChainRTV[i].Reset();
+		}
+
+		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeap(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+		for (auto index = 0; index < BUFFERS_COUNT; index++)
+		{
+			HRESULT_ASSERT(m_pSwapChain->GetBuffer(index, IID_PPV_ARGS(m_aSwapChainRTV[index].GetAddressOf())), "Swapchain get buffer error");
+			m_pDevice->CreateRenderTargetView(m_aSwapChainRTV[index].Get(), nullptr, rtvHeap);
+
+			rtvHeap.Offset(1, m_uRTVDescriptorSize);
+		}
+	}
+
 
 }

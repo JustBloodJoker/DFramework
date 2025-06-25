@@ -222,6 +222,15 @@ namespace FD3DW
 			return std::make_unique<UploadBuffer<T>>(m_pDevice.Get(), std::forward<decltype(elementCount)>(elementCount), true);
 		}
 
+		///////////////////////////////////
+
+
+		private:
+
+			void UpdateSwapchainRTVs();
+
+
+
 
 	};
 

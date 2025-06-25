@@ -12,7 +12,7 @@
 #define NUM_BONES_PER_VEREX 13
 #endif
 
-#define M_PI_2_F 1.57079632679489661923f
+#define M_PI_2_F 1.5707963f
 
 									
 #ifdef _XBOX 

@@ -12,7 +12,8 @@ protected:
 	void InitImGui(ID3D12Device* device, const HWND& hwnd, ID3D12DescriptorHeap* srvHeap);
 	void RenderImGui(ID3D12GraphicsCommandList* cmdList);
 	void ShutDownImGui();
-	bool ImGuiInputCheck(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	void OnNewSizeWindowImGui(float width, float height);
 
 private:
 	void DrawUI();

@@ -296,8 +296,12 @@ void MainRenderer::UserKeyPressed(WPARAM wParam)
 	}
 }
 
-void MainRenderer::UserResizeUpdate() { }
+void MainRenderer::UserResizeUpdate() { 
+	const auto& settings = WNDSettings();
+	OnNewSizeWindowImGui(settings.Width, settings.Height);
+		
+}
 
-bool MainRenderer::IsContinueCheckDefaultMSGProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	return !ImGuiInputCheck(hWnd, msg, wParam, lParam);
+void MainRenderer::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	ImGuiInputProcess(hWnd, msg, wParam, lParam);
 }

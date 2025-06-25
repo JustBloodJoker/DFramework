@@ -18,7 +18,7 @@ public:
 	void UserMouseMoved(WPARAM btnState, int x, int y) override;
 	void UserKeyPressed(WPARAM wParam)  override;
 	void UserResizeUpdate()				override;
-	virtual bool IsContinueCheckDefaultMSGProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual void ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 private:
 

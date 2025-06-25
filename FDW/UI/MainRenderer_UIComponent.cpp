@@ -12,6 +12,10 @@ void MainRenderer_UIComponent::InitImGui(ID3D12Device* device, const HWND& hwnd,
 
     ImGui_ImplWin32_Init(hwnd);
 
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseDrawCursor = true;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
     ImGui_ImplDX12_Init(
         device,
         BUFFERS_COUNT,
@@ -45,21 +49,15 @@ void MainRenderer_UIComponent::ShutDownImGui() {
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-bool MainRenderer_UIComponent::ImGuiInputCheck(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (!m_bIsInited) return false;
-    
+void MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+}
 
+void MainRenderer_UIComponent::OnNewSizeWindowImGui(float width, float height) {
+    if (!m_bIsInited) return;
+    
     ImGuiIO& io = ImGui::GetIO();
-    if (io.WantCaptureMouse && (msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST)) {
-        return true;
-    }
-
-    if (io.WantCaptureKeyboard && (msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN || msg == WM_CHAR)) {
-        return true;
-    }
-
-    return false;
+    io.DisplaySize = ImVec2(width, height);
 }
 
 void MainRenderer_UIComponent::DrawUI() {

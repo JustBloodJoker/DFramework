@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "WinWindow.h"
 
-namespace FDWWIN 
+namespace FDWWIN
 {
 	LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
@@ -36,7 +36,7 @@ namespace FDWWIN
 
 		m_bPAUSEWORK = false;
 	}
-	
+
 	void WinWindow::__START()
 	{
 		if (m_bIsStartedWindow) return;
@@ -49,7 +49,7 @@ namespace FDWWIN
 		{
 			CONSOLE_MESSAGE("Window created");
 		}
-		
+
 		if (InitTimer())
 		{
 			CONSOLE_MESSAGE("TIMER OBJECT INITED");
@@ -140,7 +140,9 @@ namespace FDWWIN
 				SAFE_ASSERT(false, "RegisterClassEx failed");
 			}
 		}
-			
+		
+		RECT rect = { 0, 0, m_xWndSettings.Width, m_xWndSettings.Height };
+		AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
 		m_xHWND = CreateWindowEx(
 			0,
@@ -148,7 +150,7 @@ namespace FDWWIN
 			this->m_xWndSettings.TittleName.c_str(),
 			WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, CW_USEDEFAULT,
-			this->m_xWndSettings.Width, this->m_xWndSettings.Height,
+			rect.right - rect.left, rect.bottom - rect.top,
 			NULL,
 			NULL,
 			hInstance,
@@ -172,7 +174,7 @@ namespace FDWWIN
 		m_pTimer = std::make_unique<Timer>();
 		return m_pTimer ? true : false;
 	}
-	
+
 	void WinWindow::Loop()
 	{
 		MSG msg;
@@ -192,14 +194,15 @@ namespace FDWWIN
 					m_pTimer->Tick();
 					ChildLoop();
 				}
+				else
+				{
+					WaitMessage();
+				}
 			}
 		}
 	}
 
-	bool WinWindow::IsContinueCheckDefaultMSGProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-	{
-		return true;
-	}
+	void WinWindow::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) { }
 
 	void WinWindow::EscapeKeyProc()
 	{
@@ -224,14 +227,8 @@ namespace FDWWIN
 
 	LRESULT WinWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if(msg == WM_NCCREATE || msg== WM_NCDESTROY) return DefWindowProc(hWnd, msg, wParam, lParam);
-
-		if (!IsContinueCheckDefaultMSGProc(hWnd, msg, wParam, lParam)) 
-		{
-			return 0;
-
-		}
-
+		bool isHandled = false;
+		
 		switch (msg)
 		{
 		case WM_ACTIVATE:
@@ -246,7 +243,8 @@ namespace FDWWIN
 			{
 				m_bPAUSEWORK = false;
 			}
-			return 0;
+			isHandled = true;
+			break;
 		}
 
 		case WM_KEYDOWN:
@@ -263,34 +261,45 @@ namespace FDWWIN
 			{
 				ChildKeyPressed(wParam);
 			}
-			return 0;
+			isHandled = true;
+			break;
 
 		case WM_DESTROY:
 
 			CONSOLE_MESSAGE("WM_DESTROY MESSAGE ACTIVE");
 			PostQuitMessage(0);
-			return 0;
+			isHandled = true;
+			break;
 
 		case WM_SIZE:
 			CONSOLE_MESSAGE("WM_SIZE ACTIVE");
-			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
 			ChildSIZE();
-			return 0;
+			isHandled = true;
+			break;
 
 		case WM_ENTERSIZEMOVE:
 		{
 			CONSOLE_MESSAGE("WM_ENTERSIZE ACTIVE");
-			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
+			
 			ChildENTERSIZE();
-			return 0;
+			isHandled = true;
+			break;
 		}
 		case WM_EXITSIZEMOVE:
 		{
 			CONSOLE_MESSAGE("WM_EXITSIZE ACTIVE");
-			SetWindowPos(hWnd, hWnd, CW_USEDEFAULT, CW_USEDEFAULT, LOWORD(lParam), HIWORD(lParam), WS_OVERLAPPEDWINDOW);
-			ChildEXITSIZE();
+			
+			RECT clientRect;
+			GetClientRect(hWnd, &clientRect);
+			int clientWidth = clientRect.right - clientRect.left;
+			int clientHeight = clientRect.bottom - clientRect.top;
+			
+			m_xWndSettings.Width = clientWidth;
+			m_xWndSettings.Height = clientHeight;
 
-			return 0;
+			ChildEXITSIZE();
+			isHandled = true;
+			break;
 		}
 
 		case WM_MENUCHAR:
@@ -299,29 +308,36 @@ namespace FDWWIN
 		case WM_GETMINMAXINFO:
 			((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
 			((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
-			return 0;
+			isHandled = true;
+			break;
 
 		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		case WM_RBUTTONDOWN:
 			ChildMOUSEDOWN(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			SetCapture(hWnd);
-			return 0;
+			isHandled = true;
+			break;
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
 			ChildMOUSEUP(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			ReleaseCapture();
-			return 0;
+			isHandled = true;
+			break;
 		case WM_MOUSEMOVE:
 			CONSOLE_MESSAGE_NO_PREF(std::string("MOUSE MOVED X: " + std::to_string(GET_X_LPARAM(lParam)) + " Y: " + std::to_string(GET_Y_LPARAM(lParam))));
 			ChildMOUSEMOVE(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			return 0;
+			isHandled = true;
+			break;
 
 		}
-		return DefWindowProc(hWnd,
-			msg,
-			wParam,
-			lParam);
+		
+		ChildAllMSG(hWnd, msg, wParam, lParam);
+
+
+
+		return isHandled ? 0 : DefWindowProc(hWnd, msg, wParam, lParam);
 	}
+
 }
