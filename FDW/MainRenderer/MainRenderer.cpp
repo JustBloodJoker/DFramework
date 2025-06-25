@@ -167,7 +167,7 @@ void MainRenderer::UserLoop()
 	m_pStructureBufferBones->UploadData(GetDevice(), m_pPCML, resultVector.data());
 
 	FD3DW::MatricesConstantBufferStructureFrameWork cmb;
-	cmb.Projection = dx::XMMatrixTranspose(GetMainProjectionMatrix());
+	cmb.Projection = dx::XMMatrixTranspose(m_xProjectionMatrix);
 	cmb.View = dx::XMMatrixTranspose(m_xView);
 	cmb.World = dx::XMMatrixTranspose(m_xWorld);
 	m_pMatricesBuffer->CpyData(0, cmb);
@@ -296,10 +296,12 @@ void MainRenderer::UserKeyPressed(WPARAM wParam)
 	}
 }
 
-void MainRenderer::UserResizeUpdate() { 
-	const auto& settings = WNDSettings();
-	OnNewSizeWindowImGui(settings.Width, settings.Height);
-		
+void MainRenderer::UserEndResizeUpdate() {
+}
+
+void MainRenderer::UserResizeUpdate() {
+	const auto& WndSet = WNDSettings();
+	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
 }
 
 void MainRenderer::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {

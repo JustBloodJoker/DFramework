@@ -17,6 +17,7 @@ public:
 	void UserMouseUp(WPARAM btnState, int x, int y) override;
 	void UserMouseMoved(WPARAM btnState, int x, int y) override;
 	void UserKeyPressed(WPARAM wParam)  override;
+	void UserEndResizeUpdate()			override;
 	void UserResizeUpdate()				override;
 	virtual void ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
@@ -43,6 +44,7 @@ private:
 	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> m_pMatricesBuffer;
 	dx::XMMATRIX m_xView;
 	dx::XMMATRIX m_xWorld;
+	dx::XMMATRIX m_xProjectionMatrix;
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;

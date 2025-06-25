@@ -285,5 +285,10 @@ void AnimationTestRender::UserKeyPressed(WPARAM wParam)
 
 void AnimationTestRender::UserResizeUpdate()
 {
-	//OnResizeDLSS(m_pCommandList.get());
+	const auto& WndSet = WNDSettings();
+	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
+}
+
+void AnimationTestRender::UserEndResizeUpdate()
+{
 }

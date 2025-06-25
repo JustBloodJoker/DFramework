@@ -43,6 +43,7 @@ namespace FD3DW
 		virtual void UserMouseUp(WPARAM btnState, int x, int y) = 0;
 		virtual void UserMouseMoved(WPARAM btnState, int x, int y) = 0;
 		virtual void UserKeyPressed(WPARAM wParam) = 0;
+		virtual void UserEndResizeUpdate() = 0;
 		virtual void UserResizeUpdate() = 0;
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
@@ -74,7 +75,6 @@ namespace FD3DW
 		std::unique_ptr<AudioManager> m_pAudioMananger;
 
 		// WINDOW
-		dx::XMMATRIX m_xMainProjectionMatrix;
 		D3D12_VIEWPORT m_xMainVP;
 		D3D12_RECT m_xMainRect;
 
@@ -123,7 +123,6 @@ namespace FD3DW
 		wrl::ComPtr<IDXGISwapChain> GetComPtrSwapChain()				const noexcept;
 		UINT						GetCurrentBackBufferIndex()			const noexcept;
 		WindowSettings				GetMainWNDSettings()				const noexcept;
-		dx::XMMATRIX				GetMainProjectionMatrix()			const noexcept;
 		D3D12_VIEWPORT				GetMainViewPort()					const noexcept;
 		D3D12_RECT					GetMainRect()						const noexcept;
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCurrBackBufferView()				const noexcept;
@@ -227,9 +226,10 @@ namespace FD3DW
 
 		private:
 
-			void UpdateSwapchainRTVs();
-
-
+			void CreateSwapchainData();
+			void ClearSwapchainData();
+			void SetViewportData(float width, float height);
+			void SetRectData(float width, float height);
 
 
 	};

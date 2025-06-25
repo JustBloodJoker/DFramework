@@ -13,7 +13,6 @@ protected:
 	void RenderImGui(ID3D12GraphicsCommandList* cmdList);
 	void ShutDownImGui();
 	void ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	void OnNewSizeWindowImGui(float width, float height);
 
 private:
 	void DrawUI();

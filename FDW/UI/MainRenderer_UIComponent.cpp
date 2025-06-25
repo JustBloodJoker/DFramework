@@ -53,13 +53,6 @@ void MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wPa
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
 }
 
-void MainRenderer_UIComponent::OnNewSizeWindowImGui(float width, float height) {
-    if (!m_bIsInited) return;
-    
-    ImGuiIO& io = ImGui::GetIO();
-    io.DisplaySize = ImVec2(width, height);
-}
-
 void MainRenderer_UIComponent::DrawUI() {
     ImGui::Begin("Hello, world!");
     ImGui::End();

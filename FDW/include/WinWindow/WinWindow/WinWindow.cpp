@@ -189,14 +189,14 @@ namespace FDWWIN
 			}
 			else
 			{
-				if (!m_bPAUSEWORK)
+				if (m_bPAUSEWORK)
 				{
-					m_pTimer->Tick();
-					ChildLoop();
+					WaitMessage();
 				}
 				else
 				{
-					WaitMessage();
+					m_pTimer->Tick();
+					ChildLoop();
 				}
 			}
 		}

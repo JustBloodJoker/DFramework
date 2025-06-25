@@ -186,8 +186,7 @@ namespace FD3DW
 
 	void D3DFW::ChildSIZE()
 	{
-		const auto& WndSet = WNDSettings();
-		m_xMainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
+		UserResizeUpdate();
 	}
 
 	void D3DFW::ChildENTERSIZE()
@@ -198,7 +197,11 @@ namespace FD3DW
 	{
 		const auto& WndSet = WNDSettings();
 
-		m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, WndSet.Width, WndSet.Height, GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+		m_pCommandQueue->FlushQueue();
+
+		ClearSwapchainData();
+
+		hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
 		m_xMainVP.Height = static_cast<float>(WndSet.Height);
 		m_xMainVP.Width = static_cast<float>(WndSet.Width);
 
@@ -207,11 +210,9 @@ namespace FD3DW
 		m_xMainRect.top = 0;
 		m_xMainRect.bottom = WndSet.Height;
 
-		m_xMainProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
+		CreateSwapchainData();
 
-		UpdateSwapchainRTVs();
-
-		UserResizeUpdate();
+		UserEndResizeUpdate();
 	}
 
 	void D3DFW::ChildMOUSEUP(WPARAM btnState, int x, int y)
@@ -269,7 +270,7 @@ namespace FD3DW
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		swapChainDesc.BufferDesc.Width = WndSet.Width;
 		swapChainDesc.BufferDesc.Height = WndSet.Height;
-		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		swapChainDesc.BufferDesc.Format = GetMainRTVFormat();
 		swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 		swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
 		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
@@ -285,29 +286,12 @@ namespace FD3DW
 
 		HRESULT_ASSERT(m_pFactory->CreateSwapChain(m_pCommandQueue->GetQueue(), &swapChainDesc, m_pSwapChain.GetAddressOf()), "Swapchain create error");
 
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-		rtvHeapDesc.NumDescriptors = BUFFERS_COUNT;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		rtvHeapDesc.NodeMask = 0;
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		HRESULT_ASSERT(m_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_pRTVDescriptorHeap.GetAddressOf())), "RTV descriptor heap create error");
+		ClearSwapchainData();
+		CreateSwapchainData();
 
-		m_uCurrentBackBufferIndex = 0;
-
-		UpdateSwapchainRTVs();
-
-		m_xMainVP.Height = static_cast<float>(WndSet.Height);
-		m_xMainVP.Width = static_cast<float>(WndSet.Width);
-		m_xMainVP.MaxDepth = 1.0f;
-		m_xMainVP.MinDepth = 0.0f;
-		m_xMainVP.TopLeftX = 0.0f;
-		m_xMainVP.TopLeftY = 0.0f;
-
-		m_xMainRect.left = 0;
-		m_xMainRect.right = WndSet.Width;
-		m_xMainRect.top = 0;
-		m_xMainRect.bottom = WndSet.Height;
-
+		SetViewportData(WndSet.Width, WndSet.Height);
+		SetRectData(WndSet.Width, WndSet.Height);
+		
 		return true;
 	}
 
@@ -365,11 +349,6 @@ namespace FD3DW
 	WindowSettings D3DFW::GetMainWNDSettings() const noexcept
 	{
 		return WNDSettings();
-	}
-
-	dx::XMMATRIX D3DFW::GetMainProjectionMatrix() const noexcept
-	{
-		return m_xMainProjectionMatrix;
 	}
 
 	D3D12_VIEWPORT D3DFW::GetMainViewPort() const noexcept
@@ -564,12 +543,16 @@ namespace FD3DW
 	}
 
 
-	void D3DFW::UpdateSwapchainRTVs()
+	void D3DFW::CreateSwapchainData()
 	{
-		for (auto i = 0; i < BUFFERS_COUNT; ++i)
-		{
-			m_aSwapChainRTV[i].Reset();
-		}
+		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
+		rtvHeapDesc.NumDescriptors = BUFFERS_COUNT;
+		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		rtvHeapDesc.NodeMask = 0;
+		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		HRESULT_ASSERT(m_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_pRTVDescriptorHeap.GetAddressOf())), "RTV descriptor heap create error");
+
+		m_uCurrentBackBufferIndex = 0;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHeap(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 		for (auto index = 0; index < BUFFERS_COUNT; index++)
@@ -579,6 +562,33 @@ namespace FD3DW
 
 			rtvHeap.Offset(1, m_uRTVDescriptorSize);
 		}
+	}
+
+	void D3DFW::ClearSwapchainData()
+	{
+		for (auto i = 0; i < BUFFERS_COUNT; ++i)
+		{
+			m_aSwapChainRTV[i].Reset();
+		}
+		m_pRTVDescriptorHeap.Reset();
+	}
+
+	void D3DFW::SetViewportData(float width, float height)
+	{
+		m_xMainVP.Height = static_cast<float>(height);
+		m_xMainVP.Width = static_cast<float>(width);
+		m_xMainVP.MaxDepth = 1.0f;
+		m_xMainVP.MinDepth = 0.0f;
+		m_xMainVP.TopLeftX = 0.0f;
+		m_xMainVP.TopLeftY = 0.0f;
+	}
+
+	void D3DFW::SetRectData(float width, float height)
+	{
+		m_xMainRect.left = 0;
+		m_xMainRect.right = width;
+		m_xMainRect.top = 0;
+		m_xMainRect.bottom = height;
 	}
 
 
