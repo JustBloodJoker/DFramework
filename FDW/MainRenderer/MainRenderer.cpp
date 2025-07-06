@@ -14,8 +14,7 @@ void MainRenderer::UserInit()
 	m_pTimer = GetTimer();
 	auto device = GetDevice();
 	
-	m_pUISRVPack = CreateSRVPack(1u);
-	InitImGui( device, GETHWND(), m_pUISRVPack->GetResult()->GetDescriptorPtr() );
+	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
 
 	m_pMusic = CreateAudio(L"Content/322.wav");
 	m_pMusic->SetVolume(0.1f);
@@ -235,12 +234,12 @@ void MainRenderer::UserLoop()
 
 	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
-	RenderImGui(m_pPCML);
+	m_pUIComponent->RenderImGui();
 }
 
 void MainRenderer::UserClose()
 {
-	ShutDownImGui();
+	while ( !m_vComponents.empty() ) DestroyComponent( m_vComponents.back().get() );
 }
 
 void MainRenderer::UserMouseDown(WPARAM btnState, int x, int y)
@@ -305,5 +304,17 @@ void MainRenderer::UserResizeUpdate() {
 }
 
 void MainRenderer::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	ImGuiInputProcess(hWnd, msg, wParam, lParam);
+	m_pUIComponent->ImGuiInputProcess(hWnd, msg, wParam, lParam);
+}
+
+void MainRenderer::DestroyComponent(MainRendererComponent* cmp) {
+	auto it = std::find_if(m_vComponents.begin(), m_vComponents.end(),
+		[cmp](const std::unique_ptr<MainRendererComponent>& ptr) {
+			return ptr.get() == cmp;
+		});
+
+	if (it != m_vComponents.end()) {
+		(*it)->BeforeDestruction();
+		m_vComponents.erase(it);
+	}
 }

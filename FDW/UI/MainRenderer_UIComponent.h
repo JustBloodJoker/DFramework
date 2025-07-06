@@ -1,22 +1,34 @@
 #pragma once
 
 #include <pch.h>
+#include <MainRenderer/MainRendererComponent.h>
 
-class MainRenderer_UIComponent {
+class MainRenderer;
+
+namespace FD3DW {
+	class SRVPacker;
+}
+
+class MainRenderer_UIComponent : virtual public MainRendererComponent {
 public:
-	MainRenderer_UIComponent()=default;
+	MainRenderer_UIComponent(MainRenderer* owner);
 	virtual ~MainRenderer_UIComponent() = default;
 
-protected:
-
-	void InitImGui(ID3D12Device* device, const HWND& hwnd, ID3D12DescriptorHeap* srvHeap);
-	void RenderImGui(ID3D12GraphicsCommandList* cmdList);
+public:
+	void InitImGui();
+	void RenderImGui();
 	void ShutDownImGui();
 	void ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+public:
+	virtual void AfterConstruction() override;
+	virtual void BeforeDestruction() override;
 
 private:
 	void DrawUI();
 
+
 private:
+	std::unique_ptr<FD3DW::SRVPacker> m_pUISRVPack;
 	bool m_bIsInited = false;
 };

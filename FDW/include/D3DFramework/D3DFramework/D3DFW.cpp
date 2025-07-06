@@ -30,6 +30,12 @@ namespace FD3DW
 		return m_pCommandQueue->GetQueue();
 	}
 
+	ID3D12GraphicsCommandList* D3DFW::GetBindedCommandList() const noexcept 
+	{
+		return m_pBindedMainCommandList->GetPtrCommandList();
+	}
+
+
 	IDXGISwapChain* D3DFW::GetSwapChain() const noexcept 
 	{
 		return m_pSwapChain.Get();

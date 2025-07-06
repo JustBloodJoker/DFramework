@@ -48,6 +48,9 @@
     <ClCompile Include="include\imgui\backends\imgui_impl_win32.cpp">
       <Filter>__IMGUI</Filter>
     </ClCompile>
+    <ClCompile Include="MainRenderer\MainRendererComponent.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -58,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="UI\MainRenderer_UIComponent.h">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderer\MainRendererComponent.h">
+      <Filter>mainRenderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

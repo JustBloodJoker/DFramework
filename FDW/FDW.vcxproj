@@ -28,10 +28,12 @@
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
+    <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h" />
+    <ClInclude Include="MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
   </ItemGroup>

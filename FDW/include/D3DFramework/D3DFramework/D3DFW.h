@@ -112,7 +112,7 @@ namespace FD3DW
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
 		void				EndDraw(ID3D12GraphicsCommandList* pCommandList);
 
-	protected:
+	public:
 
 		const UINT					Get_CBV_SRV_UAV_DescriptorSize()	const noexcept;
 		const UINT					Get_RTV_DescriptorSize()			const noexcept;
@@ -130,8 +130,9 @@ namespace FD3DW
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 		AudioManager*				GetAudioMananger()					const noexcept;
 		ID3D12CommandQueue*			GetCommandQueue()					const noexcept;
+		ID3D12GraphicsCommandList*	GetBindedCommandList()				const noexcept;
 
-
+	protected:
 		void				BindMainViewPort(ID3D12GraphicsCommandList* pCommandList);
 		void				BindMainRect(ID3D12GraphicsCommandList* pCommandList);
 		void				BindListToMainQueue(CommandList* pCommandList);
@@ -140,7 +141,7 @@ namespace FD3DW
 		void				ExecuteMainQueue();
 		void				SetVSync(bool enable);
 		
-
+	public:
 		////////////////////////////////////
 		// FACADE
 		UINT GetIndexSize(Object* obj, const size_t index)		const;
@@ -149,7 +150,7 @@ namespace FD3DW
 		UINT GetVertexSize(Object* obj, const size_t index)		const;
 		UINT GetMaterialIndex(Object* obj, const size_t index)    const;
 
-		protected:
+	public:
 		std::unique_ptr<Scene>				CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list);
 		std::unique_ptr<Rectangle>			CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list);
 		std::unique_ptr<Cube>				CreateCube(bool neverUpdate, ID3D12GraphicsCommandList* list);

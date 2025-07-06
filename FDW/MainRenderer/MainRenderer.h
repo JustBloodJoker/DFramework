@@ -1,10 +1,12 @@
 #pragma once
 
 #include <pch.h>
+#include <MainRenderer/MainRendererComponent.h>
+
 #include <UI/MainRenderer_UIComponent.h>
 #include <D3DFramework/D3DFW.h>
 
-class MainRenderer : virtual public FD3DW::D3DFW, virtual public MainRenderer_UIComponent {
+class MainRenderer : virtual public FD3DW::D3DFW {
 
 public:
 	MainRenderer();
@@ -23,7 +25,25 @@ public:
 
 private:
 
-	std::unique_ptr<FD3DW::SRVPacker> m_pUISRVPack;
+
+	MainRenderer_UIComponent* m_pUIComponent = nullptr;
+
+protected:
+
+	template <typename T>
+	T* CreateComponent() {
+		auto cmp = std::make_unique<T>(this);
+		auto cmpRaw = cmp.get();
+		this->m_vComponents.push_back( std::move(cmp) );
+		cmpRaw->AfterConstruction();
+		return cmpRaw;
+	}
+
+	void DestroyComponent(MainRendererComponent* cmp);
+
+protected:
+	std::vector<std::unique_ptr<MainRendererComponent>> m_vComponents;
+
 
 private:
 	//Refactor these fields
