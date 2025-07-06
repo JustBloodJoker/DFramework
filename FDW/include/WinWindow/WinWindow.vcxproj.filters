@@ -13,6 +13,12 @@
     <ClCompile Include="WinWindowTest\main.cpp">
       <Filter>WinWindowTest</Filter>
     </ClCompile>
+    <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp">
+      <Filter>WinWindow\InputSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp">
+      <Filter>WinWindow\InputSystem</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinWindow\Utils\Macroses.h">
@@ -33,6 +39,12 @@
     <ClInclude Include="WinWindowTest\TestBaseWindow.h">
       <Filter>WinWindowTest</Filter>
     </ClInclude>
+    <ClInclude Include="WinWindow\InputSystem\WinWindowInputLayer.h">
+      <Filter>WinWindow\InputSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\InputSystem\WinWindowInputRouter.h">
+      <Filter>WinWindow\InputSystem</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="WinWindowTest">
@@ -43,6 +55,9 @@
     </Filter>
     <Filter Include="WinWindow\Utils">
       <UniqueIdentifier>{9e5525d3-b40b-4ce2-a216-7ea2a9f3d653}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow\InputSystem">
+      <UniqueIdentifier>{c26119b6-7058-45d5-b2dc-c3df0f33b256}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

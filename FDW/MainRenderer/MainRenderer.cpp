@@ -15,6 +15,7 @@ void MainRenderer::UserInit()
 	auto device = GetDevice();
 	
 	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
+	m_pCameraComponent = CreateComponent<MainRenderer_CameraComponent>();
 
 	m_pMusic = CreateAudio(L"Content/322.wav");
 	m_pMusic->SetVolume(0.1f);
@@ -58,9 +59,6 @@ void MainRenderer::UserInit()
 
 	m_pStructureBufferBones = CreateSimpleStructuredBuffer(m_pBird->GetBonesCount() * sizeof(dx::XMMATRIX));
 
-	m_xEye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
-	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	m_pMatricesBuffer = CreateConstantBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>(1);
 
 	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
@@ -155,19 +153,14 @@ void MainRenderer::UserLoop()
 {
 	m_pCommandList->ResetList();
 
-	m_xAt = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
-		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), m_xEye);
-
-	m_xUp = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
-	m_xView = dx::XMMatrixLookAtLH(m_xEye, m_xAt, m_xUp);
-	m_xWorld = dx::XMMatrixIdentity();
 
 	auto resultVector = m_pBird->PlayAnimation(m_pTimer->GetTime(), "Take 001");
 	m_pStructureBufferBones->UploadData(GetDevice(), m_pPCML, resultVector.data());
 
 	FD3DW::MatricesConstantBufferStructureFrameWork cmb;
-	cmb.Projection = dx::XMMatrixTranspose(m_xProjectionMatrix);
-	cmb.View = dx::XMMatrixTranspose(m_xView);
+	cmb.Projection = dx::XMMatrixTranspose(m_pCameraComponent->GetProjectionMatrix());
+	cmb.View = dx::XMMatrixTranspose(m_pCameraComponent->GetViewMatrix());
+	m_xWorld = dx::XMMatrixIdentity();
 	cmb.World = dx::XMMatrixTranspose(m_xWorld);
 	m_pMatricesBuffer->CpyData(0, cmb);
 
@@ -240,71 +233,6 @@ void MainRenderer::UserLoop()
 void MainRenderer::UserClose()
 {
 	while ( !m_vComponents.empty() ) DestroyComponent( m_vComponents.back().get() );
-}
-
-void MainRenderer::UserMouseDown(WPARAM btnState, int x, int y)
-{
-	m_xLastMousePos.x = x;
-	m_xLastMousePos.y = y;
-}
-
-void MainRenderer::UserMouseUp(WPARAM btnState, int x, int y)
-{
-}
-
-void MainRenderer::UserMouseMoved(WPARAM btnState, int x, int y)
-{
-	if ((btnState & MK_LBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
-	{
-		m_fCamYaw += (m_xLastMousePos.x - x) * 0.002f;
-		m_fCamPitch += (m_xLastMousePos.y - y) * 0.002f;
-	}
-	if ((btnState & MK_RBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
-	{
-		m_fCamRoll += (m_xLastMousePos.x - x) * 0.002f;
-	}
-	m_xLastMousePos.x = x;
-	m_xLastMousePos.y = y;
-}
-
-void MainRenderer::UserKeyPressed(WPARAM wParam)
-{
-	dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(m_xAt, m_xEye));
-	dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, cameraDirection));
-
-	if (wParam == 'W')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'S')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'D')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'A')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
-	}
-
-	if (wParam == 'R')
-	{
-		m_fCamRoll = 0.0f;
-	}
-}
-
-void MainRenderer::UserEndResizeUpdate() {
-}
-
-void MainRenderer::UserResizeUpdate() {
-	const auto& WndSet = WNDSettings();
-	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
-}
-
-void MainRenderer::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	m_pUIComponent->ImGuiInputProcess(hWnd, msg, wParam, lParam);
 }
 
 void MainRenderer::DestroyComponent(MainRendererComponent* cmp) {

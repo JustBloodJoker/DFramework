@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\CameraInputLayer.cpp" />
+    <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -30,12 +32,16 @@
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
+    <ClCompile Include="UI\UIInputLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera\CameraInputLayer.h" />
+    <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
     <ClInclude Include="MainRenderer\MainRenderer.h" />
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
+    <ClInclude Include="UI\UIInputLayer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

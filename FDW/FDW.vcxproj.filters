@@ -16,6 +16,9 @@
     <Filter Include="__IMGUI">
       <UniqueIdentifier>{29d2e9d5-4696-41b4-bc1c-07e4c797160d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{66d738e4-34be-4b10-8d16-c8009daf7b39}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -51,6 +54,15 @@
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
+    <ClCompile Include="UI\UIInputLayer.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraInputLayer.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -64,6 +76,15 @@
     </ClInclude>
     <ClInclude Include="MainRenderer\MainRendererComponent.h">
       <Filter>mainRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIInputLayer.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraInputLayer.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\MainRenderer_CameraComponent.h">
+      <Filter>Camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

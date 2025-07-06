@@ -5,6 +5,7 @@
 
 #include <UI/MainRenderer_UIComponent.h>
 #include <D3DFramework/D3DFW.h>
+#include <Camera/MainRenderer_CameraComponent.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -15,18 +16,13 @@ public:
 	void UserInit() override;
 	void UserLoop() override;
 	void UserClose()  override;
-	void UserMouseDown(WPARAM btnState, int x, int y)  override;
-	void UserMouseUp(WPARAM btnState, int x, int y) override;
-	void UserMouseMoved(WPARAM btnState, int x, int y) override;
-	void UserKeyPressed(WPARAM wParam)  override;
-	void UserEndResizeUpdate()			override;
-	void UserResizeUpdate()				override;
-	virtual void ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 private:
 
 
 	MainRenderer_UIComponent* m_pUIComponent = nullptr;
+	MainRenderer_CameraComponent* m_pCameraComponent = nullptr;
+
 
 protected:
 
@@ -62,9 +58,7 @@ private:
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
 	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> m_pMatricesBuffer;
-	dx::XMMATRIX m_xView;
 	dx::XMMATRIX m_xWorld;
-	dx::XMMATRIX m_xProjectionMatrix;
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;
@@ -72,15 +66,6 @@ private:
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
 	std::unique_ptr<FD3DW::RootSingature> m_pRootScreen;
 	std::unique_ptr<FD3DW::PipelineStateObject> m_pPSOScreen;
-
-	float m_fCamYaw;
-	float m_fCamPitch;
-	float m_fCamRoll;
-	POINT m_xLastMousePos;
-	dx::XMVECTOR m_xEye;
-	dx::XMVECTOR m_xUp;
-	dx::XMVECTOR m_xStartUp;
-	dx::XMVECTOR m_xAt;
 
 	std::unique_ptr<FD3DW::PipelineStateObject> m_pPSO;
 	std::unique_ptr<FD3DW::RootSingature> m_pRootSignnatureRender;

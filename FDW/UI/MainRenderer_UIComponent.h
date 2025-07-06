@@ -2,6 +2,7 @@
 
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
+#include <UI/UIInputLayer.h>
 
 class MainRenderer;
 
@@ -18,7 +19,7 @@ public:
 	void InitImGui();
 	void RenderImGui();
 	void ShutDownImGui();
-	void ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 public:
 	virtual void AfterConstruction() override;
@@ -29,6 +30,7 @@ private:
 
 
 private:
+	std::unique_ptr<UIInputLayer> m_pUILayer = nullptr;
 	std::unique_ptr<FD3DW::SRVPacker> m_pUISRVPack;
 	bool m_bIsInited = false;
 };

@@ -174,6 +174,9 @@ namespace FD3DW
 		CONSOLE_MESSAGE("Render inited");
 
 		UserInit();
+		
+		AddToRouter(GetInputRouter());
+		
 		return true;
 	}
 
@@ -183,57 +186,6 @@ namespace FD3DW
 		CONSOLE_MESSAGE("USER CLOSED");
 
 		CONSOLE_MESSAGE("FRAMEWORK CLOSED");
-	}
-
-	void D3DFW::ChildKeyPressed(WPARAM param)
-	{
-		UserKeyPressed(param);
-	}
-
-	void D3DFW::ChildSIZE()
-	{
-		UserResizeUpdate();
-	}
-
-	void D3DFW::ChildENTERSIZE()
-	{
-	}
-
-	void D3DFW::ChildEXITSIZE()
-	{
-		const auto& WndSet = WNDSettings();
-
-		m_pCommandQueue->FlushQueue();
-
-		ClearSwapchainData();
-
-		hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
-		m_xMainVP.Height = static_cast<float>(WndSet.Height);
-		m_xMainVP.Width = static_cast<float>(WndSet.Width);
-
-		m_xMainRect.left = 0;
-		m_xMainRect.right = WndSet.Width;
-		m_xMainRect.top = 0;
-		m_xMainRect.bottom = WndSet.Height;
-
-		CreateSwapchainData();
-
-		UserEndResizeUpdate();
-	}
-
-	void D3DFW::ChildMOUSEUP(WPARAM btnState, int x, int y)
-	{
-		UserMouseUp(btnState, x, y);
-	}
-
-	void D3DFW::ChildMOUSEDOWN(WPARAM btnState, int x, int y)
-	{
-		UserMouseDown(btnState, x, y);
-	}
-
-	void D3DFW::ChildMOUSEMOVE(WPARAM btnState, int x, int y)
-	{
-		UserMouseMoved(btnState, x, y);
 	}
 
 	void D3DFW::CallBeforePresent() {}
@@ -325,6 +277,30 @@ namespace FD3DW
 		PresentSwapchain();
 	
 		CallAfterPresent();
+	}
+
+	bool D3DFW::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (msg == WM_EXITSIZEMOVE) {
+			const auto& WndSet = WNDSettings();
+
+			m_pCommandQueue->FlushQueue();
+
+			ClearSwapchainData();
+
+			hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+			m_xMainVP.Height = static_cast<float>(WndSet.Height);
+			m_xMainVP.Width = static_cast<float>(WndSet.Width);
+
+			m_xMainRect.left = 0;
+			m_xMainRect.right = WndSet.Width;
+			m_xMainRect.top = 0;
+			m_xMainRect.bottom = WndSet.Height;
+
+			CreateSwapchainData();
+		}
+
+		return false;
 	}
 
 	const UINT D3DFW::Get_CBV_SRV_UAV_DescriptorSize() const noexcept

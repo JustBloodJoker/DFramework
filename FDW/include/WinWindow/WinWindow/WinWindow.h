@@ -2,6 +2,7 @@
 #include "pch.h"
 
 #include "Utils/Timer.h"
+#include "InputSystem/WinWindowInputRouter.h"
 
 namespace FDWWIN
 {
@@ -22,6 +23,8 @@ namespace FDWWIN
 
 		void SETHWND(HWND hwnd);
 		HWND GETHWND() const;
+		WindowSettings WNDSettings() const;
+		WinWindowInputRouter* GetInputRouter() const;
 
 	protected:
 		
@@ -39,17 +42,6 @@ namespace FDWWIN
 		///////		CHILD RELEASE
 		virtual void ChildRelease() = 0;
 
-		//////////////////////////
-		///////		CHILD HANDLERS
-		virtual void ChildKeyPressed(WPARAM) = 0;
-		virtual void ChildSIZE() = 0;
-		virtual void ChildENTERSIZE() = 0;
-		virtual void ChildEXITSIZE() = 0;
-		virtual void ChildMOUSEUP(WPARAM btnState, int x, int y) = 0;
-		virtual void ChildMOUSEDOWN(WPARAM btnState, int x, int y) = 0;
-		virtual void ChildMOUSEMOVE(WPARAM btnState, int x, int y) = 0;
-		virtual void ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 	protected:
 		virtual void EscapeKeyProc();
 
@@ -58,7 +50,6 @@ namespace FDWWIN
 		///		GETTERS
 		bool ISPAUSED() const;
 		bool ISSTARTEDWINDOW() const;
-		WindowSettings WNDSettings() const;
 		Timer* GetTimer() const;
 
 	private:
@@ -68,6 +59,7 @@ namespace FDWWIN
 
 		bool InitWindow();
 		bool InitTimer();
+		bool InitInputRouter();
 
 		////////////////
 		//	WINDOW
@@ -80,6 +72,11 @@ namespace FDWWIN
 		///////////////
 		//	TIMER
 		std::unique_ptr <Timer> m_pTimer;
+
+		///////////////
+		// INPUT
+		std::unique_ptr<WinWindowInputRouter> m_pInputRouter;
+
 	};
 
 }

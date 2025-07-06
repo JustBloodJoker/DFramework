@@ -55,6 +55,11 @@ namespace FDWWIN
 			CONSOLE_MESSAGE("TIMER OBJECT INITED");
 		}
 
+		if (InitInputRouter())
+		{
+			CONSOLE_MESSAGE("INPUT ROUTER INITED");
+		}
+
 		if (ChildInit())
 		{
 			CONSOLE_MESSAGE("Child inited");
@@ -172,7 +177,14 @@ namespace FDWWIN
 	bool WinWindow::InitTimer()
 	{
 		m_pTimer = std::make_unique<Timer>();
-		return m_pTimer ? true : false;
+		return m_pTimer != nullptr;
+	}
+
+	bool WinWindow::InitInputRouter()
+	{
+		m_pInputRouter = std::make_unique<WinWindowInputRouter>();
+		
+		return m_pInputRouter!=nullptr;
 	}
 
 	void WinWindow::Loop()
@@ -202,8 +214,6 @@ namespace FDWWIN
 		}
 	}
 
-	void WinWindow::ChildAllMSG(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) { }
-
 	void WinWindow::EscapeKeyProc()
 	{
 	}
@@ -223,6 +233,11 @@ namespace FDWWIN
 	Timer* WinWindow::GetTimer() const
 	{
 		return m_pTimer.get();
+	}
+
+	WinWindowInputRouter* WinWindow::GetInputRouter() const
+	{
+		return m_pInputRouter.get();
 	}
 
 	LRESULT WinWindow::MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -246,48 +261,21 @@ namespace FDWWIN
 			isHandled = true;
 			break;
 		}
-
-		case WM_KEYDOWN:
-
-			CONSOLE_MESSAGE_NO_PREF(std::string("PRESSED KEY ID: " + std::to_string(lParam)));
-
-			if (wParam == VK_ESCAPE)
-			{
-				EscapeKeyProc();
-				CONSOLE_MESSAGE("ESCAPE PRESSED");
-				DestroyWindow(hWnd);
-			}
-			else
-			{
-				ChildKeyPressed(wParam);
-			}
-			isHandled = true;
-			break;
-
 		case WM_DESTROY:
 
 			CONSOLE_MESSAGE("WM_DESTROY MESSAGE ACTIVE");
 			PostQuitMessage(0);
 			isHandled = true;
 			break;
-
-		case WM_SIZE:
-			CONSOLE_MESSAGE("WM_SIZE ACTIVE");
-			ChildSIZE();
+		
+		case WM_GETMINMAXINFO:
+			((MINMAXINFO*)lParam)->ptMinTrackSize.x = m_xWndSettings.MinWidth;
+			((MINMAXINFO*)lParam)->ptMinTrackSize.y = m_xWndSettings.Height;
 			isHandled = true;
 			break;
 
-		case WM_ENTERSIZEMOVE:
-		{
-			CONSOLE_MESSAGE("WM_ENTERSIZE ACTIVE");
-			
-			ChildENTERSIZE();
-			isHandled = true;
-			break;
-		}
 		case WM_EXITSIZEMOVE:
 		{
-			CONSOLE_MESSAGE("WM_EXITSIZE ACTIVE");
 			
 			RECT clientRect;
 			GetClientRect(hWnd, &clientRect);
@@ -297,7 +285,6 @@ namespace FDWWIN
 			m_xWndSettings.Width = clientWidth;
 			m_xWndSettings.Height = clientHeight;
 
-			ChildEXITSIZE();
 			isHandled = true;
 			break;
 		}
@@ -305,36 +292,22 @@ namespace FDWWIN
 		case WM_MENUCHAR:
 			return MAKELRESULT(0, MNC_CLOSE);
 
-		case WM_GETMINMAXINFO:
-			((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
-			((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
-			isHandled = true;
-			break;
-
+		
 		case WM_LBUTTONDOWN:
 		case WM_MBUTTONDOWN:
 		case WM_RBUTTONDOWN:
-			ChildMOUSEDOWN(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			SetCapture(hWnd);
 			isHandled = true;
 			break;
 		case WM_LBUTTONUP:
 		case WM_MBUTTONUP:
 		case WM_RBUTTONUP:
-			ChildMOUSEUP(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			ReleaseCapture();
 			isHandled = true;
 			break;
-		case WM_MOUSEMOVE:
-			CONSOLE_MESSAGE_NO_PREF(std::string("MOUSE MOVED X: " + std::to_string(GET_X_LPARAM(lParam)) + " Y: " + std::to_string(GET_Y_LPARAM(lParam))));
-			ChildMOUSEMOVE(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-			isHandled = true;
-			break;
-
 		}
 		
-		ChildAllMSG(hWnd, msg, wParam, lParam);
-
+		if (m_pInputRouter && m_pInputRouter->RouteInput(hWnd, msg, wParam, lParam)) return 0;
 
 
 		return isHandled ? 0 : DefWindowProc(hWnd, msg, wParam, lParam);

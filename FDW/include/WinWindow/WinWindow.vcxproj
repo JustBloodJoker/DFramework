@@ -30,6 +30,8 @@
     <ClInclude Include="WinWindowTest\TestBaseWindow.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="WinWindow\InputSystem\WinWindowInputLayer.h" />
+    <ClInclude Include="WinWindow\InputSystem\WinWindowInputRouter.h" />
     <ClInclude Include="WinWindow\pch.h" />
     <ClInclude Include="WinWindow\Utils\Macroses.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
@@ -43,6 +45,8 @@
     <ClCompile Include="WinWindowTest\TestBaseWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp" />
+    <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp" />
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
     <ClCompile Include="WinWindow\WinWindow.cpp" />
   </ItemGroup>

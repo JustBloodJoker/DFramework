@@ -1,4 +1,5 @@
 #include <UI/MainRenderer_UIComponent.h>
+#include <UI/UIInputLayer.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_dx12.h>
@@ -37,7 +38,6 @@ void MainRenderer_UIComponent::InitImGui() {
     ImGui_ImplWin32_Init( m_pOwner->GETHWND() );
 
     ImGuiIO& io = ImGui::GetIO();
-    io.MouseDrawCursor = true;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     auto heap = m_pUISRVPack->GetResult()->GetDescriptorPtr();
@@ -76,14 +76,21 @@ void MainRenderer_UIComponent::ShutDownImGui() {
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-void MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
+    
+    return false;
 }
 
 void MainRenderer_UIComponent::AfterConstruction() {
     InitImGui();
+
+    m_pUILayer = std::make_unique<UIInputLayer>(this);
+    m_pUILayer->AddToRouter( m_pOwner->GetInputRouter() );
 }
 
 void MainRenderer_UIComponent::BeforeDestruction() {
     ShutDownImGui();
+
+    m_pUILayer->AddToRouter(nullptr);
 }
