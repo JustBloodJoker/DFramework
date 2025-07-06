@@ -23,7 +23,7 @@ void AnimationTestRender::UserInit()
 	m_pTimer = GetTimer();
 	auto device = GetDevice();
 
-	BindListToMainQueue(m_pCommandList.get());
+	BindMainCommandList(m_pCommandList.get());
 
 	m_pBird = CreateScene("D3DFrameworkTest/sampleModels/bird/scene.gltf", true, m_pPCML);
 
@@ -160,7 +160,7 @@ void AnimationTestRender::UserLoop()
 	m_pStructureBufferBones->UploadData(GetDevice(), m_pPCML, resultVector.data());
 
 	FD3DW::MatricesConstantBufferStructureFrameWork cmb;
-	cmb.Projection = dx::XMMatrixTranspose(GetMainProjectionMatrix());
+	cmb.Projection = dx::XMMatrixTranspose( m_xProjectionMatrix );
 	cmb.View = dx::XMMatrixTranspose(m_xView);
 	cmb.World = dx::XMMatrixTranspose(m_xWorld);
 	m_pMatricesBuffer->CpyData(0, cmb);
@@ -230,65 +230,74 @@ void AnimationTestRender::UserClose()
 {
 }
 
-void AnimationTestRender::UserMouseDown(WPARAM btnState, int x, int y)
-{
-	m_xLastMousePos.x = x;
-	m_xLastMousePos.y = y;
-}
+bool AnimationTestRender::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	D3DFW::ProcessInput(hwnd, msg, wParam, lParam);
 
-void AnimationTestRender::UserMouseUp(WPARAM btnState, int x, int y)
-{
-}
-
-void AnimationTestRender::UserMouseMoved(WPARAM btnState, int x, int y)
-{
-	if ((btnState & MK_LBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
+	auto isInput = false;
+	switch (msg)
 	{
-		m_fCamYaw += (m_xLastMousePos.x - x) * 0.002f;
-		m_fCamPitch += (m_xLastMousePos.y - y) * 0.002f;
-	}
-	if ((btnState & MK_RBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
+	case WM_SIZE:
 	{
-		m_fCamRoll += (m_xLastMousePos.x - x) * 0.002f;
-	}
-	m_xLastMousePos.x = x;
-	m_xLastMousePos.y = y;
-}
-
-void AnimationTestRender::UserKeyPressed(WPARAM wParam)
-{
-	dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(m_xAt, m_xEye));
-	dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, cameraDirection));
-
-	if (wParam == 'W')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'S')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'D')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
-	}
-	if (wParam == 'A')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		const auto& WndSet = WNDSettings();
+		m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
+		break;
 	}
 
-	if (wParam == 'R')
+	case WM_KEYDOWN:
 	{
-		m_fCamRoll = 0.0f;
+		dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(m_xAt, m_xEye));
+		dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, cameraDirection));
+
+		if (wParam == 'W')
+		{
+			m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		}
+		if (wParam == 'S')
+		{
+			m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		}
+		if (wParam == 'D')
+		{
+			m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		}
+		if (wParam == 'A')
+		{
+			m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		}
+
+		if (wParam == 'R')
+		{
+			m_fCamRoll = 0.0f;
+		}
+		isInput = true;
+		break;
+
 	}
-}
 
-void AnimationTestRender::UserResizeUpdate()
-{
-	const auto& WndSet = WNDSettings();
-	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
-}
 
-void AnimationTestRender::UserEndResizeUpdate()
-{
+	case WM_MOUSEMOVE:
+	{
+		auto x = GET_X_LPARAM(lParam);
+		auto y = GET_Y_LPARAM(lParam);
+
+		if ((wParam & MK_LBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
+		{
+			m_fCamYaw += (m_xLastMousePos.x - x) * 0.002f;
+			m_fCamPitch += (m_xLastMousePos.y - y) * 0.002f;
+		}
+		if ((wParam & MK_RBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
+		{
+			m_fCamRoll += (m_xLastMousePos.x - x) * 0.002f;
+		}
+		m_xLastMousePos.x = x;
+		m_xLastMousePos.y = y;
+		isInput = true;
+		break;
+
+	}
+		
+	}
+
+	return isInput;
+
 }

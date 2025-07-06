@@ -14,12 +14,9 @@ public:
 	void UserInit() override;
 	void UserLoop() override;
 	void UserClose()  override;
-	void UserMouseDown(WPARAM btnState, int x, int y)  override;
-	void UserMouseUp(WPARAM btnState, int x, int y) override;
-	void UserMouseMoved(WPARAM btnState, int x, int y) override;
-	void UserKeyPressed(WPARAM wParam)  override;
-	void UserResizeUpdate()				override;
-	void UserEndResizeUpdate()			override;
+
+protected:
+	virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
 
 private:
 

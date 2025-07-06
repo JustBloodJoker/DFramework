@@ -57,10 +57,11 @@ namespace FD3DW
 		bool InitD3D();
 		void Update();
 
-	private:
+	protected:
 		virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
-		using FDWWIN::WinWindowInputLayer::AddToRouter;
+		
 	private:
+		using FDWWIN::WinWindowInputLayer::AddToRouter;
 
 		std::unique_ptr<AudioManager> m_pAudioMananger;
 

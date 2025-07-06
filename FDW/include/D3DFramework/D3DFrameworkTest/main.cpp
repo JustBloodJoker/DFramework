@@ -1,12 +1,12 @@
 #include "AnimationTestRender.h"
 
 void RunAnimationTest() {
-	AnimationTestRender* mr = new AnimationTestRender();
-	mr->__START();
+	//AnimationTestRender* mr = new AnimationTestRender();
+	//mr->__START();
 }
 
 int main() {
-	RunAnimationTest();
+	//RunAnimationTest();
 
 	return 0;
 }
