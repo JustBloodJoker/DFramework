@@ -9,7 +9,7 @@ namespace FDWWIN
 	class WinWindowInputLayer {
 	public:
 		WinWindowInputLayer() = default;
-		virtual ~WinWindowInputLayer() = default;
+		virtual ~WinWindowInputLayer();
 
 	public:
 		virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) = 0;

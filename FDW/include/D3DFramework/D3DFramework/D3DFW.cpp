@@ -173,15 +173,17 @@ namespace FD3DW
 		}
 		CONSOLE_MESSAGE("Render inited");
 
+		InitMessageLayer();
+
 		UserInit();
-		
-		AddToRouter(GetInputRouter());
 		
 		return true;
 	}
 
 	void D3DFW::ChildRelease()
 	{
+		DestroyMessageLayer();
+
 		UserClose();
 		CONSOLE_MESSAGE("USER CLOSED");
 
@@ -279,28 +281,24 @@ namespace FD3DW
 		CallAfterPresent();
 	}
 
-	bool D3DFW::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	void D3DFW::ResizeHandler()
 	{
-		if (msg == WM_EXITSIZEMOVE) {
-			const auto& WndSet = WNDSettings();
+		const auto& WndSet = WNDSettings();
 
-			m_pCommandQueue->FlushQueue();
+		m_pCommandQueue->FlushQueue();
 
-			ClearSwapchainData();
+		ClearSwapchainData();
 
-			hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
-			m_xMainVP.Height = static_cast<float>(WndSet.Height);
-			m_xMainVP.Width = static_cast<float>(WndSet.Width);
+		hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
+		m_xMainVP.Height = static_cast<float>(WndSet.Height);
+		m_xMainVP.Width = static_cast<float>(WndSet.Width);
 
-			m_xMainRect.left = 0;
-			m_xMainRect.right = WndSet.Width;
-			m_xMainRect.top = 0;
-			m_xMainRect.bottom = WndSet.Height;
+		m_xMainRect.left = 0;
+		m_xMainRect.right = WndSet.Width;
+		m_xMainRect.top = 0;
+		m_xMainRect.bottom = WndSet.Height;
 
-			CreateSwapchainData();
-		}
-
-		return false;
+		CreateSwapchainData();
 	}
 
 	const UINT D3DFW::Get_CBV_SRV_UAV_DescriptorSize() const noexcept
@@ -573,5 +571,32 @@ namespace FD3DW
 		m_xMainRect.bottom = height;
 	}
 
+	void D3DFW::InitMessageLayer()
+	{
+		m_pMessageLayer = std::make_unique<D3DFW::D3DFWMessageLayer>([this]() { ResizeHandler(); });
+
+		m_pMessageLayer->AddToRouter(GetInputRouter());
+	}
+
+	void D3DFW::DestroyMessageLayer()
+	{
+		m_pMessageLayer->AddToRouter(nullptr);
+		m_pMessageLayer = nullptr;
+	}
+
+
+	D3DFW::D3DFWMessageLayer::D3DFWMessageLayer(std::function<void(void)> handler)
+	{
+		m_hExitSizeHandler = handler;
+	}
+
+	bool D3DFW::D3DFWMessageLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (msg == WM_EXITSIZEMOVE) {
+			if(m_hExitSizeHandler) m_hExitSizeHandler();
+		}
+
+		return false;
+	}
 
 }

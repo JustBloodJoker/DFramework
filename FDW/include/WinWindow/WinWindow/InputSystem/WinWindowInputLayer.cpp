@@ -2,6 +2,10 @@
 #include "WinWindowInputRouter.h"
 
 namespace FDWWIN {
+	WinWindowInputLayer::~WinWindowInputLayer()
+	{
+		AddToRouter(nullptr);
+	}
 
 	void WinWindowInputLayer::AddToRouter(WinWindowInputRouter* newRouter) {
 		if (m_pCurrentRouter == newRouter) return;

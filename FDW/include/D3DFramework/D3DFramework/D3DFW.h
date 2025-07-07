@@ -29,7 +29,7 @@ namespace FD3DW
 {
 
 
-	class D3DFW : virtual public FDWWIN::WinWindow, virtual public FDWWIN::WinWindowInputLayer
+	class D3DFW : virtual public FDWWIN::WinWindow
 	{
 	public:
 		D3DFW()=default;
@@ -57,12 +57,10 @@ namespace FD3DW
 		bool InitD3D();
 		void Update();
 
-	protected:
-		virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+	private:
+		void ResizeHandler();
 		
 	private:
-		using FDWWIN::WinWindowInputLayer::AddToRouter;
-
 		std::unique_ptr<AudioManager> m_pAudioMananger;
 
 		// WINDOW
@@ -222,6 +220,26 @@ namespace FD3DW
 			void ClearSwapchainData();
 			void SetViewportData(float width, float height);
 			void SetRectData(float width, float height);
+			
+		// MESSAGE LAYER
+		private:
+
+			class D3DFWMessageLayer : virtual public FDWWIN::WinWindowInputLayer {				
+			public:
+				D3DFWMessageLayer(std::function<void(void)> exitSize);
+				virtual ~D3DFWMessageLayer() = default;
+
+			public:
+				virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+
+			private:
+				std::function<void(void)> m_hExitSizeHandler = nullptr;
+			};
+
+			std::unique_ptr<D3DFWMessageLayer> m_pMessageLayer = nullptr;
+
+			void InitMessageLayer();
+			void DestroyMessageLayer();
 
 
 	};
