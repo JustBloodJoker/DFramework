@@ -42,13 +42,14 @@
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dxcompiler.lib")
 #pragma comment(lib, "cuda.lib")
 #pragma comment(lib, "cudart.lib")
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
-#include <d3dcompiler.h>
+#include <d3d12shader.h>
+#include <dxcapi.h>
 #include "include/d3dx12.h"
 #include <DirectXMath.h>
 

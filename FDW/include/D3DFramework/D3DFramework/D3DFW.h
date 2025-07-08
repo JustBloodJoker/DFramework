@@ -13,15 +13,13 @@
 #include "Objects/Scene.h"
 
 #include "GraphicUtilites/BufferManager.h"
-#include "GraphicUtilites/Shader.h"
 #include "GraphicUtilites/CommandQueue.h"
 #include "GraphicUtilites/FResource.h"
 #include "GraphicUtilites/ResourcePacker.h"
-#include "GraphicUtilites/PipelineStateObject.h"
-#include "GraphicUtilites/RootSignature.h"
 #include "GraphicUtilites/RenderTarget.h"
 #include "GraphicUtilites/DepthStencilView.h"
 #include "GraphicUtilites/InputLayout.h"
+#include "GraphicUtilites/PipelineObject.h"
 
 #include "Utilites/AudioManager.h"
 
@@ -49,9 +47,6 @@ namespace FD3DW
 		virtual void ChildLoop() override;
 		virtual bool ChildInit() override;
 		virtual void ChildRelease() override;
-
-		virtual void CallBeforePresent();
-		virtual void CallAfterPresent();
 
 		bool InitAudioMananger();
 		bool InitD3D();
@@ -98,6 +93,8 @@ namespace FD3DW
 
 	private:
 		void				PresentSwapchain();
+
+	protected:
 		void				BeginDraw(ID3D12GraphicsCommandList* pCommandList);
 		void				EndDraw(ID3D12GraphicsCommandList* pCommandList);
 
@@ -168,23 +165,6 @@ namespace FD3DW
 		std::unique_ptr<CBVPacker> CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<UAVPacker> CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<SamplerPacker> CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask = 0);
-
-		std::unique_ptr<RootSingature> CreateRootSignature(CD3DX12_ROOT_PARAMETER* slotRootParameters, const UINT numParameters);
-
-		std::unique_ptr<PipelineStateObject> CreatePSO(ID3D12RootSignature* const pRootSignature,
-			const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize,
-			const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[],
-			DXGI_FORMAT dsvFormat,
-			const UINT SampleMask = UINT_MAX,
-			const D3D12_PRIMITIVE_TOPOLOGY_TYPE type = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE, 
-			ID3DBlob* vsByteCode = nullptr, ID3DBlob* psByteCode = nullptr, ID3DBlob* gsByteCode = nullptr, ID3DBlob* dsByteCode = nullptr, ID3DBlob* hsByteCode = nullptr,
-			D3D12_RASTERIZER_DESC rasterizerDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT),
-			D3D12_DEPTH_STENCIL_DESC dsvStateDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT),
-			D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT)
-			);
-
-		std::unique_ptr<ComputePipelineStateObject> CreateComputePSO(ID3D12RootSignature* const pRootSignature,
-			ID3DBlob* csByteCode = nullptr, const D3D12_PIPELINE_STATE_FLAGS flags = D3D12_PIPELINE_STATE_FLAG_NONE, const UINT nodeMask = 0);
 
 		std::unique_ptr<CommandList> CreateList(const D3D12_COMMAND_LIST_TYPE type);
 		std::unique_ptr<CommandQueue> CreateQueue(const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags = D3D12_COMMAND_QUEUE_FLAG_NONE, size_t priority = 0, size_t nodeMask = 0);

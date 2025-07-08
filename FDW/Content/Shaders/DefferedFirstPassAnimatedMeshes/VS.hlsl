@@ -1,8 +1,8 @@
 #include "Structures.hlsli"
 #include "Utilits.hlsli"
+#include "SameShadersStructs.hlsli"
 
 #define NUM_BONES_PER_VEREX 13
-
 
 struct ANIMVERTEX_INPUT
 {
@@ -15,26 +15,10 @@ struct ANIMVERTEX_INPUT
     float Weight[NUM_BONES_PER_VEREX] : WEIGHT_BONES;
 };
 
-struct VERTEX_OUTPUT
-{
-    float4 pos : SV_Position;
-    float3 worldPos : POSITION0;
-    float3 normal : NORMAL;
-    float2 texCoord : TEXCOORD;
-    float3 tangent : TANGENT;
-    float3 bitangent : BITANGENT;
-    uint instance : SV_InstanceID;
-};
-
-
 ConstantBuffer<Matrices> objMatrices : register(b0);
-
-Texture2D tex : register(t0);
-SamplerState wraps : register(s0);
-
 StructuredBuffer<matrix> boneMatrices : register(t1);
 
-VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint instance : SV_InstanceID )
+VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 {
     VERTEX_OUTPUT vsOut;
     
@@ -52,19 +36,7 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint instance : SV_InstanceID )
     vsOut.normal = normalize(vsIn.normal);
     vsOut.tangent = vsIn.tangent;
     vsOut.bitangent = vsIn.bitangent;
-    vsOut.instance = instance;
+    vsOut.instance = Instance;
 
     return vsOut;
-}
-
-struct PIXEL_OUTPUT
-{
-    float4 result : SV_TARGET0 ;
-};
-PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
-{
-    PIXEL_OUTPUT psOut;
-    psOut.result = tex.Sample(wraps, vsOut.texCoord);
-    AlphaClipping(psOut.result.a);
-    return psOut;
 }

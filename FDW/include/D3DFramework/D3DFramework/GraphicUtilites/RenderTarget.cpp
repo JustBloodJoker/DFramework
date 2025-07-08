@@ -77,6 +77,7 @@ namespace FD3DW
             textureDimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
             break;
         }
+        
 		m_pRTVTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
         
 	}

@@ -54,7 +54,7 @@ namespace FD3DW
 		void ParseScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
 		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::SceneVertexFrameWork>> m_pVertexUploadBuffer;
-		std::unique_ptr<FD3DW::UploadBuffer<std::uint16_t>> m_pIndexUploadBuffer;
+		std::unique_ptr<FD3DW::UploadBuffer<std::uint32_t>> m_pIndexUploadBuffer;
 
 		dx::XMMATRIX m_xGlobalInverseTransform;
 		Bone m_xMainBone;

@@ -159,7 +159,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\WinWindow;..\D3DFramework</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -186,9 +186,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="D3DFrameworkTest\AnimationTestRender.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
@@ -199,13 +196,11 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h" />
     <ClInclude Include="D3DFramework\include\d3dx12.h" />
     <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
     <ClInclude Include="D3DFramework\Objects\Object.h" />
@@ -219,12 +214,6 @@
     <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D3DFrameworkTest\AnimationTestRender.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="D3DFrameworkTest\main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
@@ -233,12 +222,10 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp" />
     <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
     <ClCompile Include="D3DFramework\Objects\Object.cpp" />
     <ClCompile Include="D3DFramework\Objects\Scene.cpp" />

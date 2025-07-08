@@ -5,7 +5,7 @@
 namespace FD3DW
 {
 	static std::vector<SceneVertexFrameWork> vertices;
-	static std::vector<std::uint16_t> indices;
+	static std::vector<std::uint32_t> indices;
 
 	Scene::Scene(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
@@ -50,7 +50,7 @@ namespace FD3DW
 
 		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format = DXGI_FORMAT_R16_UNORM;
+		m_pIndexBufferView->Format =  DXGI_FORMAT_R32_UINT;
 		m_pIndexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
 
 		if (neverUpdate)

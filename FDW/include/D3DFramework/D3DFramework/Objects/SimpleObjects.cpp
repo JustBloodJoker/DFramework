@@ -8,7 +8,7 @@ namespace FD3DW
 	Cube::Cube(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		std::vector<FD3DW::VertexFrameWork> vertices;
-		std::vector<std::uint16_t> indices;
+		std::vector<std::uint32_t> indices;
 
 		vertices.emplace_back(FD3DW::VertexFrameWork());
 		(*vertices.rbegin()).Pos = dx::XMFLOAT3(-1.0f, -1.0f, -1.0f);
@@ -62,12 +62,12 @@ namespace FD3DW
 			4, 3, 7
 		};
 
-		FD3DW::BufferManager::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
+		FD3DW::BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
 
 		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
+		m_pIndexBufferView->Format =  DXGI_FORMAT_R32_UINT;
+		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint32_t);
 
 		if (neverUpdate)
 		{
@@ -81,7 +81,7 @@ namespace FD3DW
 	Rectangle::Rectangle(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		std::vector<FD3DW::VertexFrameWork> vertices;
-		std::vector<std::uint16_t> indices;
+		std::vector<std::uint32_t> indices;
 
 		vertices.emplace_back(FD3DW::VertexFrameWork());
 		(*vertices.rbegin()).Pos = dx::XMFLOAT3(-1.0f, -1.0f, 0.0f);
@@ -112,12 +112,12 @@ namespace FD3DW
 			1, 2, 3,
 		};
 
-		FD3DW::BufferManager::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
+		FD3DW::BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
 
 		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
+		m_pIndexBufferView->Format =  DXGI_FORMAT_R32_UINT;
+		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint32_t);
 
 		if (neverUpdate)
 		{
@@ -131,7 +131,7 @@ namespace FD3DW
 	Point::Point(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		std::vector<FD3DW::VertexFrameWork> vertices;
-		std::vector<std::uint16_t> indices;
+		std::vector<std::uint32_t> indices;
 
 		vertices.emplace_back(FD3DW::VertexFrameWork());
 		(*vertices.rbegin()).Pos = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -144,12 +144,12 @@ namespace FD3DW
 		m_pVertexBufferView->SizeInBytes = (UINT)vertices.size() * sizeof(FD3DW::VertexFrameWork);
 		m_pVertexBufferView->StrideInBytes = sizeof(FD3DW::VertexFrameWork);
 
-		FD3DW::BufferManager::CreateDefaultBuffer<std::uint16_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
+		FD3DW::BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
 
 		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format = DXGI_FORMAT_R16_UNORM;
-		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint16_t);
+		m_pIndexBufferView->Format =  DXGI_FORMAT_R32_UINT;
+		m_pIndexBufferView->SizeInBytes = (UINT)indices.size() * sizeof(std::uint32_t);
 
 		if (neverUpdate)
 		{

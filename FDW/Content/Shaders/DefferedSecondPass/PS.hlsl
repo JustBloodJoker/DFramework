@@ -1,10 +1,6 @@
+#include "Utilits.hlsli"
 #include "Structures.hlsli"
-
-struct VERTEX_OUTPUT
-{
-    float4 pos : SV_Position;  
-    float2 texCoord : TEXCOORD;
-};
+#include "SameShadersStructs.hlsli"
 
 struct PIXEL_OUTPUT
 {
@@ -13,14 +9,6 @@ struct PIXEL_OUTPUT
 
 Texture2D screenRTV : register(t0);
 SamplerState ss : register(s0);
-
-VERTEX_OUTPUT VS(VERTEX_INPUT vsIn)
-{
-    VERTEX_OUTPUT vsOut;
-    vsOut.pos = float4(vsIn.pos, 1.0f);
-    vsOut.texCoord = vsIn.texCoord;
-    return vsOut;
-}
 
 PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 {

@@ -105,7 +105,7 @@ namespace FD3DW
         m_xCurrState = D3D12_RESOURCE_STATE_COMMON;
     }
 
-    void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation)
+    void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation, D3D12_RESOURCE_STATES state)
     {
         auto uresource = m_pResource.Get();
         auto uresourceDesc = uresource->GetDesc();
@@ -128,14 +128,14 @@ namespace FD3DW
 
         if (!m_pUploadBuffer) m_pUploadBuffer.reset(new UploadBuffer<char>(pDevice, (UINT)uploadBufferSize, false));
 
-        ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
 
         UpdateSubresources(pCommandList,
             m_pResource.Get(),
             m_pUploadBuffer->GetResource(),
             0, 0, 1, &textureData);
 
-        ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        ResourceBarrierChange(pCommandList, 1, state);
     }
 
     bool FResource::DeleteUploadBuffer()

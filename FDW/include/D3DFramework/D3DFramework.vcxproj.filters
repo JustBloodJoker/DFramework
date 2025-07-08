@@ -4,9 +4,6 @@
     <Filter Include="D3DFramework">
       <UniqueIdentifier>{8522955d-e187-4044-b4ba-fe7da8390012}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3DFrameworkTest">
-      <UniqueIdentifier>{674e453b-6d43-4f63-b06b-a792fd74efb6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3DFramework\GraphicUtilites">
       <UniqueIdentifier>{11f5cea1-eaf1-4124-b340-fd7a2d4a61c1}</UniqueIdentifier>
     </Filter>
@@ -54,9 +51,6 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineStateObject.h">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
@@ -64,12 +58,6 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\RootSignature.h">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\Shader.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
     <ClInclude Include="D3DFramework\include\d3dx12.h">
@@ -105,8 +93,8 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFrameworkTest\AnimationTestRender.h">
-      <Filter>D3DFrameworkTest</Filter>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -137,9 +125,6 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineStateObject.cpp">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
@@ -147,12 +132,6 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\RootSignature.cpp">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\Shader.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp">
@@ -173,11 +152,8 @@
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
       <Filter>D3DFramework\Utilites</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFrameworkTest\main.cpp">
-      <Filter>D3DFrameworkTest</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFrameworkTest\AnimationTestRender.cpp">
-      <Filter>D3DFrameworkTest</Filter>
+    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

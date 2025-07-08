@@ -190,10 +190,6 @@ namespace FD3DW
 		CONSOLE_MESSAGE("FRAMEWORK CLOSED");
 	}
 
-	void D3DFW::CallBeforePresent() {}
-
-	void D3DFW::CallAfterPresent() {}
-
 	bool D3DFW::InitAudioMananger()
 	{
 		m_pAudioMananger = std::make_unique<AudioManager>();
@@ -206,18 +202,24 @@ namespace FD3DW
 
 		wrl::ComPtr<ID3D12Debug> pDebugController;
 		HRESULT_ASSERT(D3D12GetDebugInterface(IID_PPV_ARGS(&pDebugController)), "ID3D12 Debug mode set error");
+		pDebugController->EnableDebugLayer();
+#endif
+		
+		
 
+#if defined(_DEBUG)
+		CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(m_pFactory.GetAddressOf()));
+#else
+		HRESULT_ASSERT(CreateDXGIFactory1(IID_PPV_ARGS(m_pFactory.GetAddressOf())), "Factory create error");
 #endif
 
-		HRESULT_ASSERT(CreateDXGIFactory1(IID_PPV_ARGS(&m_pFactory)), "Factory create error");
-
-		HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.GetAddressOf()));
+		HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(m_pDevice.GetAddressOf()));
 		if (FAILED(hr))
 		{
 			wrl::ComPtr<IDXGIAdapter> pWarpAdapter;
 			HRESULT_ASSERT(m_pFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter)), "Warp adapter error");
 
-			HRESULT_ASSERT(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.GetAddressOf())), "Device create error");
+			HRESULT_ASSERT(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(m_pDevice.GetAddressOf())), "Device create error");
 		}
 		m_uRTVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		m_uCBV_SRV_UAVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -263,22 +265,13 @@ namespace FD3DW
 			return;
 		}
 
-		BeginDraw(m_pBindedMainCommandList->GetPtrCommandList());
 
 		/////////////////// 
 		// USER DRAW
 		UserLoop();
 		//////////////////
 
-		CallBeforePresent();
-
-		EndDraw(m_pBindedMainCommandList->GetPtrCommandList());
-		
-		ExecuteMainQueue();
-
 		PresentSwapchain();
-	
-		CallAfterPresent();
 	}
 
 	void D3DFW::ResizeHandler()
@@ -381,46 +374,6 @@ namespace FD3DW
 	{
 		CONSOLE_MESSAGE("D3DFW is creating Samplers pack");
 		return std::make_unique<SamplerPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
-	}
-
-	std::unique_ptr<RootSingature> D3DFW::CreateRootSignature(CD3DX12_ROOT_PARAMETER* slotRootParameters, const UINT numParameters)
-	{
-		CONSOLE_MESSAGE("D3DFW is creating Root Signature");
-		std::unique_ptr<RootSingature> result = std::make_unique<RootSingature>(slotRootParameters, numParameters);
-		result->CreateRootSignature(m_pDevice.Get());
-		return std::move(result);
-	}
-
-	std::unique_ptr<PipelineStateObject> D3DFW::CreatePSO(ID3D12RootSignature* const pRootSignature, const D3D12_INPUT_ELEMENT_DESC* layout, const UINT layoutSize, const UINT renderTargetsNum, DXGI_FORMAT rtvFormats[], DXGI_FORMAT dsvFormat, const UINT SampleMask, const D3D12_PRIMITIVE_TOPOLOGY_TYPE type, ID3DBlob* vsByteCode, ID3DBlob* psByteCode, ID3DBlob* gsByteCode, ID3DBlob* dsByteCode, ID3DBlob* hsByteCode, D3D12_RASTERIZER_DESC rasterizerDesc, D3D12_DEPTH_STENCIL_DESC dsvStateDesc, D3D12_BLEND_DESC blendDesc)
-	{
-		CONSOLE_MESSAGE("D3DFW is creating Pipeline State");
-		std::unique_ptr<PipelineStateObject> result = std::make_unique<PipelineStateObject>(pRootSignature, layout, layoutSize, renderTargetsNum, rtvFormats, dsvFormat);
-		result->SetRasterizerState(rasterizerDesc);
-		result->SetBlendState(blendDesc);
-		result->SetDepthStencilState(dsvStateDesc);
-		result->SetSampleDesc(DXGI_SAMPLE_DESC({ m_uSampleCount, m_uQuality }));
-		
-		if (vsByteCode) result->SetVS(vsByteCode);
-		if (psByteCode) result->SetPS(psByteCode);
-		if (gsByteCode) result->SetGS(gsByteCode);
-		if (dsByteCode) result->SetDS(dsByteCode);
-		if (hsByteCode) result->SetHS(hsByteCode);
-
-		result->CreatePSO(m_pDevice.Get());
-
-		return std::move(result);
-	}
-
-	std::unique_ptr<ComputePipelineStateObject> D3DFW::CreateComputePSO(ID3D12RootSignature* const pRootSignature, ID3DBlob* csByteCode, const D3D12_PIPELINE_STATE_FLAGS flags, const UINT nodeMask)
-	{
-		CONSOLE_MESSAGE("D3DFW is creating Compute Pipeline State");
-		std::unique_ptr<ComputePipelineStateObject> result = std::make_unique<ComputePipelineStateObject>(pRootSignature, flags, nodeMask);
-		
-		if (csByteCode) result->SetCS(csByteCode);
-
-		result->CreatePSO(m_pDevice.Get());
-
-		return std::move(result);
 	}
 
 	std::unique_ptr<CommandList> D3DFW::CreateList(const D3D12_COMMAND_LIST_TYPE type)
