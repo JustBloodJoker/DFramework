@@ -1,4 +1,5 @@
 #include "PipelineObject.h"
+#include <dxcapi.h>
 
 namespace FD3DW {
 
@@ -177,18 +178,33 @@ namespace FD3DW {
 
 	wrl::ComPtr<IDxcBlob> PipelineObject::CompileShader(const ShaderDesc& desc)
 	{
-		std::ifstream file(desc.path, std::ios::binary | std::ios::ate);
-		if (!file) throw std::runtime_error("Can't open shader file");
+		std::vector<char> data;
+		if (desc.isFile) {
 
-		std::vector<char> data(file.tellg());
-		file.seekg(0);
-		file.read(data.data(), data.size());
+			std::ifstream file(desc.pathOrData, std::ios::binary | std::ios::ate);
+			if (!file) throw std::runtime_error("Can't open shader file");
 
+			data.resize(file.tellg());
+			file.seekg(0);
+			file.read(data.data(), data.size());
+		}
+		else {
+			std::string str = WStringToString(desc.pathOrData);
+			data = std::vector<char>(str.begin(), str.end());
+			data.push_back('\0');
+		}
+
+		
+		return CompileShader(data, desc.entry, desc.target);
+	}
+
+	wrl::ComPtr<IDxcBlob> PipelineObject::CompileShader(std::vector<char> data, std::wstring entry, std::wstring target)
+	{
 		DxcBuffer buffer{ data.data(), data.size(), DXC_CP_UTF8 };
 
 		std::vector<LPCWSTR> args = {
-			L"-E", desc.entry.c_str(),
-			L"-T", desc.target.c_str(),
+			L"-E", entry.c_str(),
+			L"-T", target.c_str(),
 			L"-HV", L"2021",
 #if defined(_DEBUG)
 			L"-Zi", L"-Qembed_debug", L"-Od",
@@ -196,7 +212,7 @@ namespace FD3DW {
 			L"-O3",
 #endif
 		};
-		
+
 		for (const auto& dir : m_vIncludeDirs) {
 			args.push_back(L"-I");
 			args.push_back(dir.c_str());
@@ -222,7 +238,9 @@ namespace FD3DW {
 
 	wrl::ComPtr<IDxcBlob> PipelineObject::CompileRootSignatureBlob(const ShaderDesc& desc)
 	{
-		std::ifstream file(desc.path, std::ios::binary | std::ios::ate);
+		SAFE_ASSERT(desc.isFile, "Only file-based root signature loading is supported.");
+
+		std::ifstream file(desc.pathOrData, std::ios::binary | std::ios::ate);
 		if (!file) throw std::runtime_error("Can't open root signature file");
 
 		std::vector<char> data(file.tellg());

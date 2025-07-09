@@ -4,7 +4,10 @@
 
 namespace FD3DW
 {
-
+	std::unique_ptr<CommandList> CommandList::CreateList(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type)
+	{
+		return std::make_unique<CommandList>(pDevice, type);
+	}
 
 	CommandList::~CommandList()
 	{

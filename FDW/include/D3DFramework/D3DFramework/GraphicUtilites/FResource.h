@@ -9,6 +9,8 @@
 namespace FD3DW
 {
 
+	class PipelineObject;
+
 	namespace TEXTURETYPE
 	{
 		enum TEXTURE_TYPE
@@ -31,7 +33,9 @@ namespace FD3DW
 		static std::unordered_map<std::string, std::weak_ptr<FResource>> s_vTextures;
 		
 	public:
-				
+		static PipelineObject* GetMipGenerationPSO(ID3D12Device* device);
+
+	public:
 		static std::shared_ptr<FResource> CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 		FResource(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);//NOT RECOMENDED TO USE
 
@@ -53,11 +57,15 @@ namespace FD3DW
 		
 		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation = false, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
+		void GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+
 		bool DeleteUploadBuffer();
 
 		static void ReleaseUploadBuffers();//CLEAR ALL UPLOAD BUFFERS
 
 	private:
+		UINT CalculateMipCount(UINT width, UINT height);
+		bool IsSupportMipMapping(D3D12_RESOURCE_DESC desc);
 
 		void CreateTextureBuffer(ID3D12Device* pDevice,
 			const UINT16 arraySize, 

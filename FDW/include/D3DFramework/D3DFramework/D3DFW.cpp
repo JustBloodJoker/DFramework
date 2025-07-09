@@ -385,7 +385,7 @@ namespace FD3DW
 	std::unique_ptr<CommandQueue> D3DFW::CreateQueue(const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, size_t priority, size_t nodeMask)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating Command Queue");
-		return std::make_unique<CommandQueue>(m_pDevice.Get(), type, flags, priority, nodeMask);
+		return CommandQueue::CreateQueue(m_pDevice.Get(), type, flags, priority, nodeMask);
 	}
 
 	std::unique_ptr<Audio> D3DFW::CreateAudio(const std::wstring& path)

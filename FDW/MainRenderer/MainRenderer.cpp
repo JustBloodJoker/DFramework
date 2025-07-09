@@ -133,7 +133,7 @@ void MainRenderer::UserLoop()
 	m_pMatricesBuffer->CpyData(0, cmb);
 
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	
 	///////////////////////
 	//			SCENE RTV DRAW
 	m_pRTV->StartDraw(m_pPCML);

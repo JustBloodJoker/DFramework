@@ -7,6 +7,8 @@ namespace FD3DW
 
 	class CommandList
 	{
+	public:
+		static std::unique_ptr<CommandList> CreateList(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type);
 
 	public:
 

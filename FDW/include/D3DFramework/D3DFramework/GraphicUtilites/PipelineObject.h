@@ -14,9 +14,10 @@ namespace FD3DW {
     };
 
     struct ShaderDesc {
-        std::wstring path;
+        std::wstring pathOrData;
         std::wstring entry;
         std::wstring target;
+        bool isFile = true;
     };
     
     enum class PipelineType {
@@ -60,7 +61,6 @@ namespace FD3DW {
     public:
         std::unique_ptr<PipelineObject> MakeCopy(const GraphicPipelineObjectDesc& config);
 
-
     private:
         bool CreatePSO();
 
@@ -85,6 +85,7 @@ namespace FD3DW {
 
     private:
         wrl::ComPtr<IDxcBlob> CompileShader(const ShaderDesc& desc); 
+        wrl::ComPtr<IDxcBlob> CompileShader(std::vector<char> data, std::wstring entry, std::wstring target);
         wrl::ComPtr<IDxcBlob> CompileRootSignatureBlob(const ShaderDesc& desc);
         wrl::ComPtr<ID3D12RootSignature> ExtractRootSignature(IDxcBlob* blob);
         std::vector<D3D12_INPUT_ELEMENT_DESC> ReflectInputLayout(IDxcBlob* blob);
