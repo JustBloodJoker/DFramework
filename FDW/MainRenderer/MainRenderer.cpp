@@ -71,6 +71,17 @@ void MainRenderer::UserInit()
 		config
 	);
 
+	//auto staticPSO = std::make_unique<FD3DW::PipelineObject>(device);
+	//staticPSO->SetIncludeDirectories({ L"Content/Shaders/DefaultInclude", L"Content/Shaders/DefferedFirstPassSimpleMeshes" });
+	//staticPSO->CreatePSO(
+	//	{
+	//		{ FD3DW::CompileFileType::VS, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/VS.hlsl", L"VS", L"vs_6_5" } },
+	//		{ FD3DW::CompileFileType::PS, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/PS.hlsl", L"PS", L"ps_6_5" } },
+	//		{ FD3DW::CompileFileType::RootSignature, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/RS.hlsl", L"RS", L"rootsig_1_1" } }
+	//	},
+	//	config
+	//);
+
 	FD3DW::GraphicPipelineObjectDesc config1;
 	config1.RasterizerState = rasterizerDesc;
 	config1.RTVFormats[0] = GetMainRTVFormat();

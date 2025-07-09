@@ -38,25 +38,36 @@ namespace FD3DW {
 	{
 		SAFE_ASSERT(!(HasComputeStage(shaders) && HasGraphicsStages(shaders)), "Cannot mix compute and graphics shaders in one PSO");
 
-		std::unordered_map<CompileFileType, wrl::ComPtr<IDxcBlob>> compiledShaders;
-
 		for (const auto& [stage, desc] : shaders) {
 			if (stage == CompileFileType::RootSignature) {
-				compiledShaders[stage] = CompileRootSignatureBlob(desc);
+				m_mCompiledShaders[stage] = CompileRootSignatureBlob(desc);
 			}
 			else {
-				compiledShaders[stage] = CompileShader(desc);
+				m_mCompiledShaders[stage] = CompileShader(desc);
 			}
 
-			SAFE_ASSERT(compiledShaders[stage], "Shader compilation failed");
+			SAFE_ASSERT(m_mCompiledShaders[stage], "Shader compilation failed");
 		}
 
-		if (!m_bExternalRootSig ) {
+		if (HasComputeStage(shaders)) {
+			m_xType = PipelineType::Compute;
+		}
+		else {
+			m_xType = PipelineType::Graphics;
+		}
 
+		m_xConfig = config;
+
+		return CreatePSO();
+	}
+
+
+	bool PipelineObject::CreatePSO() {
+		if (!m_bExternalRootSig) {
 			for (const auto& type : s_vCompiledFilesForCheckRootSignature) {
-				if (compiledShaders.contains(type))
+				if (m_mCompiledShaders.contains(type))
 				{
-					m_pRootSignature = ExtractRootSignature(compiledShaders[type].Get());
+					m_pRootSignature = ExtractRootSignature(m_mCompiledShaders[type].Get());
 					if (m_pRootSignature && SUCCEEDED(hr)) break;
 				}
 			}
@@ -64,21 +75,18 @@ namespace FD3DW {
 			SAFE_ASSERT(m_pRootSignature, "Failed to extract root signature");
 		}
 
-		if (HasComputeStage(shaders)) {
-			m_xType = PipelineType::Compute;
+		if (m_xType == PipelineType::Compute) {
 			D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
 			desc.pRootSignature = m_pRootSignature.Get();
 			desc.CS = {
-				compiledShaders[CompileFileType::CS]->GetBufferPointer(),
-				compiledShaders[CompileFileType::CS]->GetBufferSize()
+				m_mCompiledShaders[CompileFileType::CS]->GetBufferPointer(),
+				m_mCompiledShaders[CompileFileType::CS]->GetBufferSize()
 			};
 			HRESULT_ASSERT(m_pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(m_pPSO.ReleaseAndGetAddressOf())), "CreateComputePipelineState failed");
 		}
 		else {
-			m_xType = PipelineType::Graphics;
-
-			if (compiledShaders.count(CompileFileType::VS)) {
-				m_vInputLayout = ReflectInputLayout(compiledShaders[CompileFileType::VS].Get());
+			if (m_mCompiledShaders.count(CompileFileType::VS)) {
+				m_vInputLayout = ReflectInputLayout(m_mCompiledShaders[CompileFileType::VS].Get());
 			}
 			else {
 				m_vInputLayout.clear();
@@ -87,34 +95,33 @@ namespace FD3DW {
 			D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
 			desc.pRootSignature = m_pRootSignature.Get();
 			desc.InputLayout = { m_vInputLayout.data(), (UINT)m_vInputLayout.size() };
-			desc.BlendState = config.BlendState;
-			desc.RasterizerState = config.RasterizerState;
-			desc.DepthStencilState = config.DepthStencilState;
-			desc.SampleMask = config.SampleMask;
-			desc.PrimitiveTopologyType = config.TopologyType;
-			desc.NumRenderTargets = config.NumRenderTargets;
-			memcpy(desc.RTVFormats, config.RTVFormats, sizeof(config.RTVFormats));
-			desc.DSVFormat = config.DSVFormat;
-			desc.SampleDesc = config.SampleDesc;
-			desc.NodeMask = config.NodeMask;
+			desc.BlendState = m_xConfig.BlendState;
+			desc.RasterizerState = m_xConfig.RasterizerState;
+			desc.DepthStencilState = m_xConfig.DepthStencilState;
+			desc.SampleMask = m_xConfig.SampleMask;
+			desc.PrimitiveTopologyType = m_xConfig.TopologyType;
+			desc.NumRenderTargets = m_xConfig.NumRenderTargets;
+			memcpy(desc.RTVFormats, m_xConfig.RTVFormats, sizeof(m_xConfig.RTVFormats));
+			desc.DSVFormat = m_xConfig.DSVFormat;
+			desc.SampleDesc = m_xConfig.SampleDesc;
+			desc.NodeMask = m_xConfig.NodeMask;
 
-			if (compiledShaders.count(CompileFileType::VS))
-				desc.VS = { compiledShaders[CompileFileType::VS]->GetBufferPointer(), compiledShaders[CompileFileType::VS]->GetBufferSize() };
-			if (compiledShaders.count(CompileFileType::PS))
-				desc.PS = { compiledShaders[CompileFileType::PS]->GetBufferPointer(), compiledShaders[CompileFileType::PS]->GetBufferSize() };
-			if (compiledShaders.count(CompileFileType::GS))
-				desc.GS = { compiledShaders[CompileFileType::GS]->GetBufferPointer(), compiledShaders[CompileFileType::GS]->GetBufferSize() };
-			if (compiledShaders.count(CompileFileType::HS))
-				desc.HS = { compiledShaders[CompileFileType::HS]->GetBufferPointer(), compiledShaders[CompileFileType::HS]->GetBufferSize() };
-			if (compiledShaders.count(CompileFileType::DS))
-				desc.DS = { compiledShaders[CompileFileType::DS]->GetBufferPointer(), compiledShaders[CompileFileType::DS]->GetBufferSize() };
+			if (m_mCompiledShaders.count(CompileFileType::VS))
+				desc.VS = { m_mCompiledShaders[CompileFileType::VS]->GetBufferPointer(), m_mCompiledShaders[CompileFileType::VS]->GetBufferSize() };
+			if (m_mCompiledShaders.count(CompileFileType::PS))
+				desc.PS = { m_mCompiledShaders[CompileFileType::PS]->GetBufferPointer(), m_mCompiledShaders[CompileFileType::PS]->GetBufferSize() };
+			if (m_mCompiledShaders.count(CompileFileType::GS))
+				desc.GS = { m_mCompiledShaders[CompileFileType::GS]->GetBufferPointer(), m_mCompiledShaders[CompileFileType::GS]->GetBufferSize() };
+			if (m_mCompiledShaders.count(CompileFileType::HS))
+				desc.HS = { m_mCompiledShaders[CompileFileType::HS]->GetBufferPointer(), m_mCompiledShaders[CompileFileType::HS]->GetBufferSize() };
+			if (m_mCompiledShaders.count(CompileFileType::DS))
+				desc.DS = { m_mCompiledShaders[CompileFileType::DS]->GetBufferPointer(), m_mCompiledShaders[CompileFileType::DS]->GetBufferSize() };
 
 			HRESULT_ASSERT(m_pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pPSO.ReleaseAndGetAddressOf())), "CreateGraphicsPipelineState failed");
 		}
 
 		return true;
 	}
-
 
 	void PipelineObject::Bind(ID3D12GraphicsCommandList* cmdList)
 	{
@@ -137,6 +144,35 @@ namespace FD3DW {
 	ID3D12RootSignature* PipelineObject::GetRootSignature() const
 	{
 		return m_pRootSignature.Get();
+	}
+
+	GraphicPipelineObjectDesc PipelineObject::GetGraphicPSOConfig() const
+	{
+		return m_xConfig;
+	}
+
+	std::unique_ptr<PipelineObject> PipelineObject::MakeCopy(const GraphicPipelineObjectDesc& newConfig)
+	{
+		if (m_pPSO == nullptr) {
+			CONSOLE_ERROR_MESSAGE("PipelineObject copy failed: m_pPSO is null (not initialized)");
+			return nullptr;
+		}
+
+		if (m_xType == PipelineType::Compute) {
+			CONSOLE_ERROR_MESSAGE("PipelineObject copy failed: compute PSO type is not supported (only graphics PSO is allowed).");
+			return nullptr;
+		}
+
+
+		std::unique_ptr<PipelineObject> copy = std::make_unique<PipelineObject>(m_pDevice);
+		copy->m_xType = this->m_xType;
+		copy->m_xConfig = newConfig;
+		copy->m_mCompiledShaders = this->m_mCompiledShaders;
+		if (m_bExternalRootSig) copy->SetExternalRootSignature(m_pRootSignature.Get());
+			
+		copy->CreatePSO();
+
+		return copy;
 	}
 
 	wrl::ComPtr<IDxcBlob> PipelineObject::CompileShader(const ShaderDesc& desc)

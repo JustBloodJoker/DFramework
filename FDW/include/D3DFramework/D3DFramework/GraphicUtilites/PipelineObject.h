@@ -53,6 +53,20 @@ namespace FD3DW {
         
         ID3D12PipelineState* GetPSO() const;
         ID3D12RootSignature* GetRootSignature() const;
+        GraphicPipelineObjectDesc GetGraphicPSOConfig() const;
+
+
+
+    public:
+        std::unique_ptr<PipelineObject> MakeCopy(const GraphicPipelineObjectDesc& config);
+
+
+    private:
+        bool CreatePSO();
+
+        std::unordered_map<CompileFileType, wrl::ComPtr<IDxcBlob>> m_mCompiledShaders;
+        GraphicPipelineObjectDesc m_xConfig;
+
 
     private:
         ID3D12Device* m_pDevice = nullptr;
@@ -69,6 +83,7 @@ namespace FD3DW {
         std::vector<std::wstring> m_vIncludeDirs;
         bool m_bExternalRootSig = false;
 
+    private:
         wrl::ComPtr<IDxcBlob> CompileShader(const ShaderDesc& desc); 
         wrl::ComPtr<IDxcBlob> CompileRootSignatureBlob(const ShaderDesc& desc);
         wrl::ComPtr<ID3D12RootSignature> ExtractRootSignature(IDxcBlob* blob);
