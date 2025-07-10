@@ -45,6 +45,9 @@
     <ClInclude Include="WinWindow\InputSystem\WinWindowInputRouter.h">
       <Filter>WinWindow\InputSystem</Filter>
     </ClInclude>
+    <ClInclude Include="WinWindow\Utils\CreativeSingleton.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="WinWindowTest">

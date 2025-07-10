@@ -1,4 +1,5 @@
 #include <MainRenderer/MainRenderer.h>
+#include <MainRenderer/PSOManager.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -13,6 +14,10 @@ void MainRenderer::UserInit()
 
 	m_pTimer = GetTimer();
 	auto device = GetDevice();
+
+	PSOManager::GetInstance()->InitPSOjects(device);
+
+
 
 	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
 	m_pCameraComponent = CreateComponent<MainRenderer_CameraComponent>();
@@ -50,56 +55,6 @@ void MainRenderer::UserInit()
 	m_pRTV_SRVPack = CreateSRVPack(1u);
 	m_pRTV_SRVPack->PushResource(m_pRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
-	CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
-	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
-
-	FD3DW::GraphicPipelineObjectDesc config;
-	config.RasterizerState = rasterizerDesc;
-	config.RTVFormats[0] = m_pRTV->GetRTVDesc().Format;
-	config.NumRenderTargets = 1;
-	config.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	m_pPSODefferedFirstPass = std::make_unique<FD3DW::PipelineObject>(device);
-	m_pPSODefferedFirstPass->SetIncludeDirectories({ L"Content/Shaders/DefaultInclude", L"Content/Shaders/DefferedFirstPassAnimatedMeshes" });
-	m_pPSODefferedFirstPass->CreatePSO(
-		{
-			{ FD3DW::CompileFileType::VS, { L"Content/Shaders/DefferedFirstPassAnimatedMeshes/VS.hlsl", L"VS", L"vs_6_5" } },
-			{ FD3DW::CompileFileType::PS, { L"Content/Shaders/DefferedFirstPassAnimatedMeshes/PS.hlsl", L"PS", L"ps_6_5" } },
-			{ FD3DW::CompileFileType::RootSignature, { L"Content/Shaders/DefferedFirstPassAnimatedMeshes/RS.hlsl", L"RS", L"rootsig_1_1" } }
-		},
-		config
-	);
-
-	//auto staticPSO = std::make_unique<FD3DW::PipelineObject>(device);
-	//staticPSO->SetIncludeDirectories({ L"Content/Shaders/DefaultInclude", L"Content/Shaders/DefferedFirstPassSimpleMeshes" });
-	//staticPSO->CreatePSO(
-	//	{
-	//		{ FD3DW::CompileFileType::VS, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/VS.hlsl", L"VS", L"vs_6_5" } },
-	//		{ FD3DW::CompileFileType::PS, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/PS.hlsl", L"PS", L"ps_6_5" } },
-	//		{ FD3DW::CompileFileType::RootSignature, { L"Content/Shaders/DefferedFirstPassSimpleMeshes/RS.hlsl", L"RS", L"rootsig_1_1" } }
-	//	},
-	//	config
-	//);
-
-	FD3DW::GraphicPipelineObjectDesc config1;
-	config1.RasterizerState = rasterizerDesc;
-	config1.RTVFormats[0] = GetMainRTVFormat();
-	config1.NumRenderTargets = 1;
-	config1.DSVFormat = DXGI_FORMAT_UNKNOWN;
-	config1.DepthStencilState = {};
-
-	m_pPSODefferedSecondPass = std::make_unique<FD3DW::PipelineObject>(device);
-	m_pPSODefferedSecondPass->SetIncludeDirectories({ L"Content/Shaders/DefaultInclude", L"Content/Shaders/DefferedSecondPass" });
-	m_pPSODefferedSecondPass->CreatePSO(
-		{
-			{ FD3DW::CompileFileType::VS, { L"Content/Shaders/DefferedSecondPass/VS.hlsl", L"VS", L"vs_6_5" } },
-			{ FD3DW::CompileFileType::PS, { L"Content/Shaders/DefferedSecondPass/PS.hlsl", L"PS", L"ps_6_5" } },
-			{ FD3DW::CompileFileType::RootSignature, { L"Content/Shaders/DefferedSecondPass/RS.hlsl", L"RS", L"rootsig_1_1" } }
-		},
-		config1
-	);
-	
 	m_pScreen = CreateRectangle(true, m_pPCML);
 
 	m_xSceneViewPort.MaxDepth = 1.0f;
@@ -146,7 +101,7 @@ void MainRenderer::UserLoop()
 	m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
 	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
-	m_pPSODefferedFirstPass->Bind(m_pPCML);
+	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(m_pPCML);
 
 	m_pPCML->SetGraphicsRootConstantBufferView(0, m_pMatricesBuffer->GetGPULocation(0));
 	m_pPCML->SetGraphicsRootShaderResourceView(3, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
@@ -177,8 +132,8 @@ void MainRenderer::UserLoop()
 
 	m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
 	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
-
-	m_pPSODefferedSecondPass->Bind(m_pPCML);
+	
+	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(m_pPCML);
 
 	m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
 	m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
@@ -202,6 +157,9 @@ void MainRenderer::UserLoop()
 void MainRenderer::UserClose()
 {
 	while ( !m_vComponents.empty() ) DestroyComponent( m_vComponents.back().get() );
+
+
+	PSOManager::FreeInstance();
 }
 
 void MainRenderer::DestroyComponent(MainRendererComponent* cmp) {

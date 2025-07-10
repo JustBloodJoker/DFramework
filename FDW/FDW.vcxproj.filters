@@ -63,6 +63,12 @@
     <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp">
       <Filter>Camera</Filter>
     </ClCompile>
+    <ClCompile Include="MainRenderer\PSOManager.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
+    <ClCompile Include="MainRenderer\GlobalConfig.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -85,6 +91,12 @@
     </ClInclude>
     <ClInclude Include="Camera\MainRenderer_CameraComponent.h">
       <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderer\PSOManager.h">
+      <Filter>mainRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderer\GlobalConfig.h">
+      <Filter>mainRenderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

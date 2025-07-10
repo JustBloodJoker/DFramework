@@ -40,9 +40,6 @@ protected:
 protected:
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vComponents;
 
-	std::unique_ptr<FD3DW::PipelineObject> m_pPSODefferedFirstPass;
-	std::unique_ptr<FD3DW::PipelineObject> m_pPSODefferedSecondPass;
-
 
 private:
 	//Refactor these fields

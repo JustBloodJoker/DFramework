@@ -3,3 +3,5 @@
 
 #include "WinWindow/pch.h"
 #include "D3DFramework/pch.h"
+
+#include <MainRenderer/GlobalConfig.h>

@@ -35,7 +35,7 @@ namespace FD3DW {
 		m_bExternalRootSig = true;
 	}
 
-	bool PipelineObject::CreatePSO(const std::unordered_map<CompileFileType, ShaderDesc>& shaders, const GraphicPipelineObjectDesc& config)
+	bool PipelineObject::CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders, const GraphicPipelineObjectDesc& config)
 	{
 		SAFE_ASSERT(!(HasComputeStage(shaders) && HasGraphicsStages(shaders)), "Cannot mix compute and graphics shaders in one PSO");
 
@@ -176,7 +176,7 @@ namespace FD3DW {
 		return copy;
 	}
 
-	wrl::ComPtr<IDxcBlob> PipelineObject::CompileShader(const ShaderDesc& desc)
+	wrl::ComPtr<IDxcBlob> PipelineObject::CompileShader(const CompileDesc& desc)
 	{
 		std::vector<char> data;
 		if (desc.isFile) {
@@ -236,7 +236,7 @@ namespace FD3DW {
 		return shaderBlob;
 	}
 
-	wrl::ComPtr<IDxcBlob> PipelineObject::CompileRootSignatureBlob(const ShaderDesc& desc)
+	wrl::ComPtr<IDxcBlob> PipelineObject::CompileRootSignatureBlob(const CompileDesc& desc)
 	{
 		SAFE_ASSERT(desc.isFile, "Only file-based root signature loading is supported.");
 
@@ -326,14 +326,14 @@ namespace FD3DW {
 		return layout;
 	}
 
-	bool PipelineObject::HasGraphicsStages(const std::unordered_map<CompileFileType, ShaderDesc>& shaders) const {
+	bool PipelineObject::HasGraphicsStages(const std::unordered_map<CompileFileType, CompileDesc>& shaders) const {
 		for (CompileFileType stage : { CompileFileType::VS, CompileFileType::PS, CompileFileType::GS, CompileFileType::HS, CompileFileType::DS }) {
 			if (shaders.count(stage)) return true;
 		}
 		return false;
 	}
 
-	bool PipelineObject::HasComputeStage(const std::unordered_map<CompileFileType, ShaderDesc>& shaders) const {
+	bool PipelineObject::HasComputeStage(const std::unordered_map<CompileFileType, CompileDesc>& shaders) const {
 		return shaders.count(CompileFileType::CS) > 0;
 	}
 

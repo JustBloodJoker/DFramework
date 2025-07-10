@@ -13,7 +13,7 @@ namespace FD3DW {
         RootSignature
     };
 
-    struct ShaderDesc {
+    struct CompileDesc {
         std::wstring pathOrData;
         std::wstring entry;
         std::wstring target;
@@ -48,7 +48,7 @@ namespace FD3DW {
         void SetIncludeDirectories(const std::vector<std::wstring>& includeDirs);
         void SetExternalRootSignature(ID3D12RootSignature* external); 
      
-        bool CreatePSO(const std::unordered_map<CompileFileType, ShaderDesc>& shaders, const GraphicPipelineObjectDesc& config = {});
+        bool CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders, const GraphicPipelineObjectDesc& config = {});
 
         void Bind(ID3D12GraphicsCommandList* cmdList);
         
@@ -84,14 +84,14 @@ namespace FD3DW {
         bool m_bExternalRootSig = false;
 
     private:
-        wrl::ComPtr<IDxcBlob> CompileShader(const ShaderDesc& desc); 
+        wrl::ComPtr<IDxcBlob> CompileShader(const CompileDesc& desc);
         wrl::ComPtr<IDxcBlob> CompileShader(std::vector<char> data, std::wstring entry, std::wstring target);
-        wrl::ComPtr<IDxcBlob> CompileRootSignatureBlob(const ShaderDesc& desc);
+        wrl::ComPtr<IDxcBlob> CompileRootSignatureBlob(const CompileDesc& desc);
         wrl::ComPtr<ID3D12RootSignature> ExtractRootSignature(IDxcBlob* blob);
         std::vector<D3D12_INPUT_ELEMENT_DESC> ReflectInputLayout(IDxcBlob* blob);
 
-        bool HasGraphicsStages(const std::unordered_map<CompileFileType, ShaderDesc>& shaders) const;
-        bool HasComputeStage(const std::unordered_map<CompileFileType, ShaderDesc>& shaders) const;
+        bool HasGraphicsStages(const std::unordered_map<CompileFileType, CompileDesc>& shaders) const;
+        bool HasComputeStage(const std::unordered_map<CompileFileType, CompileDesc>& shaders) const;
 
 	};
 

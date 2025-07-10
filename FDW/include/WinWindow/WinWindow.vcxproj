@@ -33,6 +33,7 @@
     <ClInclude Include="WinWindow\InputSystem\WinWindowInputLayer.h" />
     <ClInclude Include="WinWindow\InputSystem\WinWindowInputRouter.h" />
     <ClInclude Include="WinWindow\pch.h" />
+    <ClInclude Include="WinWindow\Utils\CreativeSingleton.h" />
     <ClInclude Include="WinWindow\Utils\Macroses.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
     <ClInclude Include="WinWindow\Utils\WindowSettings.h" />

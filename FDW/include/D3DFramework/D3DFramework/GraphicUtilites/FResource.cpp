@@ -45,7 +45,7 @@ namespace FD3DW
 
         if (!s_pGenerateMipsPSO) {
             s_pGenerateMipsPSO = std::make_unique<PipelineObject>(device);
-            std::unordered_map<CompileFileType, ShaderDesc> shaders;
+            std::unordered_map<CompileFileType, CompileDesc> shaders;
             shaders[CompileFileType::CS] = { s_wsMipMapGenCS, L"GenerateMipMaps",L"cs_6_5", false };
             s_pGenerateMipsPSO->CreatePSO(shaders);
         }

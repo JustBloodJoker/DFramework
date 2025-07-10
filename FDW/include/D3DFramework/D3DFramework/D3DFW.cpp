@@ -17,7 +17,7 @@ namespace FD3DW
 
 	DXGI_FORMAT D3DFW::GetMainRTVFormat() const noexcept
 	{
-		return DXGI_FORMAT_R8G8B8A8_UNORM;
+		return DEFAULT_SWAPCHAIN_RTV_TYPE;
 	}
 
 	AudioManager* D3DFW::GetAudioMananger() const noexcept
@@ -140,7 +140,7 @@ namespace FD3DW
 	UINT D3DFW::GetMSAAQualitySupport(const UINT msaaSamples) const
 	{
 		D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS qualityLevels;
-		qualityLevels.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		qualityLevels.Format = DEFAULT_SWAPCHAIN_RTV_TYPE;
 		qualityLevels.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
 		qualityLevels.NumQualityLevels = 0;
 		qualityLevels.SampleCount = msaaSamples;
