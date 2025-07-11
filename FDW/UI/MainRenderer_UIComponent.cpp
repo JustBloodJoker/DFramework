@@ -121,13 +121,12 @@ void MainRenderer_UIComponent::ElementParamSetter() {
         ImGui::Combo("Select Object", &m_iSelectedObjectIndex, names.data(), (int)names.size());
 
         if (m_iSelectedObjectIndex >= 0) {
-            BaseRenderableObject* selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
+            auto selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
 
             if (auto* mesh = dynamic_cast<RenderableMesh*>(selectedObj)) {
                 const auto& anims = mesh->GetAnimations();
                 if (!anims.empty()) {
-                    static int selectedAnimIndex = 0;
-                    static bool bFreezeAnimation = false;
+                    auto& animState = m_mAnimationStates[selectedObj];
 
                     ImGui::Separator();
                     ImGui::Text("Animations");
@@ -137,13 +136,13 @@ void MainRenderer_UIComponent::ElementParamSetter() {
                     for (const auto& anim : anims)
                         animNames.push_back(anim.c_str());
 
-                    if (selectedAnimIndex >= (int)anims.size())
-                        selectedAnimIndex = 0;
+                    if (animState.SelectedAnimIndex >= (int)anims.size())
+                        animState.SelectedAnimIndex = 0;
 
-                    ImGui::Combo("Animation", &selectedAnimIndex, animNames.data(), (int)animNames.size());
+                    ImGui::Combo("Animation", &animState.SelectedAnimIndex, animNames.data(), (int)animNames.size());
 
                     if (ImGui::Button("Play")) {
-                        mesh->PlayAnimation(anims[selectedAnimIndex]);
+                        mesh->PlayAnimation(anims[animState.SelectedAnimIndex]);
                     }
 
                     ImGui::SameLine();
@@ -151,8 +150,8 @@ void MainRenderer_UIComponent::ElementParamSetter() {
                         mesh->StopAnimation();
                     }
 
-                    if (ImGui::Checkbox("Freeze", &bFreezeAnimation)) {
-                        mesh->FreezeAnimation(bFreezeAnimation);
+                    if (ImGui::Checkbox("Freeze", &animState.IsFreeze)) {
+                        mesh->FreezeAnimation(animState.IsFreeze);
                     }
 
                     ImGui::Separator();

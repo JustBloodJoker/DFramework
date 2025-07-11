@@ -57,7 +57,19 @@ private:
 	std::filesystem::path currentPath = SCENES_DEFAULT_PATH;
 	std::vector<std::filesystem::directory_entry> entries = GetDirectoryEntries(currentPath);
 	bool bPathChanged = false;
+	
 
+
+
+private:
+	
+	struct AnimationUIState {
+		int SelectedAnimIndex = 0;
+		bool IsFreeze = false;
+	};
+	
+	std::unordered_map<BaseRenderableObject*, AnimationUIState> m_mAnimationStates;
+	
 	int m_iSelectedObjectIndex = -1;
 	std::vector<BaseRenderableObject*> m_vCachedObjects;
 };
