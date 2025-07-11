@@ -113,6 +113,16 @@ namespace FD3DW
         return ret;
     }
 
+    std::unique_ptr<FResource> FResource::CreateAnonimTexture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+    {
+        return std::make_unique<FResource>(pDevice, arraySize, format, width, height, sampleDesc, dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
+    }
+
+    std::unique_ptr<FResource> FResource::CreateSimpleStructuredBuffer(ID3D12Device* pDevice, const UINT64 width)
+    {
+        return FResource::CreateAnonimTexture(pDevice, 1u, DXGI_FORMAT_UNKNOWN, width, 1, DXGI_SAMPLE_DESC({1,0}), D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)), 1);
+    }
+
     std::shared_ptr<FResource> FResource::CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
     {
         auto iter = s_vTextures.find(path);
@@ -208,7 +218,7 @@ namespace FD3DW
         textureData.SlicePitch = slicePitch;
 
         m_pUploadBuffer.reset(new UploadBuffer<char>(pDevice, static_cast<UINT>(uploadBufferSize), false));
-        
+
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
 
         UpdateSubresources(pCommandList,

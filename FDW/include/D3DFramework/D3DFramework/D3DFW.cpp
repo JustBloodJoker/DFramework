@@ -251,7 +251,7 @@ namespace FD3DW
 		ClearSwapchainData();
 		CreateSwapchainData();
 
-		SetViewportData(WndSet.Width, WndSet.Height);
+		SetViewportData(float(WndSet.Width), float(WndSet.Height));
 		SetRectData(WndSet.Width, WndSet.Height);
 		
 		return true;
@@ -355,7 +355,7 @@ namespace FD3DW
 	std::unique_ptr<SRVPacker> D3DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating SRV pack");
-		return std::make_unique<SRVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
+		return  SRVPacker::CreatePack(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
 	}
 
 	std::unique_ptr<CBVPacker> D3DFW::CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask)
@@ -464,13 +464,13 @@ namespace FD3DW
 		return FResource::CreateTextureFromPath(path, m_pDevice.Get(), list);
 	}
 
-	std::unique_ptr<FResource> D3DFW::CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format, const UINT64 width, const UINT64 height, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+	std::unique_ptr<FResource> D3DFW::CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating Anonim FResource");
-		return std::make_unique<FResource>(m_pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({1, 0}), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
+		return FResource::CreateAnonimTexture(m_pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({ 1, 0 }), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
 	}
 
-	std::unique_ptr<FResource> D3DFW::CreateSimpleStructuredBuffer(const UINT64 width)
+	std::unique_ptr<FResource> D3DFW::CreateSimpleStructuredBuffer(const UINT width)
 	{
 		return CreateAnonimTexture(1u, DXGI_FORMAT_UNKNOWN,width, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
 	}
@@ -516,7 +516,7 @@ namespace FD3DW
 		m_xMainVP.TopLeftY = 0.0f;
 	}
 
-	void D3DFW::SetRectData(float width, float height)
+	void D3DFW::SetRectData(int width, int height)
 	{
 		m_xMainRect.left = 0;
 		m_xMainRect.right = width;

@@ -33,6 +33,11 @@
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="MainRenderer\PSOManager.cpp" />
+    <ClCompile Include="RenderableObjects\BaseRenderableObject.cpp" />
+    <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
   </ItemGroup>
@@ -44,6 +49,11 @@
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="MainRenderer\PSOManager.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RenderableObjects\BaseRenderableObject.h" />
+    <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
+    <ClInclude Include="RenderableObjects\RenderableMesh.h" />
+    <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
+    <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
   </ItemGroup>

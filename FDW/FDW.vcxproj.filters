@@ -19,6 +19,9 @@
     <Filter Include="Camera">
       <UniqueIdentifier>{66d738e4-34be-4b10-8d16-c8009daf7b39}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderableObjects">
+      <UniqueIdentifier>{052d535b-317d-454c-8523-bfc760f8dd1f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -69,6 +72,21 @@
     <ClCompile Include="MainRenderer\GlobalConfig.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\BaseRenderableObject.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableMesh.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -97,6 +115,21 @@
     </ClInclude>
     <ClInclude Include="MainRenderer\GlobalConfig.h">
       <Filter>mainRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\BaseRenderableObject.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableMesh.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableMeshElement.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSimpleObject.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h">
+      <Filter>RenderableObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

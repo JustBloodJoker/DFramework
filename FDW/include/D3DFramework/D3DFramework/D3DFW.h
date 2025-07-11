@@ -145,14 +145,14 @@ namespace FD3DW
 		std::unique_ptr<Material>			CreateMaterial();
 		std::shared_ptr<FResource>			CreateTexture(std::string path, ID3D12GraphicsCommandList* list);
 		std::unique_ptr<FResource>			CreateAnonimTexture(const UINT16 arraySize, const DXGI_FORMAT format,
-																const UINT64 width, const UINT64 height,
+																const UINT width, const UINT height,
 																const D3D12_RESOURCE_DIMENSION dimension,
 																const D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE,
 																const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN,
 																const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE,
 																const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 																const UINT16 mipLevels = 1);
-		std::unique_ptr<FResource>			CreateSimpleStructuredBuffer(const UINT64 width);
+		std::unique_ptr<FResource>			CreateSimpleStructuredBuffer(const UINT width);
 
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height, const UINT msaaSampleCount = 1u);
@@ -185,10 +185,10 @@ namespace FD3DW
 		}
 
 		template<typename T>
-		inline std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t&& elementCount)
+		inline std::unique_ptr<UploadBuffer<T>> CreateConstantBuffer(const size_t& elementCount)
 		{
 			CONSOLE_MESSAGE("D3DFW is creating Constant Buffer");
-			return std::make_unique<UploadBuffer<T>>(m_pDevice.Get(), std::forward<decltype(elementCount)>(elementCount), true);
+			return  UploadBuffer<T>::CreateConstantBuffer(m_pDevice.Get(), elementCount);
 		}
 
 		///////////////////////////////////
@@ -199,7 +199,7 @@ namespace FD3DW
 			void CreateSwapchainData();
 			void ClearSwapchainData();
 			void SetViewportData(float width, float height);
-			void SetRectData(float width, float height);
+			void SetRectData(int width, int height);
 			
 		// MESSAGE LAYER
 		private:

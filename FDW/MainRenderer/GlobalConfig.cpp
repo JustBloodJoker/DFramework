@@ -70,5 +70,26 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 }
 
 
+/////////////////////////////////////////
+
+static std::map<ID3D12Device*, std::tuple<UINT, UINT, UINT>> s_mDescSizesForDevice;
+
+void InitializeDescriptorSizes(ID3D12Device* device, UINT rtvDescSize, UINT dsvDescSize, UINT cbv_srv_uavDescSize){
+    s_mDescSizesForDevice[device] = { rtvDescSize, dsvDescSize, cbv_srv_uavDescSize };
+}
+
+const UINT& GetRTVDescriptorSize(ID3D12Device* device) {
+    return std::get<0>(s_mDescSizesForDevice.at(device));
+}
+
+const UINT& GetDSVDescriptorSize(ID3D12Device* device) {
+    return std::get<1>(s_mDescSizesForDevice.at(device));
+}
+
+const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device) {
+    return std::get<2>(s_mDescSizesForDevice.at(device));
+}
+
+
 
 

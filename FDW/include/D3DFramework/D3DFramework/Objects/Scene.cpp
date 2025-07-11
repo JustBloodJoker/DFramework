@@ -9,6 +9,7 @@ namespace FD3DW
 
 	Scene::Scene(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
+		m_sPath = path;
 		InitScene(path, pDevice, pCommandList, neverUpdate);
 
 		CONSOLE_MESSAGE(std::string("SCENE WITH PATH: " + path + " INITED!"));
@@ -30,9 +31,25 @@ namespace FD3DW
 		return m_vResultBones;
 	}
 
+	std::vector<std::string> Scene::GetAnimations()
+	{
+		std::vector<std::string> ret;
+		ret.reserve(m_mAnimationsMap.size());
+		for (const auto& [name, anim] : m_mAnimationsMap) {
+			ret.push_back(name);
+
+		}
+		return ret;
+	}
+
 	size_t Scene::GetBonesCount() const
 	{
 		return m_uBonesCount;
+	}
+
+	std::string Scene::GetPath() const
+	{
+		return m_sPath;
 	}
 
 	void Scene::InitScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)

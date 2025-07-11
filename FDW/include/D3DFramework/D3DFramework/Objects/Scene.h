@@ -40,8 +40,11 @@ namespace FD3DW
 		virtual ~Scene() = default;;
 
 		std::vector<dx::XMMATRIX> PlayAnimation(float time, std::string animationName);
+		
+		std::vector<std::string> GetAnimations();
 
 		size_t GetBonesCount() const;
+		std::string GetPath() const;
 
 	protected:
 
@@ -62,6 +65,8 @@ namespace FD3DW
 
 		std::unordered_map<std::string, Animation> m_mAnimationsMap;
 		std::vector<dx::XMMATRIX> m_vResultBones;
+
+		std::string m_sPath;
 	};
 
 }

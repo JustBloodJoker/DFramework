@@ -24,7 +24,12 @@ namespace FDWWIN
 		void SETHWND(HWND hwnd);
 		HWND GETHWND() const;
 		WindowSettings WNDSettings() const;
+
 		WinWindowInputRouter* GetInputRouter() const;
+		Timer* GetTimer() const;
+
+		bool ISPAUSED() const;
+		bool ISSTARTEDWINDOW() const;
 
 	protected:
 		
@@ -48,9 +53,6 @@ namespace FDWWIN
 	protected:
 		//////////////////
 		///		GETTERS
-		bool ISPAUSED() const;
-		bool ISSTARTEDWINDOW() const;
-		Timer* GetTimer() const;
 
 	private:
 		void SetFullScreen();

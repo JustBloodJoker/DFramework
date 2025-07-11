@@ -36,6 +36,9 @@ namespace FD3DW
 	{
 
 	public:
+		static std::unique_ptr<SRVPacker> CreatePack(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+
+	public:
 
 		SRVPacker(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		virtual ~SRVPacker() = default;
@@ -47,6 +50,9 @@ namespace FD3DW
 	class SamplerPacker
 		: public ResourcePacker
 	{
+	public:
+		static std::unique_ptr<SamplerPacker> CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+
 	public:
 
 		SamplerPacker(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);

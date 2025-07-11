@@ -26,6 +26,11 @@ namespace FD3DW
 	}
 
 
+	std::unique_ptr<SRVPacker> SRVPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+	{
+		return std::make_unique<SRVPacker>(descriptorSize, descriptorsCount, NodeMask, flags, pDevice);
+	}
+
 	SRVPacker::SRVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
 	{
@@ -52,6 +57,11 @@ namespace FD3DW
 	void SRVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
 	{
 		AddResource(resource, dimension, m_uCurrentIndex++, pDevice);
+	}
+
+	std::unique_ptr<SamplerPacker> SamplerPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+	{
+		return std::make_unique<SamplerPacker>(descriptorSize, descriptorsCount, NodeMask, flags, pDevice);
 	}
 
 	SamplerPacker::SamplerPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask,  D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)

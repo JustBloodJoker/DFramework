@@ -16,6 +16,8 @@
 #include <random>
 #include <chrono>
 #include <map>
+#include <codecvt>
+#include <locale>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>
