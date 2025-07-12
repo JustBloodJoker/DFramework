@@ -35,6 +35,7 @@ private:
 	std::unique_ptr<FD3DW::Scene> m_pScene = nullptr;
 	std::vector<std::unique_ptr<RenderableMeshElement>> m_vRenderableElements;
 
+	float m_fAnimationTime = 0.0;
 	std::string m_sCurrentAnimation = "";
 	bool m_bNeedResetBonesBuffer = false;
 	bool m_bNeedFreezeBonesBuffer = false;

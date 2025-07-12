@@ -13,8 +13,6 @@ void MainRenderer::UserInit()
 
 	SetVSync(true);
 
-	//m_pRenderableObjectsManager->CreateObject(CreateScene("Content/sampleModels/bird/scene.gltf", true, m_pPCML), device, m_pPCML);
-	//m_pRenderableObjectsManager->CreateObject(CreateScene("Content/sampleModels/bird/scene.gltf", true, m_pPCML), device, m_pPCML);
 
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
@@ -56,17 +54,19 @@ void MainRenderer::UserLoop()
 	//			SCENE RTV DRAW
 	m_pRTV->StartDraw(m_pPCML);
 
+	if (m_pRenderableObjectsManager->GetRenderableObjects().size()) {
+		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
-	m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-	m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
-
-	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+		m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
 
-	m_pRenderableObjectsManager->RenderObjects(GetDevice(), m_pPCML);
+		m_pRenderableObjectsManager->RenderObjects(GetDevice(), m_pPCML);
+	}
 
+	
 	m_pRTV->EndDraw(m_pPCML);
 
 	///

@@ -71,7 +71,10 @@ std::vector<std::string> RenderableMesh::GetAnimations() {
 }
 
 void RenderableMesh::PlayAnimation(std::string animName) {
+	if (m_sCurrentAnimation == animName) return;
 	m_sCurrentAnimation = animName;
+
+	m_fAnimationTime = 0.f;
 }
 
 void RenderableMesh::StopAnimation() {
@@ -101,14 +104,15 @@ void RenderableMesh::AnimationTickUpdate(const BeforeRenderInputData& data) {
 
 	std::vector<dx::XMMATRIX> dataVec;
 	if (!m_sCurrentAnimation.empty()) {
-		dataVec = m_pScene->PlayAnimation(data.Time, m_sCurrentAnimation);
+		dataVec = m_pScene->PlayAnimation(m_fAnimationTime, m_sCurrentAnimation);
+		m_fAnimationTime += data.DT;
 	}
 	else if(m_bNeedResetBonesBuffer) {
 		dataVec.resize( m_pScene->GetBonesCount() );
 	}
 
 	if (!dataVec.empty()) {
-		m_pStructureBufferBones->UploadData(data.Device, data.CommandList, dataVec.data(), false, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		m_pStructureBufferBones->UploadData(data.Device, data.CommandList, dataVec.data(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	}
 
 }

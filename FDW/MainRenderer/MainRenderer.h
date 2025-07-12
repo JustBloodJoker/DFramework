@@ -20,7 +20,7 @@ public:
 	void UserLoop() override;
 	void UserClose()  override;
 
-
+	std::shared_ptr<FD3DW::FResource> ddsTest;
 public:
 	///////////////////////////////////////////////////
 	//BRIDGE METHODS

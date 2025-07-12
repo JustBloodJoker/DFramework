@@ -33,7 +33,7 @@ namespace FD3DW
 		static std::unordered_map<std::string, std::weak_ptr<FResource>> s_vTextures;
 		
 	public:
-		static std::unique_ptr<FResource> CreateSimpleStructuredBuffer(ID3D12Device* pDevice, const UINT64 width);
+		static std::unique_ptr<FResource> CreateSimpleStructuredBuffer(ID3D12Device* pDevice, const UINT width);
 		static std::unique_ptr<FResource> CreateAnonimTexture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format,const UINT width, const UINT height,DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension,const D3D12_RESOURCE_FLAGS resourceFlags,const D3D12_TEXTURE_LAYOUT layout,const D3D12_HEAP_FLAGS heapFlags,const D3D12_HEAP_PROPERTIES* heapProperties,const UINT16 mipLevels);
 
 	public:
@@ -59,7 +59,8 @@ namespace FD3DW
 		ID3D12Resource* GetResource() const;
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
-		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool checkCalculation = false, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, std::vector<const void*> pDatas, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		void GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
