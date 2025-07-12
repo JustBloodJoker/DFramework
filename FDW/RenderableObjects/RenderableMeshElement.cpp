@@ -23,10 +23,9 @@ void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 void RenderableMeshElement::Render(ID3D12GraphicsCommandList* list) {
 	list->SetGraphicsRootConstantBufferView(0, m_pMatricesBuffer->GetGPULocation(0));
 
-	ID3D12DescriptorHeap* heaps[] = { m_xData.SRVPack->GetResult()->GetDescriptorPtr(), m_xData.SamplerPack->GetResult()->GetDescriptorPtr() };
+	ID3D12DescriptorHeap* heaps[] = { m_xData.SRVPack->GetResult()->GetDescriptorPtr() };
 	list->SetDescriptorHeaps(_countof(heaps), heaps);
 	list->SetGraphicsRootDescriptorTable(1, m_xData.SRVPack->GetResult()->GetGPUDescriptorHandle(0));
-	list->SetGraphicsRootDescriptorTable(2, m_xData.SamplerPack->GetResult()->GetGPUDescriptorHandle(0));
 
 	list->DrawIndexedInstanced(m_xData.ObjectDescriptor.IndicesCount, 1, m_xData.ObjectDescriptor.IndicesOffset, m_xData.ObjectDescriptor.VerticesOffset, 0);
 }

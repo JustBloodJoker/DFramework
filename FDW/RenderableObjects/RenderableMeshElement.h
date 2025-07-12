@@ -5,7 +5,6 @@
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
 struct RenderableMeshElementData {
-	FD3DW::SamplerPacker* SamplerPack = nullptr;
 	FD3DW::SRVPacker* SRVPack = nullptr;
 	FD3DW::ObjectDesc ObjectDescriptor;
 

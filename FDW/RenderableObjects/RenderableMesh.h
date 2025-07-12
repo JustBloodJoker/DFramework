@@ -28,7 +28,6 @@ private:
 	void AnimationTickUpdate(const BeforeRenderInputData& data);
 
 private:
-	std::unique_ptr<FD3DW::SamplerPacker> m_pSamplerPack;
 	std::vector<std::unique_ptr<FD3DW::SRVPacker>> m_vSRVPacks;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 	

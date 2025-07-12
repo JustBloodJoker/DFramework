@@ -13,9 +13,6 @@ void MainRenderer::UserInit()
 
 	SetVSync(true);
 
-	m_pSamplerPack = CreateSamplerPack(1u);
-	m_pSamplerPack->PushDefaultSampler(device);
-
 	//m_pRenderableObjectsManager->CreateObject(CreateScene("Content/sampleModels/bird/scene.gltf", true, m_pPCML), device, m_pPCML);
 	//m_pRenderableObjectsManager->CreateObject(CreateScene("Content/sampleModels/bird/scene.gltf", true, m_pPCML), device, m_pPCML);
 
@@ -90,11 +87,10 @@ void MainRenderer::UserLoop()
 	m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
 	m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
 
-	ID3D12DescriptorHeap* heaps[] = { m_pRTV_SRVPack->GetResult()->GetDescriptorPtr(), m_pSamplerPack->GetResult()->GetDescriptorPtr() };
+	ID3D12DescriptorHeap* heaps[] = { m_pRTV_SRVPack->GetResult()->GetDescriptorPtr() };
 	m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
 
 	m_pPCML->SetGraphicsRootDescriptorTable(0, m_pRTV_SRVPack->GetResult()->GetGPUDescriptorHandle(0));
-	m_pPCML->SetGraphicsRootDescriptorTable(1, m_pSamplerPack->GetResult()->GetGPUDescriptorHandle(0));
 
 	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 

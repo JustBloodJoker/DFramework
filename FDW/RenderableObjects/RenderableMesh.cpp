@@ -17,9 +17,6 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 			m_vSRVPacks.back()->PushResource(m_pScene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 		}
 	}
-
-	m_pSamplerPack = FD3DW::SamplerPacker::CreatePack(cbvsrvuavsize, 1u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
-	m_pSamplerPack->PushDefaultSampler(device);
 	
 	if (auto size = m_pScene->GetBonesCount() * sizeof(dx::XMMATRIX)) {
 		m_pStructureBufferBones = FD3DW::FResource::CreateSimpleStructuredBuffer(device, size);
@@ -29,7 +26,6 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	{
 		RenderableMeshElementData data;
 		data.ObjectDescriptor = m_pScene->GetObjectParameters(ind);
-		data.SamplerPack = m_pSamplerPack.get();
 		data.SRVPack = m_vSRVPacks[GetMaterialIndex(m_pScene.get(), ind)].get();
 
 		auto elem = std::make_unique<RenderableMeshElement>(data);
@@ -55,7 +51,7 @@ void RenderableMesh::Render(ID3D12GraphicsCommandList* list) {
 	
 	if (m_pStructureBufferBones) {
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
-		list->SetGraphicsRootShaderResourceView(3, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
+		list->SetGraphicsRootShaderResourceView(2, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
 	}
 	else {
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassSimpleMeshesDefaultConfig)->Bind(list);

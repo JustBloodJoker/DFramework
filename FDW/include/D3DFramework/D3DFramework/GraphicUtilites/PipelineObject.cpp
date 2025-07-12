@@ -257,7 +257,7 @@ namespace FD3DW {
 		};
 
 		wrl::ComPtr<IDxcOperationResult> result;
-		m_pCompiler->Compile(&buffer, args.data(), (UINT)args.size(), m_pIncludeHandler.Get(), IID_PPV_ARGS(result.ReleaseAndGetAddressOf()));
+		HRESULT_ASSERT( m_pCompiler->Compile(&buffer, args.data(), (UINT)args.size(), m_pIncludeHandler.Get(), IID_PPV_ARGS(result.ReleaseAndGetAddressOf())) , "Shader compile error");
 
 		HRESULT hr;
 		result->GetStatus(&hr);

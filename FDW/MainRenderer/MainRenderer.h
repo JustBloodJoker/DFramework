@@ -66,7 +66,6 @@ protected:
 
 protected:
 	//TEST FIELDS
-	std::unique_ptr<FD3DW::SamplerPacker> m_pSamplerPack;
 	std::unique_ptr<FD3DW::RenderTarget> m_pRTV;
 	std::unique_ptr<FD3DW::RTVPacker> m_pRTVPack;
 	std::unique_ptr<FD3DW::SRVPacker> m_pRTV_SRVPack;
