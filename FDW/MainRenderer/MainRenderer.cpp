@@ -141,6 +141,10 @@ void MainRenderer::AddSkybox(std::string path) {
 	m_pRenderableObjectsManager->CreateObject(path, GetDevice(), m_pPCML);
 }
 
+void MainRenderer::AddAudio(std::string path) {
+	m_pRenderableObjectsManager->CreateObject(CreateAudio(FD3DW::StringToWString(path)), GetDevice(), m_pPCML, path);
+}
+
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {
 	m_pRenderableObjectsManager->RemoveObject(obj);
 }
@@ -163,6 +167,7 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
 	m_pCameraComponent = CreateComponent<MainRenderer_CameraComponent>();
 	m_pRenderableObjectsManager = CreateComponent<MainRenderer_RenderableObjectsManager>();
+
 }
 
 void MainRenderer::DestroyComponent(MainRendererComponent* cmp) {

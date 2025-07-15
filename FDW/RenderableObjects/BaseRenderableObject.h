@@ -5,6 +5,7 @@
 
 enum RenderPass
 {
+    None = 0x0,
     Deferred = 0x1,
     Forward = 0x2,
     DeferredAndForward = 0x3,

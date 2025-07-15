@@ -11,6 +11,7 @@
 #include <RenderableObjects/RenderableMeshElement.h>
 #include <RenderableObjects/RenderableSimpleObject.h>
 #include <RenderableObjects/RenderableSkyboxObject.h>
+#include <RenderableObjects/RenderableAudioObject.h>
 
 /////////////////////////////////////////
 ///         ---ENGINE_UI---
@@ -18,6 +19,7 @@
 
 static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf" };
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
+static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
 
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
@@ -83,18 +85,24 @@ void MainRenderer_UIComponent::SceneBrowser() {
         else if (entry.is_regular_file()) {
             bool isScene = std::find(s_vSupportedSceneExts.begin(), s_vSupportedSceneExts.end(), ext) != s_vSupportedSceneExts.end();
             bool isSkybox = std::find(s_vSupportedSkyboxExts.begin(), s_vSupportedSkyboxExts.end(), ext) != s_vSupportedSkyboxExts.end();
+            bool isAudio = std::find(s_vSupportedAudioExts.begin(), s_vSupportedAudioExts.end(), ext) != s_vSupportedAudioExts.end();
 
-            std::string icon = isScene ? "Scene " : isSkybox ? "Skybox " : "File ";
+            std::string icon = isScene ? "Scene " : isSkybox ? "Skybox " : isAudio ? "Audio " : "File ";
             selected = ImGui::Selectable((icon + label).c_str());
 
             if (selected) {
                 std::string utf8Path = path.string();
+
                 if (isScene) {
                     m_pOwner->AddScene(utf8Path);
                     m_bShowSceneBrowser = false;
                 }
                 else if (isSkybox) {
                     m_pOwner->AddSkybox(utf8Path);
+                    m_bShowSceneBrowser = false;
+                }
+                else if (isAudio) {
+                    m_pOwner->AddAudio(utf8Path);
                     m_bShowSceneBrowser = false;
                 }
             }
@@ -163,6 +171,9 @@ void MainRenderer_UIComponent::ElementParamSetter() {
     }
     else if (auto* skybox = dynamic_cast<RenderableSkyboxObject*>(selectedObj)) {
         DrawSkyboxUI(skybox);
+    }
+    else if (auto* audio = dynamic_cast<RenderableAudioObject*>(selectedObj)) {
+        DrawAudioUI(audio);
     }
 }
 
@@ -268,6 +279,33 @@ void MainRenderer_UIComponent::DrawSimpleRenderableUI(RenderableSimpleObject* ob
 void MainRenderer_UIComponent::DrawSkyboxUI(RenderableSkyboxObject* skybox) {
     ImGui::Separator();
     ImGui::Text("Skybox: no editable parameters");
+}
+
+void MainRenderer_UIComponent::DrawAudioUI(RenderableAudioObject* audio) {
+    ImGui::Separator();
+    ImGui::Text("Audio Controls");
+
+    if (ImGui::Button("Play")) {
+        audio->Play();
+    }
+    
+    if (ImGui::Button("Stop")) {
+        audio->Stop();
+    }
+    
+    if (ImGui::Button("Restart")) {
+        audio->Restart();
+    }
+
+    float volume = audio->GetVolume();
+    if (ImGui::SliderFloat("Volume", &volume, 0.0f, 1.0f)) {
+        audio->SetVolume(volume);
+    }
+
+    bool loop = audio->IsLoop();
+    if (ImGui::Checkbox("Loop", &loop)) {
+        audio->Loop(loop);
+    }
 }
 
 

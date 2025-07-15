@@ -28,7 +28,6 @@ namespace FD3DW
             HRESULT_ASSERT(HRESULT_FROM_WIN32(GetLastError()), "Can't set file ptr to begin");
 
         WAVEFORMATEXTENSIBLE wfx = { 0 };
-        XAUDIO2_BUFFER buffer = { 0 };
         IXAudio2SourceVoice* sourceVoice;
         DWORD dwChunkSize;
         DWORD dwChunkPosition;
@@ -49,14 +48,9 @@ namespace FD3DW
         BYTE* pDataBuffer = new BYTE[dwChunkSize];
         HRESULT_ASSERT(ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition), "Read chunk error");;
 
-        buffer.AudioBytes = dwChunkSize;
-        buffer.pAudioData = pDataBuffer;
-        buffer.Flags = XAUDIO2_END_OF_STREAM;
-
         HRESULT_ASSERT(m_pAudio->CreateSourceVoice(&sourceVoice, (WAVEFORMATEX*)&wfx), "Create Source Voice error");
-        HRESULT_ASSERT(sourceVoice->SubmitSourceBuffer(&buffer), "Submit buffer error");
 
-        return new Audio(sourceVoice);
+        return new Audio(sourceVoice, dwChunkSize, pDataBuffer);
     }
 
 	void AudioManager::InitXAudio()

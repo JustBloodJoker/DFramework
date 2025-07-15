@@ -37,6 +37,7 @@
     <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
@@ -54,6 +55,7 @@
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
+    <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
     <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />

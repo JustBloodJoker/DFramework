@@ -9,6 +9,7 @@
 #include <RenderableObjects/RenderableMesh.h>
 #include <RenderableObjects/RenderableSimpleObject.h>
 #include <RenderableObjects/RenderableSkyboxObject.h>
+#include <RenderableObjects/RenderableAudioObject.h>
 
 template<typename TObject>
 struct RenderableType;
@@ -23,18 +24,22 @@ struct RenderableType<FD3DW::SimpleObject> {
     using type = RenderableSimpleObject;
 };
 
+template<>
+struct RenderableType<FD3DW::Audio> {
+    using type = RenderableAudioObject;
+};
+
 class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
 public:
     MainRenderer_RenderableObjectsManager(MainRenderer* owner);
 
-    template<typename TObject>
-    void CreateObject(std::unique_ptr<TObject> obj, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+    template<typename TObject, typename... Args>
+    void CreateObject(std::unique_ptr<TObject> obj, ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
         using TRenderable = typename RenderableType<TObject>::type;
 
-        static_assert(std::is_base_of_v<FD3DW::Object, TObject>, "TObject must derive from FD3DW::Object");
         static_assert(std::is_base_of_v<BaseRenderableObject, TRenderable>, "TRenderable must derive from BaseRenderableObject");
 
-        auto renderable = std::make_unique<TRenderable>(std::move(obj));
+        auto renderable = std::make_unique<TRenderable>(std::move(obj), std::forward<Args>(args)...);
         renderable->Init(device, list);
         m_vObjects.push_back(std::move(renderable));
     }
