@@ -6,6 +6,9 @@
 
 class MainRenderer;
 class BaseRenderableObject;
+class RenderableSimpleObject;
+class RenderableSkyboxObject;
+class RenderableMesh;
 
 namespace FD3DW {
 	class SRVPacker;
@@ -38,7 +41,10 @@ private:
 
 	void SceneBrowser();
 	void ElementParamSetter();
-
+	
+	void DrawMeshUI(RenderableMesh* mesh);
+	void DrawSimpleRenderableUI(RenderableSimpleObject* obj);
+	void DrawSkyboxUI(RenderableSkyboxObject* skybox);
 
 private:
 	std::vector<std::filesystem::path> FindSceneFiles(const std::wstring& root, const std::vector<std::wstring>& extensions);

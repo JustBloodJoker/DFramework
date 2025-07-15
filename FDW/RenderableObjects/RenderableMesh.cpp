@@ -3,7 +3,6 @@
 
 RenderableMesh::RenderableMesh(std::unique_ptr<FD3DW::Scene> scene) : BaseRenderableObject( scene->GetPath() ) {
 	m_pScene = std::move(scene);
-
 }
 
 void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
@@ -12,9 +11,9 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
 	{
 		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
-		if (m_pScene->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(TextureType::BASE))
+		if (m_pScene->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(FD3DW::TextureType::BASE))
 		{
-			m_vSRVPacks.back()->PushResource(m_pScene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+			m_vSRVPacks.back()->PushResource(m_pScene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 		}
 	}
 	
@@ -47,23 +46,16 @@ void RenderableMesh::BeforeRender(const BeforeRenderInputData& data) {
 	}
 }
 
-void RenderableMesh::Render(ID3D12GraphicsCommandList* list) {
-	
-	if (m_pStructureBufferBones) {
-		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
-		list->SetGraphicsRootShaderResourceView(2, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
-	}
-	else {
-		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassSimpleMeshesDefaultConfig)->Bind(list);
-	}
+void RenderableMesh::DeferredRender(ID3D12GraphicsCommandList* list) {
+	RenderObjectsInPass(RenderPass::Deferred, list);
+}
 
+void RenderableMesh::ForwardRender(ID3D12GraphicsCommandList* list) {
+	RenderObjectsInPass(RenderPass::Forward, list);
+}
 
-	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
-	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());
-
-	for (auto& elem : m_vRenderableElements) {
-		elem->Render(list);
-	}
+RenderPass RenderableMesh::GetRenderPass() const {
+	return RenderPass::DeferredAndForward;
 }
 
 std::vector<std::string> RenderableMesh::GetAnimations() {
@@ -97,6 +89,27 @@ std::vector<RenderableMeshElement*> RenderableMesh::GetRenderableElements() {
 	}
 
 	return ret;
+}
+
+void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {
+	if (pass==RenderPass::Forward) return; //forward not impl
+
+	if (m_pStructureBufferBones) {
+		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
+		list->SetGraphicsRootShaderResourceView(2, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
+	}
+	else {
+		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassSimpleMeshesDefaultConfig)->Bind(list);
+	}
+
+	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
+	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());
+
+	for (auto& elem : m_vRenderableElements) {
+		if (elem->IsCanRenderInPass(pass)) {
+			elem->IsCanRenderInPass(RenderPass::Deferred) ? elem->DeferredRender(list) : elem->ForwardRender(list);
+		}
+	}
 }
 
 void RenderableMesh::AnimationTickUpdate(const BeforeRenderInputData& data) {

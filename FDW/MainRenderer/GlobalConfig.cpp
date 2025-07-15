@@ -6,6 +6,34 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 
+
+    static CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
+    dsvFirstDefPassDesc.DepthEnable = true;
+    dsvFirstDefPassDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+    dsvFirstDefPassDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+    dsvFirstDefPassDesc.StencilEnable = true;
+    dsvFirstDefPassDesc.StencilReadMask = 0xFF;
+    dsvFirstDefPassDesc.StencilWriteMask = 0xFF;
+    dsvFirstDefPassDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+    dsvFirstDefPassDesc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+    dsvFirstDefPassDesc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_INCR_SAT;
+    dsvFirstDefPassDesc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+    dsvFirstDefPassDesc.BackFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
+    dsvFirstDefPassDesc.BackFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
+    dsvFirstDefPassDesc.BackFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
+    dsvFirstDefPassDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
+
+    
+    static CD3DX12_DEPTH_STENCIL_DESC dsvForwardPassDesc(D3D12_DEFAULT);
+
+    static CD3DX12_DEPTH_STENCIL_DESC secondPassDSVDesc(D3D12_DEFAULT);
+    secondPassDSVDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+    //secondPassDSVDesc.
+
+
+    static CD3DX12_RASTERIZER_DESC skyboxRasterizerDesc(D3D12_DEFAULT);
+    skyboxRasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
+
     static const std::unordered_map<PSOType, PSODescriptor> descriptors = {
         {
             PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig,
@@ -16,6 +44,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
                     return desc;
                 }()
@@ -30,6 +59,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
                     return desc;
                 }()
@@ -43,8 +73,30 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
-                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.DepthStencilState = secondPassDSVDesc;
                     desc.RasterizerState = rasterizerDesc;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::SimpleSkyboxDefaultConfig,
+            {
+                L"SimpleSkybox",
+                [] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.RasterizerState = skyboxRasterizerDesc;
+
+                    CD3DX12_DEPTH_STENCIL_DESC skyboxDepthDesc(D3D12_DEFAULT);
+                    skyboxDepthDesc.DepthEnable = true;
+                    skyboxDepthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+                    skyboxDepthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+                    desc.DepthStencilState = skyboxDepthDesc;
+
                     return desc;
                 }()
             }

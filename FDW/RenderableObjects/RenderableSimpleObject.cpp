@@ -14,6 +14,14 @@ void RenderableSimpleObject::BeforeRender(const BeforeRenderInputData& data) {
 	//TODO
 }
 
-void RenderableSimpleObject::Render(ID3D12GraphicsCommandList* list) {
+void RenderableSimpleObject::DeferredRender(ID3D12GraphicsCommandList* list) {
 	//TODO
+}
+
+void RenderableSimpleObject::ForwardRender(ID3D12GraphicsCommandList* list) {
+	//TODO
+}
+
+RenderPass RenderableSimpleObject::GetRenderPass() const {
+	return RenderPass::Deferred;
 }

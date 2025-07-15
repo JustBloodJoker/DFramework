@@ -3,6 +3,13 @@
 #include <pch.h>
 #include <D3DFramework/Objects/Object.h>
 
+enum RenderPass
+{
+    Deferred = 0x1,
+    Forward = 0x2,
+    DeferredAndForward = 0x3,
+};
+
 struct BeforeRenderInputData {
     float Time;
     float DT;
@@ -20,7 +27,9 @@ public:
 
     virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) = 0;
     virtual void BeforeRender(const BeforeRenderInputData& data) = 0;
-    virtual void Render(ID3D12GraphicsCommandList* list) = 0;
+    virtual void DeferredRender(ID3D12GraphicsCommandList* list) = 0;
+    virtual void ForwardRender(ID3D12GraphicsCommandList* list) = 0;
+    virtual RenderPass GetRenderPass() const = 0;
 
     void SetPosition(const dx::XMFLOAT3& pos);
     void SetRotation(const dx::XMFLOAT3& rot);
@@ -35,6 +44,8 @@ public:
     dx::XMFLOAT3 GetScale() const;
 
     const std::string& GetName() const;
+
+    bool IsCanRenderInPass(RenderPass pass);
 
 public:
     static UINT GetIndexSize(FD3DW::Object* obj, const size_t index);

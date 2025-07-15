@@ -59,8 +59,7 @@ namespace FD3DW
 		ID3D12Resource* GetResource() const;
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
-		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, std::vector<const void*> pDatas, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,bool bCopyAllMips=false);
 
 		void GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
@@ -83,7 +82,7 @@ namespace FD3DW
 			const D3D12_TEXTURE_LAYOUT layout = D3D12_TEXTURE_LAYOUT_UNKNOWN, 
 			const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE, 
 			const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
-			const UINT16 mipLevels = 1);
+			const UINT16 mipLevels = 1, bool WillGeneratedMips = true);
 		
 		D3D12_RESOURCE_STATES m_xCurrState;
 
@@ -93,7 +92,8 @@ namespace FD3DW
 		std::string m_sPath;
 	};
 
+	namespace TextureTypeSpace = FD3DW::TEXTURETYPE;
+	using TextureType = FD3DW::TEXTURETYPE::TEXTURE_TYPE;
+
 }
 
-namespace TextureTypeSpace = FD3DW::TEXTURETYPE;
-using TextureType = FD3DW::TEXTURETYPE::TEXTURE_TYPE;

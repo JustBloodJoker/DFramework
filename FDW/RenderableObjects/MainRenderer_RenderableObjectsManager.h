@@ -8,6 +8,7 @@
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <RenderableObjects/RenderableMesh.h>
 #include <RenderableObjects/RenderableSimpleObject.h>
+#include <RenderableObjects/RenderableSkyboxObject.h>
 
 template<typename TObject>
 struct RenderableType;
@@ -38,12 +39,25 @@ public:
         m_vObjects.push_back(std::move(renderable));
     }
 
+    void CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+
     void RemoveObject(BaseRenderableObject* obj);
 
     std::vector<BaseRenderableObject*> GetRenderableObjects() const;
 
-    void RenderObjects(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+    void BeforeRender(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+    void DeferredRender(ID3D12GraphicsCommandList* list);
+    void ForwardRender(ID3D12GraphicsCommandList* list);
+    void AfterRender();
+
+    RenderableSkyboxObject* FindSkyboxObject();
 
 private:
+    void DoDeleteObject(BaseRenderableObject* obj);
+
+private:
+
+    std::vector < BaseRenderableObject* > m_vSheduleForDelete;
+
     std::vector<std::unique_ptr<BaseRenderableObject>> m_vObjects;
 };

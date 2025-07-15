@@ -16,7 +16,9 @@ public:
 
 	virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
-	virtual void Render(ID3D12GraphicsCommandList* list) override;
+	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
+	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
+	virtual RenderPass GetRenderPass() const override;
 
 private:
 	std::unique_ptr<FD3DW::SimpleObject> m_pObject = nullptr;

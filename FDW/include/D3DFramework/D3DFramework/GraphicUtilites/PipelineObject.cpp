@@ -211,6 +211,8 @@ namespace FD3DW {
 #else
 			L"-O3",
 #endif
+			L"-Ges",
+			L"-fspv-reflect",
 		};
 
 		for (const auto& dir : m_vIncludeDirs) {
@@ -222,12 +224,11 @@ namespace FD3DW {
 		m_pCompiler->Compile(&buffer, args.data(), (UINT)args.size(), m_pIncludeHandler.Get(), IID_PPV_ARGS(result.ReleaseAndGetAddressOf()));
 
 		HRESULT_ASSERT(result->GetStatus(&hr), "Failed to retrieve shader compile status");
-		if (FAILED(hr)) {
-			wrl::ComPtr<IDxcBlobEncoding> errors;
-			result->GetErrorBuffer(&errors);
-			if (errors && errors->GetBufferSize()) {
-				CONSOLE_ERROR_MESSAGE((char*)errors->GetBufferPointer());
-			}
+
+		wrl::ComPtr<IDxcBlobEncoding> errors;
+		result->GetErrorBuffer(&errors);
+		if (errors && errors->GetBufferSize()) {
+			CONSOLE_ERROR_MESSAGE((char*)errors->GetBufferPointer());
 			return nullptr;
 		}
 
@@ -253,7 +254,9 @@ namespace FD3DW {
 			L"-T", desc.target.c_str(),
 			L"-E", desc.entry.c_str(),
 			L"-HV", L"2021",
-			L"-Zi"
+			L"-Zi",
+			L"-Ges",
+			L"-fspv-reflect",
 		};
 
 		wrl::ComPtr<IDxcOperationResult> result;
@@ -282,49 +285,49 @@ namespace FD3DW {
 		return rs;
 	}
 
-	std::vector<D3D12_INPUT_ELEMENT_DESC> PipelineObject::ReflectInputLayout(IDxcBlob* blob)
-	{
-		wrl::ComPtr<IDxcContainerReflection> container;
-		UINT32 idx;
-		wrl::ComPtr<ID3D12ShaderReflection> reflection;
-		DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(container.ReleaseAndGetAddressOf()));
+		std::vector<D3D12_INPUT_ELEMENT_DESC> PipelineObject::ReflectInputLayout(IDxcBlob* blob)
+		{
+			wrl::ComPtr<IDxcContainerReflection> container;
+			UINT32 idx;
+			wrl::ComPtr<ID3D12ShaderReflection> reflection;
+			DxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(container.ReleaseAndGetAddressOf()));
 
-		HRESULT_ASSERT(container->Load(blob), "Failed to load container reflection");
-		HRESULT_ASSERT(container->FindFirstPartKind(DXC_PART_DXIL, &idx), "DXIL part not found");
-		HRESULT_ASSERT(container->GetPartReflection(idx, IID_PPV_ARGS(reflection.ReleaseAndGetAddressOf())), "Failed to get shader reflection");
+			HRESULT_ASSERT(container->Load(blob), "Failed to load container reflection");
+			HRESULT_ASSERT(container->FindFirstPartKind(DXC_PART_DXIL, &idx), "DXIL part not found");
+			HRESULT_ASSERT(container->GetPartReflection(idx, IID_PPV_ARGS(reflection.ReleaseAndGetAddressOf())), "Failed to get shader reflection");
 
-		D3D12_SHADER_DESC shaderDesc;
-		reflection->GetDesc(&shaderDesc);
+			D3D12_SHADER_DESC shaderDesc;
+			reflection->GetDesc(&shaderDesc);
 
 
-		std::vector<D3D12_INPUT_ELEMENT_DESC> layout;
-		for (UINT i = 0; i < shaderDesc.InputParameters; ++i) {
-			D3D12_SIGNATURE_PARAMETER_DESC param;
-			reflection->GetInputParameterDesc(i, &param);
+			std::vector<D3D12_INPUT_ELEMENT_DESC> layout;
+			for (UINT i = 0; i < shaderDesc.InputParameters; ++i) {
+				D3D12_SIGNATURE_PARAMETER_DESC param;
+				reflection->GetInputParameterDesc(i, &param);
 
-			DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
-			switch (param.Mask) {
-			case 1: format = DXGI_FORMAT_R32_FLOAT; break;
-			case 3: format = DXGI_FORMAT_R32G32_FLOAT; break;
-			case 7: format = DXGI_FORMAT_R32G32B32_FLOAT; break;
-			case 15: format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+				DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
+				switch (param.Mask) {
+				case 1: format = DXGI_FORMAT_R32_FLOAT; break;
+				case 3: format = DXGI_FORMAT_R32G32_FLOAT; break;
+				case 7: format = DXGI_FORMAT_R32G32B32_FLOAT; break;
+				case 15: format = DXGI_FORMAT_R32G32B32A32_FLOAT; break;
+				}
+
+				if (std::string(param.SemanticName) == std::string("SV_INSTANCEID")) continue;
+
+				layout.push_back({
+					_strdup(param.SemanticName),
+					param.SemanticIndex,
+					format,
+					0,
+					D3D12_APPEND_ALIGNED_ELEMENT,
+					D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+					0
+					});
 			}
 
-			if (std::string(param.SemanticName) == std::string("SV_INSTANCEID")) continue;
-
-			layout.push_back({
-				_strdup(param.SemanticName),
-				param.SemanticIndex,
-				format,
-				0,
-				D3D12_APPEND_ALIGNED_ELEMENT,
-				D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-				0
-				});
+			return layout;
 		}
-
-		return layout;
-	}
 
 	bool PipelineObject::HasGraphicsStages(const std::unordered_map<CompileFileType, CompileDesc>& shaders) const {
 		for (CompileFileType stage : { CompileFileType::VS, CompileFileType::PS, CompileFileType::GS, CompileFileType::HS, CompileFileType::DS }) {

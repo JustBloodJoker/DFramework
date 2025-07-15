@@ -87,6 +87,9 @@
     <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp">
       <Filter>RenderableObjects</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -129,6 +132,9 @@
       <Filter>RenderableObjects</Filter>
     </ClInclude>
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h">
       <Filter>RenderableObjects</Filter>
     </ClInclude>
   </ItemGroup>

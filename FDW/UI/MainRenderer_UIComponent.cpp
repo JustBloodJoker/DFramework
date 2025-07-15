@@ -7,9 +7,17 @@
 #include <MainRenderer/MainRenderer.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
+#include <RenderableObjects/RenderableMesh.h>
+#include <RenderableObjects/RenderableMeshElement.h>
+#include <RenderableObjects/RenderableSimpleObject.h>
+#include <RenderableObjects/RenderableSkyboxObject.h>
 
 /////////////////////////////////////////
 ///         ---ENGINE_UI---
+
+
+static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf" };
+static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
 
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
@@ -23,7 +31,14 @@ void MainRenderer_UIComponent::MainWindow() {
     if (ImGui::Button("Load Scene")) {
         m_bShowSceneBrowser = true;
     }
-
+    if (m_iSelectedObjectIndex >= 0 && m_iSelectedObjectIndex < (int)m_vCachedObjects.size()) {
+        ImGui::SameLine();
+        if (ImGui::Button("Delete Selected")) {
+            auto* selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
+            m_pOwner->RemoveObject(selectedObj);
+            m_iSelectedObjectIndex = -1;
+        }
+    }
     ElementParamSetter();
     
     ImGui::End();
@@ -52,33 +67,48 @@ void MainRenderer_UIComponent::SceneBrowser() {
     for (const auto& entry : entries) {
         if (!entry.exists()) continue;
 
-        std::string label = WStringToUTF8(entry.path().filename().wstring());
+        const auto& path = entry.path();
+        std::wstring ext = path.extension().wstring();
+        std::string label = WStringToUTF8(path.filename().wstring());
 
         bool selected = false;
+
         if (entry.is_directory()) {
             selected = ImGui::Selectable(("Folder " + label).c_str());
             if (selected) {
-                currentPath /= entry.path().filename();
+                currentPath /= path.filename();
                 bPathChanged = true;
             }
         }
-        else if (entry.is_regular_file() && entry.path().extension() == L".gltf") {
-            selected = ImGui::Selectable(("File " + label).c_str());
+        else if (entry.is_regular_file()) {
+            bool isScene = std::find(s_vSupportedSceneExts.begin(), s_vSupportedSceneExts.end(), ext) != s_vSupportedSceneExts.end();
+            bool isSkybox = std::find(s_vSupportedSkyboxExts.begin(), s_vSupportedSkyboxExts.end(), ext) != s_vSupportedSkyboxExts.end();
+
+            std::string icon = isScene ? "Scene " : isSkybox ? "Skybox " : "File ";
+            selected = ImGui::Selectable((icon + label).c_str());
+
             if (selected) {
-                m_pOwner->AddScene(entry.path().string());
-                m_bShowSceneBrowser = false;
+                std::string utf8Path = path.string();
+                if (isScene) {
+                    m_pOwner->AddScene(utf8Path);
+                    m_bShowSceneBrowser = false;
+                }
+                else if (isSkybox) {
+                    m_pOwner->AddSkybox(utf8Path);
+                    m_bShowSceneBrowser = false;
+                }
             }
         }
 
         if (ImGui::IsItemHovered()) {
             ImGui::BeginTooltip();
             ImGui::Text("Name: %s", label.c_str());
-            ImGui::Text("Path: %s", WStringToUTF8(entry.path().wstring()).c_str());
+            ImGui::Text("Path: %s", WStringToUTF8(path.wstring()).c_str());
 
             if (entry.is_regular_file()) {
                 std::error_code ec;
-                auto fsize = std::filesystem::file_size(entry.path(), ec);
-                auto ftime = std::filesystem::last_write_time(entry.path(), ec);
+                auto fsize = std::filesystem::file_size(path, ec);
+                auto ftime = std::filesystem::last_write_time(path, ec);
                 if (!ec) {
                     std::time_t cftime = std::chrono::system_clock::to_time_t(
                         std::chrono::clock_cast<std::chrono::system_clock>(ftime));
@@ -105,108 +135,141 @@ void MainRenderer_UIComponent::SceneBrowser() {
 
 void MainRenderer_UIComponent::ElementParamSetter() {
     m_vCachedObjects = m_pOwner->GetRenderableObjects();
-    if (!m_vCachedObjects.empty()) {
-        ImGui::Separator();
-        ImGui::Text("Scene Objects");
+    if (m_vCachedObjects.empty()) return;
 
-        std::vector<const char*> names;
-        names.reserve(m_vCachedObjects.size());
-        for (const auto* obj : m_vCachedObjects) {
-            names.push_back(obj->GetName().c_str());
+    ImGui::Separator();
+    ImGui::Text("Scene Objects");
+
+    std::vector<const char*> names;
+    names.reserve(m_vCachedObjects.size());
+    for (const auto* obj : m_vCachedObjects) {
+        names.push_back(obj->GetName().c_str());
+    }
+
+    if (m_iSelectedObjectIndex >= (int)m_vCachedObjects.size())
+        m_iSelectedObjectIndex = -1;
+
+    ImGui::Combo("Select Object", &m_iSelectedObjectIndex, names.data(), (int)names.size());
+
+    if (m_iSelectedObjectIndex < 0) return;
+
+    BaseRenderableObject* selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
+
+    if (auto* mesh = dynamic_cast<RenderableMesh*>(selectedObj)) {
+        DrawMeshUI(mesh);
+    }
+    else if (auto* simple = dynamic_cast<RenderableSimpleObject*>(selectedObj)) {
+        DrawSimpleRenderableUI(simple);
+    }
+    else if (auto* skybox = dynamic_cast<RenderableSkyboxObject*>(selectedObj)) {
+        DrawSkyboxUI(skybox);
+    }
+}
+
+void MainRenderer_UIComponent::DrawMeshUI(RenderableMesh* mesh) {
+    ImGui::Separator();
+    ImGui::Text("Transform");
+
+    dx::XMFLOAT3 pos = mesh->GetPosition();
+    dx::XMFLOAT3 rot = mesh->GetRotation();
+    dx::XMFLOAT3 scale = mesh->GetScale();
+
+    if (ImGui::DragFloat3("Position", (float*)&pos, 0.1f)) {
+        mesh->SetPosition(pos);
+    }
+
+    if (ImGui::DragFloat3("Rotation", (float*)&rot, 1.0f)) {
+        mesh->SetRotation(rot);
+    }
+
+    if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
+        mesh->SetScale(scale);
+    }
+
+    const auto& anims = mesh->GetAnimations();
+    if (!anims.empty()) {
+        auto& animState = m_mAnimationStates[mesh];
+
+        ImGui::Separator();
+        ImGui::Text("Animations");
+
+        std::vector<const char*> animNames;
+        animNames.reserve(anims.size());
+        for (const auto& anim : anims)
+            animNames.push_back(anim.c_str());
+
+        if (animState.SelectedAnimIndex >= (int)anims.size())
+            animState.SelectedAnimIndex = 0;
+
+        ImGui::Combo("Animation", &animState.SelectedAnimIndex, animNames.data(), (int)animNames.size());
+
+        if (ImGui::Button("Play")) {
+            mesh->PlayAnimation(anims[animState.SelectedAnimIndex]);
         }
 
-        if (m_iSelectedObjectIndex >= (int)m_vCachedObjects.size())
-            m_iSelectedObjectIndex = -1;
+        ImGui::SameLine();
+        if (ImGui::Button("Stop")) {
+            mesh->StopAnimation();
+        }
 
-        ImGui::Combo("Select Object", &m_iSelectedObjectIndex, names.data(), (int)names.size());
+        if (ImGui::Checkbox("Freeze", &animState.IsFreeze)) {
+            mesh->FreezeAnimation(animState.IsFreeze);
+        }
+    }
 
-        if (m_iSelectedObjectIndex >= 0) {
-            auto selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
+    if (ImGui::CollapsingHeader("Mesh Elements", ImGuiTreeNodeFlags_DefaultOpen)) {
+        auto elements = mesh->GetRenderableElements();
+        for (size_t i = 0; i < elements.size(); ++i) {
+            auto* element = elements[i];
+            std::string label = "Element " + std::to_string(i);
 
-            if (auto* mesh = dynamic_cast<RenderableMesh*>(selectedObj)) {
-                const auto& anims = mesh->GetAnimations();
-                if (!anims.empty()) {
-                    auto& animState = m_mAnimationStates[selectedObj];
+            if (ImGui::TreeNode(label.c_str())) {
+                dx::XMFLOAT3 ePos = element->GetPosition();
+                dx::XMFLOAT3 eRot = element->GetRotation();
+                dx::XMFLOAT3 eScale = element->GetScale();
 
-                    ImGui::Separator();
-                    ImGui::Text("Animations");
-
-                    std::vector<const char*> animNames;
-                    animNames.reserve(anims.size());
-                    for (const auto& anim : anims)
-                        animNames.push_back(anim.c_str());
-
-                    if (animState.SelectedAnimIndex >= (int)anims.size())
-                        animState.SelectedAnimIndex = 0;
-
-                    ImGui::Combo("Animation", &animState.SelectedAnimIndex, animNames.data(), (int)animNames.size());
-
-                    if (ImGui::Button("Play")) {
-                        mesh->PlayAnimation(anims[animState.SelectedAnimIndex]);
-                    }
-
-                    ImGui::SameLine();
-                    if (ImGui::Button("Stop")) {
-                        mesh->StopAnimation();
-                    }
-
-                    if (ImGui::Checkbox("Freeze", &animState.IsFreeze)) {
-                        mesh->FreezeAnimation(animState.IsFreeze);
-                    }
-
-                    ImGui::Separator();
+                if (ImGui::DragFloat3("Pos", (float*)&ePos, 0.1f)) {
+                    element->SetPosition(ePos);
                 }
-            }
-
-            dx::XMFLOAT3 pos = selectedObj->GetPosition();
-            dx::XMFLOAT3 rot = selectedObj->GetRotation();
-            dx::XMFLOAT3 scale = selectedObj->GetScale();
-
-            ImGui::Separator();
-            ImGui::Text("Transform");
-
-            if (ImGui::DragFloat3("Position", (float*)&pos, 0.1f)) {
-                selectedObj->SetPosition(pos);
-            }
-
-            if (ImGui::DragFloat3("Rotation", (float*)&rot, 1.0f)) {
-                selectedObj->SetRotation(rot);
-            }
-
-            if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
-                selectedObj->SetScale(scale);
-            }
-
-            if (auto* mesh = dynamic_cast<RenderableMesh*>(selectedObj)) {
-                if (ImGui::CollapsingHeader("Mesh Elements", ImGuiTreeNodeFlags_DefaultOpen)) {
-                    auto elements = mesh->GetRenderableElements();
-                    for (size_t i = 0; i < elements.size(); ++i) {
-                        auto* element = elements[i];
-                        std::string label = "Element " + std::to_string(i);
-
-                        if (ImGui::TreeNode(label.c_str())) {
-                            dx::XMFLOAT3 ePos = element->GetPosition();
-                            dx::XMFLOAT3 eRot = element->GetRotation();
-                            dx::XMFLOAT3 eScale = element->GetScale();
-
-                            if (ImGui::DragFloat3("Pos", (float*)&ePos, 0.1f)) {
-                                element->SetPosition(ePos);
-                            }
-                            if (ImGui::DragFloat3("Rot", (float*)&eRot, 1.0f)) {
-                                element->SetRotation(eRot);
-                            }
-                            if (ImGui::DragFloat3("Scale", (float*)&eScale, 0.05f)) {
-                                element->SetScale(eScale);
-                            }
-
-                            ImGui::TreePop();
-                        }
-                    }
+                if (ImGui::DragFloat3("Rot", (float*)&eRot, 1.0f)) {
+                    element->SetRotation(eRot);
                 }
+                if (ImGui::DragFloat3("Scale", (float*)&eScale, 0.05f)) {
+                    element->SetScale(eScale);
+                }
+
+                ImGui::TreePop();
             }
         }
     }
 }
+
+void MainRenderer_UIComponent::DrawSimpleRenderableUI(RenderableSimpleObject* obj) {
+    ImGui::Separator();
+    ImGui::Text("Transform");
+
+    dx::XMFLOAT3 pos = obj->GetPosition();
+    dx::XMFLOAT3 rot = obj->GetRotation();
+    dx::XMFLOAT3 scale = obj->GetScale();
+
+    if (ImGui::DragFloat3("Position", (float*)&pos, 0.1f)) {
+        obj->SetPosition(pos);
+    }
+
+    if (ImGui::DragFloat3("Rotation", (float*)&rot, 1.0f)) {
+        obj->SetRotation(rot);
+    }
+
+    if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
+        obj->SetScale(scale);
+    }
+}
+
+void MainRenderer_UIComponent::DrawSkyboxUI(RenderableSkyboxObject* skybox) {
+    ImGui::Separator();
+    ImGui::Text("Skybox: no editable parameters");
+}
+
 
 /////////////////////////////////////////
 

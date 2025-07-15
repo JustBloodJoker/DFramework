@@ -90,5 +90,5 @@ void MainRenderer_CameraComponent::UpdateViewMatrix() {
 
 void MainRenderer_CameraComponent::UpdateProjectionMatrix() {
 	const auto& WndSet = m_pOwner->WNDSettings();
-	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 1.0f, 10000.0f);
+	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 0.1f, 10000.0f);
 }

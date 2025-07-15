@@ -15,7 +15,9 @@ public:
 
 	virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
-	virtual void Render(ID3D12GraphicsCommandList* list) override;
+	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
+	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
+	virtual RenderPass GetRenderPass() const override;
 
 	std::vector<std::string> GetAnimations();
 	void PlayAnimation(std::string animName);
@@ -23,6 +25,9 @@ public:
 	void FreezeAnimation(bool isFreezed);
 
 	std::vector<RenderableMeshElement*> GetRenderableElements();
+
+private:
+	void RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list);
 
 private:
 	void AnimationTickUpdate(const BeforeRenderInputData& data);

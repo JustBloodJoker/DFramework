@@ -45,9 +45,6 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\InputLayout.h">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
@@ -96,8 +93,8 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\PipelineObject.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\Utilites\DDSParser.h">
-      <Filter>D3DFramework\Utilites</Filter>
+    <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -158,8 +155,8 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\PipelineObject.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\Utilites\DDSParser.cpp">
-      <Filter>D3DFramework\Utilites</Filter>
+    <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -18,7 +18,6 @@
 #include "GraphicUtilites/ResourcePacker.h"
 #include "GraphicUtilites/RenderTarget.h"
 #include "GraphicUtilites/DepthStencilView.h"
-#include "GraphicUtilites/InputLayout.h"
 #include "GraphicUtilites/PipelineObject.h"
 
 #include "Utilites/AudioManager.h"

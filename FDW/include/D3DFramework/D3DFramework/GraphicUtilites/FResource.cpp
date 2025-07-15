@@ -4,8 +4,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "PipelineObject.h"
-#include "CommandQueue.h"
-#include "../Utilites/DDSParser.h"
+#include "TextureLoaders.h"
 
 namespace FD3DW
 {
@@ -72,55 +71,11 @@ namespace FD3DW
             std::string extension = pt.extension().string();
             if (extension == ".dds")
             {
-                DDSParser parser(path);
+                TextureDataOutput resultData;
+                HRESULT_ASSERT(DDSTextureLoaderDX12::Load(path, pDevice, pCommandList, resultData), "Cant create dds resource");
 
-                auto format = parser.GetDDSFormat();
-                auto width = parser.GetWidth();
-                auto height = parser.GetHeight();
-                auto mipCount = parser.GetMipLevelsCount();
-
-                std::vector<DDSImage> images;
-
-                bool isCubemap = parser.IsCubemap();
-                if (isCubemap) {
-                    mipCount = 1;
-                    images = parser.GetDDSCubemapImages(0);
-                }
-                else {
-                    images = parser.GetDDSImages();
-                }
-
-                auto imagesCount = images.size() / mipCount;
-                CreateTextureBuffer(pDevice, (UINT16)imagesCount,
-                    format,
-                    width,
-                    height,
-                    DXGI_SAMPLE_DESC({ 1, 0 }),
-                    D3D12_RESOURCE_DIMENSION_TEXTURE2D,
-                    D3D12_RESOURCE_FLAG_NONE,
-                    D3D12_TEXTURE_LAYOUT_UNKNOWN,
-                    D3D12_HEAP_FLAG_NONE,
-                    &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
-                    mipCount);
-
-                
-                std::vector<std::vector<uint8_t>> allDecoded;
-                std::vector<const void*> pDatas;
-                for (int i = 0; i < imagesCount; ++i) {
-                    for (int mip = 0; mip < mipCount; ++mip) {
-                        auto img = images[mip + i*mipCount];
-
-                        std::vector<uint8_t> out;
-                        parser.DecodeDDS(img, out);
-                        pDatas.push_back( out.data() );
-                        allDecoded.push_back( std::move(out) );
-                    }
-                }
-
-                // Although Nsight shows that only one slice of the DDS texture is uploaded,
-                // inspecting the memory reveals that data exists for all 6 slices.
-                // Most likely a visualization or interpretation issue in Nsight, I hope.
-                UploadData(pDevice, pCommandList, pDatas);
+                m_pResource = resultData.TextureResource;
+                m_pUploadBuffer = std::move(resultData.ResultUploadBuffer);
             }
             else if (extension == ".hdr")
             {
@@ -210,12 +165,11 @@ namespace FD3DW
 
     bool FResource::IsSupportMipMapping(D3D12_RESOURCE_DESC desc)
     {
-        //currently i know only this issue
         return desc.Format == DXGI_FORMAT_R32G32B32A32_FLOAT;
     }
 
 
-    void FResource::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)
+    void FResource::CreateTextureBuffer(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels, bool willGenerateMips)
     {
         D3D12_RESOURCE_DESC txtDesc = {};
         
@@ -230,10 +184,14 @@ namespace FD3DW
         txtDesc.Flags = resourceFlags;
         txtDesc.Layout = layout;
 
-        txtDesc.MipLevels = IsSupportMipMapping(txtDesc) ? txtDesc.MipLevels : 1;
-        if (txtDesc.MipLevels > 1) {
-            txtDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;//for generating mip levels
+        if (willGenerateMips) {
+            txtDesc.MipLevels = IsSupportMipMapping(txtDesc) ? txtDesc.MipLevels : 1;
+            if (txtDesc.MipLevels > 1) {
+                txtDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;//for generating mip levels
+            }
+
         }
+
         HRESULT_ASSERT(pDevice->CreateCommittedResource(
             heapProperties,
             heapFlags | D3D12_HEAP_FLAG_SHARED, //for post processing
@@ -248,42 +206,51 @@ namespace FD3DW
     }
 
 
-    void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, std::vector<const void*> pDatas, D3D12_RESOURCE_STATES state)
+    void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state,bool bCopyAllMips)
     {
         auto uresource = m_pResource.Get();
         auto desc = uresource->GetDesc();
 
-
-        auto width = desc.Width;
-        auto height = desc.Height;
         auto arrSize = desc.DepthOrArraySize;
+        auto mipLevels = bCopyAllMips ? desc.MipLevels : 1;
 
-        SAFE_ASSERT(pDatas.size() == desc.MipLevels * desc.DepthOrArraySize, "Wrong number of subresources passed!");
+        size_t expectedSubresources = static_cast<size_t>(mipLevels) * arrSize;
 
-        auto bytesPerPixel = GetFormatSizeInBytes(desc.Format);
+        UINT64 totalBytes = GetRequiredIntermediateSize(uresource, 0, expectedSubresources);
 
-        auto uploadBufferSize = GetRequiredIntermediateSize(uresource, 0, pDatas.size());
+        std::vector<D3D12_SUBRESOURCE_DATA> subResData;
+        subResData.reserve(expectedSubresources);
+        subResData.resize(expectedSubresources);
 
-        auto rawRowPitch = width * bytesPerPixel;
+        auto ptrData = reinterpret_cast<const uint8_t*>(pData);
+        for (UINT arrayIdx = 0; arrayIdx < arrSize; ++arrayIdx)
+        {
+            UINT w = desc.Width;
+            UINT h = desc.Height;
 
-        auto rowPitch = (rawRowPitch + D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1) & ~(D3D12_TEXTURE_DATA_PITCH_ALIGNMENT - 1);
+            for (UINT mipIdx = 0; mipIdx < mipLevels; ++mipIdx)
+            {
+                UINT subresourceIndex = mipIdx + arrayIdx * mipLevels;
 
-        auto slicePitch = rowPitch * height;
+                D3D12_SUBRESOURCE_DATA textureData = {};
+                textureData.pData = ptrData;
+                textureData.RowPitch = w * GetFormatSizeInBytes(desc.Format);
+                textureData.SlicePitch = textureData.RowPitch * h;
 
-        std::vector<D3D12_SUBRESOURCE_DATA> subResData;    
-        for (const auto& data : pDatas) {
-            D3D12_SUBRESOURCE_DATA textureData;
-            textureData.pData = data;
-            textureData.RowPitch = rowPitch;
-            textureData.SlicePitch = slicePitch;
-            subResData.push_back(textureData);
+                subResData[subresourceIndex] = textureData;
+
+                ptrData += textureData.SlicePitch;
+               
+                w = std::max(1u, w >> 1);
+                h = std::max(1u, h >> 1);
+            }
         }
 
         if (!m_pUploadBuffer)
         {
-            m_pUploadBuffer.reset(new UploadBuffer<char>(pDevice, static_cast<UINT>(uploadBufferSize), false));
+            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(totalBytes), false);
         }
-            
+
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
 
         UpdateSubresources(pCommandList,
@@ -293,12 +260,6 @@ namespace FD3DW
             subResData.data());
 
         ResourceBarrierChange(pCommandList, 1, state);
-    }
-
-
-    void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state)
-    {
-        UploadData(pDevice, pCommandList, std::vector<const void*>{ pData }, state);
     }
 
     void FResource::GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)

@@ -48,6 +48,10 @@ dx::XMFLOAT3 BaseRenderableObject::GetScale()    const { return m_xScaling; }
 
 const std::string& BaseRenderableObject::GetName() const { return m_sName; }
 
+bool BaseRenderableObject::IsCanRenderInPass(RenderPass pass) {
+    return (GetRenderPass() & pass) == pass;
+}
+
 UINT BaseRenderableObject::GetIndexSize(FD3DW::Object* obj, const size_t index)
 {
     return (UINT)obj->GetObjectParameters(index).IndicesCount;

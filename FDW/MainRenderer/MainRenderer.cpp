@@ -10,9 +10,8 @@ void MainRenderer::UserInit()
 	auto device = GetDevice();
 
 	InitMainRendererParts(device);
-
+	
 	SetVSync(true);
-
 
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
@@ -48,39 +47,37 @@ void MainRenderer::UserLoop()
 	m_pCommandList->ResetList();
 
 
+	m_pRenderableObjectsManager->BeforeRender(GetDevice(), m_pPCML);
+
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
-	//			SCENE RTV DRAW
+	//	DEFERRED FIRST PASS
 	m_pRTV->StartDraw(m_pPCML);
-
-	if (m_pRenderableObjectsManager->GetRenderableObjects().size()) {
-		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
-
-		m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-
-		m_pRenderableObjectsManager->RenderObjects(GetDevice(), m_pPCML);
-	}
-
 	
+	m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+	m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
+
+	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+	m_pRenderableObjectsManager->DeferredRender(m_pPCML);
+
 	m_pRTV->EndDraw(m_pPCML);
 
 	///
 	///////////////////////////
 
 	//////////////////////////
-	//			MAIN RTV
+	// DEFERRED SECOND PASS
 
 	BindMainViewPort(m_pPCML);
 	BindMainRect(m_pPCML);
 	BeginDraw(m_pCommandList->GetPtrCommandList());
 
 	m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
+	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 	
 	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(m_pPCML);
 
@@ -94,12 +91,27 @@ void MainRenderer::UserLoop()
 
 	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
+	///
+	///////////////////////////
+	
+
+	//////////////////////////
+	//			FORWARD PASS
+
+	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+	m_pRenderableObjectsManager->ForwardRender(m_pPCML);
+
 	m_pUIComponent->RenderImGui();
+	
+	///
+	///////////////////////////
 
 	EndDraw(m_pCommandList->GetPtrCommandList());
 
 	ExecuteMainQueue();
-	FD3DW::FResource::ReleaseUploadBuffers();
+	
+	m_pRenderableObjectsManager->AfterRender();
 }
 
 void MainRenderer::UserClose()
@@ -123,6 +135,10 @@ std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 
 void MainRenderer::AddScene(std::string path) {
 	m_pRenderableObjectsManager->CreateObject(CreateScene(path, true, m_pPCML), GetDevice(), m_pPCML);
+}
+
+void MainRenderer::AddSkybox(std::string path) {
+	m_pRenderableObjectsManager->CreateObject(path, GetDevice(), m_pPCML);
 }
 
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {

@@ -38,6 +38,7 @@
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
   </ItemGroup>
@@ -54,6 +55,7 @@
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
+    <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
   </ItemGroup>
@@ -93,7 +95,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -180,6 +182,6 @@
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.1.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.targets" />
   </ImportGroup>
 </Project>

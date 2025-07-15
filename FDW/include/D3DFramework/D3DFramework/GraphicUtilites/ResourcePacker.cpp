@@ -41,15 +41,79 @@ namespace FD3DW
 	{
 		CONSOLE_MESSAGE(std::string("SRVPaker is adding resource"));
 
+		const auto& desc = resource->GetDesc();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = resource->GetDesc().Format;
+		srvDesc.Format = desc.Format;
 		srvDesc.ViewDimension = dimension;
-		srvDesc.Texture2D.MostDetailedMip = 0; 
-		srvDesc.Texture2D.MipLevels = resource->GetDesc().MipLevels;
-		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+		switch (dimension)
+		{
+		case D3D12_SRV_DIMENSION_TEXTURE1D:
+			srvDesc.Texture1D.MostDetailedMip = 0;
+			srvDesc.Texture1D.MipLevels = desc.MipLevels;
+			srvDesc.Texture1D.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE1DARRAY:
+			srvDesc.Texture1DArray.MostDetailedMip = 0;
+			srvDesc.Texture1DArray.MipLevels = desc.MipLevels;
+			srvDesc.Texture1DArray.FirstArraySlice = 0;
+			srvDesc.Texture1DArray.ArraySize = desc.DepthOrArraySize;
+			srvDesc.Texture1DArray.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE2D:
+			srvDesc.Texture2D.MostDetailedMip = 0;
+			srvDesc.Texture2D.MipLevels = desc.MipLevels;
+			srvDesc.Texture2D.PlaneSlice = 0;
+			srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE2DARRAY:
+			srvDesc.Texture2DArray.MostDetailedMip = 0;
+			srvDesc.Texture2DArray.MipLevels = desc.MipLevels;
+			srvDesc.Texture2DArray.FirstArraySlice = 0;
+			srvDesc.Texture2DArray.ArraySize = desc.DepthOrArraySize;
+			srvDesc.Texture2DArray.PlaneSlice = 0;
+			srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE2DMS:
+			// No fields need to be set for Texture2DMS
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY:
+			srvDesc.Texture2DMSArray.FirstArraySlice = 0;
+			srvDesc.Texture2DMSArray.ArraySize = desc.DepthOrArraySize;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURE3D:
+			srvDesc.Texture3D.MostDetailedMip = 0;
+			srvDesc.Texture3D.MipLevels = desc.MipLevels;
+			srvDesc.Texture3D.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURECUBE:
+			srvDesc.TextureCube.MostDetailedMip = 0;
+			srvDesc.TextureCube.MipLevels = desc.MipLevels;
+			srvDesc.TextureCube.ResourceMinLODClamp = 0.0f;
+			break;
+
+		case D3D12_SRV_DIMENSION_TEXTURECUBEARRAY:
+			srvDesc.TextureCubeArray.MostDetailedMip = 0;
+			srvDesc.TextureCubeArray.MipLevels = desc.MipLevels;
+			srvDesc.TextureCubeArray.First2DArrayFace = 0;
+			srvDesc.TextureCubeArray.NumCubes = desc.DepthOrArraySize / 6;
+			srvDesc.TextureCubeArray.ResourceMinLODClamp = 0.0f;
+			break;
+
+		default:
+			CONSOLE_ERROR_MESSAGE("SRVPacker: Unsupported SRV dimension");
+			break;
+		}
+
 		pDevice->CreateShaderResourceView(resource,
 			&srvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 	}

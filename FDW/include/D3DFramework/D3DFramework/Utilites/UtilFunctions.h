@@ -272,7 +272,20 @@ namespace FD3DW
 		WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(),static_cast<int>(wstr.size()),&result[0], size_needed, nullptr, nullptr);
 		return result;
 	}
+	inline std::wstring StringToWString(const std::string& str) {
+		if (str.empty()) {
+			return std::wstring();
+		}
 
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), nullptr, 0);
+		if (size_needed <= 0) {
+			return std::wstring();
+		}
+
+		std::wstring result(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), static_cast<int>(str.size()), &result[0], size_needed);
+		return result;
+	}
 
 }
 

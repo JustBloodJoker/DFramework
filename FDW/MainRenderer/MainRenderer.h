@@ -32,6 +32,7 @@ public:
 	//RENDERABLE OBJECTS MANAGER
 	std::vector<BaseRenderableObject*> GetRenderableObjects() const;
 	void AddScene(std::string path);
+	void AddSkybox(std::string path);
 	void RemoveObject(BaseRenderableObject* obj);
 	void RemoveAllObjects();
 
