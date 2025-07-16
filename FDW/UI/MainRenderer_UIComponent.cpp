@@ -239,6 +239,7 @@ void MainRenderer_UIComponent::DrawMeshUI(RenderableMesh* mesh) {
                 dx::XMFLOAT3 eRot = element->GetRotation();
                 dx::XMFLOAT3 eScale = element->GetScale();
 
+                ImGui::SeparatorText("Transformation");
                 if (ImGui::DragFloat3("Pos", (float*)&ePos, 0.1f)) {
                     element->SetPosition(ePos);
                 }
@@ -247,6 +248,47 @@ void MainRenderer_UIComponent::DrawMeshUI(RenderableMesh* mesh) {
                 }
                 if (ImGui::DragFloat3("Scale", (float*)&eScale, 0.05f)) {
                     element->SetScale(eScale);
+                }
+                ImGui::SeparatorText("Material");
+                
+                dx::XMFLOAT4 diffuse = element->GetDiffuse();
+                if (ImGui::ColorEdit4("Diffuse", (float*)&diffuse)) {
+                    element->SetDiffuse(diffuse);
+                }
+
+                dx::XMFLOAT4 specular = element->GetSpecular();
+                if (ImGui::ColorEdit4("Specular", (float*)&specular)) {
+                    element->SetSpecular(specular);
+                }
+
+                dx::XMFLOAT4 ambient = element->GetAmbient();
+                if (ImGui::ColorEdit3("Ambient", (float*)&ambient)) {
+                    element->SetAmbient(dx::XMFLOAT4(ambient.x, ambient.y, ambient.z, 1.0f));
+                }
+
+                dx::XMFLOAT4 emissive = element->GetEmissive();
+                if (ImGui::ColorEdit3("Emissive", (float*)&emissive)) {
+                    element->SetEmissive(dx::XMFLOAT4(emissive.x, emissive.y, emissive.z, 1.0f));
+                }
+
+                float roughness = element->GetRoughness();
+                if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
+                    element->SetRoughness(roughness);
+                }
+
+                float metalness = element->GetMetalness();
+                if (ImGui::SliderFloat("Metalness", &metalness, 0.0f, 1.0f)) {
+                    element->SetMetalness(metalness);
+                }
+
+                float specPower = element->GetSpecularPower();
+                if (ImGui::SliderFloat("SpecularPower", &specPower, 1.0f, 128.0f)) {
+                    element->SetSpecularPower(specPower);
+                }
+
+                float height = element->GetHeightScale();
+                if (ImGui::SliderFloat("Height Scale", &height, 0.0f, 0.1f)) {
+                    element->SetHeightScale(height);
                 }
 
                 ImGui::TreePop();

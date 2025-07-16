@@ -10,11 +10,23 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 
 	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
 	{
-		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
-		if (m_pScene->GetMaterialMananger()->GetMaterial(ind)->IsHaveTexture(FD3DW::TextureType::BASE))
-		{
-			m_vSRVPacks.back()->PushResource(m_pScene->GetMaterialMananger()->GetMaterial(ind)->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, FD3DW::TextureType::SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
+		MeshMaterialStructure cbData;
+		
+		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
+		cbData = mat->GetMaterialDesc();
+		for (int i = 0; i < FD3DW::TextureType::SIZE; ++i) {
+			if ( cbData.LoadedTexture[i] = mat->IsHaveTexture(FD3DW::TextureType(i) ) )
+			{
+				m_vSRVPacks.back()->AddResource(mat->GetResourceTexture(FD3DW::TextureType(i)), D3D12_SRV_DIMENSION_TEXTURE2D, i, device);
+			}
+			else {
+
+				m_vSRVPacks.back()->AddNullResource(i, device);
+			}
 		}
+
+		m_vMeshMaterialStructures.push_back(cbData);
 	}
 	
 	if (auto size = m_pScene->GetBonesCount() * sizeof(dx::XMMATRIX)) {
@@ -25,7 +37,10 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	{
 		RenderableMeshElementData data;
 		data.ObjectDescriptor = m_pScene->GetObjectParameters(ind);
-		data.SRVPack = m_vSRVPacks[GetMaterialIndex(m_pScene.get(), ind)].get();
+		
+		auto matIndex = GetMaterialIndex(m_pScene.get(), ind);
+		data.SRVPack = m_vSRVPacks[matIndex].get();
+		data.MaterialCBufferData = m_vMeshMaterialStructures[matIndex];
 
 		auto elem = std::make_unique<RenderableMeshElement>(data);
 		elem->Init(device, list);
@@ -67,6 +82,10 @@ void RenderableMesh::PlayAnimation(std::string animName) {
 	m_sCurrentAnimation = animName;
 
 	m_fAnimationTime = 0.f;
+
+	for (auto& elem : m_vRenderableElements) {
+		elem->SetAnimationPlaying(m_pStructureBufferBones!=nullptr && true);
+	}
 }
 
 void RenderableMesh::StopAnimation() {
@@ -74,6 +93,10 @@ void RenderableMesh::StopAnimation() {
 
 	m_sCurrentAnimation = "";
 	m_bNeedResetBonesBuffer = true;
+
+	for (auto& elem : m_vRenderableElements) {
+		elem->SetAnimationPlaying(false);
+	}
 }
 
 void RenderableMesh::FreezeAnimation(bool isFreezed) {
@@ -93,19 +116,17 @@ std::vector<RenderableMeshElement*> RenderableMesh::GetRenderableElements() {
 
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {
 	if (pass==RenderPass::Forward) return; //forward not impl
+	
+	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
 
 	if (m_pStructureBufferBones) {
-		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
-		list->SetGraphicsRootShaderResourceView(2, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
-	}
-	else {
-		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassSimpleMeshesDefaultConfig)->Bind(list);
+		list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
 	}
 
 	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
 	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());
 
-	for (auto& elem : m_vRenderableElements) {
+	for (const auto& elem : m_vRenderableElements) {
 		if (elem->IsCanRenderInPass(pass)) {
 			elem->IsCanRenderInPass(RenderPass::Deferred) ? elem->DeferredRender(list) : elem->ForwardRender(list);
 		}
@@ -122,6 +143,7 @@ void RenderableMesh::AnimationTickUpdate(const BeforeRenderInputData& data) {
 	}
 	else if(m_bNeedResetBonesBuffer) {
 		dataVec.resize( m_pScene->GetBonesCount() );
+		m_bNeedResetBonesBuffer = false;
 	}
 
 	if (!dataVec.empty()) {

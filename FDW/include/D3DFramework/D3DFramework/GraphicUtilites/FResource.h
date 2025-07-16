@@ -23,7 +23,9 @@ namespace FD3DW
 			SPECULAR,
 			OPACITY,
 			BUMP,
-			EMISSIVE
+			EMISSIVE,
+
+			SIZE
 		};
 	}
 

@@ -24,7 +24,10 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
     dsvFirstDefPassDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
 
     
-    static CD3DX12_DEPTH_STENCIL_DESC dsvForwardPassDesc(D3D12_DEFAULT);
+    static CD3DX12_DEPTH_STENCIL_DESC skyboxDepthDesc(D3D12_DEFAULT);
+    skyboxDepthDesc.DepthEnable = true;
+    skyboxDepthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+    skyboxDepthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
     static CD3DX12_DEPTH_STENCIL_DESC secondPassDSVDesc(D3D12_DEFAULT);
     secondPassDSVDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -39,21 +42,6 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
             PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig,
             {
                 L"DefferedFirstPassAnimatedMeshes",
-                [] {
-                    FD3DW::GraphicPipelineObjectDesc desc{};
-                    desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
-                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-                    desc.DepthStencilState = dsvFirstDefPassDesc;
-                    desc.RasterizerState = rasterizerDesc;
-                    return desc;
-                }()
-            }
-        },
-        {
-            PSOType::DefferedFirstPassSimpleMeshesDefaultConfig,
-            {
-                L"DefferedFirstPassSimpleMeshes",
                 [] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
@@ -90,13 +78,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                     desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.RasterizerState = skyboxRasterizerDesc;
-
-                    CD3DX12_DEPTH_STENCIL_DESC skyboxDepthDesc(D3D12_DEFAULT);
-                    skyboxDepthDesc.DepthEnable = true;
-                    skyboxDepthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-                    skyboxDepthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
                     desc.DepthStencilState = skyboxDepthDesc;
-
                     return desc;
                 }()
             }

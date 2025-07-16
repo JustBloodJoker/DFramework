@@ -34,6 +34,7 @@ private:
 
 private:
 	std::vector<std::unique_ptr<FD3DW::SRVPacker>> m_vSRVPacks;
+	std::vector<MeshMaterialStructure> m_vMeshMaterialStructures;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 	
 private:

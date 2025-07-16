@@ -53,6 +53,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RenderableObjects\BaseRenderableObject.h" />
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
+    <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />

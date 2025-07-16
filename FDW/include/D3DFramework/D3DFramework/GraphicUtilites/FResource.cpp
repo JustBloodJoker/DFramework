@@ -212,11 +212,11 @@ namespace FD3DW
         auto desc = uresource->GetDesc();
 
         auto arrSize = desc.DepthOrArraySize;
-        auto mipLevels = bCopyAllMips ? desc.MipLevels : 1;
+        UINT mipLevels = bCopyAllMips ? desc.MipLevels : 1u;
 
         size_t expectedSubresources = static_cast<size_t>(mipLevels) * arrSize;
 
-        UINT64 totalBytes = GetRequiredIntermediateSize(uresource, 0, expectedSubresources);
+        UINT64 totalBytes = GetRequiredIntermediateSize(uresource, 0, UINT(expectedSubresources));
 
         std::vector<D3D12_SUBRESOURCE_DATA> subResData;
         subResData.reserve(expectedSubresources);
@@ -225,8 +225,8 @@ namespace FD3DW
         auto ptrData = reinterpret_cast<const uint8_t*>(pData);
         for (UINT arrayIdx = 0; arrayIdx < arrSize; ++arrayIdx)
         {
-            UINT w = desc.Width;
-            UINT h = desc.Height;
+            UINT w = UINT(desc.Width);
+            UINT h = UINT(desc.Height);
 
             for (UINT mipIdx = 0; mipIdx < mipLevels; ++mipIdx)
             {

@@ -6,6 +6,16 @@
 //////////////////////////////////////////////
 //////		PSO MANAGER GLOBALS
 
+///////////////////
+//   MESHES
+#define CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG 0
+#define CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG 1
+#define TEXTURE_START_POSITION_IN_ROOT_SIG 2
+#define ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG 3
+
+
+
+
 struct PSODescriptor {
     std::wstring shaderFolderName;
     FD3DW::GraphicPipelineObjectDesc pipelineDesc;
@@ -13,7 +23,6 @@ struct PSODescriptor {
 
 enum class PSOType {
 	DefferedFirstPassAnimatedMeshesDefaultConfig,
-	DefferedFirstPassSimpleMeshesDefaultConfig,
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 };

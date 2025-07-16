@@ -11,10 +11,14 @@ namespace FD3DW
 		{
 			ZeroMemory(this, sizeof(MaterialFrameWork));
 		}
-		dx::XMFLOAT4 Diffuse;
+		dx::XMFLOAT4 Diffuse;   // .w = opacity
 		dx::XMFLOAT4 Ambient;
 		dx::XMFLOAT4 Emissive;
-		dx::XMFLOAT4 Specular;
+		dx::XMFLOAT4 Specular;  // .w = shininess
+		float Roughness;
+		float Metalness;
+		float SpecularPower;
+		float HeightScale;
 	};
 
 	class Material

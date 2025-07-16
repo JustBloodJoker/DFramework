@@ -143,5 +143,8 @@
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h">
       <Filter>RenderableObjects</Filter>
     </ClInclude>
+    <ClInclude Include="RenderableObjects\MeshMaterialStructure.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

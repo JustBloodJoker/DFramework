@@ -45,6 +45,7 @@ namespace FD3DW
 
 		void AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice);
 		void PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice);
+		void AddNullResource(const size_t index, ID3D12Device* pDevice);
 	};
 
 	class SamplerPacker

@@ -216,7 +216,20 @@ namespace FD3DW
 				matDesc.Ambient.y = tColor.g;
 				matDesc.Ambient.z = tColor.b;
 			}
-			
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_SHININESS, matDesc.SpecularPower) ){
+				matDesc.SpecularPower = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
+			}
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_ROUGHNESS_FACTOR, matDesc.Roughness)) {
+				matDesc.Roughness = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
+			}
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_METALLIC_FACTOR, matDesc.Metalness)) {
+				matDesc.Metalness = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
+			}
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_BUMPSCALING, matDesc.HeightScale)) {
+				matDesc.HeightScale = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
+			}
+
+
 			m_pMaterialManager->SetMaterialDesc(matDesc);
 			//////////////////////////////////////////////////////////////////////////////////////
 			//									   TEXTURES

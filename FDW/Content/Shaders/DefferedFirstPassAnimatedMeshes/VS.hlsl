@@ -15,17 +15,20 @@ struct ANIMVERTEX_INPUT
     float Weight[NUM_BONES_PER_VEREX] : WEIGHT_BONES;
 };
 
-ConstantBuffer<Matrices> objMatrices : register(b0);
-StructuredBuffer<matrix> boneMatrices : register(t1);
+ConstantBuffer<MeshMatrices> objMatrices : register(b0);
+StructuredBuffer<matrix> boneMatrices : register(t9);
 
 VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 {
     VERTEX_OUTPUT vsOut;
     
     matrix ResultWorldMatrix = objMatrices.WorldMatrix;
-    for(int i = 0; i < NUM_BONES_PER_VEREX; i++)
-    {
-        ResultWorldMatrix += boneMatrices[vsIn.IDs[i]] * vsIn.Weight[i];
+    
+    if(objMatrices.IsActiveAnimations) {
+        for(int i = 0; i < NUM_BONES_PER_VEREX; i++)
+        {
+            ResultWorldMatrix += boneMatrices[vsIn.IDs[i]] * vsIn.Weight[i];
+        }
     }
 
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
