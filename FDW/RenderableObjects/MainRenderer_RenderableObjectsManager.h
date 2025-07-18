@@ -34,17 +34,20 @@ public:
     MainRenderer_RenderableObjectsManager(MainRenderer* owner);
 
     template<typename TObject, typename... Args>
-    void CreateObject(std::unique_ptr<TObject> obj, ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
+    BaseRenderableObject* CreateObject(std::unique_ptr<TObject> obj, ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
         using TRenderable = typename RenderableType<TObject>::type;
 
         static_assert(std::is_base_of_v<BaseRenderableObject, TRenderable>, "TRenderable must derive from BaseRenderableObject");
 
         auto renderable = std::make_unique<TRenderable>(std::move(obj), std::forward<Args>(args)...);
         renderable->Init(device, list);
+        auto ptr = renderable.get();
         m_vObjects.push_back(std::move(renderable));
+        return ptr;
     }
 
-    void CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+    BaseRenderableObject* CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+    void CreatePlane(ID3D12Device* device, ID3D12GraphicsCommandList* list);
 
     void RemoveObject(BaseRenderableObject* obj);
 

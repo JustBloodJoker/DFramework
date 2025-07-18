@@ -1,13 +1,14 @@
 #include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
+#include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 MainRenderer_RenderableObjectsManager::MainRenderer_RenderableObjectsManager(MainRenderer* owner) 
     : MainRendererComponent(owner)
 {
 }
 
-void MainRenderer_RenderableObjectsManager::CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+BaseRenderableObject* MainRenderer_RenderableObjectsManager::CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
     if (auto skybox = FindSkyboxObject())
     {
         RemoveObject(skybox);
@@ -15,8 +16,13 @@ void MainRenderer_RenderableObjectsManager::CreateObject(const std::string path,
 
     auto renderable = std::make_unique<RenderableSkyboxObject>(path);
     renderable->Init(device, list);
+    auto ptr = renderable.get();
     m_vObjects.push_back(std::move(renderable));
-    
+    return ptr;
+}
+
+void MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+    CreateObject(std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GenerateRectangleScene), device, list);
 }
 
 void MainRenderer_RenderableObjectsManager::RemoveObject(BaseRenderableObject* obj) {

@@ -1,6 +1,5 @@
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
-#include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -13,9 +12,7 @@ void MainRenderer::UserInit()
 	InitMainRendererParts(device);
 	
 	SetVSync(true);
-
-	m_pRenderableObjectsManager->CreateObject(std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, m_pPCML, GenerateRectangleScene), device, m_pPCML);
-
+	
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
@@ -149,6 +146,10 @@ void MainRenderer::AddSkybox(std::string path) {
 
 void MainRenderer::AddAudio(std::string path) {
 	m_pRenderableObjectsManager->CreateObject(CreateAudio(FD3DW::StringToWString(path)), GetDevice(), m_pPCML, path);
+}
+
+void MainRenderer::AddSimplePlane() {
+	m_pRenderableObjectsManager->CreatePlane(GetDevice(), m_pPCML);
 }
 
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {

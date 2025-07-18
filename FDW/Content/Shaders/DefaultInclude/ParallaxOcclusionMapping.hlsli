@@ -30,25 +30,21 @@ float2 ParallaxOcclusionMapping(POMInputData inData)
     float2 deltaTexCoord = P / numLayers;
 
     float2 currentTexCoord = inData.TextureCoords;
-    float2 prevTexCoord = currentTexCoord;
-
     float currentDepth = inData.HeightTexture.Sample(inData.Sampler, currentTexCoord).r;
-    float prevDepth = currentDepth;
 
     while (currentLayerDepth < currentDepth)
     {
-        prevTexCoord = currentTexCoord;
-        prevDepth = currentDepth;
         currentTexCoord -= deltaTexCoord;
         currentDepth = inData.HeightTexture.SampleGrad(inData.Sampler, currentTexCoord, dx, dy).r;
         currentLayerDepth += layerDepth;
     }
 
-    float after = currentDepth - currentLayerDepth;
-    float before = prevDepth - (currentLayerDepth - layerDepth);
-    float weight = before / (before - after);
+    float2 prevTexCoords = currentTexCoord + deltaTexCoord;
+    float afterDepth  = currentDepth - currentLayerDepth;
+    float beforeDepth = inData.HeightTexture.Sample(inData.Sampler, prevTexCoords).r - currentLayerDepth + layerDepth;
+ 
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    float2 finalTexCoords = prevTexCoords * weight + currentTexCoord * (1.0 - weight);
 
-    float2 finalTexCoord = lerp(currentTexCoord, prevTexCoord, weight);
-
-    return finalTexCoord;
+    return finalTexCoords;
 }

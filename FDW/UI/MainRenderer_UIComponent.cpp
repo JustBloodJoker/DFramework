@@ -20,7 +20,7 @@
 static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf", L".fbx" };
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
-static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg" };
+static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg", L".png" };
 
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
@@ -42,6 +42,9 @@ void MainRenderer_UIComponent::MainWindow() {
     }
     if (ImGui::Button("Load Skybox")) {
         m_bShowSkyboxBrowser = true;
+    }
+    if (ImGui::Button("Create Simple Plane")) {
+        m_pOwner->AddSimplePlane();
     }
     if (m_iSelectedObjectIndex >= 0 && m_iSelectedObjectIndex < (int)m_vCachedObjects.size()) {
         ImGui::SameLine();
