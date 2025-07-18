@@ -1,5 +1,4 @@
 #include <RenderableObjects/RenderableMesh.h>
-#include <MainRenderer/PSOManager.h>
 
 RenderableMesh::RenderableMesh(std::unique_ptr<FD3DW::Scene> scene) : BaseRenderableObject( scene->GetPath() ) {
 	m_pScene = std::move(scene);
@@ -30,7 +29,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	}
 	
 	if (auto size = m_pScene->GetBonesCount() * sizeof(dx::XMMATRIX)) {
-		m_pStructureBufferBones = FD3DW::FResource::CreateSimpleStructuredBuffer(device, size);
+		m_pStructureBufferBones = FD3DW::FResource::CreateSimpleStructuredBuffer(device, (UINT)size);
 	}
 	
 	for (auto ind = 0; ind < m_pScene->GetObjectBuffersCount(); ind++)
@@ -117,11 +116,8 @@ std::vector<RenderableMeshElement*> RenderableMesh::GetRenderableElements() {
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {
 	if (pass==RenderPass::Forward) return; //forward not impl
 	
-	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig)->Bind(list);
-
-	if (m_pStructureBufferBones) {
-		list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
-	}
+	auto gpuStructureBufferBonesAdress = m_pStructureBufferBones ? m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
+	list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, gpuStructureBufferBonesAdress);
 
 	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
 	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());

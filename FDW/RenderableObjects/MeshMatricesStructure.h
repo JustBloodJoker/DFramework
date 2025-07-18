@@ -5,4 +5,5 @@
 
 struct MeshMatricesStructure : FD3DW::MatricesConstantBufferStructureFrameWork {
 	bool IsActiveAnimation = false;
+	dx::XMFLOAT3 CameraPosition;
 };

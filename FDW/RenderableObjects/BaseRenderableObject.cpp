@@ -1,5 +1,16 @@
 #include <RenderableObjects/BaseRenderableObject.h>
 
+std::unique_ptr<FD3DW::FResource> s_sEmptyStructuredBuffer;
+
+void BaseRenderableObject::CreateEmptyStructuredBuffer(ID3D12Device* device) {
+    s_sEmptyStructuredBuffer = FD3DW::FResource::CreateSimpleStructuredBuffer(device, 1);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS BaseRenderableObject::GetEmptyStructuredBufferGPUVirtualAddress()
+{
+    return s_sEmptyStructuredBuffer->GetResource()->GetGPUVirtualAddress();
+}
+
 BaseRenderableObject::BaseRenderableObject(const std::string& name)
     : m_sName(name)
 {

@@ -31,6 +31,15 @@ dx::XMMATRIX MainRenderer_CameraComponent::GetViewMatrix() const {
 	return m_xView;
 }
 
+dx::XMFLOAT3 MainRenderer_CameraComponent::GetCameraPosition() const
+{
+	dx::XMFLOAT3 pos;
+	auto invView = dx::XMMatrixInverse(nullptr, m_xView);
+	auto cameraPosition = invView.r[3];
+	XMStoreFloat3(&pos, cameraPosition);
+	return pos;
+}
+
 void MainRenderer_CameraComponent::OnResizeWindow() {
 	UpdateProjectionMatrix();
 }
@@ -41,19 +50,19 @@ void MainRenderer_CameraComponent::OnKeyInput(WPARAM wParam) {
 
 	if (wParam == 'W')
 	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.0000016f));
 	}
 	if (wParam == 'S')
 	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.0000016f));
 	}
 	if (wParam == 'D')
 	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.0000016f));
 	}
 	if (wParam == 'A')
 	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.016f));
+		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.0000016f));
 	}
 
 	if (wParam == 'R')

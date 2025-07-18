@@ -1,5 +1,6 @@
 #include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
 #include <MainRenderer/MainRenderer.h>
+#include <MainRenderer/PSOManager.h>
 
 MainRenderer_RenderableObjectsManager::MainRenderer_RenderableObjectsManager(MainRenderer* owner) 
     : MainRendererComponent(owner)
@@ -43,6 +44,7 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12Device* device, I
     data.CommandList = cmdList;
     data.Projection = m_pOwner->GetCurrentProjectionMatrix();
     data.View = m_pOwner->GetCurrentViewMatrix();
+    data.CameraPosition = m_pOwner->GetCurrentCameraPosition();
     data.AdditionalWorld = dx::XMMatrixIdentity();
 
     for (auto& obj : m_vObjects) {
@@ -51,6 +53,7 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12Device* device, I
 }
 
 void MainRenderer_RenderableObjectsManager::DeferredRender(ID3D12GraphicsCommandList* list) {
+    PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
     for (auto& obj : m_vObjects) {
         if(obj->IsCanRenderInPass(RenderPass::Deferred)) obj->DeferredRender(list);
     }

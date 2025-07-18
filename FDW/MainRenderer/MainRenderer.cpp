@@ -1,5 +1,6 @@
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
+#include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -13,6 +14,8 @@ void MainRenderer::UserInit()
 	
 	SetVSync(true);
 
+	m_pRenderableObjectsManager->CreateObject(std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, m_pPCML, GenerateRectangleScene), device, m_pPCML);
+
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
@@ -24,7 +27,7 @@ void MainRenderer::UserInit()
 	m_pRTV_SRVPack = CreateSRVPack(1u);
 	m_pRTV_SRVPack->PushResource(m_pRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
-	m_pScreen = CreateRectangle(true, m_pPCML);
+	m_pScreen = CreateRectangle(m_pPCML);
 
 	m_xSceneViewPort.MaxDepth = 1.0f;
 	m_xSceneViewPort.MinDepth = 0.0f;
@@ -45,7 +48,6 @@ void MainRenderer::UserInit()
 void MainRenderer::UserLoop()
 {
 	m_pCommandList->ResetList();
-
 
 	m_pRenderableObjectsManager->BeforeRender(GetDevice(), m_pPCML);
 
@@ -129,6 +131,10 @@ dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
 	return m_pCameraComponent->GetViewMatrix();
 }
 
+dx::XMFLOAT3 MainRenderer::GetCurrentCameraPosition() const {
+	return m_pCameraComponent->GetCameraPosition();
+}
+
 std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 	return m_pRenderableObjectsManager->GetRenderableObjects();
 }
@@ -159,6 +165,7 @@ void MainRenderer::RemoveAllObjects() {
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
+	BaseRenderableObject::CreateEmptyStructuredBuffer(device);
 
 	m_pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pPCML = m_pCommandList->GetPtrCommandList();

@@ -17,14 +17,18 @@
 ///         ---ENGINE_UI---
 
 
-static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf" };
+static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf", L".fbx" };
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
+static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg" };
 
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
     MainWindow();
     SceneBrowser();
+    AudioBrowser();
+    SkyboxBrowser();
+    TextureBrowser();
 }
 
 void MainRenderer_UIComponent::MainWindow() {
@@ -32,6 +36,12 @@ void MainRenderer_UIComponent::MainWindow() {
 
     if (ImGui::Button("Load Scene")) {
         m_bShowSceneBrowser = true;
+    }
+    if (ImGui::Button("Load Audio")) {
+        m_bShowAudioBrowser = true;
+    }
+    if (ImGui::Button("Load Skybox")) {
+        m_bShowSkyboxBrowser = true;
     }
     if (m_iSelectedObjectIndex >= 0 && m_iSelectedObjectIndex < (int)m_vCachedObjects.size()) {
         ImGui::SameLine();
@@ -47,98 +57,65 @@ void MainRenderer_UIComponent::MainWindow() {
 }
 
 void MainRenderer_UIComponent::SceneBrowser() {
-    if (!m_bShowSceneBrowser) return;
-
-    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Scene Browser", &m_bShowSceneBrowser, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
-
-    if (bPathChanged) {
-        entries = GetDirectoryEntries(currentPath);
-        bPathChanged = false;
-    }
-
-    if (ImGui::Button("Back")) {
-        if (currentPath.has_parent_path()) {
-            currentPath = currentPath.parent_path();
-            bPathChanged = true;
+    FileBrowser(
+        m_bShowSceneBrowser,
+        "Scene Browser",
+        currentPath,
+        s_vSupportedSceneExts,
+        [this](const std::filesystem::path& path) {
+            m_pOwner->AddScene(path.string());
+        },
+        [](const std::filesystem::path& path) {
+            return "Scene ";
         }
-    }
+    );
+}
 
-    ImGui::Separator();
+void MainRenderer_UIComponent::AudioBrowser() {
+    FileBrowser(
+        m_bShowAudioBrowser,
+        "Audio Browser",
+        currentPath,
+        s_vSupportedAudioExts,
+        [this](const std::filesystem::path& path) {
+            m_pOwner->AddAudio(path.string());
+        },
+        [](const std::filesystem::path& path) {
+            return "Audio ";
+        }
+    );
+}
 
-    for (const auto& entry : entries) {
-        if (!entry.exists()) continue;
+void MainRenderer_UIComponent::SkyboxBrowser() {
+    FileBrowser(
+        m_bShowSkyboxBrowser,
+        "Skybox Browser",
+        currentPath,
+        s_vSupportedSkyboxExts,
+        [this](const std::filesystem::path& path) {
+            m_pOwner->AddSkybox(path.string());
+        },
+        [](const std::filesystem::path& path) {
+            return "Skybox ";
+        }
+    );
+}
 
-        const auto& path = entry.path();
-        std::wstring ext = path.extension().wstring();
-        std::string label = WStringToUTF8(path.filename().wstring());
-
-        bool selected = false;
-
-        if (entry.is_directory()) {
-            selected = ImGui::Selectable(("Folder " + label).c_str());
-            if (selected) {
-                currentPath /= path.filename();
-                bPathChanged = true;
+void MainRenderer_UIComponent::TextureBrowser() {
+    FileBrowser(
+        m_bShowTextureBrowser,
+        "Texture Browser",
+        currentPath,
+        s_vSupportedTextureExts,
+        [this](const std::filesystem::path& path) {
+            if (m_pTextureTargetObject && m_iTextureBeingSet >= 0 && m_iTextureBeingSet < std::size(m_vTextureOps)) {
+                m_vTextureOps[m_iTextureBeingSet].SetFunc(m_pTextureTargetObject, path.string());
             }
+        },
+        [](const std::filesystem::path& path) {
+            return "Texture ";
         }
-        else if (entry.is_regular_file()) {
-            bool isScene = std::find(s_vSupportedSceneExts.begin(), s_vSupportedSceneExts.end(), ext) != s_vSupportedSceneExts.end();
-            bool isSkybox = std::find(s_vSupportedSkyboxExts.begin(), s_vSupportedSkyboxExts.end(), ext) != s_vSupportedSkyboxExts.end();
-            bool isAudio = std::find(s_vSupportedAudioExts.begin(), s_vSupportedAudioExts.end(), ext) != s_vSupportedAudioExts.end();
-
-            std::string icon = isScene ? "Scene " : isSkybox ? "Skybox " : isAudio ? "Audio " : "File ";
-            selected = ImGui::Selectable((icon + label).c_str());
-
-            if (selected) {
-                std::string utf8Path = path.string();
-
-                if (isScene) {
-                    m_pOwner->AddScene(utf8Path);
-                    m_bShowSceneBrowser = false;
-                }
-                else if (isSkybox) {
-                    m_pOwner->AddSkybox(utf8Path);
-                    m_bShowSceneBrowser = false;
-                }
-                else if (isAudio) {
-                    m_pOwner->AddAudio(utf8Path);
-                    m_bShowSceneBrowser = false;
-                }
-            }
-        }
-
-        if (ImGui::IsItemHovered()) {
-            ImGui::BeginTooltip();
-            ImGui::Text("Name: %s", label.c_str());
-            ImGui::Text("Path: %s", WStringToUTF8(path.wstring()).c_str());
-
-            if (entry.is_regular_file()) {
-                std::error_code ec;
-                auto fsize = std::filesystem::file_size(path, ec);
-                auto ftime = std::filesystem::last_write_time(path, ec);
-                if (!ec) {
-                    std::time_t cftime = std::chrono::system_clock::to_time_t(
-                        std::chrono::clock_cast<std::chrono::system_clock>(ftime));
-                    std::tm tmResult{};
-                    char timeStr[26] = {};
-                    if (localtime_s(&tmResult, &cftime) == 0) {
-                        asctime_s(timeStr, sizeof(timeStr), &tmResult);
-                        ImGui::Text("Size: %.2f KB", fsize / 1024.0f);
-                        ImGui::Text("Modified: %s", timeStr);
-                    }
-                }
-            }
-            ImGui::EndTooltip();
-        }
-    }
-
-    ImGui::Separator();
-    if (ImGui::Button("Close")) {
-        m_bShowSceneBrowser = false;
-    }
-
-    ImGui::End();
+    );
 }
 
 void MainRenderer_UIComponent::ElementParamSetter() {
@@ -299,7 +276,7 @@ void MainRenderer_UIComponent::DrawMeshUI(RenderableMesh* mesh) {
 
 void MainRenderer_UIComponent::DrawSimpleRenderableUI(RenderableSimpleObject* obj) {
     ImGui::Separator();
-    ImGui::Text("Transform");
+    ImGui::Text("Renderable Simple Object");
 
     dx::XMFLOAT3 pos = obj->GetPosition();
     dx::XMFLOAT3 rot = obj->GetRotation();
@@ -316,7 +293,81 @@ void MainRenderer_UIComponent::DrawSimpleRenderableUI(RenderableSimpleObject* ob
     if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
         obj->SetScale(scale);
     }
+
+    ImGui::SeparatorText("Material");
+
+    dx::XMFLOAT4 diffuse = obj->GetDiffuse();
+    if (ImGui::ColorEdit4("Diffuse", (float*)&diffuse)) {
+        obj->SetDiffuse(diffuse);
+    }
+
+    dx::XMFLOAT4 specular = obj->GetSpecular();
+    if (ImGui::ColorEdit4("Specular", (float*)&specular)) {
+        obj->SetSpecular(specular);
+    }
+
+    dx::XMFLOAT4 ambient = obj->GetAmbient();
+    if (ImGui::ColorEdit3("Ambient", (float*)&ambient)) {
+        obj->SetAmbient(dx::XMFLOAT4(ambient.x, ambient.y, ambient.z, 1.0f));
+    }
+
+    dx::XMFLOAT4 emissive = obj->GetEmissive();
+    if (ImGui::ColorEdit3("Emissive", (float*)&emissive)) {
+        obj->SetEmissive(dx::XMFLOAT4(emissive.x, emissive.y, emissive.z, 1.0f));
+    }
+
+    float roughness = obj->GetRoughness();
+    if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
+        obj->SetRoughness(roughness);
+    }
+
+    float metalness = obj->GetMetalness();
+    if (ImGui::SliderFloat("Metalness", &metalness, 0.0f, 1.0f)) {
+        obj->SetMetalness(metalness);
+    }
+
+    float specPower = obj->GetSpecularPower();
+    if (ImGui::SliderFloat("Specular Power", &specPower, 1.0f, 128.0f)) {
+        obj->SetSpecularPower(specPower);
+    }
+
+    float heightScale = obj->GetHeightScale();
+    if (ImGui::SliderFloat("Height Scale", &heightScale, 0.0f, 0.1f)) {
+        obj->SetHeightScale(heightScale);
+    }
+
+    if (ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen)) {
+        for (int i = 0; i < std::size(m_vTextureOps); ++i) {
+            ImGui::SeparatorText(m_vTextureOps[i].Name);
+
+            ImGui::PushID(i);
+
+            if (m_pTextureTargetObject) {
+                auto tex = m_pTextureTargetObject->GetTexture(static_cast<FD3DW::TextureType>(i));
+                if (tex) {
+                    D3D12_GPU_DESCRIPTOR_HANDLE srv = m_pTextureTargetObject->GetTextureSRV(static_cast<FD3DW::TextureType>(i));
+                    ImGui::Image((ImTextureID)srv.ptr, ImVec2(48, 48));
+                }
+            }
+
+            if (ImGui::Button("Set")) {
+                m_bShowTextureBrowser = true;
+                m_iTextureBeingSet = i;
+                m_pTextureTargetObject = obj;
+            }
+
+            if (m_pTextureTargetObject) {
+                auto tex = m_pTextureTargetObject->GetTexture(static_cast<FD3DW::TextureType>(i));
+                if (tex && ImGui::Button("Erase")) {
+                    m_vTextureOps[i].EraseFunc(obj);
+                }
+            }
+
+            ImGui::PopID();
+        }
+    }
 }
+
 
 void MainRenderer_UIComponent::DrawSkyboxUI(RenderableSkyboxObject* skybox) {
     ImGui::Separator();
@@ -356,6 +407,30 @@ void MainRenderer_UIComponent::DrawAudioUI(RenderableAudioObject* audio) {
 
 
 MainRenderer_UIComponent::MainRenderer_UIComponent(MainRenderer* owner) : MainRendererComponent(owner) { 
+    static const std::pair<const char*, FD3DW::TextureType> kTextureNames[] = {
+        { "BASE",     FD3DW::TextureType::BASE },
+        { "NORMAL",   FD3DW::TextureType::NORMAL },
+        { "ROUGHNESS",FD3DW::TextureType::ROUGHNESS },
+        { "METALNESS",FD3DW::TextureType::METALNESS },
+        { "HEIGHT",   FD3DW::TextureType::HEIGHT },
+        { "SPECULAR", FD3DW::TextureType::SPECULAR },
+        { "OPACITY",  FD3DW::TextureType::OPACITY },
+        { "BUMP",    FD3DW::TextureType::BUMP },
+        { "EMISSIVE", FD3DW::TextureType::EMISSIVE }
+    };
+
+    for (const auto& [name, type] : kTextureNames)
+    {
+        m_vTextureOps.push_back({
+            name,
+            [this, type](RenderableSimpleObject* obj, const std::string& path) {
+                obj->SetupTexture(type, path, m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList());
+            },
+            [this, type](RenderableSimpleObject* obj) {
+                obj->EraseTexture(type, m_pOwner->GetDevice());
+            }
+            });
+    }
 }
 
 void MainRenderer_UIComponent::InitImGui() {
@@ -425,6 +500,100 @@ void MainRenderer_UIComponent::BeforeDestruction() {
     ShutDownImGui();
 
     m_pUILayer->AddToRouter(nullptr);
+}
+
+
+void MainRenderer_UIComponent::FileBrowser(
+    bool& isOpen,
+    const std::string& windowTitle,
+    std::filesystem::path& currentPath,
+    const std::vector<std::wstring>& supportedExtensions,
+    const std::function<void(const std::filesystem::path&)>& onFileSelected,
+    const std::function<std::string(const std::filesystem::path&)>& getIcon
+) {
+    if (!isOpen) return;
+
+    static std::vector<std::filesystem::directory_entry> entries;
+    static bool bPathChanged = true;
+
+    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+    ImGui::Begin(windowTitle.c_str(), &isOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+
+    if (bPathChanged) {
+        entries = GetDirectoryEntries(currentPath);
+        bPathChanged = false;
+    }
+
+    if (ImGui::Button("Back")) {
+        if (currentPath.has_parent_path()) {
+            currentPath = currentPath.parent_path();
+            bPathChanged = true;
+        }
+    }
+
+    ImGui::Separator();
+
+    for (const auto& entry : entries) {
+        if (!entry.exists()) continue;
+
+        const auto& path = entry.path();
+        std::wstring ext = path.extension().wstring();
+        std::string label = WStringToUTF8(path.filename().wstring());
+
+        bool selected = false;
+
+        if (entry.is_directory()) {
+            selected = ImGui::Selectable(("Folder " + label).c_str());
+            if (selected) {
+                currentPath /= path.filename();
+                bPathChanged = true;
+            }
+        }
+        else if (entry.is_regular_file()) {
+            if (!supportedExtensions.empty() && std::find(supportedExtensions.begin(), supportedExtensions.end(), ext) == supportedExtensions.end())
+                continue;
+
+            std::string icon = getIcon ? getIcon(path) : "File ";
+            selected = ImGui::Selectable((icon + label).c_str());
+
+            if (selected && onFileSelected) {
+                onFileSelected(path);
+                isOpen = false;
+                break;
+            }
+        }
+
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::Text("Name: %s", label.c_str());
+            ImGui::Text("Path: %s", WStringToUTF8(path.wstring()).c_str());
+
+            if (entry.is_regular_file()) {
+                std::error_code ec;
+                auto fsize = std::filesystem::file_size(path, ec);
+                auto ftime = std::filesystem::last_write_time(path, ec);
+                if (!ec) {
+                    std::time_t cftime = std::chrono::system_clock::to_time_t(
+                        std::chrono::clock_cast<std::chrono::system_clock>(ftime));
+                    std::tm tmResult{};
+                    char timeStr[26] = {};
+                    if (localtime_s(&tmResult, &cftime) == 0) {
+                        asctime_s(timeStr, sizeof(timeStr), &tmResult);
+                        ImGui::Text("Size: %.2f KB", fsize / 1024.0f);
+                        ImGui::Text("Modified: %s", timeStr);
+                    }
+                }
+            }
+            ImGui::EndTooltip();
+        }
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Close")) {
+        isOpen = false;
+    }
+
+    ImGui::End();
 }
 
 

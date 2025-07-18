@@ -6,7 +6,7 @@ RenderableSkyboxObject::RenderableSkyboxObject(const std::string& pathToSkybox) 
 }
 
 void RenderableSkyboxObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {	
-	m_pCube = std::make_unique<FD3DW::Cube>(device, list, true);
+	m_pCube = std::make_unique<FD3DW::Cube>(device, list);
 	m_pMatricesBuffer = FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>::CreateConstantBuffer(device, 1);
 
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);

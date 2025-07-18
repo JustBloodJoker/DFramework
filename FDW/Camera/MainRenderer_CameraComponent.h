@@ -18,6 +18,7 @@ public:
 
 	dx::XMMATRIX GetProjectionMatrix() const;
 	dx::XMMATRIX GetViewMatrix() const;
+	dx::XMFLOAT3 GetCameraPosition() const;
 	void UpdateViewMatrix();
 	void UpdateProjectionMatrix();
 

@@ -34,6 +34,7 @@
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="MainRenderer\PSOManager.cpp" />
     <ClCompile Include="RenderableObjects\BaseRenderableObject.cpp" />
+    <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp" />
     <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
@@ -52,8 +53,10 @@
     <ClInclude Include="MainRenderer\PSOManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RenderableObjects\BaseRenderableObject.h" />
+    <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h" />
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
     <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
+    <ClInclude Include="RenderableObjects\MeshMatricesStructure.h" />
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />

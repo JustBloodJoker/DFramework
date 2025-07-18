@@ -137,9 +137,9 @@ namespace FD3DW
 
 	public:
 		std::unique_ptr<Scene>				CreateScene(std::string path, bool neverUpdate, ID3D12GraphicsCommandList* list);
-		std::unique_ptr<Rectangle>			CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list);
-		std::unique_ptr<Cube>				CreateCube(bool neverUpdate, ID3D12GraphicsCommandList* list);
-		std::unique_ptr<Point>				CreatePoint(bool neverUpdate, ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Rectangle>			CreateRectangle(ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Cube>				CreateCube(ID3D12GraphicsCommandList* list);
+		std::unique_ptr<Point>				CreatePoint(ID3D12GraphicsCommandList* list);
 		std::unique_ptr<MaterialsManager>	CreateMaterialMananger();
 		std::unique_ptr<Material>			CreateMaterial();
 		std::shared_ptr<FResource>			CreateTexture(std::string path, ID3D12GraphicsCommandList* list);

@@ -17,12 +17,19 @@ struct BeforeRenderInputData {
     dx::XMMATRIX Projection;
     dx::XMMATRIX View;
     dx::XMMATRIX AdditionalWorld;
+    dx::XMFLOAT3 CameraPosition;
     ID3D12Device* Device;
     ID3D12GraphicsCommandList* CommandList;
 };
 
 class BaseRenderableObject {
+
 public:
+    static void CreateEmptyStructuredBuffer(ID3D12Device* device);
+    D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
+
+public:
+
     BaseRenderableObject(const std::string& name);
     virtual ~BaseRenderableObject() = default;
 

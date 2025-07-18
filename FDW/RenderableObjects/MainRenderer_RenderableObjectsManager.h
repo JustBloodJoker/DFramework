@@ -11,17 +11,17 @@
 #include <RenderableObjects/RenderableSkyboxObject.h>
 #include <RenderableObjects/RenderableAudioObject.h>
 
-template<typename TObject>
+template<typename TObject, typename = void>
 struct RenderableType;
+
+template<typename TObject>
+struct RenderableType< TObject, std::enable_if_t<std::is_base_of_v<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>, TObject>> > {
+    using type = RenderableSimpleObject;
+};
 
 template<>
 struct RenderableType<FD3DW::Scene> {
     using type = RenderableMesh;
-};
-
-template<>
-struct RenderableType<FD3DW::SimpleObject> {
-    using type = RenderableSimpleObject;
 };
 
 template<>

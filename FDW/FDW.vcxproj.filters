@@ -93,6 +93,9 @@
     <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp">
       <Filter>RenderableObjects</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -144,6 +147,12 @@
       <Filter>RenderableObjects</Filter>
     </ClInclude>
     <ClInclude Include="RenderableObjects\MeshMaterialStructure.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\MeshMatricesStructure.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h">
       <Filter>RenderableObjects</Filter>
     </ClInclude>
   </ItemGroup>

@@ -21,6 +21,8 @@ void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 	cmb.View = dx::XMMatrixTranspose(data.View);
 	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
 	cmb.IsActiveAnimation = m_bIsAnimationPlaying;
+	cmb.CameraPosition = data.CameraPosition;
+
 	m_pMatricesBuffer->CpyData(0, cmb);
 
 	BeforeRenderCBMaterial();

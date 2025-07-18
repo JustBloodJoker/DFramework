@@ -6,7 +6,6 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 
-
     static CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
     dsvFirstDefPassDesc.DepthEnable = true;
     dsvFirstDefPassDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
@@ -39,9 +38,9 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
 
     static const std::unordered_map<PSOType, PSODescriptor> descriptors = {
         {
-            PSOType::DefferedFirstPassAnimatedMeshesDefaultConfig,
+            PSOType::DefferedFirstPassDefaultConfig,
             {
-                L"DefferedFirstPassAnimatedMeshes",
+                L"DefferedFirstPass",
                 [] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;

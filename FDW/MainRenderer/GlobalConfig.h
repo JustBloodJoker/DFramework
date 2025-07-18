@@ -22,9 +22,9 @@ struct PSODescriptor {
 };
 
 enum class PSOType {
-	DefferedFirstPassAnimatedMeshesDefaultConfig,
+	DefferedFirstPassDefaultConfig,
 	DefferedSecondPassDefaultConfig,
-	SimpleSkyboxDefaultConfig,
+	SimpleSkyboxDefaultConfig
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors();

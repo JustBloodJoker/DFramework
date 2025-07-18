@@ -430,21 +430,21 @@ namespace FD3DW
 		return std::make_unique<Scene>(path, m_pDevice.Get(), list, neverUpdate);
 	}
 
-	std::unique_ptr<Rectangle> D3DFW::CreateRectangle(bool neverUpdate, ID3D12GraphicsCommandList* list)
+	std::unique_ptr<Rectangle> D3DFW::CreateRectangle(ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating Rectangle");
-		return std::make_unique<Rectangle>(m_pDevice.Get(), list, neverUpdate);
+		return std::make_unique<Rectangle>(m_pDevice.Get(), list);
 	}
 
-	std::unique_ptr<Cube> D3DFW::CreateCube(bool neverUpdate, ID3D12GraphicsCommandList* list)
+	std::unique_ptr<Cube> D3DFW::CreateCube(ID3D12GraphicsCommandList* list)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating Cube");
-		return std::make_unique<Cube>(m_pDevice.Get(), list, neverUpdate);
+		return std::make_unique<Cube>(m_pDevice.Get(), list);
 	}
 
-	std::unique_ptr<Point> D3DFW::CreatePoint(bool neverUpdate, ID3D12GraphicsCommandList* list)
+	std::unique_ptr<Point> D3DFW::CreatePoint(ID3D12GraphicsCommandList* list)
 	{
-		return std::make_unique<Point>(m_pDevice.Get(), list, neverUpdate);
+		return std::make_unique<Point>(m_pDevice.Get(), list);
 	}
 
 	std::unique_ptr<MaterialsManager> D3DFW::CreateMaterialMananger()

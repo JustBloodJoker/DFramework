@@ -10,3 +10,23 @@ bool IsZeroMatrix(matrix m)
            all(m[2] == 0) &&
            all(m[3] == 0);
 }
+
+matrix MakeZeroMatrix()
+{
+    return matrix(
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0, 0
+    );
+}
+
+matrix MakeIdentityMatrix()
+{
+    return matrix(
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+    );
+}

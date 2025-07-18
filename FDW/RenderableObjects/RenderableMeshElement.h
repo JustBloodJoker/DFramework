@@ -47,6 +47,9 @@ public:
 	IMPL_FLOAT_GET_SET_FUNCTION(SpecularPower);
 	IMPL_FLOAT_GET_SET_FUNCTION(HeightScale);
 
+	#undef IMPL_XMFLOAT4_GET_SET_FUNCTION
+	#undef IMPL_FLOAT_GET_SET_FUNCTION
+
 	//////////////////////////////////////
 
 private:

@@ -40,7 +40,8 @@ namespace FD3DW
 			m_xMaterial = std::forward<decltype(matdesc)>(matdesc);
 		}
 
-		void SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+		void SetTexture(const std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+		void DeleteTexture(TextureType type);
 
 		bool IsHaveTexture(TextureType type) const;
 

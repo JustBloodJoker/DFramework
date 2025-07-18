@@ -29,6 +29,7 @@ struct MeshMatrices
     matrix ViewMatrix;
     matrix ProjectionMatrix;
     bool IsActiveAnimations;
+    float3 CameraPosition;
 };
 
 #define TEXTURE_BASE_LOAD_FLAG_LOCATION             0
@@ -51,6 +52,5 @@ struct Materials
     float metalness;
     float specularPower;
     float heightScale;
-
-    bool LoadedTexture[9];
+    int4 LoadedTexture[3];
 };

@@ -18,7 +18,7 @@ namespace FD3DW
 
 	ID3D12Resource* Material::GetResourceTexture(TextureType type) const
 	{
-		return m_mTextureMap.at(type)->GetResource();
+		return m_mTextureMap.contains(type) ? m_mTextureMap.at(type)->GetResource() : nullptr;
 	}
 
 	MaterialFrameWork Material::GetMaterialDesc() const
@@ -26,9 +26,14 @@ namespace FD3DW
 		return m_xMaterial;
 	}
 
-	void Material::SetTexture(std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
+	void Material::SetTexture(const std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
-		m_mTextureMap.emplace(type,FResource::CreateTextureFromPath(texturePath,pDevice, pCommandList));
+		m_mTextureMap.insert_or_assign(type, FResource::CreateTextureFromPath(texturePath, pDevice, pCommandList));
+	}
+
+	void Material::DeleteTexture(TextureType type)
+	{
+		m_mTextureMap.erase(type);
 	}
 
 	bool Material::IsHaveTexture(TextureType type) const

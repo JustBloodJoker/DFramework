@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <fstream>
+#include <array>
 #include <tuple>
 #include <vector>
 #include <array>
@@ -17,6 +18,7 @@
 #include <chrono>
 #include <map>
 #include <codecvt>
+#include <locale>
 #include <locale>
 
 #define _USE_MATH_DEFINES 

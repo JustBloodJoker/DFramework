@@ -28,6 +28,7 @@ public:
 	//CAMERA COMPONENT
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
+	dx::XMFLOAT3 GetCurrentCameraPosition() const;
 
 	//RENDERABLE OBJECTS MANAGER
 	std::vector<BaseRenderableObject*> GetRenderableObjects() const;

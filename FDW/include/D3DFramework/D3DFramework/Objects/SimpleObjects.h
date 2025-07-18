@@ -1,63 +1,75 @@
 #pragma once
 #include "Object.h"
 
-
 namespace FD3DW
 {
-	class SimpleObject
-		: public Object
+	template<typename TVertex>
+	class SimpleObject : public Object
 	{
-
 	public:
+		using GeneratorFunc = std::function<void(std::vector<TVertex>&, std::vector<std::uint32_t>&)>;
 
-		SimpleObject() = default;
+		SimpleObject(ID3D12Device* pDevice,ID3D12GraphicsCommandList* pCommandList,GeneratorFunc generator)
+		{
+			std::vector<TVertex> vertices;
+			std::vector<std::uint32_t> indices;
+			generator(vertices, indices);
+
+			BufferManager::CreateDefaultBuffer<TVertex>(pDevice, pCommandList, vertices.data(), static_cast<UINT>(vertices.size()),m_pVertexBuffer, m_pVertexUploadBuffer);
+
+			m_pVertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
+			m_pVertexBufferView->BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
+			m_pVertexBufferView->SizeInBytes = static_cast<UINT>(vertices.size() * sizeof(TVertex));
+			m_pVertexBufferView->StrideInBytes = sizeof(TVertex);
+
+			BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(),static_cast<UINT>(indices.size()),m_pIndexBuffer, m_pIndexUploadBuffer);
+
+			m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
+			m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
+			m_pIndexBufferView->Format = DXGI_FORMAT_R32_UINT;
+			m_pIndexBufferView->SizeInBytes = static_cast<UINT>(indices.size() * sizeof(std::uint32_t));
+			
+			m_vObjectParameters.emplace_back(ObjectDesc{vertices.size(), 0,indices.size(), 0, 0});
+		}
+
 		virtual ~SimpleObject() = default;
 
-		
 	protected:
-
-		std::unique_ptr<FD3DW::UploadBuffer<FD3DW::VertexFrameWork>> m_pVertexUploadBuffer;
-		std::unique_ptr<FD3DW::UploadBuffer<std::uint32_t>> m_pIndexUploadBuffer;
+		std::unique_ptr<UploadBuffer<TVertex>> m_pVertexUploadBuffer;
+		std::unique_ptr<UploadBuffer<std::uint32_t>> m_pIndexUploadBuffer;
 	};
 
+	void GenerateCube(std::vector<VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
+	void GenerateRectangle(std::vector<VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
+	void GeneratePoint(std::vector<VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
 
-	class Cube
-		: public SimpleObject
+	//////////////////////////////////////
+	////			DEFAULT TYPES
+	class Cube : public SimpleObject<VertexFrameWork>
 	{
 	public:
-
-		Cube(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
-		virtual ~Cube() = default;
-
-	protected:
-
+		Cube(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+			: SimpleObject(device, cmdList, GenerateCube)
+		{
+		}
 	};
 
-
-	class Rectangle
-		: public SimpleObject
+	class Rectangle : public SimpleObject<VertexFrameWork>
 	{
-
 	public:
-
-		Rectangle(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
-		virtual ~Rectangle() = default;
-
-
-	protected:
-
+		Rectangle(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+			: SimpleObject(device, cmdList, GenerateRectangle)
+		{
+		}
 	};
 
-	class Point
-		: public SimpleObject
+	class Point : public SimpleObject<VertexFrameWork>
 	{
 	public:
-
-		Point(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate);
-		virtual ~Point() = default;
-
-	protected:
-
+		Point(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList)
+			: SimpleObject(device, cmdList, GeneratePoint)
+		{
+		}
 	};
 
 }
