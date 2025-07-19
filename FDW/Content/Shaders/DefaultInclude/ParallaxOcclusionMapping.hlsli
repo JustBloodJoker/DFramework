@@ -8,7 +8,6 @@ struct POMInputData {
     SamplerState Sampler;
 };
 
-
 float2 ParallaxOcclusionMapping(POMInputData inData)
 {
     const float minLayers = 8.0;

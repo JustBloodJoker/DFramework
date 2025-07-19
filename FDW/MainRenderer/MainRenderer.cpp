@@ -12,17 +12,26 @@ void MainRenderer::UserInit()
 	InitMainRendererParts(device);
 	
 	SetVSync(true);
-	
+
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
 
 	auto wndSettins = GetMainWNDSettings();
-	m_pRTV = CreateRenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height);
-	m_pRTVPack = CreateRTVPack(1u);
-	m_pRTVPack->PushResource(m_pRTV->GetRTVResource(), m_pRTV->GetRTVDesc(), device);
-	m_pRTV_SRVPack = CreateSRVPack(1u);
-	m_pRTV_SRVPack->PushResource(m_pRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+
+	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;
+	auto gbuffersNum = (UINT)gBufferFormats.size();
+	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
+	m_pGBuffersSRVPack = CreateSRVPack(gbuffersNum);
+
+	for (const auto& format : gBufferFormats) {
+		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height));
+		auto& gbuffer = m_pGBuffers.back();
+		
+		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
+		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+
+	}
 
 	m_pScreen = CreateRectangle(m_pPCML);
 
@@ -52,18 +61,26 @@ void MainRenderer::UserLoop()
 	
 	///////////////////////
 	//	DEFERRED FIRST PASS
-	m_pRTV->StartDraw(m_pPCML);
-	
+	auto gBuffersCount = GetGBuffersNum();
+
+	for (auto& gbuffer : m_pGBuffers) {
+		gbuffer->StartDraw(m_pPCML);
+	}
+
 	m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
 	m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
 	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	m_pPCML->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+	for (auto i = 0; i < gBuffersCount; ++i) {
+		m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
+	}
+	m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
 	m_pRenderableObjectsManager->DeferredRender(m_pPCML);
-
-	m_pRTV->EndDraw(m_pPCML);
+	
+	for (auto& gbuffer : m_pGBuffers) {
+		gbuffer->EndDraw(m_pPCML);
+	}
 
 	///
 	///////////////////////////
@@ -83,10 +100,10 @@ void MainRenderer::UserLoop()
 	m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
 	m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
 
-	ID3D12DescriptorHeap* heaps[] = { m_pRTV_SRVPack->GetResult()->GetDescriptorPtr() };
+	ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
 	m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
 
-	m_pPCML->SetGraphicsRootDescriptorTable(0, m_pRTV_SRVPack->GetResult()->GetGPUDescriptorHandle(0));
+	m_pPCML->SetGraphicsRootDescriptorTable(0, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
 	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 

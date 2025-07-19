@@ -1,5 +1,24 @@
 #include "GlobalConfig.h"
 
+static const GBuffersData s_sGBuffersData = { {
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_FLOAT,
+        DXGI_FORMAT_R32G32B32A32_FLOAT
+}};
+
+
+
+const GBuffersData& GetGBufferData() {
+    return s_sGBuffersData;
+}
+
+const UINT& GetGBuffersNum() {
+    return (UINT)s_sGBuffersData.GBuffersFormats.size();
+}
+
 const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
 
     static CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
@@ -43,8 +62,10 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                 L"DefferedFirstPass",
                 [] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
-                    desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
+                    for (auto i = 0; i < desc.NumRenderTargets; ++i) {
+                        desc.RTVFormats[i] = s_sGBuffersData.GBuffersFormats[i];
+                    }
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;

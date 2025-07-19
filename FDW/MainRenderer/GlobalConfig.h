@@ -4,6 +4,21 @@
 #include <D3DFramework/GraphicUtilites/PipelineObject.h>
 
 //////////////////////////////////////////////
+//				GBUFFERS DATA
+
+
+struct GBuffersData {
+	std::vector<DXGI_FORMAT> GBuffersFormats;
+};
+
+const GBuffersData& GetGBufferData();
+const UINT& GetGBuffersNum();
+
+//////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////
 //////		PSO MANAGER GLOBALS
 
 ///////////////////
@@ -12,9 +27,6 @@
 #define CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG 1
 #define TEXTURE_START_POSITION_IN_ROOT_SIG 2
 #define ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG 3
-
-
-
 
 struct PSODescriptor {
     std::wstring shaderFolderName;

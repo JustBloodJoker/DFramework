@@ -70,11 +70,13 @@ protected:
 
 protected:
 	//TEST FIELDS
-	std::unique_ptr<FD3DW::RenderTarget> m_pRTV;
-	std::unique_ptr<FD3DW::RTVPacker> m_pRTVPack;
-	std::unique_ptr<FD3DW::SRVPacker> m_pRTV_SRVPack;
+	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;
+	std::unique_ptr<FD3DW::RTVPacker> m_pGBuffersRTVPack;
+	std::unique_ptr<FD3DW::SRVPacker> m_pGBuffersSRVPack;
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
+
+
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
