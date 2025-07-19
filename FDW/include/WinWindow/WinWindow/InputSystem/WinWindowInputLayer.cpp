@@ -17,4 +17,16 @@ namespace FDWWIN {
 		if (m_pCurrentRouter) m_pCurrentRouter->AddLayer(this);
 	}
 
+	float WinWindowInputLayer::GetDT()
+	{
+		return 0.0f;
+	}
+
+	bool WinWindowInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) { return false; }
+	
+	void WinWindowInputLayer::PreTickUpdate(float DT) {}
+
+	bool WinWindowInputLayer::IsKeyDown(uint8_t btn) {
+		return m_pCurrentRouter->IsKeyDown(btn);
+	}
 }

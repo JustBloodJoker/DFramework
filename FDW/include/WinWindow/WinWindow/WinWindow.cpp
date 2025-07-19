@@ -207,15 +207,14 @@ namespace FDWWIN
 				}
 				else
 				{
-					m_pTimer->Tick();
+					m_pTimer->Tick();	
+					
+					m_pInputRouter->PreTickUpdate( m_pTimer->GetDeltaTime() );
+
 					ChildLoop();
 				}
 			}
 		}
-	}
-
-	void WinWindow::EscapeKeyProc()
-	{
 	}
 
 	bool WinWindow::ISPAUSED() const {

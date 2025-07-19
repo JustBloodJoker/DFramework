@@ -19,6 +19,9 @@ void MainRenderer_CameraComponent::InitDefault() {
 	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
+	m_xStartEye = m_xEye;
+	m_xStartAt = m_xAt;
+
 	UpdateViewMatrix();
 	UpdateProjectionMatrix();
 }
@@ -44,33 +47,52 @@ void MainRenderer_CameraComponent::OnResizeWindow() {
 	UpdateProjectionMatrix();
 }
 
-void MainRenderer_CameraComponent::OnKeyInput(WPARAM wParam) {
-	dx::XMVECTOR cameraDirection = dx::XMVector3Normalize(dx::XMVectorSubtract(m_xAt, m_xEye));
-	dx::XMVECTOR rightDirection = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, cameraDirection));
-
-	if (wParam == 'W')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.0000016f));
-	}
-	if (wParam == 'S')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(cameraDirection, 1000.0f * 0.0000016f));
-	}
-	if (wParam == 'D')
-	{
-		m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.0000016f));
-	}
-	if (wParam == 'A')
-	{
-		m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(rightDirection, 1000.0f * 0.0000016f));
-	}
-
-	if (wParam == 'R')
-	{
-		m_fCamRoll = 0.0f;
-	}
-
+void MainRenderer_CameraComponent::MoveForward(float dt) {
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
 	UpdateViewMatrix();
+}
+
+void MainRenderer_CameraComponent::MoveBackward(float dt) {
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
+	UpdateViewMatrix();
+}
+
+void MainRenderer_CameraComponent::StrafeRight(float dt) {
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, dir));
+	m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
+	UpdateViewMatrix();
+}
+
+void MainRenderer_CameraComponent::StrafeLeft(float dt) {
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, dir));
+	m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
+	UpdateViewMatrix();
+}
+
+void MainRenderer_CameraComponent::ResetRoll() {
+	m_fCamRoll = 0.0f;
+	UpdateViewMatrix();
+}
+
+void MainRenderer_CameraComponent::ResetPosition() {
+	m_xEye = m_xStartEye;
+	m_xAt = m_xStartAt;
+	m_fCamPitch = 0.0f;
+	m_fCamYaw = 0.0f;
+	m_fCamRoll = 0.0f;
+	UpdateViewMatrix();
+}
+
+float MainRenderer_CameraComponent::GetCameraSpeed() const {
+	return m_fCameraSpeed;
+}
+
+void MainRenderer_CameraComponent::SetCameraSpeed(float speed) {
+	m_fCameraSpeed = speed;
 }
 
 void MainRenderer_CameraComponent::OnMouseMove(WPARAM btnState, int x, int y) {

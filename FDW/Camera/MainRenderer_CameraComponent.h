@@ -22,25 +22,38 @@ public:
 	void UpdateViewMatrix();
 	void UpdateProjectionMatrix();
 
+public:
+	void ResetPosition();
+	float GetCameraSpeed() const;
+	void SetCameraSpeed(float speed);
 
 public:
 	void OnResizeWindow();
-	void OnKeyInput(WPARAM wParam);
+
+	void MoveForward(float dt);
+	void MoveBackward(float dt);
+	void StrafeLeft(float dt);
+	void StrafeRight(float dt);
+	void ResetRoll();
+	
 	void OnMouseMove(WPARAM btnState, int x, int y);
 
 private:
 	dx::XMMATRIX m_xView;
 	dx::XMMATRIX m_xProjectionMatrix;
 
+	float m_fCameraSpeed = 1000.0f;
 	float m_fCamYaw;
 	float m_fCamPitch;
 	float m_fCamRoll;
 	POINT m_xLastMousePos;
 	dx::XMVECTOR m_xEye;
 	dx::XMVECTOR m_xUp;
-	dx::XMVECTOR m_xStartUp;
 	dx::XMVECTOR m_xAt;
 
+	dx::XMVECTOR m_xStartUp;
+	dx::XMVECTOR m_xStartEye = dx::XMVectorZero();
+	dx::XMVECTOR m_xStartAt = dx::XMVectorZero();
 private:
 	std::unique_ptr<CameraInputLayer> m_pCameraLayer = nullptr;
 };

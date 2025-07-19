@@ -14,7 +14,10 @@ bool CameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 			break;
 
 		case WM_KEYDOWN:
-			m_pCameraOwner->OnKeyInput(wParam);
+			if (wParam == 'R')
+			{
+				m_pCameraOwner->ResetRoll();
+			}
 			isInput = true;
 			break;
 		
@@ -25,4 +28,11 @@ bool CameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 	}
 
 	return isInput;
+}
+
+void CameraInputLayer::PreTickUpdate(float dt) {
+	if (IsKeyDown('W')) m_pCameraOwner->MoveForward(dt);
+	if (IsKeyDown('S')) m_pCameraOwner->MoveBackward(dt);
+	if (IsKeyDown('D')) m_pCameraOwner->StrafeRight(dt);
+	if (IsKeyDown('A')) m_pCameraOwner->StrafeLeft(dt);
 }

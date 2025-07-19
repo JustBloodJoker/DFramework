@@ -30,7 +30,6 @@ void MainRenderer::UserInit()
 		
 		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
 		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
-
 	}
 
 	m_pScreen = CreateRectangle(m_pPCML);
@@ -148,6 +147,19 @@ dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
 dx::XMFLOAT3 MainRenderer::GetCurrentCameraPosition() const {
 	return m_pCameraComponent->GetCameraPosition();
 }
+
+float MainRenderer::GetCameraSpeed() {
+	return m_pCameraComponent->GetCameraSpeed();
+}
+
+void MainRenderer::SetCameraSpeed(float speed) {
+	m_pCameraComponent->SetCameraSpeed(speed);
+}
+
+void MainRenderer::SetDefaultPosition() {
+	m_pCameraComponent->ResetPosition();
+}
+
 
 std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 	return m_pRenderableObjectsManager->GetRenderableObjects();

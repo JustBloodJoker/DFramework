@@ -10,6 +10,7 @@ public:
 	CameraInputLayer(MainRenderer_CameraComponent* cameraOwner);
 
 	virtual bool ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) override;
+	virtual void PreTickUpdate(float DT) override;
 
 private:
 	MainRenderer_CameraComponent* m_pCameraOwner = nullptr;

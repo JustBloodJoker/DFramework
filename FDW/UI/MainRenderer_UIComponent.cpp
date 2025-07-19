@@ -34,6 +34,25 @@ void MainRenderer_UIComponent::DrawUI() {
 void MainRenderer_UIComponent::MainWindow() {
     ImGui::Begin("Main WND");
 
+    if (ImGui::BeginTabBar("MainTabs")) {
+
+        if (ImGui::BeginTabItem("Renderable Objects")) {
+            DrawRenderableObjectsTab();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Camera")) {
+            DrawCameraTab();
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}
+
+void MainRenderer_UIComponent::DrawRenderableObjectsTab() {
     if (ImGui::Button("Load Scene")) {
         m_bShowSceneBrowser = true;
     }
@@ -55,8 +74,23 @@ void MainRenderer_UIComponent::MainWindow() {
         }
     }
     ElementParamSetter();
-    
-    ImGui::End();
+}
+
+void MainRenderer_UIComponent::DrawCameraTab() {
+    ImGui::SeparatorText("Camera Controls");
+
+    float moveSpeed = m_pOwner->GetCameraSpeed();
+    if (ImGui::SliderFloat("Move Speed", &moveSpeed, 0.1f, 2000.0f, "%.2f")) {
+        m_pOwner->SetCameraSpeed(moveSpeed);
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::SeparatorText("Actions");
+    if (ImGui::Button("Reset Position")) {
+        m_pOwner->SetDefaultPosition();
+    }
 }
 
 void MainRenderer_UIComponent::SceneBrowser() {

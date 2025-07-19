@@ -38,6 +38,9 @@ private:
 	
 	void MainWindow();
 
+	void DrawRenderableObjectsTab();
+	void DrawCameraTab();
+
 	void SceneBrowser();
 	void AudioBrowser();
 	void SkyboxBrowser();

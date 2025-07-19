@@ -29,6 +29,9 @@ public:
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
+	float GetCameraSpeed();
+	void SetCameraSpeed(float speed);
+	void SetDefaultPosition();
 
 	//RENDERABLE OBJECTS MANAGER
 	std::vector<BaseRenderableObject*> GetRenderableObjects() const;

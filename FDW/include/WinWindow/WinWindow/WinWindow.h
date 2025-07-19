@@ -48,9 +48,6 @@ namespace FDWWIN
 		virtual void ChildRelease() = 0;
 
 	protected:
-		virtual void EscapeKeyProc();
-
-	protected:
 		//////////////////
 		///		GETTERS
 
