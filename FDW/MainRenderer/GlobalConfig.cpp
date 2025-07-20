@@ -25,17 +25,17 @@ const UINT& GetGBuffersNum() {
 
 const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
 
-    static CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
+    CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
 
 
-    static CD3DX12_DEPTH_STENCIL_DESC dsvPostProcessDesc(D3D12_DEFAULT);
+    CD3DX12_DEPTH_STENCIL_DESC dsvPostProcessDesc(D3D12_DEFAULT);
     dsvPostProcessDesc.DepthEnable = FALSE;
     dsvPostProcessDesc.StencilEnable = FALSE;
 
 
-    static CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
+    CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
     dsvFirstDefPassDesc.DepthEnable = true;
     dsvFirstDefPassDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     dsvFirstDefPassDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
@@ -52,17 +52,16 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
     dsvFirstDefPassDesc.BackFace.StencilFunc = D3D12_COMPARISON_FUNC_NEVER;
 
     
-    static CD3DX12_DEPTH_STENCIL_DESC skyboxDepthDesc(D3D12_DEFAULT);
+    CD3DX12_DEPTH_STENCIL_DESC skyboxDepthDesc(D3D12_DEFAULT);
     skyboxDepthDesc.DepthEnable = true;
     skyboxDepthDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
     skyboxDepthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
-    static CD3DX12_DEPTH_STENCIL_DESC secondPassDSVDesc(D3D12_DEFAULT);
+    CD3DX12_DEPTH_STENCIL_DESC secondPassDSVDesc(D3D12_DEFAULT);
     secondPassDSVDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-    //secondPassDSVDesc.
+   
 
-
-    static CD3DX12_RASTERIZER_DESC skyboxRasterizerDesc(D3D12_DEFAULT);
+    CD3DX12_RASTERIZER_DESC skyboxRasterizerDesc(D3D12_DEFAULT);
     skyboxRasterizerDesc.CullMode = D3D12_CULL_MODE_FRONT;
 
     static const std::unordered_map<PSOType, PSODescriptor> descriptors = {
@@ -70,7 +69,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
             PSOType::DefferedFirstPassDefaultConfig,
             {
                 L"DefferedFirstPass",
-                [] {
+                [rasterizerDesc, dsvFirstDefPassDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
                     for (auto i = 0; i < desc.NumRenderTargets; ++i) {
@@ -79,6 +78,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
+                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
                     return desc;
                 }()
             }
@@ -87,7 +87,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
             PSOType::DefferedSecondPassDefaultConfig,
             {
                 L"DefferedSecondPass",
-                [] {
+                [rasterizerDesc, secondPassDSVDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = GetForwardRenderPassFormat();
@@ -102,7 +102,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
             PSOType::SimpleSkyboxDefaultConfig,
             {
                 L"SimpleSkybox",
-                [] {
+                [skyboxRasterizerDesc, skyboxDepthDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = GetForwardRenderPassFormat();
@@ -117,7 +117,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
             PSOType::PostProcessDefaultConfig,
             {
                 L"PostProcess",
-                [] {
+                [dsvPostProcessDesc, skyboxRasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;

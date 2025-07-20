@@ -22,7 +22,7 @@ namespace FD3DW
 			HEIGHT,
 			SPECULAR,
 			OPACITY,
-			BUMP,
+			AMBIENT,
 			EMISSIVE,
 
 			SIZE

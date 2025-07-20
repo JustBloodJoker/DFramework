@@ -15,7 +15,7 @@ Texture2D MetalnessTexture : register(t3);
 Texture2D HeightTexture : register(t4);
 Texture2D SpecularTexture : register(t5);
 Texture2D OpacityTexture : register(t6);
-Texture2D BumpTexture : register(t7);
+Texture2D AmbientTexture : register(t7);
 Texture2D EmmisiveTexture : register(t8);
 
 SamplerState wraps : register(s0);
@@ -38,7 +38,9 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 tangent = normalize(vsOut.tangent);
     float3 bitangent = normalize(vsOut.bitangent);
     float2 texCoord = vsOut.texCoord;
-    float3x3 TBN = float3x3(tangent, bitangent, normal);
+    float3x3 TBN = float3x3(normalize(tangent),
+                        normalize(bitangent),
+                        normalize(normal));
 
     if (LoadedTexture[TEXTURE_HEIGHT_LOAD_FLAG_LOCATION])
     {
@@ -62,7 +64,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         inData.Sampler = wraps;
         normal = NormalMapping(inData);
     }
-    
 
     float4 albedo = objMaterials.diffuse;
     if (LoadedTexture[TEXTURE_BASE_LOAD_FLAG_LOCATION])
@@ -73,13 +74,13 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float roughness = objMaterials.roughness;
     if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION])
     {
-        roughness = RoughnessTexture.Sample(wraps, texCoord).r;
+        roughness = RoughnessTexture.Sample(wraps, texCoord).g;
     }
 
     float metalness = objMaterials.metalness;
     if (LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION])
     {
-        metalness = MetalnessTexture.Sample(wraps, texCoord).r;
+        metalness = MetalnessTexture.Sample(wraps, texCoord).g;
     }
 
     float4 specular = objMaterials.specular;
@@ -94,6 +95,11 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         emissive.rgb = SpecularTexture.Sample(wraps, texCoord).rgb;
     }
     
+    float ao = 0.0f;
+    if (LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION])
+    {
+        ao = AmbientTexture.Sample(wraps, texCoord).r;
+    }
 
     AlphaClipping(albedo.a);
 
@@ -103,7 +109,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     psOut.Albedo        = albedo;
     psOut.Specular      = specular;
     psOut.Emissive      = emissive;
-    psOut.MaterialData  = float4(roughness, metalness, objMaterials.specularPower, 0.0f);
+    psOut.MaterialData  = float4(roughness, metalness, objMaterials.specularPower, ao);
 
     return psOut;
 }

@@ -39,7 +39,7 @@ struct MeshMatrices
 #define TEXTURE_HEIGHT_LOAD_FLAG_LOCATION           4
 #define TEXTURE_SPECULAR_LOAD_FLAG_LOCATION         5
 #define TEXTURE_OPACITY_LOAD_FLAG_LOCATION          6
-#define TEXTURE_BUMP_LOAD_FLAG_LOCATION             7
+#define TEXTURE_AMBIENT_LOAD_FLAG_LOCATION          7
 #define TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION         8
 
 struct Materials

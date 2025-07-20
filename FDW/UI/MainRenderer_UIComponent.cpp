@@ -513,7 +513,7 @@ MainRenderer_UIComponent::MainRenderer_UIComponent(MainRenderer* owner) : MainRe
         { "HEIGHT",   FD3DW::TextureType::HEIGHT },
         { "SPECULAR", FD3DW::TextureType::SPECULAR },
         { "OPACITY",  FD3DW::TextureType::OPACITY },
-        { "BUMP",    FD3DW::TextureType::BUMP },
+        { "AMBIENT",    FD3DW::TextureType::AMBIENT },
         { "EMISSIVE", FD3DW::TextureType::EMISSIVE }
     };
 

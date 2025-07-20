@@ -17,8 +17,6 @@ void MainRenderer::UserInit()
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
 
-	CreateLight();
-
 	auto wndSettins = GetMainWNDSettings();
 
 	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;

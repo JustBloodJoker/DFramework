@@ -275,10 +275,10 @@ namespace FD3DW
 				name = prePathName + std::string(pathname.C_Str());
 				m_pMaterialManager->SetTexture(name, TextureType::OPACITY, pDevice, pCommandList);
 			}
-			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_DISPLACEMENT, 0, &pathname))
+			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_AMBIENT, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
-				m_pMaterialManager->SetTexture(name, TextureType::BUMP, pDevice, pCommandList);
+				m_pMaterialManager->SetTexture(name, TextureType::AMBIENT, pDevice, pCommandList);
 			}
 		}
 		//////////////////////////////////////////////////////////////////////////////////////
