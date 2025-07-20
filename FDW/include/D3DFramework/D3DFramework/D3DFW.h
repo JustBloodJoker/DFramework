@@ -19,6 +19,7 @@
 #include "GraphicUtilites/RenderTarget.h"
 #include "GraphicUtilites/DepthStencilView.h"
 #include "GraphicUtilites/PipelineObject.h"
+#include "GraphicUtilites/StructuredBuffer.h"
 
 #include "Utilites/AudioManager.h"
 
@@ -151,7 +152,7 @@ namespace FD3DW
 																const D3D12_HEAP_FLAGS heapFlags = D3D12_HEAP_FLAG_NONE,
 																const D3D12_HEAP_PROPERTIES* heapProperties = &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 																const UINT16 mipLevels = 1);
-		std::unique_ptr<FResource>			CreateSimpleStructuredBuffer(const UINT width);
+		std::unique_ptr<StructuredBuffer>	CreateSimpleStructuredBuffer(const UINT width);
 
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height, const UINT msaaSampleCount = 1u);

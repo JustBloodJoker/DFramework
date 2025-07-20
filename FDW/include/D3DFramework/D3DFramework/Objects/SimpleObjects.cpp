@@ -28,7 +28,7 @@ namespace FD3DW {
 			{ {  1.0f,  1.0f, 0.0f }, {}, { 1.0f, 0.0f }, {}, {} },
 		};
 
-		indices = { 0, 1, 2, 1, 2, 3 };
+		indices = { 0, 1, 2, 3, 2, 1 };
 	}
 
 	void GeneratePoint(std::vector<VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices)

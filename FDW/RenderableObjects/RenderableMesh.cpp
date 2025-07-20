@@ -28,8 +28,8 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		m_vMeshMaterialStructures.push_back(cbData);
 	}
 	
-	if (auto size = m_pScene->GetBonesCount() * sizeof(dx::XMMATRIX)) {
-		m_pStructureBufferBones = FD3DW::FResource::CreateSimpleStructuredBuffer(device, (UINT)size);
+	if (m_pScene->GetBonesCount()) {
+		m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, m_pScene->GetBonesCount(), false);
 	}
 	
 	for (auto ind = 0; ind < m_pScene->GetObjectBuffersCount(); ind++)

@@ -10,12 +10,14 @@ void MainRenderer::UserInit()
 	auto device = GetDevice();
 
 	InitMainRendererParts(device);
-	
+
 	SetVSync(true);
 
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
+
+	CreateLight();
 
 	auto wndSettins = GetMainWNDSettings();
 
@@ -31,6 +33,14 @@ void MainRenderer::UserInit()
 		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
 		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 	}
+
+
+	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height);
+	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
+	m_pForwardRenderPassSRVPack = CreateSRVPack(1u);
+	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
+	m_pForwardRenderPassSRVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+
 
 	m_pScreen = CreateRectangle(m_pPCML);
 
@@ -54,31 +64,35 @@ void MainRenderer::UserLoop()
 {
 	m_pCommandList->ResetList();
 
-	m_pRenderableObjectsManager->BeforeRender(GetDevice(), m_pPCML);
+	m_pLightsManager->BeforeRender(m_pPCML);
+	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
 
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
 	//	DEFERRED FIRST PASS
-	auto gBuffersCount = GetGBuffersNum();
+	{
+		auto gBuffersCount = GetGBuffersNum();
 
-	for (auto& gbuffer : m_pGBuffers) {
-		gbuffer->StartDraw(m_pPCML);
-	}
+		for (auto& gbuffer : m_pGBuffers) {
+			gbuffer->StartDraw(m_pPCML);
+		}
 
-	m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-	m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
+		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
-	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	for (auto i = 0; i < gBuffersCount; ++i) {
-		m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
-	}
-	m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+		m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		for (auto i = 0; i < gBuffersCount; ++i) {
+			m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
+		}
+		m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
-	m_pRenderableObjectsManager->DeferredRender(m_pPCML);
-	
-	for (auto& gbuffer : m_pGBuffers) {
-		gbuffer->EndDraw(m_pPCML);
+		m_pRenderableObjectsManager->DeferredRender(m_pPCML);
+
+		for (auto& gbuffer : m_pGBuffers) {
+			gbuffer->EndDraw(m_pPCML);
+		}
+
 	}
 
 	///
@@ -87,42 +101,83 @@ void MainRenderer::UserLoop()
 	//////////////////////////
 	// DEFERRED SECOND PASS
 
+	{
+		m_pForwardRenderPassRTV->StartDraw(m_pPCML);
+
+		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
+
+		m_pPCML->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(m_pPCML);
+
+		m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+		m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+
+		ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
+		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
+
+		m_pPCML->SetGraphicsRootDescriptorTable(0, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+
+		m_pLightsManager->BindLightConstantBuffer(1,2, m_pPCML);
+
+		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+
+
+		m_pRenderableObjectsManager->ForwardRender(m_pPCML);
+
+
+		m_pForwardRenderPassRTV->EndDraw(m_pPCML);
+	}
+
+	//
+	///////////////////////////
+
+	//////////////////////////
+	// POSTPROCESS PASS
+
 	BindMainViewPort(m_pPCML);
 	BindMainRect(m_pPCML);
 	BeginDraw(m_pCommandList->GetPtrCommandList());
 
-	m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-	
-	PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(m_pPCML);
+	{
 
-	m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-	m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+		m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
+		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
 
-	ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
-	m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
+		PSOManager::GetInstance()->GetPSOObject(PSOType::PostProcessDefaultConfig)->Bind(m_pPCML);
 
-	m_pPCML->SetGraphicsRootDescriptorTable(0, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+		m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+		m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
 
-	m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+		ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
+		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
+
+		m_pPCML->SetGraphicsRootDescriptorTable(0, m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+
+
+		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+
+	}
 
 	///
 	///////////////////////////
 	
 
 	//////////////////////////
-	//			FORWARD PASS
+	//			UI PASS
 
-	m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-	m_pRenderableObjectsManager->ForwardRender(m_pPCML);
-
-	m_pUIComponent->RenderImGui();
+	{
+		m_pUIComponent->RenderImGui();
+	}
 	
 	///
 	///////////////////////////
 
-	EndDraw(m_pCommandList->GetPtrCommandList());
+	{
+		EndDraw(m_pCommandList->GetPtrCommandList());
+	}
 
 	ExecuteMainQueue();
 	
@@ -170,7 +225,7 @@ void MainRenderer::AddScene(std::string path) {
 }
 
 void MainRenderer::AddSkybox(std::string path) {
-	m_pRenderableObjectsManager->CreateObject(path, GetDevice(), m_pPCML);
+	m_pRenderableObjectsManager->CreateObject(path, m_pPCML);
 }
 
 void MainRenderer::AddAudio(std::string path) {
@@ -178,7 +233,7 @@ void MainRenderer::AddAudio(std::string path) {
 }
 
 void MainRenderer::AddSimplePlane() {
-	m_pRenderableObjectsManager->CreatePlane(GetDevice(), m_pPCML);
+	m_pRenderableObjectsManager->CreatePlane(m_pPCML);
 }
 
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {
@@ -190,6 +245,27 @@ void MainRenderer::RemoveAllObjects() {
 	for (const auto obj : objs) {
 		RemoveObject(obj);
 	}
+}
+
+void MainRenderer::CreateLight() {
+	LightStruct light;
+	m_pLightsManager->AddLight(light);
+}
+
+const LightStruct& MainRenderer::GetLight(int idx) {
+	return m_pLightsManager->GetLight(idx);
+}
+
+void MainRenderer::SetLightData(LightStruct newData, int idx) {
+	m_pLightsManager->SetLightData(newData,idx);
+}
+
+int MainRenderer::GetLightsCount() {
+	return m_pLightsManager->GetLightsCount();
+}
+
+void MainRenderer::DeleteLight(int idx) {
+	m_pLightsManager->DeleteLight(idx);
 }
 
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
@@ -204,6 +280,7 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
 	m_pCameraComponent = CreateComponent<MainRenderer_CameraComponent>();
 	m_pRenderableObjectsManager = CreateComponent<MainRenderer_RenderableObjectsManager>();
+	m_pLightsManager = CreateComponent<MainRenderer_LightsManager>();
 
 }
 

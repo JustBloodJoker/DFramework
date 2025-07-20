@@ -54,3 +54,15 @@ struct Materials
     float heightScale;
     int4 LoadedTexture[3];
 };
+
+struct LightsHelper{
+    int LightCount;
+    float3 CameraPos;
+};
+
+struct LightStruct {
+    float3 Position;
+    float Intensity;
+    float3 Color;
+    float Radius;
+};

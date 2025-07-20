@@ -15,6 +15,10 @@ const GBuffersData& GetGBufferData() {
     return s_sGBuffersData;
 }
 
+const DXGI_FORMAT GetForwardRenderPassFormat() {
+    return DXGI_FORMAT_R32G32B32A32_FLOAT;
+}
+
 const UINT& GetGBuffersNum() {
     return (UINT)s_sGBuffersData.GBuffersFormats.size();
 }
@@ -24,6 +28,12 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
     static CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
     rasterizerDesc.CullMode = D3D12_CULL_MODE_NONE;
+
+
+    static CD3DX12_DEPTH_STENCIL_DESC dsvPostProcessDesc(D3D12_DEFAULT);
+    dsvPostProcessDesc.DepthEnable = FALSE;
+    dsvPostProcessDesc.StencilEnable = FALSE;
+
 
     static CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
     dsvFirstDefPassDesc.DepthEnable = true;
@@ -80,7 +90,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                 [] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = secondPassDSVDesc;
                     desc.RasterizerState = rasterizerDesc;
@@ -95,10 +105,25 @@ const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
                 [] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.RasterizerState = skyboxRasterizerDesc;
                     desc.DepthStencilState = skyboxDepthDesc;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::PostProcessDefaultConfig,
+            {
+                L"PostProcess",
+                [] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.RasterizerState = skyboxRasterizerDesc;
+                    desc.DepthStencilState = dsvPostProcessDesc;
                     return desc;
                 }()
             }

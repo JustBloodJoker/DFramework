@@ -46,6 +46,11 @@ void MainRenderer_UIComponent::MainWindow() {
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem("Lights")) {
+            DrawLightsTab();
+            ImGui::EndTabItem();
+        }
+
         ImGui::EndTabBar();
     }
 
@@ -93,11 +98,67 @@ void MainRenderer_UIComponent::DrawCameraTab() {
     }
 }
 
+void MainRenderer_UIComponent::DrawLightsTab() {
+    ImGui::SeparatorText("Lights");
+
+    int lightCount = m_pOwner->GetLightsCount();
+
+    if (ImGui::Button("Add Light")) {
+        m_pOwner->CreateLight();
+    }
+
+    if (lightCount > 0) {
+        std::vector<std::string> lightNames(lightCount);
+        for (int i = 0; i < lightCount; ++i) {
+            lightNames[i] = "Light " + std::to_string(i);
+        }
+
+        std::vector<const char*> cstrNames;
+        for (const auto& name : lightNames) {
+            cstrNames.push_back(name.c_str());
+        }
+
+        ImGui::Combo("Select Light", &m_iSelectedLightIndex, cstrNames.data(), (int)cstrNames.size());
+
+        if (m_iSelectedLightIndex >= 0 && m_iSelectedLightIndex < lightCount) {
+            LightStruct light = m_pOwner->GetLight(m_iSelectedLightIndex);
+
+            ImGui::SeparatorText("Transform & Properties");
+
+            if (ImGui::DragFloat3("Position", (float*)&light.Position, 0.1f)) {
+                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
+            }
+
+            if (ImGui::DragFloat("Intensity", &light.Intensity, 0.1f, 0.0f, 10000.0f)) {
+                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
+            }
+
+            if (ImGui::ColorEdit3("Color", (float*)&light.Color)) {
+                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
+            }
+
+            if (ImGui::DragFloat("Radius", &light.Radius, 0.1f, 0.0f, 1000.0f)) {
+                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
+            }
+
+            ImGui::Spacing();
+
+            if (ImGui::Button("Delete Light")) {
+                m_pOwner->DeleteLight(m_iSelectedLightIndex);
+                m_iSelectedLightIndex = std::max(0, m_iSelectedLightIndex - 1);
+            }
+        }
+    }
+    else {
+        ImGui::Text("No lights available.");
+    }
+}
+
 void MainRenderer_UIComponent::SceneBrowser() {
     FileBrowser(
         m_bShowSceneBrowser,
         "Scene Browser",
-        currentPath,
+        m_xCurrentPath,
         s_vSupportedSceneExts,
         [this](const std::filesystem::path& path) {
             m_pOwner->AddScene(path.string());
@@ -112,7 +173,7 @@ void MainRenderer_UIComponent::AudioBrowser() {
     FileBrowser(
         m_bShowAudioBrowser,
         "Audio Browser",
-        currentPath,
+        m_xCurrentPath,
         s_vSupportedAudioExts,
         [this](const std::filesystem::path& path) {
             m_pOwner->AddAudio(path.string());
@@ -127,7 +188,7 @@ void MainRenderer_UIComponent::SkyboxBrowser() {
     FileBrowser(
         m_bShowSkyboxBrowser,
         "Skybox Browser",
-        currentPath,
+        m_xCurrentPath,
         s_vSupportedSkyboxExts,
         [this](const std::filesystem::path& path) {
             m_pOwner->AddSkybox(path.string());
@@ -142,7 +203,7 @@ void MainRenderer_UIComponent::TextureBrowser() {
     FileBrowser(
         m_bShowTextureBrowser,
         "Texture Browser",
-        currentPath,
+        m_xCurrentPath,
         s_vSupportedTextureExts,
         [this](const std::filesystem::path& path) {
             if (m_pTextureTargetObject && m_iTextureBeingSet >= 0 && m_iTextureBeingSet < std::size(m_vTextureOps)) {
@@ -631,22 +692,6 @@ void MainRenderer_UIComponent::FileBrowser(
     }
 
     ImGui::End();
-}
-
-
-std::vector<std::filesystem::path> MainRenderer_UIComponent::FindSceneFiles(const std::wstring& root, const std::vector<std::wstring>& extensions) {
-    std::vector<std::filesystem::path> result;
-    for (auto& p : std::filesystem::recursive_directory_iterator(root)) {
-        if (!p.is_regular_file()) continue;
-        auto ext = p.path().extension().wstring();
-        for (const auto& wanted : extensions) {
-            if (ext == wanted) {
-                result.push_back(p.path());
-                break;
-            }
-        }
-    }
-    return result;
 }
 
 std::vector<std::filesystem::directory_entry> MainRenderer_UIComponent::GetDirectoryEntries(const std::filesystem::path& dir) {

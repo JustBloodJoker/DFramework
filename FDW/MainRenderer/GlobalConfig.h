@@ -12,6 +12,7 @@ struct GBuffersData {
 };
 
 const GBuffersData& GetGBufferData();
+const DXGI_FORMAT GetForwardRenderPassFormat();
 const UINT& GetGBuffersNum();
 
 //////////////////////////////////////////////
@@ -36,7 +37,8 @@ struct PSODescriptor {
 enum class PSOType {
 	DefferedFirstPassDefaultConfig,
 	DefferedSecondPassDefaultConfig,
-	SimpleSkyboxDefaultConfig
+	SimpleSkyboxDefaultConfig,
+	PostProcessDefaultConfig,
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors();

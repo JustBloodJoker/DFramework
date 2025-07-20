@@ -22,6 +22,9 @@
     <Filter Include="RenderableObjects">
       <UniqueIdentifier>{052d535b-317d-454c-8523-bfc760f8dd1f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lights">
+      <UniqueIdentifier>{640379cf-94af-44b2-a5b7-8aa0711dc627}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -96,6 +99,9 @@
     <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp">
       <Filter>RenderableObjects</Filter>
     </ClCompile>
+    <ClCompile Include="Lights\MainRenderer_LightsManager.cpp">
+      <Filter>Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -154,6 +160,12 @@
     </ClInclude>
     <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h">
       <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\MainRenderer_LightsManager.h">
+      <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\LightStruct.h">
+      <Filter>Lights</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

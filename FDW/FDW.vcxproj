@@ -28,6 +28,7 @@
     <ClCompile Include="include\imgui\imgui_draw.cpp" />
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Lights\MainRenderer_LightsManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainRenderer\GlobalConfig.cpp" />
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
@@ -47,6 +48,8 @@
   <ItemGroup>
     <ClInclude Include="Camera\CameraInputLayer.h" />
     <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
+    <ClInclude Include="Lights\LightStruct.h" />
+    <ClInclude Include="Lights\MainRenderer_LightsManager.h" />
     <ClInclude Include="MainRenderer\GlobalConfig.h" />
     <ClInclude Include="MainRenderer\MainRenderer.h" />
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />

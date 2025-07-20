@@ -2,6 +2,7 @@
 
 #include <pch.h>
 #include <D3DFramework/Objects/Object.h>
+#include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 
 enum RenderPass
 {

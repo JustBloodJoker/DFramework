@@ -126,11 +126,6 @@ namespace FD3DW
         return std::make_unique<FResource>(pDevice, arraySize, format, width, height, sampleDesc, dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
     }
 
-    std::unique_ptr<FResource> FResource::CreateSimpleStructuredBuffer(ID3D12Device* pDevice, const UINT width)
-    {
-        return FResource::CreateAnonimTexture(pDevice, 1u, DXGI_FORMAT_UNKNOWN, width, 1, DXGI_SAMPLE_DESC({1,0}), D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)), 1);
-    }
-
     std::shared_ptr<FResource> FResource::CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
     {
         auto iter = s_vTextures.find(path);
@@ -198,11 +193,16 @@ namespace FD3DW
             &txtDesc,
             D3D12_RESOURCE_STATE_COMMON,
             nullptr,
-            IID_PPV_ARGS(m_pResource.GetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
+            IID_PPV_ARGS(m_pResource.ReleaseAndGetAddressOf())), " CREATE TEXTURE RESOURCE ERROR");
 
         SetResource(m_pResource.Get());
 
         m_xCurrState = D3D12_RESOURCE_STATE_COMMON;
+    }
+
+    D3D12_RESOURCE_STATES FResource::GetCurrentState() const
+    {
+        return m_xCurrState;
     }
 
 
@@ -260,6 +260,74 @@ namespace FD3DW
             subResData.data());
 
         ResourceBarrierChange(pCommandList, 1, state);
+    }
+
+    std::vector<uint8_t> FResource::GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList) {
+        std::vector<uint8_t> fullData;
+
+        //NOT IMPL
+
+        return fullData;
+
+        /*const D3D12_RESOURCE_DESC desc = GetResource()->GetDesc();
+
+        const UINT64 rowPitch = (desc.Width * GetFormatSizeInBytes(desc.Format) + 7) / 8;
+        const UINT64 slicePitch = rowPitch * desc.Height;
+
+        const UINT numSubresources = desc.MipLevels * desc.DepthOrArraySize;
+
+        UINT64 totalSize = 0;
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(numSubresources);
+        std::vector<UINT> numRows(numSubresources);
+        std::vector<UINT64> rowSizesInBytes(numSubresources);
+        UINT64 requiredSize = 0;
+
+        device->GetCopyableFootprints(&desc, 0, numSubresources, 0, layouts.data(), numRows.data(), rowSizesInBytes.data(), &requiredSize);
+        fullData.resize(static_cast<size_t>(requiredSize));
+
+        wrl::ComPtr<ID3D12Resource> readbackBuffer;
+        CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(requiredSize);
+
+        device->CreateCommittedResource(
+            &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK)),
+            D3D12_HEAP_FLAG_NONE,
+            &bufferDesc,
+            D3D12_RESOURCE_STATE_COPY_DEST,
+            nullptr,
+            IID_PPV_ARGS(&readbackBuffer)
+        );
+
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            GetResource(), m_xCurrState, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        pCommandList->ResourceBarrier(1, &barrier);
+
+        for (UINT i = 0; i < numSubresources; ++i) {
+            const D3D12_PLACED_SUBRESOURCE_FOOTPRINT& footprint = layouts[i];
+
+            D3D12_TEXTURE_COPY_LOCATION dst = {};
+            dst.pResource = readbackBuffer.Get();
+            dst.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+            dst.PlacedFootprint = footprint;
+
+            D3D12_TEXTURE_COPY_LOCATION src = {};
+            src.pResource = GetResource();
+            src.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+            src.SubresourceIndex = i;
+
+            pCommandList->CopyTextureRegion(&dst, 0, 0, 0, &src, nullptr);
+        }
+
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+            GetResource(), D3D12_RESOURCE_STATE_COPY_SOURCE, m_xCurrState);
+        pCommandList->ResourceBarrier(1, &barrier);
+
+        D3D12_RANGE readRange = { 0, static_cast<SIZE_T>(requiredSize) };
+        void* mappedData = nullptr;
+        readbackBuffer->Map(0, &readRange, &mappedData);
+        memcpy(fullData.data(), mappedData, static_cast<size_t>(requiredSize));
+        readbackBuffer->Unmap(0, nullptr);
+
+        return fullData;*/
     }
 
     void FResource::GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)

@@ -470,9 +470,9 @@ namespace FD3DW
 		return FResource::CreateAnonimTexture(m_pDevice.Get(), arraySize, format, width, height, DXGI_SAMPLE_DESC({ 1, 0 }), dimension, resourceFlags, layout, heapFlags, heapProperties, mipLevels);
 	}
 
-	std::unique_ptr<FResource> D3DFW::CreateSimpleStructuredBuffer(const UINT width)
+	std::unique_ptr<StructuredBuffer> D3DFW::CreateSimpleStructuredBuffer(const UINT width)
 	{
-		return CreateAnonimTexture(1u, DXGI_FORMAT_UNKNOWN,width, 1, D3D12_RESOURCE_DIMENSION_BUFFER, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_ROW_MAJOR, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
+		return StructuredBuffer::CreateStructuredBuffer<uint8_t>(GetDevice(), width, false);
 	}
 
 

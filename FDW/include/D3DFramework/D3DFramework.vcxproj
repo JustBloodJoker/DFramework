@@ -192,6 +192,7 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h" />
@@ -219,6 +220,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp" />

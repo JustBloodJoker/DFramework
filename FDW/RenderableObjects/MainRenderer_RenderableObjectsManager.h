@@ -46,14 +46,14 @@ public:
         return ptr;
     }
 
-    BaseRenderableObject* CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list);
-    void CreatePlane(ID3D12Device* device, ID3D12GraphicsCommandList* list);
+    BaseRenderableObject* CreateObject(const std::string path, ID3D12GraphicsCommandList* list);
+    void CreatePlane(ID3D12GraphicsCommandList* list);
 
     void RemoveObject(BaseRenderableObject* obj);
 
     std::vector<BaseRenderableObject*> GetRenderableObjects() const;
 
-    void BeforeRender(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList);
+    void BeforeRender(ID3D12GraphicsCommandList* cmdList);
     void DeferredRender(ID3D12GraphicsCommandList* list);
     void ForwardRender(ID3D12GraphicsCommandList* list);
     void AfterRender();

@@ -7,6 +7,7 @@
 #include <D3DFramework/D3DFW.h>
 #include <Camera/MainRenderer_CameraComponent.h>
 #include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
+#include <Lights/MainRenderer_LightsManager.h>
 
 #include <RenderableObjects/RenderableMesh.h>
 
@@ -42,6 +43,13 @@ public:
 	void RemoveObject(BaseRenderableObject* obj);
 	void RemoveAllObjects();
 
+	//LIGHTS MANAGER
+	void CreateLight();
+	void DeleteLight(int idx);
+	const LightStruct& GetLight(int idx);
+	void SetLightData(LightStruct newData, int idx);
+	int GetLightsCount();
+
 private:
 	void InitMainRendererParts(ID3D12Device* device);
 
@@ -51,6 +59,7 @@ private:
 	MainRenderer_UIComponent* m_pUIComponent = nullptr;
 	MainRenderer_CameraComponent* m_pCameraComponent = nullptr;
 	MainRenderer_RenderableObjectsManager* m_pRenderableObjectsManager = nullptr;
+	MainRenderer_LightsManager* m_pLightsManager = nullptr;
 
 protected:
 
@@ -79,6 +88,9 @@ protected:
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
+	std::unique_ptr<FD3DW::RenderTarget> m_pForwardRenderPassRTV;
+	std::unique_ptr<FD3DW::RTVPacker> m_pForwardRenderPassRTVPack;
+	std::unique_ptr<FD3DW::SRVPacker> m_pForwardRenderPassSRVPack;
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;

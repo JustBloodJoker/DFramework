@@ -8,20 +8,21 @@ MainRenderer_RenderableObjectsManager::MainRenderer_RenderableObjectsManager(Mai
 {
 }
 
-BaseRenderableObject* MainRenderer_RenderableObjectsManager::CreateObject(const std::string path, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+BaseRenderableObject* MainRenderer_RenderableObjectsManager::CreateObject(const std::string path, ID3D12GraphicsCommandList* list) {
     if (auto skybox = FindSkyboxObject())
     {
         RemoveObject(skybox);
     }
 
     auto renderable = std::make_unique<RenderableSkyboxObject>(path);
-    renderable->Init(device, list);
+    renderable->Init(m_pOwner->GetDevice(), list);
     auto ptr = renderable.get();
     m_vObjects.push_back(std::move(renderable));
     return ptr;
 }
 
-void MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+void MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12GraphicsCommandList* list) {
+    auto device = m_pOwner->GetDevice();
     CreateObject(std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GenerateRectangleScene), device, list);
 }
 
@@ -40,13 +41,13 @@ std::vector<BaseRenderableObject*> MainRenderer_RenderableObjectsManager::GetRen
     return ret;
 }
 
-void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList) {
+void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandList* cmdList) {
     auto timer = m_pOwner->GetTimer();
 
     BeforeRenderInputData data;
     data.Time = timer->GetTime();
     data.DT = timer->GetDeltaTime();
-    data.Device = device;
+    data.Device = m_pOwner->GetDevice();
     data.CommandList = cmdList;
     data.Projection = m_pOwner->GetCurrentProjectionMatrix();
     data.View = m_pOwner->GetCurrentViewMatrix();

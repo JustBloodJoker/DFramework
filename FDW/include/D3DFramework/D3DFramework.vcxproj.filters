@@ -96,6 +96,9 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -156,6 +159,9 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>
