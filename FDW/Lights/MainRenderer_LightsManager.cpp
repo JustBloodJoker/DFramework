@@ -62,9 +62,6 @@ void MainRenderer_LightsManager::UpdateLightsStructuredBuffer(ID3D12GraphicsComm
 	if (m_bIsNeedUpdateLightsStructuredBuffer) {
 		auto device = m_pOwner->GetDevice();
 		m_pLightsStructuredBuffer->UploadData(device, list, m_vLights.data(), UINT(m_vLights.size()));
-
-		auto data = m_pLightsStructuredBuffer->GetData(device, list);
-
 		m_bIsNeedUpdateLightsStructuredBuffer = false;
 	}
 }
