@@ -45,11 +45,18 @@ namespace FD3DW
 
 		bool IsHaveTexture(TextureType type) const;
 
+		void UpdateRoughnessMetalnessTexturesInfo();
+
+		bool IsRoughnessAndMetalnessInOneTexture();
+
 	private:
 
 		MaterialFrameWork m_xMaterial;
 		std::unordered_map<TextureType, std::shared_ptr<FResource>> m_mTextureMap;
 
+	private:
+
+		bool m_bIsRoughnessAndMetalnessInOneTexture = false;
 
 	};
 

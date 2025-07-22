@@ -4,7 +4,7 @@
 #include <D3DFramework/GraphicUtilites/Materials.h>
 
 struct MeshMaterialStructure : FD3DW::MaterialFrameWork {
-	int LoadedTexture[FD3DW::TextureType::SIZE];
+	int LoadedTexture[FD3DW::TextureType::SIZE+1];
 
 	void operator=(const FD3DW::MaterialFrameWork& frameworkData) {
 		Diffuse = frameworkData.Diffuse;

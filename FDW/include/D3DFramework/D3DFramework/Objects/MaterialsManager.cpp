@@ -26,6 +26,8 @@ namespace FD3DW
 		{
 			CONSOLE_MESSAGE(std::string("SET TEXTURE ERROR. CAN'T FIND MATERIAL WITH INDEX " + std::to_string(index)).c_str());
 		}
+
+
 	}
 
 	void MaterialsManager::SetMaterialDesc(const MaterialFrameWork& materialDesc, const std::size_t index)

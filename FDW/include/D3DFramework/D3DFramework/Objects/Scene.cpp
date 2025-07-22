@@ -280,6 +280,7 @@ namespace FD3DW
 				name = prePathName + std::string(pathname.C_Str());
 				m_pMaterialManager->SetTexture(name, TextureType::AMBIENT, pDevice, pCommandList);
 			}
+
 		}
 		//////////////////////////////////////////////////////////////////////////////////////
 		//									  ANIMATIONS

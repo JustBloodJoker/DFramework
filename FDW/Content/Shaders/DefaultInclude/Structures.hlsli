@@ -42,6 +42,8 @@ struct MeshMatrices
 #define TEXTURE_AMBIENT_LOAD_FLAG_LOCATION          7
 #define TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION         8
 
+#define TEXTURE_ROUGHNESS_AND_METALNESS_IS_ONE_TEXTURE_FLAG_LOCATION   9
+
 struct Materials
 {
     float4 diffuse;
@@ -60,9 +62,31 @@ struct LightsHelper{
     float3 CameraPos;
 };
 
+
+#define LIGHT_POINT_LIGHT_ENUM_VALUE 0
+#define LIGHT_SPOT_LIGHT_ENUM_VALUE 1
+#define LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE 2
+#define LIGHT_RECT_LIGHT_ENUM_VALUE 3
+
+
 struct LightStruct {
-    float3 Position;
-    float Intensity;
+    int LightType;
     float3 Color;
-    float Radius;
+    float Intensity;
+
+    float3 Position;
+
+    //Point light fields
+    float AttenuationRadius;
+    float SourceRadius;
+
+    //SpotLight
+    float3 Direction; //Directional Light
+    float InnerConeAngle;
+    float OuterConeAngle;
+
+    //RectLight
+    float2 RectSize;
+    float3 Up;
+    float3 Right;
 };

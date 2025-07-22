@@ -29,6 +29,7 @@ namespace FD3DW
 	void Material::SetTexture(const std::string& texturePath, TextureType type, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 	{
 		m_mTextureMap.insert_or_assign(type, FResource::CreateTextureFromPath(texturePath, pDevice, pCommandList));
+		UpdateRoughnessMetalnessTexturesInfo();
 	}
 
 	void Material::DeleteTexture(TextureType type)
@@ -39,6 +40,22 @@ namespace FD3DW
 	bool Material::IsHaveTexture(TextureType type) const
 	{
 		return m_mTextureMap.find(type) != m_mTextureMap.end();
+	}
+
+	void Material::UpdateRoughnessMetalnessTexturesInfo()
+	{
+		if (IsHaveTexture(TextureType::ROUGHNESS) && IsHaveTexture(TextureType::METALNESS)) {
+			if (GetResourceTexture(TextureType::ROUGHNESS) == GetResourceTexture(TextureType::METALNESS)) {
+				m_bIsRoughnessAndMetalnessInOneTexture = true;
+				return;
+			}
+		}
+		m_bIsRoughnessAndMetalnessInOneTexture = false;
+	}
+
+	bool Material::IsRoughnessAndMetalnessInOneTexture()
+	{
+		return m_bIsRoughnessAndMetalnessInOneTexture;
 	}
 
 }

@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <UI/UIInputLayer.h>
+#include <Lights/LightStruct.h>
 
 class MainRenderer;
 class BaseRenderableObject;
@@ -46,6 +47,13 @@ private:
 	void AudioBrowser();
 	void SkyboxBrowser();
 	void TextureBrowser();
+
+	bool DrawCommonLightProperties(LightStruct& light);
+	bool DrawSpecificLightUI(LightStruct& light);
+	bool DrawPointLightUI(LightStruct& light);
+	bool DrawDirectionalLightUI(LightStruct& light);
+	bool DrawSpotLightUI(LightStruct& light);
+	bool DrawRectLightUI(LightStruct& light);
 
 
 	void ElementParamSetter();

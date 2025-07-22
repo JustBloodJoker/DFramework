@@ -74,13 +74,19 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float roughness = objMaterials.roughness;
     if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION])
     {
-        roughness = RoughnessTexture.Sample(wraps, texCoord).g;
+        if(LoadedTexture[TEXTURE_ROUGHNESS_AND_METALNESS_IS_ONE_TEXTURE_FLAG_LOCATION])
+        {
+            roughness = RoughnessTexture.Sample(wraps, texCoord).g;
+        } else
+        {
+            roughness = RoughnessTexture.Sample(wraps, texCoord).r;
+        }
     }
 
     float metalness = objMaterials.metalness;
     if (LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION])
     {
-        metalness = MetalnessTexture.Sample(wraps, texCoord).g;
+        metalness = MetalnessTexture.Sample(wraps, texCoord).r;
     }
 
     float4 specular = objMaterials.specular;

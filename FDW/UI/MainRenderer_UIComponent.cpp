@@ -22,6 +22,15 @@ static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dd
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
 static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg", L".png" };
 
+
+constexpr std::array<std::pair<LightTypes, const char*>, LightTypes::Size> LightTypeInfo = { {
+    { PointLight, "PointLight" },
+    { SpotLight, "SpotLight" },
+    { DirectionalLight, "DirectionalLight" },
+    { RectLight, "RectLight" }
+} };
+
+
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
     MainWindow();
@@ -107,50 +116,52 @@ void MainRenderer_UIComponent::DrawLightsTab() {
         m_pOwner->CreateLight();
     }
 
-    if (lightCount > 0) {
-        std::vector<std::string> lightNames(lightCount);
-        for (int i = 0; i < lightCount; ++i) {
-            lightNames[i] = "Light " + std::to_string(i);
-        }
-
-        std::vector<const char*> cstrNames;
-        for (const auto& name : lightNames) {
-            cstrNames.push_back(name.c_str());
-        }
-
-        ImGui::Combo("Select Light", &m_iSelectedLightIndex, cstrNames.data(), (int)cstrNames.size());
-
-        if (m_iSelectedLightIndex >= 0 && m_iSelectedLightIndex < lightCount) {
-            LightStruct light = m_pOwner->GetLight(m_iSelectedLightIndex);
-
-            ImGui::SeparatorText("Transform & Properties");
-
-            if (ImGui::DragFloat3("Position", (float*)&light.Position, 0.1f)) {
-                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
-            }
-
-            if (ImGui::DragFloat("Intensity", &light.Intensity, 0.1f, 0.0f, 10000.0f)) {
-                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
-            }
-
-            if (ImGui::ColorEdit3("Color", (float*)&light.Color)) {
-                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
-            }
-
-            if (ImGui::DragFloat("Radius", &light.Radius, 0.1f, 0.0f, 1000.0f)) {
-                m_pOwner->SetLightData(light, m_iSelectedLightIndex);
-            }
-
-            ImGui::Spacing();
-
-            if (ImGui::Button("Delete Light")) {
-                m_pOwner->DeleteLight(m_iSelectedLightIndex);
-                m_iSelectedLightIndex = std::max(0, m_iSelectedLightIndex - 1);
-            }
-        }
-    }
-    else {
+    if (lightCount <= 0) {
         ImGui::Text("No lights available.");
+        return;
+    }
+
+    std::vector<std::string> lightNames(lightCount);
+    for (int i = 0; i < lightCount; ++i)
+        lightNames[i] = "Light " + std::to_string(i);
+
+    std::vector<const char*> cstrNames;
+    for (const auto& name : lightNames)
+        cstrNames.push_back(name.c_str());
+
+    ImGui::Combo("Select Light", &m_iSelectedLightIndex, cstrNames.data(), (int)cstrNames.size());
+
+    if (m_iSelectedLightIndex < 0 || m_iSelectedLightIndex >= lightCount) return;
+
+    LightStruct light = m_pOwner->GetLight(m_iSelectedLightIndex);
+    int currentType = light.LightType;
+    bool changed = false;
+
+    static const std::array<const char*, LightTypes::Size> lightTypeNamesCStr = []() {
+        std::array<const char*, LightTypes::Size> result{};
+        for (size_t i = 0; i < LightTypeInfo.size(); ++i)
+            result[i] = LightTypeInfo[i].second;
+        return result;
+        }();
+
+    if (ImGui::Combo("Light Type", &currentType, lightTypeNamesCStr.data(), (int)lightTypeNamesCStr.size())) {
+        light.LightType = currentType;
+        changed = true;
+    }
+
+    ImGui::SeparatorText("Transform & Properties");
+    changed |= DrawCommonLightProperties(light);
+    changed |= DrawSpecificLightUI(light);
+
+    if (changed) {
+        m_pOwner->SetLightData(light, m_iSelectedLightIndex);
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Delete Light")) {
+        m_pOwner->DeleteLight(m_iSelectedLightIndex);
+        m_iSelectedLightIndex = std::max(0, m_iSelectedLightIndex - 1);
     }
 }
 
@@ -214,6 +225,94 @@ void MainRenderer_UIComponent::TextureBrowser() {
             return "Texture ";
         }
     );
+}
+
+bool MainRenderer_UIComponent::DrawCommonLightProperties(LightStruct& light) {
+    bool changed = false;
+    changed |= ImGui::DragFloat3("Position", (float*)&light.Position, 0.1f);
+    changed |= ImGui::DragFloat("Intensity", &light.Intensity, 0.1f, 0.0f, 10000.0f);
+    changed |= ImGui::ColorEdit3("Color", (float*)&light.Color);
+    return changed;
+}
+
+bool MainRenderer_UIComponent::DrawSpecificLightUI(LightStruct& light) {
+    switch (light.LightType) {
+    case LightTypes::PointLight:
+        return DrawPointLightUI(light);
+    case LightTypes::DirectionalLight:
+        return DrawDirectionalLightUI(light);
+    case LightTypes::SpotLight:
+        return DrawSpotLightUI(light);
+    case LightTypes::RectLight:
+        return DrawRectLightUI(light);
+    default:
+        ImGui::Text("Unknown Light Type");
+        return false;
+    }
+}
+
+bool MainRenderer_UIComponent::DrawPointLightUI(LightStruct& light) {
+    bool changed = false;
+    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.0f, 1000.0f);
+    changed |= ImGui::DragFloat("Source Radius", &light.SourceRadius, 0.1f, 0.0f, 1000.0f);
+    return changed;
+}
+
+bool MainRenderer_UIComponent::DrawDirectionalLightUI(LightStruct& light) {
+    bool changed = false;
+
+    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.1f, -1.0f, 1.0f);
+
+    return changed;
+}
+
+bool MainRenderer_UIComponent::DrawSpotLightUI(LightStruct& light) {
+    bool changed = false;
+
+    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.1f, -1.0f, 1.0f);
+
+    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.1f, 100.0f);
+
+    float innerDeg = dx::XMConvertToDegrees(light.InnerConeAngle);
+    float outerDeg = dx::XMConvertToDegrees(light.OuterConeAngle);
+
+    changed |= ImGui::DragFloat("Inner Cone Angle", &innerDeg, 0.1f, 0.0f, 90.0f);
+    changed |= ImGui::DragFloat("Outer Cone Angle", &outerDeg, 0.1f, 0.0f, 90.0f);
+
+    light.InnerConeAngle = dx::XMConvertToRadians(innerDeg);
+    light.OuterConeAngle = dx::XMConvertToRadians(outerDeg);
+
+    return changed;
+}
+
+bool MainRenderer_UIComponent::DrawRectLightUI(LightStruct& light) {
+    bool changed = false;
+
+    changed |= ImGui::DragFloat2("Rect Size", (float*)&light.RectSize, 0.1f, 0.1f, 20.0f);
+
+    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.05f, -1.0f, 1.0f);
+
+    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.1f, 100.0f);
+
+    if (changed)
+    {
+        dx::XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&light.Direction));
+
+        dx::XMVECTOR tempUp = dx::XMVectorSet(0, 1, 0, 0);
+        if (fabsf(dx::XMVectorGetX(dx::XMVector3Dot(dir, tempUp))) > 0.99f)
+        {
+            tempUp = dx::XMVectorSet(0, 0, 1, 0);
+        }
+
+        dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(tempUp, dir));
+        dx::XMVECTOR up = dx::XMVector3Cross(dir, right);
+
+        dx::XMStoreFloat3(&light.Direction, dir);
+        dx::XMStoreFloat3(&light.Right, right);
+        dx::XMStoreFloat3(&light.Up, up);
+    }
+
+    return changed;
 }
 
 void MainRenderer_UIComponent::ElementParamSetter() {

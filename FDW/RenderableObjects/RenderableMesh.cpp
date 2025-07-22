@@ -24,6 +24,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 				m_vSRVPacks.back()->AddNullResource(i, device);
 			}
 		}
+		cbData.LoadedTexture[FD3DW::TextureType::SIZE] = mat->IsRoughnessAndMetalnessInOneTexture();
 
 		m_vMeshMaterialStructures.push_back(cbData);
 	}

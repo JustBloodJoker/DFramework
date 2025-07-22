@@ -80,6 +80,7 @@ void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string p
 	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(type), D3D12_SRV_DIMENSION_TEXTURE2D, type, device);
 	
 	m_xMaterialCBufferData.LoadedTexture[type] = true;
+	m_xMaterialCBufferData.LoadedTexture[FD3DW::TextureType::SIZE] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
 	NeedUpdateMaterials();
 }
 
@@ -88,6 +89,7 @@ void RenderableSimpleObject::EraseTexture(FD3DW::TextureType type, ID3D12Device*
 	m_pSRVPack->AddNullResource(type, device);
 	
 	m_xMaterialCBufferData.LoadedTexture[type] = false;
+	m_xMaterialCBufferData.LoadedTexture[FD3DW::TextureType::SIZE] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
 	NeedUpdateMaterials();
 }
 
