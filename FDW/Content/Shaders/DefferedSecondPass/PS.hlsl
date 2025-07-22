@@ -134,12 +134,12 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
                 break;
         }
     }
+    
+    float3 emissive = GBuffer_Emissive.Sample(ss, uv).rgb;
 
-    float3 ambient = float3(0.03, 0.03, 0.03) * albedo * ao;
-    float3 color = ambient + Lo;
+    float3 color = Lo * ao + emissive;
 
     color = color / (color + float3(1.0, 1.0, 1.0));
-    color = pow(color, float3(1.0 / 2.2,1.0 / 2.2,1.0 / 2.2));
 
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);

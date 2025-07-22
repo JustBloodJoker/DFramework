@@ -88,11 +88,23 @@ namespace FD3DW
             else
             {
                 int width, height, channels;
-                float* dat = stbi_loadf(path.c_str(), &width, &height, &channels, 0);
+                unsigned char* dat = stbi_load(path.c_str(), &width, &height, &channels, 0);
                 
+                if (channels == 3) {
+                    unsigned char* rgbaData = new unsigned char[width * height * 4];
+                    for (int i = 0; i < width * height; ++i) {
+                        rgbaData[i * 4 + 0] = dat[i * 3 + 0];
+                        rgbaData[i * 4 + 1] = dat[i * 3 + 1];
+                        rgbaData[i * 4 + 2] = dat[i * 3 + 2];
+                        rgbaData[i * 4 + 3] = 255;
+                    }
+                    stbi_image_free(dat);
+                    dat = rgbaData;
+                }
+
                 UINT mipLevels = CalculateMipCount(width, height);
                 CreateTextureBuffer(pDevice, 1, 
-                    channels == 1 ? DXGI_FORMAT_R32_FLOAT : channels == 2 ? DXGI_FORMAT_R32G32_FLOAT : channels == 3 ? DXGI_FORMAT_R32G32B32_FLOAT : DXGI_FORMAT_R32G32B32A32_FLOAT,
+                    channels == 1 ? DXGI_FORMAT_R8_UNORM : channels == 2 ? DXGI_FORMAT_R8G8_UNORM : channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
                     width, height, 
                     DXGI_SAMPLE_DESC({1, 0}),
                     D3D12_RESOURCE_DIMENSION_TEXTURE2D, 

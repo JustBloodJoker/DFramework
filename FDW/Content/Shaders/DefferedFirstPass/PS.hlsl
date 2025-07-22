@@ -16,7 +16,7 @@ Texture2D HeightTexture : register(t4);
 Texture2D SpecularTexture : register(t5);
 Texture2D OpacityTexture : register(t6);
 Texture2D AmbientTexture : register(t7);
-Texture2D EmmisiveTexture : register(t8);
+Texture2D EmissiveTexture : register(t8);
 
 SamplerState wraps : register(s0);
 
@@ -96,18 +96,20 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     }
     
     float4 emissive = objMaterials.emissive;
-    if (LoadedTexture[TEXTURE_SPECULAR_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION])
     {
-        emissive.rgb = SpecularTexture.Sample(wraps, texCoord).rgb;
+        emissive.rgb = EmissiveTexture.Sample(wraps, texCoord).rgb;
     }
     
-    float ao = 0.0f;
+    float ao = 1.0f;
     if (LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION])
     {
         ao = AmbientTexture.Sample(wraps, texCoord).r;
     }
 
     AlphaClipping(albedo.a);
+
+    albedo.rgb = GammaCorrection(albedo.rgb, 2.2);
 
     PIXEL_OUTPUT psOut;
     psOut.Position      = float4(vsOut.worldPos, 1.0f);
