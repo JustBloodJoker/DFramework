@@ -10,6 +10,20 @@ void MainRenderer_LightsManager::AfterConstruction() {
 	m_pLightsStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<LightStruct>(device, 1u, true);
 }
 
+void MainRenderer_LightsManager::InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRVPacker* srvPack) {
+	auto device = m_pOwner->GetDevice();
+	auto size = GetCBV_SRV_UAVDescriptorSize(device);
+
+	auto LTCMat = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_MAT, device, list);
+	srvPack->AddResource(LTCMat->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
+
+	auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
+	srvPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
+
+	m_vLCTResources.push_back(LTCMat);
+	m_vLCTResources.push_back(LTCAmp);
+}
+
 void MainRenderer_LightsManager::AddLight(LightStruct light) {
 	m_vLights.push_back(light);
 	m_bIsNeedUpdateLightsStructuredBuffer = true;
@@ -42,7 +56,7 @@ int MainRenderer_LightsManager::GetLightsCount() {
 }
 
 void MainRenderer_LightsManager::BeforeRender(ID3D12GraphicsCommandList* list) {
-	UpdateLightsConstantBuffer();
+	UpdateLightsConstantBuffer();	
 	UpdateLightsStructuredBuffer(list);
 }
 

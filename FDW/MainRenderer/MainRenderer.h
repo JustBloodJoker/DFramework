@@ -50,6 +50,7 @@ public:
 	void SetLightData(LightStruct newData, int idx);
 	int GetLightsCount();
 
+
 private:
 	void InitMainRendererParts(ID3D12Device* device);
 

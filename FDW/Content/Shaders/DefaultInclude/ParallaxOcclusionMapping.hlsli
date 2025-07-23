@@ -1,3 +1,6 @@
+#ifndef _PARALLAX_OCCLUSION_MAPPING_HLSLI_
+#define _PARALLAX_OCCLUSION_MAPPING_HLSLI_
+
 struct POMInputData {
     float3 WorldPosition;
     float3 CameraPosition;
@@ -47,3 +50,5 @@ float2 ParallaxOcclusionMapping(POMInputData inData)
 
     return finalTexCoords;
 }
+
+#endif

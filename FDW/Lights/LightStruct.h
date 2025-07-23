@@ -25,15 +25,14 @@ struct LightStruct {
     //point light only
     float SourceRadius = 0.0f;
 
-    //ûpot light only
-    dx::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };
+    //spot light only
+    dx::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f }; //directional light using this
     float InnerConeAngle = dx::XMConvertToRadians(15.0f);
     float OuterConeAngle = dx::XMConvertToRadians(30.0f);
 
-
+    //LTC only
     dx::XMFLOAT2 RectSize = { 1.0f, 1.0f };
-    dx::XMFLOAT3 Up = { 0.0f, 1.0f, 0.0f };
-    dx::XMFLOAT3 Right = { 1.0f, 0.0f, 0.0f };
+    dx::XMFLOAT3 Rotation = { 0.0f, dx::XMConvertToRadians(90.0f), 0.0f };
 };
 
 struct LightBuffer {

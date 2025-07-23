@@ -1,3 +1,6 @@
+#ifndef _STRUCTURES_HLSLI_
+#define _STRUCTURES_HLSLI_
+
 struct VERTEX_INPUT
 {
     float3 pos : POSITION;
@@ -87,6 +90,7 @@ struct LightStruct {
 
     //RectLight
     float2 RectSize;
-    float3 Up;
-    float3 Right;
+    float3 Rotation;
 };
+
+#endif

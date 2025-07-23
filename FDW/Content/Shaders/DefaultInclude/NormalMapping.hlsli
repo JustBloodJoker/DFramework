@@ -1,3 +1,6 @@
+#ifndef _NORMAL_MAPPING_HLSLI_
+#define _NORMAL_MAPPING_HLSLI_
+
 struct NMInputData{
     float2 TextureCoords;
     float3x3 TBN;
@@ -10,3 +13,5 @@ float3 NormalMapping(NMInputData inData){
     normalMap = (2.0f * normalMap) - 1.0f;
     return normalize(mul(normalMap.rgb, inData.TBN));
 }
+
+#endif

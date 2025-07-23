@@ -2,6 +2,7 @@
 #include "Structures.hlsli"
 #include "SameShadersStructs.hlsli"
 #include "PBRFunctions.hlsli"
+#include "LTCFunctions.hlsli"
 
 struct PIXEL_OUTPUT
 {
@@ -17,6 +18,9 @@ Texture2D GBuffer_Albedo : register(t3);        //r         , g         , b     
 Texture2D GBuffer_Specular : register(t4);      //r         , g         , b                 , specularFactor
 Texture2D GBuffer_Emissive : register(t5);      //r         , g         , b                 , empty
 Texture2D GBuffer_MaterialData : register(t6);  //roughness , metalness , specular power    , AO
+
+Texture2D<float4> LTC_Mat : register(t7);
+Texture2D<float2> LTC_Amp : register(t8);
 
 SamplerState ss : register(s0);
 
@@ -90,10 +94,34 @@ float3 ApplyDirectionalLight(in LightStruct light, float3 WorldPos, float3 N, fl
     return CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
 }
 
-float3 ApplyRectLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
-{
-    //TODO
-    return float3(0.0f,0.0f,0.0f);
+float3 ApplyRectLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
+    float3 points[4];
+    InitRectPoints(light, points);
+    
+    float NdotV = clamp(dot(N, V), 0.0, 1.0);
+    roughness = max(0.1, roughness);
+    float2 uv = float2(roughness, sqrt(1.0 - NdotV));
+    uv = uv*LUT_SCALE + LUT_BIAS;
+    
+    float4 ltc1 = LTC_Mat.SampleLevel(ss, uv, 0);
+    float2 ltc2 = LTC_Amp.SampleLevel(ss, uv, 0);
+
+	float3x3 minV = float3x3(
+	   float3(ltc1.x, 0, ltc1.y),
+	   float3(0, 1, 0),
+	   float3(ltc1.z, 0, ltc1.w)
+	);
+	
+    minV = transpose(minV);
+    
+    float3 spec = LTCEvaluate(N, V, WorldPos, minV, points);
+    
+    spec *= F0 * ltc2.x + (1.0 - F0) * ltc2.y;
+
+    float3 diffuse = LTCEvaluate(N, V, WorldPos, float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), points);
+
+    float3 color = light.Intensity * light.Color * (spec + diffuse*albedo);
+    return color;
 }
 
 PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)

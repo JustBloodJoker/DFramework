@@ -1,3 +1,5 @@
+#ifndef _UTILITS_HLSLI_
+#define _UTILITS_HLSLI_
 
 void AlphaClipping(float alpha)
 {
@@ -75,3 +77,77 @@ float4x4 Inverse(float4x4 m) {
 
     return ret;
 }
+
+
+/////////////////////////////////////////////////////////////////////////////
+//EULER ROTATIONS
+float3 RotateYaw(float3 axis, float angle)
+{
+    float3 r;
+    r.x = axis.x * cos(angle) + axis.z * sin(angle);
+    r.y = axis.y;
+    r.z = -axis.x * sin(angle) + axis.z * cos(angle);
+    return r;
+}
+
+float3 RotateRoll(float3 axis, float angle)
+{
+    float3 r;
+    r.x = axis.x * cos(angle) - axis.y * sin(angle);
+    r.y = axis.x * sin(angle) + axis.y * cos(angle);
+    r.z = axis.z;
+    return r;
+}
+
+float3 RotatePitch(float3 axis, float angle)
+{
+    float3 r;
+    r.x = axis.x;
+    r.y = cos(angle) * axis.y - axis.z * sin(angle);
+    r.z = sin(angle) * axis.y + cos(angle) * axis.z;
+    return r;
+}
+
+// Not recommended: causes Gimbal Lock due to sequential Euler rotations.
+float3 RotateAxis(float3 axis, float pitch, float yaw, float roll)
+{
+    return RotatePitch(RotateRoll(RotateYaw(axis, yaw), roll), pitch);
+}
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+//QUAT ROTATIONS
+float4 AxisAngleQuat(float3 axis, float angle)
+{
+    float halfAngle = angle * 0.5;
+    float s = sin(halfAngle);
+    return float4(axis * s, cos(halfAngle));
+}
+
+float4 MulQuat(float4 q, float4 r)
+{
+    return float4(
+        q.w * r.x + q.x * r.w + q.y * r.z - q.z * r.y,
+        q.w * r.y - q.x * r.z + q.y * r.w + q.z * r.x,
+        q.w * r.z + q.x * r.y - q.y * r.x + q.z * r.w,
+        q.w * r.w - q.x * r.x - q.y * r.y - q.z * r.z
+    );
+}
+
+float3 RotateByQuat(float3 v, float4 q)
+{
+    float3 t = 2.0 * cross(q.xyz, v);
+    return v + q.w * t + cross(q.xyz, t);
+}
+
+float3 RotateAxisQuat(float3 v, float pitch, float yaw, float roll)
+{
+    float4 qPitch = AxisAngleQuat(float3(1, 0, 0), pitch);
+    float4 qYaw   = AxisAngleQuat(float3(0, 1, 0), yaw);
+    float4 qRoll  = AxisAngleQuat(float3(0, 0, 1), roll);
+    float4 q = MulQuat(qYaw, MulQuat(qRoll, qPitch));
+    return RotateByQuat(v, q);
+}
+/////////////////////////////////////////////////////////////////////////////
+
+#endif

@@ -22,7 +22,7 @@ void MainRenderer::UserInit()
 	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;
 	auto gbuffersNum = (UINT)gBufferFormats.size();
 	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
-	m_pGBuffersSRVPack = CreateSRVPack(gbuffersNum);
+	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
 
 	for (const auto& format : gBufferFormats) {
 		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height));
@@ -32,6 +32,7 @@ void MainRenderer::UserInit()
 		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 	}
 
+	m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
 
 	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height);
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
@@ -116,9 +117,9 @@ void MainRenderer::UserLoop()
 		ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
 		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
 
-		m_pPCML->SetGraphicsRootDescriptorTable(0, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+		m_pPCML->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
-		m_pLightsManager->BindLightConstantBuffer(1,2, m_pPCML);
+		m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pPCML);
 
 		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 

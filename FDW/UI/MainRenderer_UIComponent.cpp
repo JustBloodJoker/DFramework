@@ -288,30 +288,12 @@ bool MainRenderer_UIComponent::DrawSpotLightUI(LightStruct& light) {
 bool MainRenderer_UIComponent::DrawRectLightUI(LightStruct& light) {
     bool changed = false;
 
-    changed |= ImGui::DragFloat2("Rect Size", (float*)&light.RectSize, 0.1f, 0.1f, 20.0f);
+    changed |= ImGui::DragFloat2("Size (W x H)", (float*)&light.RectSize, 0.1f, 0.1f, 20.0f);
 
-    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.05f, -1.0f, 1.0f);
-
-    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.1f, 100.0f);
-
-    if (changed)
-    {
-        dx::XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&light.Direction));
-
-        dx::XMVECTOR tempUp = dx::XMVectorSet(0, 1, 0, 0);
-        if (fabsf(dx::XMVectorGetX(dx::XMVector3Dot(dir, tempUp))) > 0.99f)
-        {
-            tempUp = dx::XMVectorSet(0, 0, 1, 0);
-        }
-
-        dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(tempUp, dir));
-        dx::XMVECTOR up = dx::XMVector3Cross(dir, right);
-
-        dx::XMStoreFloat3(&light.Direction, dir);
-        dx::XMStoreFloat3(&light.Right, right);
-        dx::XMStoreFloat3(&light.Up, up);
-    }
-
+    changed |= ImGui::SliderAngle("Pitch", &light.Rotation.x, -180.0f, 180.0f);
+    changed |= ImGui::SliderAngle("Yaw", &light.Rotation.y, -180.0f, 180.0f);
+    changed |= ImGui::SliderAngle("Roll", &light.Rotation.z, -180.0f, 180.0f);
+    
     return changed;
 }
 
