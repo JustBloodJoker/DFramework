@@ -257,8 +257,8 @@ namespace FD3DW
                 h = std::max(1u, h >> 1);
             }
         }
-
-        if (!m_pUploadBuffer)
+        
+        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize()!=totalBytes)
         {
             m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(totalBytes), false);
         }

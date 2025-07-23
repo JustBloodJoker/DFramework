@@ -34,11 +34,13 @@ namespace FD3DW
 		void CpyData(int index, const BUFFER_STRUCTURE_DESC_TYPE& data);
 
 		UINT GetDataSize() const;
+		UINT GetBufferSize() const;
 
 	private:
 
 		BYTE* m_pData;
 		UINT m_uDataSize;
+		UINT m_uElementCount;
 		wrl::ComPtr<ID3D12Resource> m_pUploadBuffer;
 
 	};
@@ -72,13 +74,15 @@ namespace FD3DW
 	{
 		isCBBuffer ? m_uDataSize = UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::CalculateConstantBufferSize(sizeof(BUFFER_STRUCTURE_DESC_TYPE)) : m_uDataSize = sizeof(BUFFER_STRUCTURE_DESC_TYPE);
 
+		m_uElementCount = elementNum;
+
 		if (m_pUploadBuffer)
 			m_pUploadBuffer->Release();
 
 		HRESULT_ASSERT(pDevice->CreateCommittedResource(
 			&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD)),
 			D3D12_HEAP_FLAG_NONE,
-			&keep(CD3DX12_RESOURCE_DESC::Buffer(elementNum * m_uDataSize)),
+			&keep(CD3DX12_RESOURCE_DESC::Buffer(m_uElementCount * m_uDataSize)),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(m_pUploadBuffer.GetAddressOf())),
@@ -120,6 +124,12 @@ namespace FD3DW
 	inline UINT UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetDataSize() const
 	{
 		return m_uDataSize;
+	}
+
+	template<typename BUFFER_STRUCTURE_DESC_TYPE>
+	inline UINT UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetBufferSize() const
+	{
+		return m_uDataSize * m_uElementCount;
 	}
 
 
