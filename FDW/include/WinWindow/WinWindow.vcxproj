@@ -27,6 +27,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="WinWindowTest\SerializerTest.h" />
     <ClInclude Include="WinWindowTest\TestBaseWindow.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -35,6 +36,13 @@
     <ClInclude Include="WinWindow\pch.h" />
     <ClInclude Include="WinWindow\Utils\CreativeSingleton.h" />
     <ClInclude Include="WinWindow\Utils\Macroses.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\BaseFieldCollector.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\BinarySerializer.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\Concepts.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\FieldInfo.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
     <ClInclude Include="WinWindow\Utils\WindowSettings.h" />
     <ClInclude Include="WinWindow\WinWindow.h" />
@@ -43,6 +51,7 @@
     <ClCompile Include="WinWindowTest\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="WinWindowTest\SerializerTest.cpp" />
     <ClCompile Include="WinWindowTest\TestBaseWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -169,7 +178,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>WinWindow;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

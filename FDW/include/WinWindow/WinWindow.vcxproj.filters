@@ -19,6 +19,9 @@
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp">
       <Filter>WinWindow\InputSystem</Filter>
     </ClCompile>
+    <ClCompile Include="WinWindowTest\SerializerTest.cpp">
+      <Filter>WinWindowTest</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinWindow\Utils\Macroses.h">
@@ -48,6 +51,30 @@
     <ClInclude Include="WinWindow\Utils\CreativeSingleton.h">
       <Filter>WinWindow\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\BaseFieldCollector.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\BinarySerializer.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\Concepts.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\FieldInfo.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindowTest\SerializerTest.h">
+      <Filter>WinWindowTest</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="WinWindowTest">
@@ -61,6 +88,9 @@
     </Filter>
     <Filter Include="WinWindow\InputSystem">
       <UniqueIdentifier>{c26119b6-7058-45d5-b2dc-c3df0f33b256}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow\Utils\Serializer">
+      <UniqueIdentifier>{44625d3a-ab5f-4c2f-a72a-2d3abeda6f83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

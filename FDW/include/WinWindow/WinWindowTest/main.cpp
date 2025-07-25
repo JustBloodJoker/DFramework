@@ -1,4 +1,6 @@
 #include "TestBaseWindow.h"
+#include "SerializerTest.h"
+
 
 void RunOneWindow() {
 	auto wnd1 = new TestBaseWindow(L"wnd1", 100, 100, false);
@@ -27,7 +29,10 @@ void RunMultipleWindow() {
 
 int main() {
 
+	RunAllSerializationsTests();
+
 	RunOneWindow();
 
 	RunMultipleWindow();
+
 }
