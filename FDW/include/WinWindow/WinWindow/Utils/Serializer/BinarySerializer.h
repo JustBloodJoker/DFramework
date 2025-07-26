@@ -8,14 +8,6 @@ class BinarySerializer {
 public:
     BinarySerializer() = default;
 
-    template<typename T>
-    void LoadFromObject(const T& obj) {
-        m_xBuffer.clear();
-        MemoryArchive ar(true);
-        SerializeAny(ar, const_cast<T&>(obj));
-        m_xBuffer = ar.GetBuffer();
-    }
-
     bool LoadFromFile(const std::string& filename) {
         std::ifstream in(filename, std::ios::binary | std::ios::ate);
         if (!in) return false;
@@ -32,13 +24,20 @@ public:
         return out.write(m_xBuffer.data(), m_xBuffer.size()).good();
     }
 
-    template<typename T>
-    T DeserializeToObject() const {
-        MemoryArchive ar(false, m_xBuffer);
-        T obj;
-        SerializeAny(ar, obj);
-        return obj;
+    template<typename... Args>
+    void LoadFromObjects(const Args&... args) {
+        m_xBuffer.clear();
+        MemoryArchive ar(true);
+        (SerializeAny(ar, const_cast<Args&>(args)), ...);
+        m_xBuffer = ar.GetBuffer();
     }
+
+    template<typename... Args>
+    void DeserializeToObjects(Args&... args) const {
+        MemoryArchive ar(false, m_xBuffer);
+        (SerializeAny(ar, args), ...);
+    }
+
 
 protected:
     std::vector<char> m_xBuffer;

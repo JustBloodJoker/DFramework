@@ -206,9 +206,10 @@ void RunInsaneHierarchyPointerTest() {
     crazyContainer.push_back(lst);
 
     BinarySerializer ser;
-    ser.LoadFromObject(crazyContainer);
+    ser.LoadFromObjects(crazyContainer);
 
-    Container loaded = ser.DeserializeToObject<Container>();
+    Container loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized Insane Hierarchy Container:\n";
     for (auto& lst : loaded)
@@ -227,9 +228,10 @@ void RunOwnerReferenceTest() {
     original->inner->value = 999;
 
     BinarySerializer ser;
-    ser.LoadFromObject(original);
+    ser.LoadFromObjects(original);
 
-    std::unique_ptr<Outer> loaded = ser.DeserializeToObject<std::unique_ptr<Outer>>();
+    std::unique_ptr<Outer> loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized Outer with Inner:\n";
     std::cout << "Outer Name: " << loaded->name << "\n";
@@ -257,9 +259,10 @@ void RunSharedControlBlockTest() {
     container["gods"] = { sharedWeapon2, sharedWeapon2, sharedWeapon1 };
 
     BinarySerializer ser;
-    ser.LoadFromObject(container);
+    ser.LoadFromObjects(container);
 
-    ContainerType loaded = ser.DeserializeToObject<ContainerType>();
+    ContainerType loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized Map<string, vector<shared_ptr<Weapon>>>:\n";
     for (auto& [k, vec] : loaded) {
@@ -295,9 +298,10 @@ void RunVectorOfUniquePtrTest() {
     weapons.push_back(std::move(w2));
 
     BinarySerializer ser;
-    ser.LoadFromObject(weapons);
+    ser.LoadFromObjects(weapons);
 
-    auto loaded = ser.DeserializeToObject<std::vector<std::unique_ptr<Weapon>>>();
+    std::vector<std::unique_ptr<Weapon>> loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized vector<unique_ptr<Weapon>>:\n";
     for (auto& w : loaded) {
@@ -318,9 +322,10 @@ void RunCyclicSharedPtrTest() {
     node2->next = node1;
 
     BinarySerializer ser;
-    ser.LoadFromObject(node1);
+    ser.LoadFromObjects(node1);
 
-    auto loaded = ser.DeserializeToObject<std::shared_ptr<Node>>();
+    std::shared_ptr<Node> loaded;
+    ser.DeserializeToObjects<std::shared_ptr<Node>>(loaded);
 
     std::cout << "\nDeserialized Cyclic Node:\n";
     std::cout << "Node1: " << loaded->name << "\n";
@@ -347,9 +352,10 @@ void RunSharedRawPointerTest() {
     obj.rawWeapon = obj.uniqWeapon.get();
 
     BinarySerializer ser;
-    ser.LoadFromObject(obj);
+    ser.LoadFromObjects(obj);
 
-    PointerHolder loaded = ser.DeserializeToObject<PointerHolder>();
+    PointerHolder loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized PointerHolder:\n";
     std::cout << "weapon1: " << loaded.weapon1->name << "\n";
@@ -383,9 +389,10 @@ void RunNestedVectorMapTest() {
     data.push_back(map2);
 
     BinarySerializer ser;
-    ser.LoadFromObject(data);
+    ser.LoadFromObjects(data);
 
-    ContainerType loaded = ser.DeserializeToObject<ContainerType>();
+    ContainerType loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized std::vector<std::map<int, std::vector<Player>>>:\n";
     for (size_t i = 0; i < loaded.size(); ++i) {
@@ -428,9 +435,10 @@ void RunContainerWithDerivedTest() {
     team.bosses["dragon"] = boss;
 
     BinarySerializer ser;
-    ser.LoadFromObject(team);
+    ser.LoadFromObjects(team);
 
-    Team loaded = ser.DeserializeToObject<Team>();
+    Team loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized Team:\n";
     for (auto& m : loaded.members)
@@ -454,9 +462,10 @@ void RunContainerTest() {
     bag.idMap = { {100, "sword"}, {200, "shield"} };
 
     BinarySerializer ser;
-    ser.LoadFromObject(bag);
-
-    Bag loaded = ser.DeserializeToObject<Bag>();
+    ser.LoadFromObjects(bag);
+   
+    Bag loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized Bag:\n";
     for (auto& name : loaded.names)
@@ -487,9 +496,10 @@ void RunBigAutoTest() {
     pc.item = { "health_potion", 5 };
 
     BinarySerializer ser;
-    ser.LoadFromObject(pc);
+    ser.LoadFromObjects(pc);
 
-    PlayerCharacter loaded = ser.DeserializeToObject<PlayerCharacter>();
+    PlayerCharacter loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "Deserialized PlayerCharacter:\n";
     std::cout
@@ -524,9 +534,10 @@ void RunSuperEntityTest() {
     se.score = 1'000'000;
 
     BinarySerializer ser;
-    ser.LoadFromObject(se);
+    ser.LoadFromObjects(se);
 
-    SuperEntity loaded = ser.DeserializeToObject<SuperEntity>();
+    SuperEntity loaded;
+    ser.DeserializeToObjects(loaded);
 
     std::cout << "\nDeserialized SuperEntity:\n";
     std::cout << "Name: " << loaded.name << "\n";
@@ -544,6 +555,35 @@ void RunSuperEntityTest() {
     assert(loaded.score == se.score);
 }
 
+void MultipleSerializedObjectsTest() {
+    BinarySerializer ser;
+
+    Player player;
+    Weapon weapon;
+    Stats stats;
+
+    player.name = "PlayerX";
+    weapon.name = "Gun";
+    stats.strength = 100;
+
+    ser.LoadFromObjects(player, weapon, stats);
+
+    Player playerL;
+    Weapon weaponL;
+    Stats statsL;
+
+    playerL.name;
+    weaponL.name;
+    statsL.strength;
+
+    ser.DeserializeToObjects(playerL, weaponL, statsL);
+
+    assert(playerL.name==player.name);
+    assert(weaponL.name== weapon.name);
+    assert(statsL.strength == stats.strength);
+}
+
+
 void RunAllSerializationsTests() {
     RunBigAutoTest();
     RunSuperEntityTest();
@@ -556,6 +596,7 @@ void RunAllSerializationsTests() {
     RunCyclicSharedPtrTest();
     RunOwnerReferenceTest();
     RunInsaneHierarchyPointerTest();
+    MultipleSerializedObjectsTest();
 
-    std::cout << "\nAll tests passed!\n";
+    std::cout << "\Serializer tests passed!\n";
 }
