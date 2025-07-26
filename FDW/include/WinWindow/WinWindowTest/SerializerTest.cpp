@@ -8,11 +8,8 @@ struct CustomType {
     std::string message;
 };
 
-REGISTER_SERIALIZER(CustomType, [](IArchive& ar, void* ptr) {
-    CustomType& obj = *static_cast<CustomType*>(ptr);
-    SerializeAny(ar, obj.value);
-    SerializeAny(ar, obj.message);
-})
+REGISTER_SERIALIZER(CustomType, [](IArchive& ar, void* ptr) { CustomType& obj = *static_cast<CustomType*>(ptr); SerializeAny(ar, obj.value); SerializeAny(ar, obj.message); })
+
 
 
 class Vec3 {
@@ -192,6 +189,76 @@ public:
         END_FIELD_REGISTRATION()
 };
 
+
+class Base_ID {
+public:
+    std::string name;
+    virtual ~Base_ID() = default;
+
+    BEGIN_FIELD_REGISTRATION(Base_ID)
+        REGISTER_FIELD(name)
+        END_FIELD_REGISTRATION()
+};
+
+class Derived_ID_1 : public Base_ID {
+public:
+    int id1 = 1;
+
+    Derived_ID_1() = default;
+    Derived_ID_1(int val) : id1(val) {}
+    virtual ~Derived_ID_1() = default;
+
+    BEGIN_FIELD_REGISTRATION(Derived_ID_1, Base_ID)
+        REGISTER_FIELD(id1)
+    END_FIELD_REGISTRATION()
+};
+
+class Derived_ID_2 : public Base_ID {
+public:
+    int id2 = 1;
+
+    Derived_ID_2() = default;
+    Derived_ID_2(int val) : id2(val) {}
+    virtual ~Derived_ID_2() = default;
+
+    BEGIN_FIELD_REGISTRATION(Derived_ID_2, Base_ID)
+        REGISTER_FIELD(id2)
+        END_FIELD_REGISTRATION()
+};
+
+class IDManager {
+public:
+    std::vector<std::shared_ptr<Base_ID>> IDs;
+    BEGIN_FIELD_REGISTRATION(IDManager)
+        REGISTER_FIELD(IDs)
+    END_FIELD_REGISTRATION()
+};
+
+void RunBaseTypePointerForDeriverType() {
+    auto manager = std::make_unique<IDManager>();
+
+    auto id1 = std::make_shared<Derived_ID_2>(2);
+    manager->IDs.push_back(id1);
+
+    auto id2 = std::make_shared<Derived_ID_1>(1);
+    manager->IDs.push_back(id2);
+    auto id3 = std::make_shared<Derived_ID_2>(22);
+    manager->IDs.push_back(id3);
+    auto id4 = std::make_shared<Derived_ID_2>(222);
+    manager->IDs.push_back(id4);
+    auto id5 = std::make_shared<Derived_ID_1>(11);
+    manager->IDs.push_back(id5);
+
+    BinarySerializer ser;
+    ser.LoadFromObjects(manager.get());
+
+    std::unique_ptr<IDManager> loaded = nullptr;
+    ser.DeserializeToObjects(loaded);
+
+    for (int i = 0; i < loaded->IDs.size(); ++i) {
+        assert(typeid(*loaded->IDs[i]).name() == typeid(*manager->IDs[i]).name());
+    }
+}
 
 void RunInsaneHierarchyPointerTest() {
     using Container = std::vector<std::list<std::unordered_map<int, std::shared_ptr<SuperEntity>>>>;
@@ -629,6 +696,7 @@ void RunAllSerializationsTests() {
     RunInsaneHierarchyPointerTest();
     MultipleSerializedObjectsTest();
     RunDynamicSerializerBindTest();
+    RunBaseTypePointerForDeriverType();
 
     std::cout << "\nSerializer tests passed!\n";
 }

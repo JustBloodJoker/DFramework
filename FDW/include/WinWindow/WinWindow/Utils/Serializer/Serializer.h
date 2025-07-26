@@ -1,6 +1,4 @@
 #pragma once
-#include "Concepts.h"
-#include "IArchive.h"
 #include <string>
 #include <map>
 #include <list>
@@ -8,8 +6,9 @@
 #include <unordered_map>
 #include <cstring>
 #include <type_traits>
-#include "MacroReflection.h"
+#include "Concepts.h"
 #include "DynamicSerializerRegistry.h"
+#include "PolymorphicFactory.h"
 #include "../Macroses.h"
 
 
@@ -24,8 +23,9 @@ IArchive& operator<<(IArchive& ar, T& val) {
     return ar;
 }
 
+
 using String = std::string;
-REGISTER_SERIALIZER(String, [](IArchive& ar, void* ptr) {
+static StaticSerializerRegister<String> _reg_serializer_String([](IArchive& ar, void* ptr) {
     std::string& str = *static_cast<std::string*>(ptr);
     if (ar.IsOutput()) {
         uint32_t size = static_cast<uint32_t>(str.size());
@@ -40,24 +40,9 @@ REGISTER_SERIALIZER(String, [](IArchive& ar, void* ptr) {
     }
     });
 
-static StaticSerializerRegister<std::string> _reg_StringType([](IArchive& ar, void* ptr) {
-    std::string& str = *static_cast<std::string*>(ptr);
-    if (ar.IsOutput()) {
-        uint32_t size = static_cast<uint32_t>(str.size());
-        ar << size;
-        ar.Serialize(str.data(), size);
-    }
-    else {
-        uint32_t size;
-        ar << size;
-        str.resize(size);
-        ar.Serialize(str.data(), size);
-    }
-});
-
 template<typename T>
 inline void SerializeAny(IArchive& ar, T& val) {
-    std::type_index type = typeid(T);
+    std::type_index type  = typeid(val);
     auto* serializer = DynamicSerializerRegistry::GetInstance()->Get(type);
     if (serializer) {
         (*serializer)(ar, &val);
@@ -68,15 +53,9 @@ inline void SerializeAny(IArchive& ar, T& val) {
 }
 
 template<typename T>
-    requires (std::is_arithmetic_v<T> && !Reflectable<T>)
+    requires (std::is_arithmetic_v<T>)
 void SerializeAny(IArchive& ar, T& val) {
     ar << val;
-}
-
-template<typename T>
-    requires Reflectable<T>
-void SerializeAny(IArchive& ar, T& val) {
-    SerializeObject(ar, &val, T::GetFieldList());
 }
 
 template<MapContainer Map>
@@ -129,64 +108,12 @@ void SerializeAny(IArchive& ar, Cont& c) {
 }
 
 template<typename PtrT>
-void SerializePointer(IArchive& ar, PtrT& ptr) 
+void SerializePointer(IArchive& ar, PtrT& ptr)
 {
     using T = typename std::pointer_traits<PtrT>::element_type;
     auto& ctx = ar.GetContext();
 
-    if constexpr (std::is_same_v<PtrT, std::shared_ptr<T>>) 
-    {
-        uint32_t id = 0;
-
-        if (ar.IsOutput()) 
-        {
-            if (ptr) 
-            {
-                void* raw = ptr.get();
-                auto it = ctx.PtrToID.find(raw);
-                if (it == ctx.PtrToID.end()) 
-                {
-                    id = ctx.NextID++;
-                    ctx.PtrToID[raw] = id;
-                    ar << id;
-                    SerializeAny(ar, *ptr);
-                }
-                else 
-                {
-                    id = it->second;
-                    ar << id;
-                }
-            }
-            else 
-            {
-                ar << id;
-            }
-        }
-        else 
-        {
-            ar << id;
-            if (id == 0) 
-            {
-                ptr.reset();
-                return;
-            }
-            auto it = ctx.IDToPtrShared.find(id);
-            if (it != ctx.IDToPtrShared.end()) 
-            {
-                ptr = std::static_pointer_cast<T>(it->second);
-            }
-            else 
-            {
-                auto sp = std::make_shared<T>();
-                ctx.IDToPtrShared[id] = sp;
-                ctx.IDToPtr[id] = sp.get();
-                SerializeAny(ar, *sp);
-                ptr = sp;
-            }
-        }
-
-    }
-    else if constexpr (std::is_same_v<PtrT, std::unique_ptr<T>>)
+    if constexpr (std::is_same_v<PtrT, std::shared_ptr<T>>)
     {
         uint32_t id = 0;
 
@@ -194,6 +121,9 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
         {
             if (ptr)
             {
+                std::string typeName = typeid(*ptr).name();
+                SerializeAny(ar, typeName);
+
                 void* raw = ptr.get();
                 auto it = ctx.PtrToID.find(raw);
                 if (it == ctx.PtrToID.end())
@@ -211,12 +141,81 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             }
             else
             {
+                std::string empty{};
+                SerializeAny(ar, empty);
                 ar << id;
             }
         }
         else
         {
+            std::string typeName;
+            SerializeAny(ar, typeName);
             ar << id;
+
+            if (id == 0)
+            {
+                ptr.reset();
+                return;
+            }
+
+            auto it = ctx.IDToPtrShared.find(id);
+            if (it != ctx.IDToPtrShared.end())
+            {
+                ptr = std::static_pointer_cast<T>(it->second);
+            }
+            else
+            {
+                void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
+                assert(raw && "Unknown polymorphic type");
+
+                auto sp = std::shared_ptr<T>(static_cast<T*>(raw));
+                ctx.IDToPtrShared[id] = sp;
+                ctx.IDToPtr[id] = raw;
+                SerializeAny(ar, *sp);
+                ptr = sp;
+            }
+        }
+    }
+
+    else if constexpr (std::is_same_v<PtrT, std::unique_ptr<T>>)
+    {
+        uint32_t id = 0;
+
+        if (ar.IsOutput())
+        {
+            if (ptr)
+            {
+                std::string typeName = typeid(*ptr).name();
+                SerializeAny(ar, typeName);
+
+                void* raw = ptr.get();
+                auto it = ctx.PtrToID.find(raw);
+                if (it == ctx.PtrToID.end())
+                {
+                    id = ctx.NextID++;
+                    ctx.PtrToID[raw] = id;
+                    ar << id;
+                    SerializeAny(ar, *ptr);
+                }
+                else
+                {
+                    id = it->second;
+                    ar << id;
+                }
+            }
+            else
+            {
+                std::string empty{};
+                SerializeAny(ar, empty);
+                ar << id;
+            }
+        }
+        else
+        {
+            std::string typeName;
+            SerializeAny(ar, typeName);
+            ar << id;
+
             if (id == 0)
             {
                 ptr.reset();
@@ -226,62 +225,59 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             auto it = ctx.IDToPtr.find(id);
             if (it != ctx.IDToPtr.end())
             {
-                ptr.reset(static_cast<T*>(it->second)); 
+                ptr.reset(static_cast<T*>(it->second));
             }
             else
             {
-                auto raw = new T();
-                ctx.IDToPtr[id] = raw;
-                SerializeAny(ar, *raw);
-                ptr.reset(raw);
+                void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
+                assert(raw && "Unknown polymorphic type");
+
+                T* obj = static_cast<T*>(raw);
+                ctx.IDToPtr[id] = obj;
+                SerializeAny(ar, *obj);
+                ptr.reset(obj);
             }
         }
     }
-    else if constexpr (std::is_same_v<PtrT, std::weak_ptr<T>>) 
-    {
-        if (ar.IsOutput()) 
-        {
-            std::shared_ptr<T> tmp = ptr.lock();
-            SerializePointer(ar, tmp);
-        }
-        else 
-        {
-            std::shared_ptr<T> tmp;
-            SerializePointer(ar, tmp);
-            ptr = tmp;
-        }
 
-    }
-    else if constexpr (std::is_pointer_v<PtrT>) 
+    else if constexpr (std::is_pointer_v<PtrT>)
     {
         uint32_t id = 0;
 
-        if (ar.IsOutput()) 
+        if (ar.IsOutput())
         {
-            if (ptr) 
+            if (ptr)
             {
+                std::string typeName = typeid(*ptr).name();
+                SerializeAny(ar, typeName);
+
                 auto it = ctx.PtrToID.find(ptr);
-                if (it == ctx.PtrToID.end()) 
+                if (it == ctx.PtrToID.end())
                 {
                     id = ctx.NextID++;
                     ctx.PtrToID[ptr] = id;
                     ar << id;
                     SerializeAny(ar, *ptr);
                 }
-                else 
+                else
                 {
                     id = it->second;
                     ar << id;
                 }
             }
-            else 
+            else
             {
+                std::string empty{};
+                SerializeAny(ar, empty);
                 ar << id;
             }
         }
-        else 
+        else
         {
+            std::string typeName;
+            SerializeAny(ar, typeName);
             ar << id;
+
             if (id == 0)
             {
                 ptr = nullptr;
@@ -289,19 +285,38 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             }
 
             auto it = ctx.IDToPtr.find(id);
-            if (it != ctx.IDToPtr.end()) 
+            if (it != ctx.IDToPtr.end())
             {
                 ptr = static_cast<T*>(it->second);
             }
-            else 
+            else
             {
-                ptr = new T();
+                void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
+                assert(raw && "Unknown polymorphic type");
+
+                ptr = static_cast<T*>(raw);
                 ctx.IDToPtr[id] = ptr;
                 SerializeAny(ar, *ptr);
             }
         }
     }
+
+    else if constexpr (std::is_same_v<PtrT, std::weak_ptr<T>>)
+    {
+        if (ar.IsOutput())
+        {
+            std::shared_ptr<T> tmp = ptr.lock();
+            SerializePointer(ar, tmp);
+        }
+        else
+        {
+            std::shared_ptr<T> tmp;
+            SerializePointer(ar, tmp);
+            ptr = tmp;
+        }
+    }
 }
+
 
 template<typename T>
 void SerializeAny(IArchive& ar, std::shared_ptr<T>& ptr) {

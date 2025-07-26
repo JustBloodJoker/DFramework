@@ -1,25 +1,34 @@
 #pragma once
 #include <cstddef>
-#include "Concepts.h"
-#include "FieldInfo.h"
+#include "IArchive.h"
 #include "BaseFieldCollector.h"
 #include "DynamicSerializerRegistry.h"
+#include "Serializer.h"
+
+
+#define REGISTER_SERIALIZER(Type, SerializerFunc)                           \
+    inline static StaticSerializerRegister<Type> _reg_serializer_##Type{    \
+        SerializerFunc                                                      \
+    };
 
 #define FIELDS_NAME s_sFields
 
-#define BEGIN_FIELD_REGISTRATION(SelfType, ...) \
-    using Self = SelfType; \
-    static const std::vector<FieldInfo>& GetFieldList() { \
-        static std::vector<FieldInfo> FIELDS_NAME; \
-        if (FIELDS_NAME.empty()) { \
+#define BEGIN_FIELD_REGISTRATION(SelfType, ...)                                 \
+    using Self = SelfType;                                                      \
+    AutoRegisterInFactory<SelfType> _auto_reg_##SelfType;                       \
+    static const std::vector<FieldInfo>& GetFieldList() {                       \
+        static std::vector<FieldInfo> FIELDS_NAME;                              \
+        if (FIELDS_NAME.empty()) {                                              \
             BaseFieldCollector<SelfType, __VA_ARGS__>::Collect(FIELDS_NAME);
 
-#define REGISTER_FIELD(name) \
+#define REGISTER_FIELD(name)                                                                    \
     FIELDS_NAME.push_back(FieldInfo::Make<decltype(Self::name)>(#name, offsetof(Self, name)));
 
-#define END_FIELD_REGISTRATION() } return FIELDS_NAME; }
+#define END_FIELD_REGISTRATION() } return FIELDS_NAME; }        \
+    REGISTER_SERIALIZER(Self, [](IArchive& ar, void* ptr) {     \
+            SerializeObject(ar, ptr, Self::GetFieldList());     \
+        }                                                       \
+    )
 
+        
 
-
-#define REGISTER_SERIALIZER(Type, SerializerFunc)           \
-static StaticSerializerRegister<Type> _reg_serializer_##Type(SerializerFunc);

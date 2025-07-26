@@ -65,6 +65,9 @@
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
     <ClCompile Include="WinWindow\WinWindow.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="WinWindow\Utils\Serializer\PolymorphicFactory.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

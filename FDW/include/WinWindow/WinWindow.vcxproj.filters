@@ -96,4 +96,9 @@
       <UniqueIdentifier>{44625d3a-ab5f-4c2f-a72a-2d3abeda6f83}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="WinWindow\Utils\Serializer\PolymorphicFactory.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </None>
+  </ItemGroup>
 </Project>

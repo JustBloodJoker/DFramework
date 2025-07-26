@@ -18,6 +18,8 @@ private:
     template<typename Derived, typename Base>
     static void CollectOne(std::vector<FieldInfo>& fields) {
         if constexpr (Reflectable<Base>) {
+            if (Base::GetFieldList().empty()) return;
+
             size_t baseOffset = BaseOffset<Derived, Base>();
             for (const auto& f : Base::GetFieldList()) {
                 fields.push_back({ f.Name, baseOffset + f.Offset, f.Serializer });
