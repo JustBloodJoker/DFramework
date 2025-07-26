@@ -75,6 +75,9 @@
     <ClInclude Include="WinWindowTest\SerializerTest.h">
       <Filter>WinWindowTest</Filter>
     </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Serializer\DynamicSerializerRegistry.h">
+      <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="WinWindowTest">

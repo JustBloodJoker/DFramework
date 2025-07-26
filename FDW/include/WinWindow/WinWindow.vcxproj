@@ -27,7 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="WinWindowTest\SerializerTest.h" />
+    <ClInclude Include="WinWindowTest\SerializerTest.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="WinWindowTest\TestBaseWindow.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -39,6 +41,7 @@
     <ClInclude Include="WinWindow\Utils\Serializer\BaseFieldCollector.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\BinarySerializer.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\Concepts.h" />
+    <ClInclude Include="WinWindow\Utils\Serializer\DynamicSerializerRegistry.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\FieldInfo.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h" />
@@ -51,7 +54,9 @@
     <ClCompile Include="WinWindowTest\main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="WinWindowTest\SerializerTest.cpp" />
+    <ClCompile Include="WinWindowTest\SerializerTest.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="WinWindowTest\TestBaseWindow.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClCompile>

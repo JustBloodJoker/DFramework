@@ -8,12 +8,14 @@
 #include <unordered_map>
 #include <cstring>
 #include <type_traits>
+#include "MacroReflection.h"
+#include "DynamicSerializerRegistry.h"
+#include "../Macroses.h"
+
 
 void SerializeObject(IArchive& ar, void* baseObj, const std::vector<FieldInfo>& fields);
 void SerializeFieldName(IArchive& ar, const char* name);
 void SkipFieldName(IArchive& ar);
-
-template<typename T> void SerializeAny(IArchive& ar, T& val);
 
 template<typename T>
     requires std::is_trivially_copyable_v<T>
@@ -22,14 +24,9 @@ IArchive& operator<<(IArchive& ar, T& val) {
     return ar;
 }
 
-template<typename T>
-    requires (std::is_arithmetic_v<T> && !Reflectable<T>)
-void SerializeAny(IArchive& ar, T& val) {
-    ar << val;
-}
-
-template<>
-inline void SerializeAny<std::string>(IArchive& ar, std::string& str) {
+using String = std::string;
+REGISTER_SERIALIZER(String, [](IArchive& ar, void* ptr) {
+    std::string& str = *static_cast<std::string*>(ptr);
     if (ar.IsOutput()) {
         uint32_t size = static_cast<uint32_t>(str.size());
         ar << size;
@@ -41,6 +38,39 @@ inline void SerializeAny<std::string>(IArchive& ar, std::string& str) {
         str.resize(size);
         ar.Serialize(str.data(), size);
     }
+    });
+
+static StaticSerializerRegister<std::string> _reg_StringType([](IArchive& ar, void* ptr) {
+    std::string& str = *static_cast<std::string*>(ptr);
+    if (ar.IsOutput()) {
+        uint32_t size = static_cast<uint32_t>(str.size());
+        ar << size;
+        ar.Serialize(str.data(), size);
+    }
+    else {
+        uint32_t size;
+        ar << size;
+        str.resize(size);
+        ar.Serialize(str.data(), size);
+    }
+});
+
+template<typename T>
+inline void SerializeAny(IArchive& ar, T& val) {
+    std::type_index type = typeid(T);
+    auto* serializer = DynamicSerializerRegistry::GetInstance()->Get(type);
+    if (serializer) {
+        (*serializer)(ar, &val);
+    }
+    else {
+        SAFE_ASSERT(false, std::string("No serializer registered for type: ") + type.name());
+    }
+}
+
+template<typename T>
+    requires (std::is_arithmetic_v<T> && !Reflectable<T>)
+void SerializeAny(IArchive& ar, T& val) {
+    ar << val;
 }
 
 template<typename T>

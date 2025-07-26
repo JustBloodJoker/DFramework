@@ -3,6 +3,10 @@
 #include <vector>
 #include <functional>
 #include "IArchive.h"
+#include "DynamicSerializerRegistry.h"
+
+
+class IArchive;
 
 struct FieldInfo {
     std::string Name;

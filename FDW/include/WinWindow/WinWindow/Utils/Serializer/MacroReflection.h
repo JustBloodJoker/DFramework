@@ -3,6 +3,7 @@
 #include "Concepts.h"
 #include "FieldInfo.h"
 #include "BaseFieldCollector.h"
+#include "DynamicSerializerRegistry.h"
 
 #define FIELDS_NAME s_sFields
 
@@ -17,3 +18,8 @@
     FIELDS_NAME.push_back(FieldInfo::Make<decltype(Self::name)>(#name, offsetof(Self, name)));
 
 #define END_FIELD_REGISTRATION() } return FIELDS_NAME; }
+
+
+
+#define REGISTER_SERIALIZER(Type, SerializerFunc)           \
+static StaticSerializerRegister<Type> _reg_serializer_##Type(SerializerFunc);

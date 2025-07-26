@@ -1,7 +1,18 @@
 
-
+#include "SerializerTest.h"
 #include "../WinWindow/Utils/Serializer/MacroReflection.h"
 #include "../WinWindow/Utils/Serializer/BinarySerializer.h"
+
+struct CustomType {
+    int value{};
+    std::string message;
+};
+
+REGISTER_SERIALIZER(CustomType, [](IArchive& ar, void* ptr) {
+    CustomType& obj = *static_cast<CustomType*>(ptr);
+    SerializeAny(ar, obj.value);
+    SerializeAny(ar, obj.message);
+})
 
 
 class Vec3 {
@@ -581,6 +592,26 @@ void MultipleSerializedObjectsTest() {
     assert(playerL.name==player.name);
     assert(weaponL.name== weapon.name);
     assert(statsL.strength == stats.strength);
+}    
+
+
+
+void RunDynamicSerializerBindTest() {
+    CustomType original;
+    original.value = 42;
+    original.message = "Hello, Dynamic World!";
+
+    BinarySerializer ser;
+    ser.LoadFromObjects(original);
+
+    CustomType loaded;
+    ser.DeserializeToObjects(loaded);
+
+    std::cout << "\n[DynamicSerializerRegistry] Deserialized CustomType:\n";
+    std::cout << "value = " << loaded.value << ", message = " << loaded.message << "\n";
+
+    assert(loaded.value == original.value);
+    assert(loaded.message == original.message);
 }
 
 
@@ -597,6 +628,7 @@ void RunAllSerializationsTests() {
     RunOwnerReferenceTest();
     RunInsaneHierarchyPointerTest();
     MultipleSerializedObjectsTest();
+    RunDynamicSerializerBindTest();
 
-    std::cout << "\Serializer tests passed!\n";
+    std::cout << "\nSerializer tests passed!\n";
 }

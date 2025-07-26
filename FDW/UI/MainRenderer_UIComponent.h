@@ -18,7 +18,7 @@ namespace FD3DW {
 
 class MainRenderer_UIComponent : virtual public MainRendererComponent {
 public:
-	MainRenderer_UIComponent(MainRenderer* owner);
+	MainRenderer_UIComponent()=default;
 	virtual ~MainRenderer_UIComponent() = default;
 
 public:
