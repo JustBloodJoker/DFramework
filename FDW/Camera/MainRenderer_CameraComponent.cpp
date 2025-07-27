@@ -1,7 +1,14 @@
 #include <Camera/MainRenderer_CameraComponent.h>
 #include <MainRenderer/MainRenderer.h>
 
-MainRenderer_CameraComponent::MainRenderer_CameraComponent(MainRenderer* owner) :MainRendererComponent(owner) {}
+MainRenderer_CameraComponent::MainRenderer_CameraComponent() {
+	m_xEye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	m_xStartEye = m_xEye;
+	m_xStartAt = m_xAt;
+}
 
 void MainRenderer_CameraComponent::AfterConstruction() {
 	InitDefault();
@@ -15,12 +22,7 @@ void MainRenderer_CameraComponent::BeforeDestruction() {
 }
 
 void MainRenderer_CameraComponent::InitDefault() {
-	m_xEye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
-	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-	m_xStartEye = m_xEye;
-	m_xStartAt = m_xAt;
 
 	UpdateViewMatrix();
 	UpdateProjectionMatrix();

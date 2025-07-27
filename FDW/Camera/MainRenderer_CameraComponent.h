@@ -4,16 +4,17 @@
 #include <MainRenderer/MainRendererComponent.h>
 #include <Camera/CameraInputLayer.h>
 
+
 class MainRenderer;
 
 class MainRenderer_CameraComponent : virtual public MainRendererComponent {
 public:
-	MainRenderer_CameraComponent(MainRenderer* owner);
+	MainRenderer_CameraComponent();
 	virtual ~MainRenderer_CameraComponent() = default;
 
 public:
-	virtual void AfterConstruction();
-	virtual void BeforeDestruction();
+	virtual void AfterConstruction() override;
+	virtual void BeforeDestruction() override;
 	void InitDefault();
 
 	dx::XMMATRIX GetProjectionMatrix() const;
@@ -38,9 +39,26 @@ public:
 	
 	void OnMouseMove(WPARAM btnState, int x, int y);
 
+public:
+
+
+	BEGIN_FIELD_REGISTRATION(MainRenderer_CameraComponent, MainRendererComponent)
+		REGISTER_FIELD(m_fCameraSpeed)
+		REGISTER_FIELD(m_fCamYaw)
+		REGISTER_FIELD(m_fCamPitch)
+		REGISTER_FIELD(m_fCamRoll)
+		REGISTER_FIELD(m_xEye)
+		REGISTER_FIELD(m_xUp)
+		REGISTER_FIELD(m_xAt)
+		REGISTER_FIELD(m_xStartUp)
+		REGISTER_FIELD(m_xStartEye)
+		REGISTER_FIELD(m_xStartAt)
+	END_FIELD_REGISTRATION()
+
 private:
-	dx::XMMATRIX m_xView;
 	dx::XMMATRIX m_xProjectionMatrix;
+
+	dx::XMMATRIX m_xView;
 
 	float m_fCameraSpeed = 1000.0f;
 	float m_fCamYaw;
@@ -54,6 +72,7 @@ private:
 	dx::XMVECTOR m_xStartUp;
 	dx::XMVECTOR m_xStartEye = dx::XMVectorZero();
 	dx::XMVECTOR m_xStartAt = dx::XMVectorZero();
+
 private:
 	std::unique_ptr<CameraInputLayer> m_pCameraLayer = nullptr;
 };

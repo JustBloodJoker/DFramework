@@ -1,5 +1,6 @@
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
+#include <D3DFramework/Utilites/Serializer/BinarySerializer.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -81,7 +82,7 @@ void MainRenderer::UserLoop()
 		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
 		m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		for (auto i = 0; i < gBuffersCount; ++i) {
+		for (UINT i = 0; i < gBuffersCount; ++i) {
 			m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
 		}
 		m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
@@ -181,11 +182,16 @@ void MainRenderer::UserLoop()
 	ExecuteMainQueue();
 	
 	m_pRenderableObjectsManager->AfterRender();
+
+	CallAfterRenderLoop();
 }
 
 void MainRenderer::UserClose()
 {
-	while ( !m_vComponents.empty() ) DestroyComponent( m_vComponents.back().get() );
+	DestroyComponent(m_pLightsManager);
+	DestroyComponent(m_pRenderableObjectsManager);
+	DestroyComponent(m_pCameraComponent);
+	DestroyComponent(m_pUIComponent);
 
 	PSOManager::FreeInstance();
 }
@@ -220,15 +226,15 @@ std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 }
 
 void MainRenderer::AddScene(std::string path) {
-	m_pRenderableObjectsManager->CreateObject(CreateScene(path, true, m_pPCML), GetDevice(), m_pPCML);
+	m_pRenderableObjectsManager->CreateObject<RenderableMesh>(GetDevice(), m_pPCML, path);
 }
 
 void MainRenderer::AddSkybox(std::string path) {
-	m_pRenderableObjectsManager->CreateObject(path, m_pPCML);
+	m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(GetDevice(), m_pPCML, path);
 }
 
 void MainRenderer::AddAudio(std::string path) {
-	m_pRenderableObjectsManager->CreateObject(CreateAudio(FD3DW::StringToWString(path)), GetDevice(), m_pPCML, path);
+	m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(GetDevice(), m_pPCML, path);
 }
 
 void MainRenderer::AddSimplePlane() {
@@ -263,6 +269,32 @@ int MainRenderer::GetLightsCount() {
 	return m_pLightsManager->GetLightsCount();
 }
 
+void MainRenderer::SaveSceneToFile(std::string pathTo) {
+	AddToCallAfterRenderLoop([this, pathTo]() {
+		BinarySerializer ser;
+		ser.LoadFromObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager);
+
+		ser.SaveToFile(pathTo);
+	});
+}
+
+void MainRenderer::LoadSceneFromFile(std::string pathTo) {
+	AddToCallAfterRenderLoop([this, pathTo]() {
+		BinarySerializer ser;
+		ser.LoadFromFile(pathTo);
+
+		this->DestroyComponent(m_pCameraComponent);
+		this->DestroyComponent(m_pLightsManager);
+		this->DestroyComponent(m_pRenderableObjectsManager);
+
+		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager);
+		m_pCameraComponent->SetAfterConstruction(this);
+		m_pLightsManager->SetAfterConstruction(this);
+		m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
+		m_pRenderableObjectsManager->SetAfterConstruction(this);
+	});
+}
+
 void MainRenderer::DeleteLight(int idx) {
 	m_pLightsManager->DeleteLight(idx);
 }
@@ -276,21 +308,27 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	m_pPCML = m_pCommandList->GetPtrCommandList();
 	BindMainCommandList(m_pCommandList.get());
 
-	m_pUIComponent = CreateComponent<MainRenderer_UIComponent>();
-	m_pCameraComponent = CreateComponent<MainRenderer_CameraComponent>();
-	m_pRenderableObjectsManager = CreateComponent<MainRenderer_RenderableObjectsManager>();
-	m_pLightsManager = CreateComponent<MainRenderer_LightsManager>();
+	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
+	m_pCameraComponent = CreateUniqueComponent<MainRenderer_CameraComponent>();
+	m_pRenderableObjectsManager = CreateUniqueComponent<MainRenderer_RenderableObjectsManager>();
+	m_pLightsManager = CreateUniqueComponent<MainRenderer_LightsManager>();
 
 }
 
-void MainRenderer::DestroyComponent(MainRendererComponent* cmp) {
-	auto it = std::find_if(m_vComponents.begin(), m_vComponents.end(),
-		[cmp](const std::unique_ptr<MainRendererComponent>& ptr) {
-			return ptr.get() == cmp;
-		});
+void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
+	m_vCallAfterRenderLoop.push_back(foo);
+}
 
-	if (it != m_vComponents.end()) {
-		(*it)->BeforeDestruction();
-		m_vComponents.erase(it);
+void MainRenderer::CallAfterRenderLoop() {
+	m_pCommandList->ResetList();
+
+	auto vv = m_vCallAfterRenderLoop;
+	m_vCallAfterRenderLoop.clear();
+	for (auto han : vv) {
+		if (han) han();
 	}
+
+	ExecuteMainQueue();
 }
+
+

@@ -2,9 +2,14 @@
 
 #include <pch.h>
 #include <D3DFramework/GraphicUtilites/Materials.h>
+#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+
+#define LOADED_FLAGS_DATA_SIZE TEXTURE_TYPE_SIZE+1
+
+#define IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS TEXTURE_TYPE_SIZE
 
 struct MeshMaterialStructure : FD3DW::MaterialFrameWork {
-	int LoadedTexture[FD3DW::TextureType::SIZE+1];
+	std::array<int, LOADED_FLAGS_DATA_SIZE> LoadedTexture = {false};
 
 	void operator=(const FD3DW::MaterialFrameWork& frameworkData) {
 		Diffuse = frameworkData.Diffuse;
@@ -16,5 +21,17 @@ struct MeshMaterialStructure : FD3DW::MaterialFrameWork {
 		SpecularPower = frameworkData.SpecularPower;
 		HeightScale = frameworkData.HeightScale;
 	}
+
+	BEGIN_FIELD_REGISTRATION(MeshMaterialStructure)
+		REGISTER_FIELD(Diffuse)
+		REGISTER_FIELD(Ambient)
+		REGISTER_FIELD(Emissive)
+		REGISTER_FIELD(Specular)
+		REGISTER_FIELD(Roughness)
+		REGISTER_FIELD(Metalness)
+		REGISTER_FIELD(SpecularPower)
+		REGISTER_FIELD(HeightScale)
+} return s_sFields; } inline static StaticSerializerRegister<Self> _reg_serializer_Self{ [](IArchive& ar, void* ptr) { SerializeObject(ar, ptr, Self::GetFieldList()); } };
+
 };
 

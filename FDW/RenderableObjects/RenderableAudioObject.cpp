@@ -1,7 +1,7 @@
 #include <RenderableObjects/RenderableAudioObject.h>
 
-RenderableAudioObject::RenderableAudioObject(std::unique_ptr<FD3DW::Audio> audio, const std::string& path) : BaseRenderableObject(path){
-	m_pAudio = std::move(audio);
+RenderableAudioObject::RenderableAudioObject(const std::string& path) : BaseRenderableObject(path){
+	m_sPath = path;
 }
 
 void RenderableAudioObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {}
@@ -16,6 +16,10 @@ void RenderableAudioObject::ForwardRender(ID3D12GraphicsCommandList* list) {}
 
 RenderPass RenderableAudioObject::GetRenderPass() const {
 	return RenderPass::None;
+}
+
+void RenderableAudioObject::CreateAfterLoadAudio(FD3DW::AudioManager* manager) {
+	m_pAudio.reset( manager->CreateAudio(m_sPath) );
 }
 
 void RenderableAudioObject::Play() {

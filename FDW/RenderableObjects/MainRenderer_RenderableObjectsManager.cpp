@@ -3,27 +3,14 @@
 #include <MainRenderer/PSOManager.h>
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
-MainRenderer_RenderableObjectsManager::MainRenderer_RenderableObjectsManager(MainRenderer* owner) 
-    : MainRendererComponent(owner)
-{
-}
 
-BaseRenderableObject* MainRenderer_RenderableObjectsManager::CreateObject(const std::string path, ID3D12GraphicsCommandList* list) {
-    if (auto skybox = FindSkyboxObject())
-    {
-        RemoveObject(skybox);
-    }
-
-    auto renderable = std::make_unique<RenderableSkyboxObject>(path);
-    renderable->Init(m_pOwner->GetDevice(), list);
-    auto ptr = renderable.get();
-    m_vObjects.push_back(std::move(renderable));
-    return ptr;
+void MainRenderer_RenderableObjectsManager::CreateSimpleObject(SimpleObjectType type, ID3D12GraphicsCommandList* list) {
+    auto device = m_pOwner->GetDevice();
+    CreateObject<RenderableSimpleObject>(device, list, type);
 }
 
 void MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12GraphicsCommandList* list) {
-    auto device = m_pOwner->GetDevice();
-    CreateObject(std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GenerateRectangleScene), device, list);
+    CreateSimpleObject(SimpleObjectType::Plane, list);
 }
 
 void MainRenderer_RenderableObjectsManager::RemoveObject(BaseRenderableObject* obj) {
@@ -81,11 +68,34 @@ void MainRenderer_RenderableObjectsManager::AfterRender() {
     FD3DW::FResource::ReleaseUploadBuffers();
 }
 
+void MainRenderer_RenderableObjectsManager::AfterConstruction() {
+    auto cmList = m_pOwner->GetBindedCommandList();
+    auto device = m_pOwner->GetDevice();
+    for (const auto& obj : m_vObjects) {
+        DoInitObject(obj.get(), device, cmList);
+    }
+}
+
+void MainRenderer_RenderableObjectsManager::BeforeDestruction() {
+    AfterRender();
+}
+
 RenderableSkyboxObject* MainRenderer_RenderableObjectsManager::FindSkyboxObject() {
     for (const auto& obj : m_vObjects) {
         if (auto skyBox = dynamic_cast<RenderableSkyboxObject*>(obj.get())) return skyBox;
     }
     return nullptr;
+}
+
+void MainRenderer_RenderableObjectsManager::DoInitObject(BaseRenderableObject* obj, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+    obj->Init(device, list);
+    SpecificPostLoadForOblect(obj);
+}
+
+void MainRenderer_RenderableObjectsManager::SpecificPostLoadForOblect(BaseRenderableObject* obj) {
+    if (auto audio = dynamic_cast<RenderableAudioObject*>(obj)) {
+        audio->CreateAfterLoadAudio(m_pOwner->GetAudioMananger());
+    }
 }
 
 void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject* obj) {

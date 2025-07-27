@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <D3DFramework/Objects/Object.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
+#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
 
 enum RenderPass
 {
@@ -30,7 +31,7 @@ public:
     D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
 
 public:
-
+    BaseRenderableObject()=default;
     BaseRenderableObject(const std::string& name);
     virtual ~BaseRenderableObject() = default;
 
@@ -62,6 +63,15 @@ public:
     static UINT GetVertexStartPos(FD3DW::Object* obj, const size_t index);
     static UINT GetVertexSize(FD3DW::Object* obj, const size_t index);
     static UINT GetMaterialIndex(FD3DW::Object* obj, const size_t index);
+
+public:
+
+    BEGIN_FIELD_REGISTRATION(BaseRenderableObject)
+        REGISTER_FIELD(m_xPosition)
+        REGISTER_FIELD(m_xRotation)
+        REGISTER_FIELD(m_xScaling)
+        REGISTER_FIELD(m_sName)
+    END_FIELD_REGISTRATION()
 
 protected:
     void UpdateWorldMatrix();

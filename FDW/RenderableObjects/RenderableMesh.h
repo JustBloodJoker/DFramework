@@ -8,7 +8,8 @@
 
 class RenderableMesh : public BaseRenderableObject {
 public:
-	RenderableMesh(std::unique_ptr<FD3DW::Scene> scene);
+	RenderableMesh() = default;
+	RenderableMesh(std::string path);
 	virtual ~RenderableMesh() = default;
 
 public:
@@ -26,6 +27,12 @@ public:
 
 	std::vector<RenderableMeshElement*> GetRenderableElements();
 
+public:
+	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject)
+		REGISTER_FIELD(m_sPath);
+		REGISTER_FIELD(m_vRenderableElements);
+	END_FIELD_REGISTRATION();
+
 private:
 	void RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list);
 
@@ -34,7 +41,6 @@ private:
 
 private:
 	std::vector<std::unique_ptr<FD3DW::SRVPacker>> m_vSRVPacks;
-	std::vector<MeshMaterialStructure> m_vMeshMaterialStructures;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 	
 private:
@@ -45,4 +51,6 @@ private:
 	std::string m_sCurrentAnimation = "";
 	bool m_bNeedResetBonesBuffer = false;
 	bool m_bNeedFreezeBonesBuffer = false;
+
+	std::string m_sPath;
 };

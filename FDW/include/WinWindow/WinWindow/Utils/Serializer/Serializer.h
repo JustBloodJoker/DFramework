@@ -58,6 +58,14 @@ void SerializeAny(IArchive& ar, T& val) {
     ar << val;
 }
 
+template<typename T>
+    requires (std::is_enum_v<T>)
+void SerializeAny(IArchive& ar, T& val) {
+    using Underlying = std::underlying_type_t<T>;
+    ar << reinterpret_cast<Underlying&>(val);
+}
+
+
 template<MapContainer Map>
 void SerializeAny(IArchive& ar, Map& m) {
     if (ar.IsOutput()) {

@@ -1,20 +1,24 @@
 #include <RenderableObjects/RenderableMesh.h>
 
-RenderableMesh::RenderableMesh(std::unique_ptr<FD3DW::Scene> scene) : BaseRenderableObject( scene->GetPath() ) {
-	m_pScene = std::move(scene);
+RenderableMesh::RenderableMesh(std::string path) : BaseRenderableObject(path) {
+	m_sPath = path;
 }
 
 void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
+
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
+
+	std::vector<MeshMaterialStructure> meshMaterialStructures;
 
 	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
 	{
-		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, FD3DW::TextureType::SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
+		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
 		MeshMaterialStructure cbData;
 		
 		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
 		cbData = mat->GetMaterialDesc();
-		for (int i = 0; i < FD3DW::TextureType::SIZE; ++i) {
+		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
 			if ( cbData.LoadedTexture[i] = mat->IsHaveTexture(FD3DW::TextureType(i) ) )
 			{
 				m_vSRVPacks.back()->AddResource(mat->GetResourceTexture(FD3DW::TextureType(i)), D3D12_SRV_DIMENSION_TEXTURE2D, i, device);
@@ -24,9 +28,9 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 				m_vSRVPacks.back()->AddNullResource(i, device);
 			}
 		}
-		cbData.LoadedTexture[FD3DW::TextureType::SIZE] = mat->IsRoughnessAndMetalnessInOneTexture();
+		cbData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = mat->IsRoughnessAndMetalnessInOneTexture();
 
-		m_vMeshMaterialStructures.push_back(cbData);
+		meshMaterialStructures.push_back(cbData);
 	}
 	
 	if (m_pScene->GetBonesCount()) {
@@ -40,12 +44,19 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		
 		auto matIndex = GetMaterialIndex(m_pScene.get(), ind);
 		data.SRVPack = m_vSRVPacks[matIndex].get();
-		data.MaterialCBufferData = m_vMeshMaterialStructures[matIndex];
+		data.MaterialCBufferData = meshMaterialStructures[matIndex];
 
-		auto elem = std::make_unique<RenderableMeshElement>(data);
-		elem->Init(device, list);
-
-		m_vRenderableElements.push_back( std::move(elem) );
+		if (m_vRenderableElements.size() <= ind) 
+		{
+			auto elem = std::make_unique<RenderableMeshElement>(data);
+			elem->Init(device, list);
+			m_vRenderableElements.push_back(std::move(elem));
+		}
+		else 
+		{
+			m_vRenderableElements[ind]->SetRenderableMeshElementData(data);
+			m_vRenderableElements[ind]->Init(device, list);
+		}
 	}
 
 }

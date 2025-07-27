@@ -13,6 +13,7 @@ namespace FD3DW
 		AudioManager();
 		~AudioManager()=default;
 
+		Audio* CreateAudio(const std::string& path);
 		Audio* CreateAudio(const std::wstring& path);
 
 	private:

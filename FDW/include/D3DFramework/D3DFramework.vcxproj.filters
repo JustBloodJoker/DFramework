@@ -16,6 +16,9 @@
     <Filter Include="D3DFramework\Utilites">
       <UniqueIdentifier>{87f27dad-2760-44cc-86ab-a7bc04621f76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3DFramework\Utilites\Serializer">
+      <UniqueIdentifier>{fa96ef0e-c1f3-4f03-9ae4-23a414fd5601}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h">
@@ -98,6 +101,12 @@
     </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Serializer\ReflectionImpl.h">
+      <Filter>D3DFramework\Utilites\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Serializer\BinarySerializer.h">
+      <Filter>D3DFramework\Utilites\Serializer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

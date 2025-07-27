@@ -29,6 +29,18 @@ private:
 template<typename T>
 struct AutoRegisterInFactory {
     AutoRegisterInFactory() {
+        Register();
+    }
+
+private:
+    template<typename U = T>
+    typename std::enable_if<!std::is_abstract<U>::value>::type
+        Register() {
         PolymorphicFactory::GetInstance()->RegisterType<T>(typeid(T).name());
+    }
+
+    template<typename U = T>
+    typename std::enable_if<std::is_abstract<U>::value>::type
+        Register() {
     }
 };

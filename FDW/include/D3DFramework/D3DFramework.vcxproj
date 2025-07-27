@@ -211,6 +211,8 @@
     <ClInclude Include="D3DFramework\Utilites\Audio.h" />
     <ClInclude Include="D3DFramework\Utilites\AudioManager.h" />
     <ClInclude Include="D3DFramework\Utilites\Macroses.h" />
+    <ClInclude Include="D3DFramework\Utilites\Serializer\BinarySerializer.h" />
+    <ClInclude Include="D3DFramework\Utilites\Serializer\ReflectionImpl.h" />
     <ClInclude Include="D3DFramework\Utilites\Structures.h" />
     <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h" />
   </ItemGroup>

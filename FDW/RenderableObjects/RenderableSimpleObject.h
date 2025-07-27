@@ -8,12 +8,14 @@
 #include <RenderableObjects/MeshMatricesStructure.h>
 
 
+
 class RenderableSimpleObject : public BaseRenderableObject {
 private:
 
 
 public:
-	RenderableSimpleObject(std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> object);
+	RenderableSimpleObject() = default;
+	RenderableSimpleObject(SimpleObjectType type);
 	virtual ~RenderableSimpleObject() = default;
 
 public:
@@ -52,6 +54,16 @@ public:
 	ID3D12Resource* GetTexture(FD3DW::TextureType type);
 	D3D12_GPU_DESCRIPTOR_HANDLE GetTextureSRV(FD3DW::TextureType type);
 
+
+public:
+
+	BEGIN_FIELD_REGISTRATION(RenderableSimpleObject, BaseRenderableObject)
+		REGISTER_FIELD(m_xType)
+		REGISTER_FIELD(m_xMaterialCBufferData)
+		REGISTER_FIELD(m_bIsInitedMaterialDesc)
+		REGISTER_FIELD(m_mPathToTextures)
+	END_FIELD_REGISTRATION()
+
 private:
 
 private:
@@ -59,6 +71,10 @@ private:
 	void NeedUpdateMaterials();
 
 private:
+	SimpleObjectType m_xType;
+
+	std::map<FD3DW::TextureType, std::string> m_mPathToTextures;
+
 	std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> m_pObject = nullptr;
 	std::unique_ptr<FD3DW::SRVPacker> m_pSRVPack = nullptr;
 	
@@ -68,6 +84,7 @@ private:
 	std::unique_ptr<FD3DW::UploadBuffer<MeshMaterialStructure>> m_pMaterialBuffer;
 
 private:
+	bool m_bIsInitedMaterialDesc = false;
 	bool m_bIsMaterialDataChanged = false;
 	MeshMaterialStructure m_xMaterialCBufferData;
 };

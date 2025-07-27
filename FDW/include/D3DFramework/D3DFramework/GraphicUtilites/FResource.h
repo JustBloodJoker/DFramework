@@ -23,10 +23,10 @@ namespace FD3DW
 			SPECULAR,
 			OPACITY,
 			AMBIENT,
-			EMISSIVE,
-
-			SIZE
+			EMISSIVE
 		};
+
+		#define TEXTURE_TYPE_SIZE 9
 	}
 
 	class FResource : virtual public PostProcessing, virtual public std::enable_shared_from_this<FResource>

@@ -1,5 +1,13 @@
 #include "GeneratorsForSimpleObjects.h"
 
+std::function<void(std::vector<FD3DW::SceneVertexFrameWork>&, std::vector<std::uint32_t>&)> GetGeneratorForType(SimpleObjectType type) {
+	if (type == SimpleObjectType::Plane) {
+		return GenerateRectangleScene;
+
+	}
+	return nullptr;
+}
+
 void GenerateRectangleScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices, std::vector<std::uint32_t>& indices)
 {
 	const dx::XMFLOAT3 normal = { 0.0f, 0.0f, 1.0f };

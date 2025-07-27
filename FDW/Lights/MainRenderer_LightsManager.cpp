@@ -1,13 +1,13 @@
 #include <Lights/MainRenderer_LightsManager.h>
 #include <MainRenderer/MainRenderer.h>
 
-MainRenderer_LightsManager::MainRenderer_LightsManager(MainRenderer* owner) : MainRendererComponent(owner) {}
-
 void MainRenderer_LightsManager::AfterConstruction() {
 	auto device = m_pOwner->GetDevice();
 	m_pLightsHelperConstantBuffer = FD3DW::UploadBuffer<LightBuffer>::CreateConstantBuffer(device, 1);
 
 	m_pLightsStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<LightStruct>(device, 1u, true);
+
+	if (!m_vLights.empty()) m_bIsNeedUpdateLightsStructuredBuffer = true;
 }
 
 void MainRenderer_LightsManager::InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRVPacker* srvPack) {

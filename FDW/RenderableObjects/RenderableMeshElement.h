@@ -10,6 +10,10 @@ struct RenderableMeshElementData {
 	FD3DW::SRVPacker* SRVPack = nullptr;
 	FD3DW::ObjectDesc ObjectDescriptor;
 	MeshMaterialStructure MaterialCBufferData;
+
+	BEGIN_FIELD_REGISTRATION(RenderableMeshElementData)
+		REGISTER_FIELD(MaterialCBufferData);
+	END_FIELD_REGISTRATION()
 };
 
 
@@ -19,10 +23,13 @@ private:
 	static int __MeshElementsCreatedCount;
 
 public:
+	RenderableMeshElement();
 	RenderableMeshElement(const RenderableMeshElementData& data);
 	virtual ~RenderableMeshElement() = default;
 
 public:
+	void SetRenderableMeshElementData(const RenderableMeshElementData& data);
+
 	virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
@@ -51,6 +58,11 @@ public:
 	#undef IMPL_FLOAT_GET_SET_FUNCTION
 
 	//////////////////////////////////////
+
+public:
+	BEGIN_FIELD_REGISTRATION(RenderableMeshElement, BaseRenderableObject)
+		REGISTER_FIELD(m_xData)
+	END_FIELD_REGISTRATION()
 
 private:
 

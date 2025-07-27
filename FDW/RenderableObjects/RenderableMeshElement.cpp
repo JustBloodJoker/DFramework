@@ -2,10 +2,20 @@
 
 int RenderableMeshElement::__MeshElementsCreatedCount = 0;
 
+RenderableMeshElement::RenderableMeshElement() {
+	++__MeshElementsCreatedCount;
+}
+
 RenderableMeshElement::RenderableMeshElement(const RenderableMeshElementData& data) : BaseRenderableObject("SubMesh_ID_" + std::to_string(__MeshElementsCreatedCount)) {
 	m_xData = data;
 
 	++__MeshElementsCreatedCount;
+}
+
+void RenderableMeshElement::SetRenderableMeshElementData(const RenderableMeshElementData& data) {
+	m_xData.SRVPack = data.SRVPack;
+	m_xData.MaterialCBufferData.LoadedTexture = data.MaterialCBufferData.LoadedTexture;
+	m_xData.ObjectDescriptor = data.ObjectDescriptor;
 }
 
 void RenderableMeshElement::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {

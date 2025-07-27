@@ -1,12 +1,15 @@
 #include <RenderableObjects/RenderableSimpleObject.h>
 #include <MainRenderer/PSOManager.h>
+#include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 
-RenderableSimpleObject::RenderableSimpleObject(std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> object) :BaseRenderableObject("Simple object") {
-	m_pObject = std::move(object);
+RenderableSimpleObject::RenderableSimpleObject(SimpleObjectType type) :BaseRenderableObject("Simple object") {
+	m_xType = type;
 }
 
 void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	m_pObject = std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GetGeneratorForType(m_xType));
+
 	m_pMatricesBuffer = FD3DW::UploadBuffer<MeshMatricesStructure>::CreateConstantBuffer(device, 1);
 
 	m_pMaterialBuffer = FD3DW::UploadBuffer<MeshMaterialStructure>::CreateConstantBuffer(device, 1);
@@ -15,21 +18,31 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 
 	m_pMaterial = std::make_unique<FD3DW::Material>();
 	
-	m_pSRVPack = FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, FD3DW::TextureType::SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	m_pSRVPack = FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 	
-	m_xMaterialCBufferData.Diffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
-	m_xMaterialCBufferData.Ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
-	m_xMaterialCBufferData.Emissive = { 0.0f, 0.0f, 0.0f, 1.0f };
-	m_xMaterialCBufferData.Specular = { 0.5f, 0.5f, 0.5f, 1.0f };
-	m_xMaterialCBufferData.Roughness = 0.5f;
-	m_xMaterialCBufferData.Metalness = 0.0f;
-	m_xMaterialCBufferData.SpecularPower = 32.0f;
-	m_xMaterialCBufferData.HeightScale = 0.04f;
+	if (!m_bIsInitedMaterialDesc) {
+		m_xMaterialCBufferData.Diffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
+		m_xMaterialCBufferData.Ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
+		m_xMaterialCBufferData.Emissive = { 0.0f, 0.0f, 0.0f, 1.0f };
+		m_xMaterialCBufferData.Specular = { 0.5f, 0.5f, 0.5f, 1.0f };
+		m_xMaterialCBufferData.Roughness = 0.5f;
+		m_xMaterialCBufferData.Metalness = 0.0f;
+		m_xMaterialCBufferData.SpecularPower = 32.0f;
+		m_xMaterialCBufferData.HeightScale = 0.04f;
+		m_bIsInitedMaterialDesc = true;
+	}
 
-	for (int i = 0; i < FD3DW::TextureType::SIZE; ++i) {
-		m_xMaterialCBufferData.LoadedTexture[i] = false;
-		m_pSRVPack->AddNullResource(i, device);
-
+	for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i)
+	{
+		auto type = FD3DW::TextureType(i);
+		if (m_mPathToTextures.contains(type)) 
+		{
+			SetupTexture(type, m_mPathToTextures.at(type), device, list);
+		} else 
+		{
+			m_xMaterialCBufferData.LoadedTexture[i] = false;
+			m_pSRVPack->AddNullResource(i, device);
+		}
 	}
 
 	NeedUpdateMaterials();
@@ -78,18 +91,22 @@ RenderPass RenderableSimpleObject::GetRenderPass() const {
 void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string pathTo, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pMaterial->SetTexture(pathTo, type, device, list);
 	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(type), D3D12_SRV_DIMENSION_TEXTURE2D, type, device);
-	
+
+	m_mPathToTextures[type] = pathTo;
 	m_xMaterialCBufferData.LoadedTexture[type] = true;
-	m_xMaterialCBufferData.LoadedTexture[FD3DW::TextureType::SIZE] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	m_xMaterialCBufferData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	
 	NeedUpdateMaterials();
 }
 
 void RenderableSimpleObject::EraseTexture(FD3DW::TextureType type, ID3D12Device* device) {
 	m_pMaterial->DeleteTexture(type);
 	m_pSRVPack->AddNullResource(type, device);
-	
+
+	m_mPathToTextures.erase(type);
 	m_xMaterialCBufferData.LoadedTexture[type] = false;
-	m_xMaterialCBufferData.LoadedTexture[FD3DW::TextureType::SIZE] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	m_xMaterialCBufferData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	
 	NeedUpdateMaterials();
 }
 

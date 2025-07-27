@@ -22,6 +22,7 @@ static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dd
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
 static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg", L".png" };
 
+static const std::vector<std::wstring> s_vSupportedEngineFileExts = { L".fdw" };
 
 constexpr std::array<std::pair<LightTypes, const char*>, LightTypes::Size> LightTypeInfo = { {
     { PointLight, "PointLight" },
@@ -38,6 +39,8 @@ void MainRenderer_UIComponent::DrawUI() {
     AudioBrowser();
     SkyboxBrowser();
     TextureBrowser();
+    LoadSceneBrowser();
+    SaveSceneBrowser();
 }
 
 void MainRenderer_UIComponent::MainWindow() {
@@ -57,6 +60,11 @@ void MainRenderer_UIComponent::MainWindow() {
 
         if (ImGui::BeginTabItem("Lights")) {
             DrawLightsTab();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("EditorUtilities")) {
+            DrawEditorUtilitiesTab();
             ImGui::EndTabItem();
         }
 
@@ -110,11 +118,11 @@ void MainRenderer_UIComponent::DrawCameraTab() {
 void MainRenderer_UIComponent::DrawLightsTab() {
     ImGui::SeparatorText("Lights");
 
-    int lightCount = m_pOwner->GetLightsCount();
-
     if (ImGui::Button("Add Light")) {
         m_pOwner->CreateLight();
     }
+
+    int lightCount = m_pOwner->GetLightsCount();
 
     if (lightCount <= 0) {
         ImGui::Text("No lights available.");
@@ -164,6 +172,19 @@ void MainRenderer_UIComponent::DrawLightsTab() {
         m_iSelectedLightIndex = std::max(0, m_iSelectedLightIndex - 1);
     }
 }
+
+void MainRenderer_UIComponent::DrawEditorUtilitiesTab() {
+    ImGui::SeparatorText("Scene I/O");
+
+    if (ImGui::Button("Save Scene")) {
+        m_bShowSaveSceneBrowser = true;
+    }
+
+    if (ImGui::Button("Load Scene")) {
+        m_bShowLoadSceneBrowser = true;
+    }
+}
+
 
 void MainRenderer_UIComponent::SceneBrowser() {
     FileBrowser(
@@ -225,6 +246,20 @@ void MainRenderer_UIComponent::TextureBrowser() {
             return "Texture ";
         }
     );
+}
+
+void MainRenderer_UIComponent::SaveSceneBrowser() {
+    SceneFileBrowser(m_bShowSaveSceneBrowser, "Save Scene", true,
+        [this](const std::filesystem::path& path) {
+            m_pOwner->SaveSceneToFile(path.string());
+    });
+}
+
+void MainRenderer_UIComponent::LoadSceneBrowser() {
+    SceneFileBrowser(m_bShowLoadSceneBrowser, "Load Scene", false,
+        [this](const std::filesystem::path& path) {
+            m_pOwner->LoadSceneFromFile(path.string());
+    });
 }
 
 bool MainRenderer_UIComponent::DrawCommonLightProperties(LightStruct& light) {
@@ -584,34 +619,6 @@ void MainRenderer_UIComponent::DrawAudioUI(RenderableAudioObject* audio) {
 /////////////////////////////////////////
 
 
-
-MainRenderer_UIComponent::MainRenderer_UIComponent(MainRenderer* owner) : MainRendererComponent(owner) { 
-    static const std::pair<const char*, FD3DW::TextureType> kTextureNames[] = {
-        { "BASE",     FD3DW::TextureType::BASE },
-        { "NORMAL",   FD3DW::TextureType::NORMAL },
-        { "ROUGHNESS",FD3DW::TextureType::ROUGHNESS },
-        { "METALNESS",FD3DW::TextureType::METALNESS },
-        { "HEIGHT",   FD3DW::TextureType::HEIGHT },
-        { "SPECULAR", FD3DW::TextureType::SPECULAR },
-        { "OPACITY",  FD3DW::TextureType::OPACITY },
-        { "AMBIENT",    FD3DW::TextureType::AMBIENT },
-        { "EMISSIVE", FD3DW::TextureType::EMISSIVE }
-    };
-
-    for (const auto& [name, type] : kTextureNames)
-    {
-        m_vTextureOps.push_back({
-            name,
-            [this, type](RenderableSimpleObject* obj, const std::string& path) {
-                obj->SetupTexture(type, path, m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList());
-            },
-            [this, type](RenderableSimpleObject* obj) {
-                obj->EraseTexture(type, m_pOwner->GetDevice());
-            }
-            });
-    }
-}
-
 void MainRenderer_UIComponent::InitImGui() {
     if (m_bIsInited) return;
     
@@ -669,6 +676,31 @@ bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wPa
 }
 
 void MainRenderer_UIComponent::AfterConstruction() {
+    static const std::pair<const char*, FD3DW::TextureType> kTextureNames[] = {
+        { "BASE",     FD3DW::TextureType::BASE },
+        { "NORMAL",   FD3DW::TextureType::NORMAL },
+        { "ROUGHNESS",FD3DW::TextureType::ROUGHNESS },
+        { "METALNESS",FD3DW::TextureType::METALNESS },
+        { "HEIGHT",   FD3DW::TextureType::HEIGHT },
+        { "SPECULAR", FD3DW::TextureType::SPECULAR },
+        { "OPACITY",  FD3DW::TextureType::OPACITY },
+        { "AMBIENT",    FD3DW::TextureType::AMBIENT },
+        { "EMISSIVE", FD3DW::TextureType::EMISSIVE }
+    };
+
+    for (const auto& [name, type] : kTextureNames)
+    {
+        m_vTextureOps.push_back({
+            name,
+            [this, type](RenderableSimpleObject* obj, const std::string& path) {
+                obj->SetupTexture(type, path, m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList());
+            },
+            [this, type](RenderableSimpleObject* obj) {
+                obj->EraseTexture(type, m_pOwner->GetDevice());
+            }
+            });
+    }
+
     InitImGui();
 
     m_pUILayer = std::make_unique<UIInputLayer>(this);
@@ -682,6 +714,76 @@ void MainRenderer_UIComponent::BeforeDestruction() {
 }
 
 
+void MainRenderer_UIComponent::SceneFileBrowser(bool& isOpen, const std::string& title, bool isSave, const std::function<void(const std::filesystem::path&)>& onConfirm) {
+    if (!isOpen) return;
+
+    static char fileNameBuffer[256] = {};
+
+
+    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+    ImGui::Begin(title.c_str(), &isOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+
+    if (m_bIsPathChanged) {
+        m_vEntries = GetDirectoryEntries(m_xCurrentPath);
+        m_bIsPathChanged = false;
+    }
+
+    if (ImGui::Button("Back")) {
+        if (m_xCurrentPath.has_parent_path()) {
+            m_xCurrentPath = m_xCurrentPath.parent_path();
+            m_bIsPathChanged = true;
+        }
+    }
+
+    ImGui::Separator();
+
+    for (const auto& entry : m_vEntries) {
+        if (!entry.exists()) continue;
+        const auto& path = entry.path();
+        std::wstring ext = path.extension().wstring();
+        std::string label = WStringToUTF8(path.filename().wstring());
+
+        if (entry.is_directory()) {
+            if (ImGui::Selectable(("Folder " + label).c_str())) {
+                m_xCurrentPath /= path.filename();
+                m_bIsPathChanged = true;
+            }
+        }
+        else if (!isSave && std::find(s_vSupportedEngineFileExts.begin(), s_vSupportedEngineFileExts.end(), ext) != s_vSupportedEngineFileExts.end()) {
+            if (ImGui::Selectable(("Scene " + label).c_str())) {
+                onConfirm(path);
+                isOpen = false;
+                break;
+            }
+        }
+    }
+
+    if (isSave) {
+        ImGui::SeparatorText("Save Scene As...");
+        ImGui::InputText("File name", fileNameBuffer, sizeof(fileNameBuffer));
+        ImGui::SameLine();
+
+        if (ImGui::Button("Save")) {
+            std::string inputName(fileNameBuffer);
+            if (!inputName.empty()) {
+                auto fullPath = m_xCurrentPath / inputName;
+                if (fullPath.extension().empty()) {
+                    fullPath += ".fdw";
+                }
+                onConfirm(fullPath);
+                isOpen = false;
+            }
+        }
+    }
+
+    ImGui::Separator();
+    if (ImGui::Button("Close")) {
+        isOpen = false;
+    }
+
+    ImGui::End();
+}
+
 void MainRenderer_UIComponent::FileBrowser(
     bool& isOpen,
     const std::string& windowTitle,
@@ -692,27 +794,24 @@ void MainRenderer_UIComponent::FileBrowser(
 ) {
     if (!isOpen) return;
 
-    static std::vector<std::filesystem::directory_entry> entries;
-    static bool bPathChanged = true;
-
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin(windowTitle.c_str(), &isOpen, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
 
-    if (bPathChanged) {
-        entries = GetDirectoryEntries(currentPath);
-        bPathChanged = false;
+    if (m_bIsPathChanged) {
+        m_vEntries = GetDirectoryEntries(currentPath);
+        m_bIsPathChanged = false;
     }
 
     if (ImGui::Button("Back")) {
         if (currentPath.has_parent_path()) {
             currentPath = currentPath.parent_path();
-            bPathChanged = true;
+            m_bIsPathChanged = true;
         }
     }
 
     ImGui::Separator();
 
-    for (const auto& entry : entries) {
+    for (const auto& entry : m_vEntries) {
         if (!entry.exists()) continue;
 
         const auto& path = entry.path();
@@ -725,7 +824,7 @@ void MainRenderer_UIComponent::FileBrowser(
             selected = ImGui::Selectable(("Folder " + label).c_str());
             if (selected) {
                 currentPath /= path.filename();
-                bPathChanged = true;
+                m_bIsPathChanged = true;
             }
         }
         else if (entry.is_regular_file()) {

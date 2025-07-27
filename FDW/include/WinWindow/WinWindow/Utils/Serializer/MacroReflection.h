@@ -15,7 +15,7 @@
 
 #define BEGIN_FIELD_REGISTRATION(SelfType, ...)                                 \
     using Self = SelfType;                                                      \
-    AutoRegisterInFactory<SelfType> _auto_reg_##SelfType;                       \
+    inline static AutoRegisterInFactory<SelfType> _auto_reg_##SelfType;         \
     static const std::vector<FieldInfo>& GetFieldList() {                       \
         static std::vector<FieldInfo> FIELDS_NAME;                              \
         if (FIELDS_NAME.empty()) {                                              \

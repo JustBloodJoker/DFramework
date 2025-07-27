@@ -42,11 +42,14 @@ private:
 	void DrawRenderableObjectsTab();
 	void DrawCameraTab();
 	void DrawLightsTab();
+	void DrawEditorUtilitiesTab();
 
 	void SceneBrowser();
 	void AudioBrowser();
 	void SkyboxBrowser();
 	void TextureBrowser();
+	void SaveSceneBrowser();
+	void LoadSceneBrowser();
 
 	bool DrawCommonLightProperties(LightStruct& light);
 	bool DrawSpecificLightUI(LightStruct& light);
@@ -64,6 +67,7 @@ private:
 	void DrawAudioUI(RenderableAudioObject* audio);
 
 private:
+	void SceneFileBrowser(bool& isOpen, const std::string& title, bool isSave, const std::function<void(const std::filesystem::path&)>& onConfirm);
 	void FileBrowser(bool& isOpen, const std::string& windowTitle, std::filesystem::path& currentPath, const std::vector<std::wstring>& supportedExtensions, const std::function<void(const std::filesystem::path&)>& onFileSelected, const std::function<std::string(const std::filesystem::path&)>& getIcon = nullptr);
 	std::vector<std::filesystem::directory_entry> GetDirectoryEntries(const std::filesystem::path& dir);
 	std::string WStringToUTF8(const std::wstring& wstr);
@@ -99,6 +103,9 @@ private:
 	std::unordered_map<BaseRenderableObject*, AnimationUIState> m_mAnimationStates;
 	int m_iSelectedObjectIndex = -1;
 	std::vector<BaseRenderableObject*> m_vCachedObjects;
-
+	bool m_bShowSaveSceneBrowser = false;
+	bool m_bShowLoadSceneBrowser = false;
+	std::vector<std::filesystem::directory_entry> m_vEntries;
+	bool m_bIsPathChanged = true;
 
 };

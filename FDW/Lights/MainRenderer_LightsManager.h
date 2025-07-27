@@ -12,7 +12,6 @@ class MainRenderer;
 class MainRenderer_LightsManager : public MainRendererComponent {
 
 public:
-	MainRenderer_LightsManager(MainRenderer* owner);
 	virtual ~MainRenderer_LightsManager() = default;
 
 	virtual void AfterConstruction() override;
@@ -31,6 +30,11 @@ public:
 
 public:
 	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list);
+
+public:
+	BEGIN_FIELD_REGISTRATION(MainRenderer_LightsManager, MainRendererComponent)
+		REGISTER_FIELD(m_vLights)
+	END_FIELD_REGISTRATION()
 
 private:
 	void UpdateLightsConstantBuffer();

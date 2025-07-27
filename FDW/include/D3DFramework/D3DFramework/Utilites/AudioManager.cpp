@@ -10,6 +10,11 @@ namespace FD3DW
 		InitXAudio();
 	}
 
+    Audio* AudioManager::CreateAudio(const std::string& path)
+    {
+        return CreateAudio(StringToWString(path));
+    }
+
     Audio* AudioManager::CreateAudio(const std::wstring& path)
     {
         HANDLE hFile = CreateFile(

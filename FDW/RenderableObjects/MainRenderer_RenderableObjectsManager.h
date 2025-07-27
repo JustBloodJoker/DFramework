@@ -31,22 +31,18 @@ struct RenderableType<FD3DW::Audio> {
 
 class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
 public:
-    MainRenderer_RenderableObjectsManager(MainRenderer* owner);
 
-    template<typename TObject, typename... Args>
-    BaseRenderableObject* CreateObject(std::unique_ptr<TObject> obj, ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
-        using TRenderable = typename RenderableType<TObject>::type;
-
-        static_assert(std::is_base_of_v<BaseRenderableObject, TRenderable>, "TRenderable must derive from BaseRenderableObject");
-
-        auto renderable = std::make_unique<TRenderable>(std::move(obj), std::forward<Args>(args)...);
-        renderable->Init(device, list);
+    template<typename TRenderable, typename... Args>
+    BaseRenderableObject* CreateObject(ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
+        
+        auto renderable = std::make_unique<TRenderable>(std::forward<Args>(args)...);
+        DoInitObject(renderable.get(), device, list);
         auto ptr = renderable.get();
         m_vObjects.push_back(std::move(renderable));
         return ptr;
     }
 
-    BaseRenderableObject* CreateObject(const std::string path, ID3D12GraphicsCommandList* list);
+    void CreateSimpleObject(SimpleObjectType type, ID3D12GraphicsCommandList* list);
     void CreatePlane(ID3D12GraphicsCommandList* list);
 
     void RemoveObject(BaseRenderableObject* obj);
@@ -58,7 +54,19 @@ public:
     void ForwardRender(ID3D12GraphicsCommandList* list);
     void AfterRender();
 
+
+    virtual void AfterConstruction() override;
+    virtual void BeforeDestruction() override;
+
     RenderableSkyboxObject* FindSkyboxObject();
+
+    BEGIN_FIELD_REGISTRATION(MainRenderer_RenderableObjectsManager, MainRendererComponent)
+        REGISTER_FIELD(m_vObjects)
+    END_FIELD_REGISTRATION()
+
+private:
+    void DoInitObject(BaseRenderableObject* obj, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+    void SpecificPostLoadForOblect(BaseRenderableObject* obj);
 
 private:
     void DoDeleteObject(BaseRenderableObject* obj);

@@ -21,7 +21,6 @@ public:
 	void UserLoop() override;
 	void UserClose()  override;
 
-	std::shared_ptr<FD3DW::FResource> ddsTest;
 public:
 	///////////////////////////////////////////////////
 	//BRIDGE METHODS
@@ -50,6 +49,10 @@ public:
 	void SetLightData(LightStruct newData, int idx);
 	int GetLightsCount();
 
+public:
+	void SaveSceneToFile(std::string pathTo);
+	void LoadSceneFromFile(std::string pathTo);
+
 
 private:
 	void InitMainRendererParts(ID3D12Device* device);
@@ -57,27 +60,33 @@ private:
 
 private:
 
-	MainRenderer_UIComponent* m_pUIComponent = nullptr;
-	MainRenderer_CameraComponent* m_pCameraComponent = nullptr;
-	MainRenderer_RenderableObjectsManager* m_pRenderableObjectsManager = nullptr;
-	MainRenderer_LightsManager* m_pLightsManager = nullptr;
+	void AddToCallAfterRenderLoop(std::function<void(void)> foo);
+	void CallAfterRenderLoop();
+	std::vector<std::function<void(void)>> m_vCallAfterRenderLoop;
+
+private:
+
+	std::unique_ptr<MainRenderer_UIComponent> m_pUIComponent = nullptr;
+	std::unique_ptr<MainRenderer_CameraComponent> m_pCameraComponent = nullptr;
+	std::unique_ptr<MainRenderer_RenderableObjectsManager> m_pRenderableObjectsManager = nullptr;
+	std::unique_ptr<MainRenderer_LightsManager> m_pLightsManager = nullptr;
 
 protected:
 
 	template <typename T, typename... Args>
-	T* CreateComponent(Args&&... args) {
-		auto cmp = std::make_unique<T>(this, std::forward<Args>(args)...);
-		auto cmpRaw = cmp.get();
-		this->m_vComponents.push_back(std::move(cmp));
-		cmpRaw->AfterConstruction();
-		return cmpRaw;
+	std::unique_ptr<T> CreateUniqueComponent(Args&&... args) {
+		auto cmp = std::make_unique<T>(std::forward<Args>(args)...);
+		cmp->SetAfterConstruction(this);
+		return std::move(cmp);
 	}
 
-	void DestroyComponent(MainRendererComponent* cmp);
+	template <typename T>
+	void DestroyComponent(std::unique_ptr<T>& cmp) {
+		cmp->BeforeDestruction();
+		cmp = nullptr;
+	}
 
 protected:
-	std::vector<std::unique_ptr<MainRendererComponent>> m_vComponents;
-
 	std::unique_ptr<FD3DW::CommandList> m_pCommandList;
 	ID3D12GraphicsCommandList* m_pPCML;
 

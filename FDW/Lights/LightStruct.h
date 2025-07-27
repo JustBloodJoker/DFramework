@@ -1,6 +1,7 @@
 #pragma once
 
 #include <pch.h>
+#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
 
 enum LightTypes {
     PointLight = 0,
@@ -33,6 +34,20 @@ struct LightStruct {
     //LTC only
     dx::XMFLOAT2 RectSize = { 1.0f, 1.0f };
     dx::XMFLOAT3 Rotation = { 0.0f, dx::XMConvertToRadians(90.0f), 0.0f };
+
+    BEGIN_FIELD_REGISTRATION(LightStruct)
+        REGISTER_FIELD(LightType)
+        REGISTER_FIELD(Color)
+        REGISTER_FIELD(Intensity)
+        REGISTER_FIELD(Position)
+        REGISTER_FIELD(AttenuationRadius)
+        REGISTER_FIELD(SourceRadius)
+        REGISTER_FIELD(Direction)
+        REGISTER_FIELD(InnerConeAngle)
+        REGISTER_FIELD(OuterConeAngle)
+        REGISTER_FIELD(RectSize)
+        REGISTER_FIELD(Rotation)
+    END_FIELD_REGISTRATION()
 };
 
 struct LightBuffer {
