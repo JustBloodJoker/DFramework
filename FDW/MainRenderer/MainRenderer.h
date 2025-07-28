@@ -39,6 +39,9 @@ public:
 	void AddSkybox(std::string path);
 	void AddAudio(std::string path);
 	void AddSimplePlane();
+	void AddSimpleCone();
+	void AddSimpleCube();
+	void AddSimpleSphere();
 	void RemoveObject(BaseRenderableObject* obj);
 	void RemoveAllObjects();
 

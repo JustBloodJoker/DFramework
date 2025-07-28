@@ -74,7 +74,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float roughness = objMaterials.roughness;
     if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION])
     {
-        if(LoadedTexture[TEXTURE_ROUGHNESS_AND_METALNESS_IS_ONE_TEXTURE_FLAG_LOCATION])
+        if(LoadedTexture[TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION])
         {
             roughness = RoughnessTexture.Sample(wraps, texCoord).g;
         } else
@@ -86,7 +86,13 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float metalness = objMaterials.metalness;
     if (LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION])
     {
-        metalness = MetalnessTexture.Sample(wraps, texCoord).r;
+        if(LoadedTexture[TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION])
+        {
+            metalness = MetalnessTexture.Sample(wraps, texCoord).b;
+        } else
+        {
+            metalness = MetalnessTexture.Sample(wraps, texCoord).r;
+        }
     }
 
     float4 specular = objMaterials.specular;
@@ -108,8 +114,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     }
 
     AlphaClipping(albedo.a);
-
-    albedo.rgb = GammaCorrection(albedo.rgb, 2.2);
 
     PIXEL_OUTPUT psOut;
     psOut.Position      = float4(vsOut.worldPos, 1.0f);

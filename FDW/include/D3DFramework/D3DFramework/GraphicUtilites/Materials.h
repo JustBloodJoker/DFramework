@@ -47,7 +47,7 @@ namespace FD3DW
 
 		void UpdateRoughnessMetalnessTexturesInfo();
 
-		bool IsRoughnessAndMetalnessInOneTexture();
+		bool IsORMTextureType();
 
 	private:
 
@@ -56,7 +56,7 @@ namespace FD3DW
 
 	private:
 
-		bool m_bIsRoughnessAndMetalnessInOneTexture = false;
+		bool m_bIsORMTextureType = false;
 
 	};
 

@@ -52,17 +52,17 @@ namespace FD3DW
 		pCommandQueue->ExecuteCommandLists(ARRAYSIZE(cmdLists), cmdLists);
 	}
 
-	ID3D12GraphicsCommandList* CommandList::GetPtrCommandList() const
+	ID3D12GraphicsCommandList4* CommandList::GetPtrCommandList() const
 	{
 		return m_pCommandList.Get();
 	}
 
-	CommandList::operator ID3D12GraphicsCommandList* () const
+	CommandList::operator ID3D12GraphicsCommandList4* () const
 	{
 		return m_pCommandList.Get();
 	}
 
-	ID3D12GraphicsCommandList* const* CommandList::GetAdressCommandList() const
+	ID3D12GraphicsCommandList4* const* CommandList::GetAdressCommandList() const
 	{
 		return m_pCommandList.GetAddressOf();
 	}

@@ -3,12 +3,10 @@
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 
-RenderableSimpleObject::RenderableSimpleObject(SimpleObjectType type) :BaseRenderableObject("Simple object") {
-	m_xType = type;
-}
+RenderableSimpleObject::RenderableSimpleObject(std::string name) :BaseRenderableObject(name) { }
 
 void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
-	m_pObject = std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GetGeneratorForType(m_xType));
+	m_pObject = CreateSimpleObject(device, list);
 
 	m_pMatricesBuffer = FD3DW::UploadBuffer<MeshMatricesStructure>::CreateConstantBuffer(device, 1);
 
@@ -94,7 +92,7 @@ void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string p
 
 	m_mPathToTextures[type] = pathTo;
 	m_xMaterialCBufferData.LoadedTexture[type] = true;
-	m_xMaterialCBufferData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	m_xMaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
 	
 	NeedUpdateMaterials();
 }
@@ -105,7 +103,7 @@ void RenderableSimpleObject::EraseTexture(FD3DW::TextureType type, ID3D12Device*
 
 	m_mPathToTextures.erase(type);
 	m_xMaterialCBufferData.LoadedTexture[type] = false;
-	m_xMaterialCBufferData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = m_pMaterial->IsRoughnessAndMetalnessInOneTexture();
+	m_xMaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
 	
 	NeedUpdateMaterials();
 }

@@ -28,7 +28,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 				m_vSRVPacks.back()->AddNullResource(i, device);
 			}
 		}
-		cbData.LoadedTexture[IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS] = mat->IsRoughnessAndMetalnessInOneTexture();
+		cbData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = mat->IsORMTextureType();
 
 		meshMaterialStructures.push_back(cbData);
 	}

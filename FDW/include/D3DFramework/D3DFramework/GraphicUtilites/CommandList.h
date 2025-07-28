@@ -25,17 +25,17 @@ namespace FD3DW
 		
 		void ExecuteList(ID3D12CommandQueue* pCommandQueue); //NEED TO SYNCHRONIZE AFTER CALL METHOD
 
-		ID3D12GraphicsCommandList* const* GetAdressCommandList() const;
-		ID3D12GraphicsCommandList* GetPtrCommandList() const;
+		ID3D12GraphicsCommandList4* const* GetAdressCommandList() const;
+		ID3D12GraphicsCommandList4* GetPtrCommandList() const;
 
 		/////////////////////////
 		//		OPERATORS
 
-		operator ID3D12GraphicsCommandList* () const;
+		operator ID3D12GraphicsCommandList4* () const;
 
 	private:
 
-		wrl::ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+		wrl::ComPtr<ID3D12GraphicsCommandList4> m_pCommandList;
 		wrl::ComPtr<ID3D12CommandAllocator> m_pListAllocator;
 
 	};

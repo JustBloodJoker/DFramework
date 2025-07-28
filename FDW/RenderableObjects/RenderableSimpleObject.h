@@ -15,7 +15,7 @@ private:
 
 public:
 	RenderableSimpleObject() = default;
-	RenderableSimpleObject(SimpleObjectType type);
+	RenderableSimpleObject(std::string name);
 	virtual ~RenderableSimpleObject() = default;
 
 public:
@@ -58,21 +58,19 @@ public:
 public:
 
 	BEGIN_FIELD_REGISTRATION(RenderableSimpleObject, BaseRenderableObject)
-		REGISTER_FIELD(m_xType)
 		REGISTER_FIELD(m_xMaterialCBufferData)
 		REGISTER_FIELD(m_bIsInitedMaterialDesc)
 		REGISTER_FIELD(m_mPathToTextures)
 	END_FIELD_REGISTRATION()
 
-private:
+protected:
+	virtual std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> CreateSimpleObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) = 0;
 
 private:
 	void BeforeRenderMaterialsUpdate();
 	void NeedUpdateMaterials();
 
 private:
-	SimpleObjectType m_xType;
-
 	std::map<FD3DW::TextureType, std::string> m_mPathToTextures;
 
 	std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> m_pObject = nullptr;

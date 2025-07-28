@@ -87,10 +87,6 @@ const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device);
 ////////////////////////////////////////////
 #define SCENES_DEFAULT_PATH L"Content/"
 
-enum SimpleObjectType {
-	Plane = 0,
-};
-
 ////////////////////////////////////////////
 
 

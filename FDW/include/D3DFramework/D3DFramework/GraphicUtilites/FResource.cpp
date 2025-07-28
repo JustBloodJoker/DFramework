@@ -180,7 +180,7 @@ namespace FD3DW
     {
         D3D12_RESOURCE_DESC txtDesc = {};
         
-
+        
         txtDesc.MipLevels = mipLevels;
         txtDesc.DepthOrArraySize = arraySize;
         txtDesc.Format = format;

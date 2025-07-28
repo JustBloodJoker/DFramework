@@ -87,6 +87,15 @@ void MainRenderer_UIComponent::DrawRenderableObjectsTab() {
     if (ImGui::Button("Create Simple Plane")) {
         m_pOwner->AddSimplePlane();
     }
+    if (ImGui::Button("Create Simple Cone")) {
+        m_pOwner->AddSimpleCone();
+    }
+    if (ImGui::Button("Create Simple Cube")) {
+        m_pOwner->AddSimpleCube();
+    }
+    if (ImGui::Button("Create Simple Sphere")) {
+        m_pOwner->AddSimpleSphere();
+    }
     if (m_iSelectedObjectIndex >= 0 && m_iSelectedObjectIndex < (int)m_vCachedObjects.size()) {
         ImGui::SameLine();
         if (ImGui::Button("Delete Selected")) {

@@ -3,14 +3,25 @@
 #include <MainRenderer/PSOManager.h>
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
-
-void MainRenderer_RenderableObjectsManager::CreateSimpleObject(SimpleObjectType type, ID3D12GraphicsCommandList* list) {
+void MainRenderer_RenderableObjectsManager::CreateSphere(ID3D12GraphicsCommandList* list) {
     auto device = m_pOwner->GetDevice();
-    CreateObject<RenderableSimpleObject>(device, list, type);
+    CreateObject<RenderableSimpleSphere>(device, list);
+}
+
+void MainRenderer_RenderableObjectsManager::CreateCube(ID3D12GraphicsCommandList* list) {
+    auto device = m_pOwner->GetDevice();
+    CreateObject<RenderableSimpleCube>(device, list);
+}
+
+
+void MainRenderer_RenderableObjectsManager::CreateCone(ID3D12GraphicsCommandList* list) {
+    auto device = m_pOwner->GetDevice();
+    CreateObject<RenderableSimpleCone>(device, list);
 }
 
 void MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12GraphicsCommandList* list) {
-    CreateSimpleObject(SimpleObjectType::Plane, list);
+    auto device = m_pOwner->GetDevice();
+    CreateObject<RenderableSimplePlane>(device, list);
 }
 
 void MainRenderer_RenderableObjectsManager::RemoveObject(BaseRenderableObject* obj) {

@@ -17,7 +17,7 @@ namespace FD3DW
 
 		m_xRTVDesc.Format = format;
 		m_xRTVDesc.ViewDimension = dimension;
-
+        
         D3D12_RESOURCE_DIMENSION textureDimension;
 
         switch (dimension)

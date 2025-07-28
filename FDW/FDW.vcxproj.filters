@@ -102,6 +102,18 @@
     <ClCompile Include="Lights\MainRenderer_LightsManager.cpp">
       <Filter>Lights</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSimplePlane.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSimpleCone.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSimpleCube.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\RenderableSimpleSphere.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -166,6 +178,18 @@
     </ClInclude>
     <ClInclude Include="Lights\LightStruct.h">
       <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSimplePlane.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSimpleCone.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSimpleCube.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h">
+      <Filter>RenderableObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

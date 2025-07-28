@@ -7,7 +7,10 @@
 #include <D3DFramework/Objects/Scene.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <RenderableObjects/RenderableMesh.h>
-#include <RenderableObjects/RenderableSimpleObject.h>
+#include <RenderableObjects/RenderableSimplePlane.h>
+#include <RenderableObjects/RenderableSimpleCone.h>
+#include <RenderableObjects/RenderableSimpleCube.h>
+#include <RenderableObjects/RenderableSimpleSphere.h>
 #include <RenderableObjects/RenderableSkyboxObject.h>
 #include <RenderableObjects/RenderableAudioObject.h>
 
@@ -42,7 +45,9 @@ public:
         return ptr;
     }
 
-    void CreateSimpleObject(SimpleObjectType type, ID3D12GraphicsCommandList* list);
+    void CreateSphere(ID3D12GraphicsCommandList* list);
+    void CreateCube(ID3D12GraphicsCommandList* list);
+    void CreateCone(ID3D12GraphicsCommandList* list);
     void CreatePlane(ID3D12GraphicsCommandList* list);
 
     void RemoveObject(BaseRenderableObject* obj);

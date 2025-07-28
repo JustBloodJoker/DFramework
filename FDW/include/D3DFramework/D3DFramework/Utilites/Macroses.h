@@ -19,6 +19,8 @@
 #endif
 
 #define M_PI_2_F 1.5707963f
+#define M_PI_F 3.141592654f
+#define M_2_PI_F 6.283185307f
 
 									
 #ifdef _XBOX 

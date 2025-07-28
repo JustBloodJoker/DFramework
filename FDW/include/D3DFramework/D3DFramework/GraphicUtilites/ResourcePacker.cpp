@@ -225,6 +225,7 @@ namespace FD3DW
 
 	void DSVPacker::AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice)
 	{
+		
 		CONSOLE_MESSAGE(std::string("DSVPaker is adding resource"));
 		pDevice->CreateDepthStencilView(resource, &dsvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 

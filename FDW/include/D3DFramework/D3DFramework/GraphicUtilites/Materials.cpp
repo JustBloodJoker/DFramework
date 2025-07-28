@@ -44,18 +44,31 @@ namespace FD3DW
 
 	void Material::UpdateRoughnessMetalnessTexturesInfo()
 	{
-		if (IsHaveTexture(TextureType::ROUGHNESS) && IsHaveTexture(TextureType::METALNESS)) {
-			if (GetResourceTexture(TextureType::ROUGHNESS) == GetResourceTexture(TextureType::METALNESS)) {
-				m_bIsRoughnessAndMetalnessInOneTexture = true;
-				return;
-			}
+		auto hasRoughness = IsHaveTexture(TextureType::ROUGHNESS);
+		auto hasMetalness = IsHaveTexture(TextureType::METALNESS);
+		auto hasAO = IsHaveTexture(TextureType::AMBIENT);
+
+		auto textureCount = int(hasRoughness) + int(hasMetalness) + int(hasAO);
+
+		if (textureCount < 2) {
+			m_bIsORMTextureType = false;
+			return;
 		}
-		m_bIsRoughnessAndMetalnessInOneTexture = false;
+
+		auto roughTex = hasRoughness ? GetResourceTexture(TextureType::ROUGHNESS) : nullptr;
+		auto metalTex = hasMetalness ? GetResourceTexture(TextureType::METALNESS) : nullptr;
+		auto aoTex = hasAO ? GetResourceTexture(TextureType::AMBIENT) : nullptr;
+
+		auto anyTwoMatch = (roughTex && metalTex && roughTex == metalTex) ||
+						   (roughTex && aoTex && roughTex == aoTex) ||
+					       (metalTex && aoTex && metalTex == aoTex);
+
+		m_bIsORMTextureType = anyTwoMatch;
 	}
 
-	bool Material::IsRoughnessAndMetalnessInOneTexture()
+	bool Material::IsORMTextureType()
 	{
-		return m_bIsRoughnessAndMetalnessInOneTexture;
+		return m_bIsORMTextureType;
 	}
 
 }

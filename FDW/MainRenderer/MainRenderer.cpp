@@ -241,6 +241,18 @@ void MainRenderer::AddSimplePlane() {
 	m_pRenderableObjectsManager->CreatePlane(m_pPCML);
 }
 
+void MainRenderer::AddSimpleCone() {
+	m_pRenderableObjectsManager->CreateCone(m_pPCML);
+}
+
+void MainRenderer::AddSimpleCube() {
+	m_pRenderableObjectsManager->CreateCube(m_pPCML);
+}
+
+void MainRenderer::AddSimpleSphere() {
+	m_pRenderableObjectsManager->CreateSphere(m_pPCML);
+}
+
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {
 	m_pRenderableObjectsManager->RemoveObject(obj);
 }

@@ -199,7 +199,6 @@ namespace FD3DW
 	bool D3DFW::InitD3D()
 	{
 #if defined(_DEBUG)
-
 		wrl::ComPtr<ID3D12Debug> pDebugController;
 		HRESULT_ASSERT(D3D12GetDebugInterface(IID_PPV_ARGS(&pDebugController)), "ID3D12 Debug mode set error");
 		pDebugController->EnableDebugLayer();
@@ -213,14 +212,48 @@ namespace FD3DW
 		HRESULT_ASSERT(CreateDXGIFactory1(IID_PPV_ARGS(m_pFactory.GetAddressOf())), "Factory create error");
 #endif
 
-		HRESULT hr = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(m_pDevice.GetAddressOf()));
+		D3D_FEATURE_LEVEL featureLevels[] = {
+			D3D_FEATURE_LEVEL_12_1,
+			D3D_FEATURE_LEVEL_12_0,
+			D3D_FEATURE_LEVEL_11_1,
+			D3D_FEATURE_LEVEL_11_0,
+		};
+
+		for (auto level : featureLevels)
+		{
+			wrl::ComPtr<ID3D12Device5> testDevice;
+			if (SUCCEEDED(hr = D3D12CreateDevice(nullptr, level, IID_PPV_ARGS(&testDevice))))
+			{
+				m_pDevice = testDevice;
+				break;
+			}
+		}
+
 		if (FAILED(hr))
 		{
-			wrl::ComPtr<IDXGIAdapter> pWarpAdapter;
-			HRESULT_ASSERT(m_pFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter)), "Warp adapter error");
+			wrl::ComPtr<IDXGIAdapter> warpAdapter;
+			HRESULT_ASSERT(m_pFactory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), "WARP adapter error");
 
-			HRESULT_ASSERT(D3D12CreateDevice(pWarpAdapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(m_pDevice.GetAddressOf())), "Device create error");
+			HRESULT_ASSERT(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(m_pDevice.GetAddressOf())), "WARP device create error");
 		}
+
+		D3D12_FEATURE_DATA_D3D12_OPTIONS5 options5 = {};
+		if (SUCCEEDED(m_pDevice->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS5, &options5, sizeof(options5))))
+		{
+			if (options5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
+			{
+				CONSOLE_MESSAGE("Raytracing not supported");
+			}
+			else
+			{
+				CONSOLE_MESSAGE("Raytracing supported");
+			}
+		}
+		else
+		{
+			CONSOLE_MESSAGE("Failed to query Raytracing tier");
+		}
+
 		m_uRTVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		m_uCBV_SRV_UAVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_uDSVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);

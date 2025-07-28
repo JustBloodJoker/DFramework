@@ -64,7 +64,7 @@ namespace FD3DW
 
 		//D3D12
 
-		wrl::ComPtr<ID3D12Device> m_pDevice;
+		wrl::ComPtr<ID3D12Device5> m_pDevice;
 		wrl::ComPtr<IDXGIFactory4> m_pFactory;
 		wrl::ComPtr<IDXGISwapChain> m_pSwapChain;
 		wrl::ComPtr<ID3D12DescriptorHeap> m_pRTVDescriptorHeap;

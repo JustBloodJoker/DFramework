@@ -6,7 +6,7 @@
 
 #define LOADED_FLAGS_DATA_SIZE TEXTURE_TYPE_SIZE+1
 
-#define IS_ROUGHNESS_AND_METALNESS_IN_ONE_TEXTURE_FLAG_POS TEXTURE_TYPE_SIZE
+#define IS_ORM_TEXTURE_FLAG_POS TEXTURE_TYPE_SIZE
 
 struct MeshMaterialStructure : FD3DW::MaterialFrameWork {
 	std::array<int, LOADED_FLAGS_DATA_SIZE> LoadedTexture = {false};

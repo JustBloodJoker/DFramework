@@ -40,7 +40,11 @@
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
     <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSimpleCone.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSimpleCube.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSimpleSphere.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
+    <ClCompile Include="RenderableObjects\RenderableSimplePlane.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
@@ -63,7 +67,11 @@
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />
+    <ClInclude Include="RenderableObjects\RenderableSimpleCone.h" />
+    <ClInclude Include="RenderableObjects\RenderableSimpleCube.h" />
+    <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
+    <ClInclude Include="RenderableObjects\RenderableSimplePlane.h" />
     <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
