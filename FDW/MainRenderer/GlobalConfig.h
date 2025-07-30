@@ -1,7 +1,8 @@
 #pragma once 
 
 #include <pch.h>
-#include <D3DFramework/GraphicUtilites/PipelineObject.h>
+#include <D3DFramework/GraphicUtilites/GraphicsPipelineObject.h>
+#include <D3DFramework/GraphicUtilites/ComputePipelineObject.h>
 
 //////////////////////////////////////////////
 //				GBUFFERS DATA
@@ -34,7 +35,7 @@ enum class PSOType {
 	PostProcessDefaultConfig,
 };
 
-const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors();
+const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors();
 const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>>& GetKnownShadersData();
 
 #define SHADERS_DEFAULT_INCLUDE_PATH L"Content/Shaders/DefaultInclude"

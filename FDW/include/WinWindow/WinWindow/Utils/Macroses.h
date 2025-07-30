@@ -11,7 +11,7 @@ static HRESULT hr = S_OK;
 #define CONSOLE_MESSAGE(text) { std::clog << "MESSAGE: " << text << std::endl; }
 #define CONSOLE_ERROR_MESSAGE(text) { std::cerr << "ERROR: " << text << std::endl; }
 #define CONSOLE_MESSAGE_NO_PREF(text) { std::clog << text << std::endl; }
-
+#define LAST_HR_STATE_CHECK() HRESULT_ASSERT(hr, "Last hr error")
 
 #else
 

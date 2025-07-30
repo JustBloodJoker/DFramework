@@ -6,6 +6,7 @@ class RenderableSimpleCube : public RenderableSimpleObject {
 public:
 	RenderableSimpleCube();
 	virtual ~RenderableSimpleCube() = default;
+	
 
 
 public:

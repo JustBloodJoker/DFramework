@@ -74,8 +74,7 @@ void RenderableSimpleObject::DeferredRender(ID3D12GraphicsCommandList* list) {
 	list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, m_pSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
 	auto params = m_pObject->GetObjectParameters(0);
-	list->DrawIndexedInstanced(params.IndicesCount, 1, params.IndicesOffset, params.VerticesOffset, 0);
-
+	list->DrawIndexedInstanced((UINT)params.IndicesCount, 1u, (UINT)params.IndicesOffset, (INT)params.VerticesOffset, 0u);
 }
 
 void RenderableSimpleObject::ForwardRender(ID3D12GraphicsCommandList* list) {

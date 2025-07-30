@@ -36,7 +36,7 @@ class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
 public:
 
     template<typename TRenderable, typename... Args>
-    BaseRenderableObject* CreateObject(ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
+    TRenderable* CreateObject(ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
         
         auto renderable = std::make_unique<TRenderable>(std::forward<Args>(args)...);
         DoInitObject(renderable.get(), device, list);
@@ -45,10 +45,10 @@ public:
         return ptr;
     }
 
-    void CreateSphere(ID3D12GraphicsCommandList* list);
-    void CreateCube(ID3D12GraphicsCommandList* list);
-    void CreateCone(ID3D12GraphicsCommandList* list);
-    void CreatePlane(ID3D12GraphicsCommandList* list);
+    RenderableSimpleSphere* CreateSphere(ID3D12GraphicsCommandList* list);
+    RenderableSimpleCube* CreateCube(ID3D12GraphicsCommandList* list);
+    RenderableSimpleCone* CreateCone(ID3D12GraphicsCommandList* list);
+    RenderableSimplePlane* CreatePlane(ID3D12GraphicsCommandList* list);
 
     void RemoveObject(BaseRenderableObject* obj);
 

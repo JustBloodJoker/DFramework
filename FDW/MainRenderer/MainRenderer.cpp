@@ -1,6 +1,7 @@
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
 #include <D3DFramework/Utilites/Serializer/BinarySerializer.h>
+#include <D3DFramework/GraphicUtilites/CommandList.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 

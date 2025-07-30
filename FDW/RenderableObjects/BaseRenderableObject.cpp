@@ -56,6 +56,7 @@ void BaseRenderableObject::AddScale(const dx::XMFLOAT3& delta) {
 dx::XMFLOAT3 BaseRenderableObject::GetPosition() const { return m_xPosition; }
 dx::XMFLOAT3 BaseRenderableObject::GetRotation() const { return m_xRotation; }
 dx::XMFLOAT3 BaseRenderableObject::GetScale()    const { return m_xScaling; }
+dx::XMMATRIX BaseRenderableObject::GetWorldMatrix() const { return m_xWorldMatrix; }
 
 const std::string& BaseRenderableObject::GetName() const { return m_sName; }
 

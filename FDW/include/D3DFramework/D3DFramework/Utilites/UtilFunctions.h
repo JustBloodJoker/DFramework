@@ -257,6 +257,33 @@ namespace FD3DW
 		}
 	}
 
+	inline std::array<std::array<FLOAT, 4>, 3> XMMatrixToDXRMatrix(dx::XMMATRIX matrix)
+	{
+		std::array<std::array<FLOAT, 4>, 3> dxrMatrix;
+		dx::XMMATRIX m = dx::XMMatrixTranspose(matrix);
+		for (int row = 0; row < 3; ++row)
+		{
+			dxrMatrix[row][0] = m.r[row].vector4_f32[0];
+			dxrMatrix[row][1] = m.r[row].vector4_f32[1];
+			dxrMatrix[row][2] = m.r[row].vector4_f32[2];
+			dxrMatrix[row][3] = m.r[row].vector4_f32[3];
+		}
+		return dxrMatrix;
+	}
+
+	inline void XMMATRIXSetToDXRMatrix(FLOAT(&out)[3][4], dx::XMMATRIX m) {
+		dx::XMMATRIX t = dx::XMMatrixTranspose(m);
+		for (int row = 0; row < 3; ++row)
+		{
+			out[row][0] = t.r[row].vector4_f32[0];
+			out[row][1] = t.r[row].vector4_f32[1];
+			out[row][2] = t.r[row].vector4_f32[2];
+			out[row][3] = t.r[row].vector4_f32[3];
+		}
+	}
+
+
+
 	inline std::string WStringToString(const std::wstring& wstr) {
 		if (wstr.empty())
 		{

@@ -3,7 +3,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#include "PipelineObject.h"
+#include "ComputePipelineObject.h"
 #include "TextureLoaders.h"
 
 namespace FD3DW
@@ -40,11 +40,11 @@ namespace FD3DW
     )";
 
 
-    PipelineObject* FResource::GetMipGenerationPSO(ID3D12Device* device) {
-        static std::unique_ptr<PipelineObject> s_pGenerateMipsPSO = nullptr;
+    ComputePipelineObject* FResource::GetMipGenerationPSO(ID3D12Device* device) {
+        static std::unique_ptr<ComputePipelineObject> s_pGenerateMipsPSO = nullptr;
 
         if (!s_pGenerateMipsPSO) {
-            s_pGenerateMipsPSO = std::make_unique<PipelineObject>(device);
+            s_pGenerateMipsPSO = std::make_unique<ComputePipelineObject>(device);
             std::unordered_map<CompileFileType, CompileDesc> shaders;
             shaders[CompileFileType::CS] = { s_wsMipMapGenCS, L"GenerateMipMaps",L"cs_6_5", false };
             s_pGenerateMipsPSO->CreatePSO(shaders);
@@ -104,7 +104,7 @@ namespace FD3DW
 
                 UINT mipLevels = CalculateMipCount(width, height);
                 CreateTextureBuffer(pDevice, 1, 
-                    channels == 1 ? DXGI_FORMAT_R8_UNORM : channels == 2 ? DXGI_FORMAT_R8G8_UNORM : channels == 3 ? DXGI_FORMAT_R8G8B8A8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+                    channels == 1 ? DXGI_FORMAT_R8_UNORM : channels == 2 ? DXGI_FORMAT_R8G8_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM,
                     width, height, 
                     DXGI_SAMPLE_DESC({1, 0}),
                     D3D12_RESOURCE_DIMENSION_TEXTURE2D, 
@@ -172,7 +172,7 @@ namespace FD3DW
 
     bool FResource::IsSupportMipMapping(D3D12_RESOURCE_DESC desc)
     {
-        return desc.Format == DXGI_FORMAT_R32G32B32A32_FLOAT;
+        return desc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     }
 
 

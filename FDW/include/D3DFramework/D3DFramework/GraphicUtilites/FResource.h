@@ -9,7 +9,7 @@
 namespace FD3DW
 {
 
-	class PipelineObject;
+	class ComputePipelineObject;
 
 	namespace TEXTURETYPE
 	{
@@ -38,7 +38,7 @@ namespace FD3DW
 		static std::unique_ptr<FResource> CreateAnonimTexture(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format,const UINT width, const UINT height,DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension,const D3D12_RESOURCE_FLAGS resourceFlags,const D3D12_TEXTURE_LAYOUT layout,const D3D12_HEAP_FLAGS heapFlags,const D3D12_HEAP_PROPERTIES* heapProperties,const UINT16 mipLevels);
 
 	public:
-		static PipelineObject* GetMipGenerationPSO(ID3D12Device* device);
+		static ComputePipelineObject* GetMipGenerationPSO(ID3D12Device* device);
 
 	public:
 		static std::shared_ptr<FResource> CreateTextureFromPath(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);

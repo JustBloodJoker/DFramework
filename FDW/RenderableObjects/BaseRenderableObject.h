@@ -52,6 +52,7 @@ public:
     dx::XMFLOAT3 GetPosition() const;
     dx::XMFLOAT3 GetRotation() const;
     dx::XMFLOAT3 GetScale() const;
+    dx::XMMATRIX GetWorldMatrix() const;
 
     const std::string& GetName() const;
 

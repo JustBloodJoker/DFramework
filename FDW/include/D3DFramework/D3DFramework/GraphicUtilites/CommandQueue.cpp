@@ -7,6 +7,10 @@ namespace FD3DW
 	{
 		return std::make_unique<CommandQueue>(pDevice, type, flags, priority, nodeMask);
 	}
+	CommandQueue::CommandQueue(ID3D12Device* pDevice, ICommandList* pCommandList) : CommandQueue(pDevice, pCommandList->GetType()) {
+		BindCommandList(pCommandList);
+	}
+
 	CommandQueue::CommandQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, INT priority, UINT nodeMask)
 	{
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -21,11 +25,10 @@ namespace FD3DW
 
 	void CommandQueue::ExecuteQueue(bool synch)
 	{
-		
 		for (const auto& el : m_vBindedLists)
 		{
 			el->TryCloseList();
-			m_vExecutedlists.push_back(el->GetPtrCommandList());
+			m_vExecutedlists.push_back(el->GetPtrDefaultCommandList());
 		}
 
 		m_pCommandQueue->ExecuteCommandLists((UINT)m_vExecutedlists.size(), m_vExecutedlists.data());
@@ -35,7 +38,7 @@ namespace FD3DW
 		synch ? FlushQueue() : (void)0 ;
 	}
 
-	void CommandQueue::BindCommandList(CommandList* pCommandList)
+	void CommandQueue::BindCommandList(ICommandList* pCommandList)
 	{
 		auto ptr = std::find(m_vBindedLists.begin(), m_vBindedLists.end(), pCommandList);
 		if (ptr == m_vBindedLists.end())
@@ -49,7 +52,7 @@ namespace FD3DW
 		}
 	}
 
-	void CommandQueue::UnbindCommandList(CommandList* pCommandList)
+	void CommandQueue::UnbindCommandList(ICommandList* pCommandList)
 	{
 		auto ptr = std::find(m_vBindedLists.begin(), m_vBindedLists.end(), pCommandList);
 		if (ptr != m_vBindedLists.end())

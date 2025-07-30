@@ -14,11 +14,11 @@
 
 #include "GraphicUtilites/BufferManager.h"
 #include "GraphicUtilites/CommandQueue.h"
+#include "GraphicUtilites/CommandList.h"
 #include "GraphicUtilites/FResource.h"
 #include "GraphicUtilites/ResourcePacker.h"
 #include "GraphicUtilites/RenderTarget.h"
 #include "GraphicUtilites/DepthStencilView.h"
-#include "GraphicUtilites/PipelineObject.h"
 #include "GraphicUtilites/StructuredBuffer.h"
 
 #include "Utilites/AudioManager.h"
@@ -64,7 +64,8 @@ namespace FD3DW
 
 		//D3D12
 
-		wrl::ComPtr<ID3D12Device5> m_pDevice;
+		wrl::ComPtr<ID3D12Device> m_pDevice;
+		wrl::ComPtr<ID3D12Device5> m_pDXRDevice;
 		wrl::ComPtr<IDXGIFactory4> m_pFactory;
 		wrl::ComPtr<IDXGISwapChain> m_pSwapChain;
 		wrl::ComPtr<ID3D12DescriptorHeap> m_pRTVDescriptorHeap;
@@ -88,6 +89,8 @@ namespace FD3DW
 		UINT m_uSampleCount;
 		UINT m_uQuality;
 
+		bool m_bIsRTSupported;
+
 	private:
 		CommandList* m_pBindedMainCommandList = nullptr;
 
@@ -103,6 +106,7 @@ namespace FD3DW
 		const UINT					Get_CBV_SRV_UAV_DescriptorSize()	const noexcept;
 		const UINT					Get_RTV_DescriptorSize()			const noexcept;
 		const UINT					Get_DSV_DescriptorSize()			const noexcept;
+		ID3D12Device5*				GetDXRDevice()						const noexcept;
 		ID3D12Device*				GetDevice()							const noexcept;
 		wrl::ComPtr<ID3D12Device>	GetComPtrDevice()					const noexcept;
 		IDXGISwapChain*				GetSwapChain()						const noexcept;

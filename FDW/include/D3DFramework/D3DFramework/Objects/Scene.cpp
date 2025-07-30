@@ -67,7 +67,7 @@ namespace FD3DW
 
 		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format =  DXGI_FORMAT_R32_UINT;
+		m_pIndexBufferView->Format =  DEFAULT_INDEX_BUFFER_FORMAT;
 		m_pIndexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
 
 		if (neverUpdate)

@@ -23,7 +23,7 @@ const UINT& GetGBuffersNum() {
     return (UINT)s_sGBuffersData.GBuffersFormats.size();
 }
 
-const std::unordered_map<PSOType, PSODescriptor>& GetPSODescriptors() {
+const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
 
     CD3DX12_RASTERIZER_DESC rasterizerDesc(D3D12_DEFAULT);
     rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;

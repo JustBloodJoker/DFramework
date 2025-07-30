@@ -188,16 +188,21 @@
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandListTemplate.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\ComputePipelineObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h" />
@@ -218,16 +223,18 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp" />
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />

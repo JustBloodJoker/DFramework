@@ -4,12 +4,12 @@
 
 void PSOManager::InitPSOjects(ID3D12Device* device)
 {
-    const auto& descriptors = GetPSODescriptors();
+    const auto& descriptors = GetGraphicsPSODescriptors();
 
     for (const auto& [type, descriptor] : descriptors) {
         std::wstring shaderDir = SHADERS_DEFAULT_PATH + descriptor.shaderFolderName;
 
-        auto pipeline = std::make_unique<FD3DW::PipelineObject>(device);
+        auto pipeline = std::make_unique<FD3DW::GraphicsPipelineObject>(device);
         pipeline->SetIncludeDirectories({ SHADERS_DEFAULT_INCLUDE_PATH, shaderDir });
         
         std::unordered_map<FD3DW::CompileFileType, FD3DW::CompileDesc> shaderFiles;
@@ -22,13 +22,14 @@ void PSOManager::InitPSOjects(ID3D12Device* device)
             }
         }
 
-        pipeline->CreatePSO(shaderFiles, descriptor.pipelineDesc);
+        pipeline->SetConfig(descriptor.pipelineDesc);
+        pipeline->CreatePSO(shaderFiles);
         m_mCreatedPSO[type] = std::move(pipeline);
     }
 }
 
 
-FD3DW::PipelineObject* PSOManager::GetPSOObject(PSOType type)
+FD3DW::BasePipelineObject* PSOManager::GetPSOObject(PSOType type)
 {
 	auto iter = m_mCreatedPSO.find(type);
 	if (iter == m_mCreatedPSO.end()) {

@@ -242,16 +242,23 @@ namespace FD3DW
 		{
 			if (options5.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED)
 			{
+				m_bIsRTSupported = false;
 				CONSOLE_MESSAGE("Raytracing not supported");
 			}
 			else
 			{
+				m_bIsRTSupported = true;
 				CONSOLE_MESSAGE("Raytracing supported");
 			}
 		}
 		else
 		{
 			CONSOLE_MESSAGE("Failed to query Raytracing tier");
+		}
+
+		if (m_bIsRTSupported) {
+			hr = m_pDevice->QueryInterface(IID_PPV_ARGS(m_pDXRDevice.ReleaseAndGetAddressOf()));
+			m_bIsRTSupported = SUCCEEDED(hr);
 		}
 
 		m_uRTVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -340,6 +347,11 @@ namespace FD3DW
 	const UINT D3DFW::Get_DSV_DescriptorSize() const noexcept
 	{
 		return m_uDSVDescriptorSize;
+	}
+
+	ID3D12Device5* D3DFW::GetDXRDevice() const noexcept 
+	{
+		return m_pDXRDevice.Get();
 	}
 
 	ID3D12Device* D3DFW::GetDevice() const noexcept

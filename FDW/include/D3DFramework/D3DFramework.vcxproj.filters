@@ -93,9 +93,6 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
-    <ClInclude Include="D3DFramework\GraphicUtilites\PipelineObject.h">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClInclude>
     <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
@@ -107,6 +104,24 @@
     </ClInclude>
     <ClInclude Include="D3DFramework\Utilites\Serializer\BinarySerializer.h">
       <Filter>D3DFramework\Utilites\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandListTemplate.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ComputePipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -120,9 +135,6 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\CommandList.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp">
@@ -164,13 +176,22 @@
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
       <Filter>D3DFramework\Utilites</Filter>
     </ClCompile>
-    <ClCompile Include="D3DFramework\GraphicUtilites\PipelineObject.cpp">
-      <Filter>D3DFramework\GraphicUtilites</Filter>
-    </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>

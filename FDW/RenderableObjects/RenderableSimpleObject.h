@@ -25,7 +25,10 @@ public:
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
-
+	
+	FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>* GetFDWObject() const {
+		return m_pObject.get();
+	}
 
 	//////////////////////////////////////////////////
 	//////   MATERIAL DATA & TEXTURE GET SET
