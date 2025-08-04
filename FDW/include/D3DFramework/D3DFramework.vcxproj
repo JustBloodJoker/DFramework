@@ -198,6 +198,7 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h" />
@@ -210,6 +211,7 @@
     <ClInclude Include="D3DFramework\include\d3dx12.h" />
     <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
     <ClInclude Include="D3DFramework\Objects\Object.h" />
+    <ClInclude Include="D3DFramework\Objects\RTObjectHelper.h" />
     <ClInclude Include="D3DFramework\Objects\Scene.h" />
     <ClInclude Include="D3DFramework\Objects\SimpleObjects.h" />
     <ClInclude Include="D3DFramework\pch.h" />
@@ -230,6 +232,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp" />
@@ -240,6 +243,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
     <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
     <ClCompile Include="D3DFramework\Objects\Object.cpp" />
+    <ClCompile Include="D3DFramework\Objects\RTObjectHelper.cpp" />
     <ClCompile Include="D3DFramework\Objects\Scene.cpp" />
     <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp" />
     <ClCompile Include="D3DFramework\pch.cpp" />

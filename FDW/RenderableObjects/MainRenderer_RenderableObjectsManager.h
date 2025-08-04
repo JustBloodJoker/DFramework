@@ -36,19 +36,20 @@ class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
 public:
 
     template<typename TRenderable, typename... Args>
-    TRenderable* CreateObject(ID3D12Device* device, ID3D12GraphicsCommandList* list, Args&&... args) {
+    TRenderable* CreateObject(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList, Args&&... args) {
         
         auto renderable = std::make_unique<TRenderable>(std::forward<Args>(args)...);
-        DoInitObject(renderable.get(), device, list);
+        DoInitObject(renderable.get(), list, dxrList);
         auto ptr = renderable.get();
         m_vObjects.push_back(std::move(renderable));
+        m_bIsNeedUpdateTLAS = true;
         return ptr;
     }
 
-    RenderableSimpleSphere* CreateSphere(ID3D12GraphicsCommandList* list);
-    RenderableSimpleCube* CreateCube(ID3D12GraphicsCommandList* list);
-    RenderableSimpleCone* CreateCone(ID3D12GraphicsCommandList* list);
-    RenderableSimplePlane* CreatePlane(ID3D12GraphicsCommandList* list);
+    RenderableSimpleSphere* CreateSphere(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList);
+    RenderableSimpleCube* CreateCube(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList);
+    RenderableSimpleCone* CreateCone(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList);
+    RenderableSimplePlane* CreatePlane(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList);
 
     void RemoveObject(BaseRenderableObject* obj);
 
@@ -59,6 +60,7 @@ public:
     void ForwardRender(ID3D12GraphicsCommandList* list);
     void AfterRender();
 
+    FD3DW::AccelerationStructureBuffers GetTLASData(ID3D12Device5* device, ID3D12GraphicsCommandList4* list);
 
     virtual void AfterConstruction() override;
     virtual void BeforeDestruction() override;
@@ -70,13 +72,15 @@ public:
     END_FIELD_REGISTRATION()
 
 private:
-    void DoInitObject(BaseRenderableObject* obj, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+    void DoInitObject(BaseRenderableObject* obj, ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList);
     void SpecificPostLoadForOblect(BaseRenderableObject* obj);
 
 private:
     void DoDeleteObject(BaseRenderableObject* obj);
 
 private:
+    FD3DW::AccelerationStructureBuffers m_xTLASBufferData;
+    bool m_bIsNeedUpdateTLAS = true;
 
     std::vector < BaseRenderableObject* > m_vSheduleForDelete;
 

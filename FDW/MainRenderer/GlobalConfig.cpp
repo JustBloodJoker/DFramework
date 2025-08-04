@@ -133,16 +133,47 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
     return descriptors;
 }
 
+const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
+    static const std::unordered_map<PSOType, PSORTDescriptor> descriptors = {
+        {
+            PSOType::RT_TEST_CONFIG,
+            {
+                L"RT_TEST_SHADER",
+                [] {
+                    FD3DW::RayTracingPipelineConfig config;
+                    config.MaxPayloadSize = sizeof(dx::XMFLOAT4);
+                    config.MaxAttributeSize = sizeof(dx::XMFLOAT2);
+                    config.MaxRecursionDepth = 1;
+
+                    config.HitGroups.push_back({
+                        L"MyHitGroup",
+                        L"ClosestHit",
+                        L"",
+                        L"",
+                        D3D12_HIT_GROUP_TYPE_TRIANGLES
+                        });
+                    return config;
+                }()
+            }
+        }
+    };
+
+    return descriptors;
+}
+
 const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>>& GetKnownShadersData()
 {
     static const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>> s_mKnownShaders = {
-        {L"VS.hlsl", {FD3DW::CompileFileType::VS, L"VS", L"vs_6_5"}},
-        {L"PS.hlsl", {FD3DW::CompileFileType::PS, L"PS", L"ps_6_5"}},
-        {L"CS.hlsl", {FD3DW::CompileFileType::CS, L"CS", L"cs_6_5"}},
-        {L"DS.hlsl", {FD3DW::CompileFileType::DS, L"DS", L"ds_6_5"}},
-        {L"HS.hlsl", {FD3DW::CompileFileType::HS, L"HS", L"hs_6_5"}},
-        {L"GS.hlsl", {FD3DW::CompileFileType::GS, L"GS", L"gs_6_5"}},
-        {L"RS.hlsl", {FD3DW::CompileFileType::RootSignature, L"RS", L"rootsig_1_1"}}
+        {L"VS.hlsl",         {FD3DW::CompileFileType::VS,               L"VS",              L"vs_6_5"}},
+        {L"PS.hlsl",         {FD3DW::CompileFileType::PS,               L"PS",              L"ps_6_5"}},
+        {L"CS.hlsl",         {FD3DW::CompileFileType::CS,               L"CS",              L"cs_6_5"}},
+        {L"DS.hlsl",         {FD3DW::CompileFileType::DS,               L"DS",              L"ds_6_5"}},
+        {L"HS.hlsl",         {FD3DW::CompileFileType::HS,               L"HS",              L"hs_6_5"}},
+        {L"GS.hlsl",         {FD3DW::CompileFileType::GS,               L"GS",              L"gs_6_5"}},		
+        {L"RayGen.hlsl",     {FD3DW::CompileFileType::RayGen,           L"RayGen",          L"lib_6_5"}},
+        {L"ClosestHit.hlsl", {FD3DW::CompileFileType::ClosestHit,       L"ClosestHit",      L"lib_6_5"}},		
+        {L"Miss.hlsl",       {FD3DW::CompileFileType::Miss,             L"Miss",            L"lib_6_5"}},
+        {L"RS.hlsl",         {FD3DW::CompileFileType::RootSignature,    L"RS",              L"rootsig_1_1"}}
     };
 
     return s_mKnownShaders;

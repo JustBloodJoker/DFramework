@@ -26,6 +26,10 @@ namespace FD3DW
 		Object();
 		virtual ~Object();
 
+
+		ID3D12Resource* GetVertexBuffer() const;
+		ID3D12Resource* GetIndexBuffer() const;
+
 		D3D12_VERTEX_BUFFER_VIEW* GetVertexBufferView() const;
 		D3D12_INDEX_BUFFER_VIEW* GetIndexBufferView() const;
 		size_t GetObjectBuffersCount() const;
@@ -33,8 +37,9 @@ namespace FD3DW
 
 		MaterialsManager* GetMaterialMananger() const;
 		size_t GetMaterialSize() const;
-
 		
+		virtual size_t GetVertexStructSize() const = 0;
+
 	protected:
 
 		std::unique_ptr<MaterialsManager> m_pMaterialManager;
@@ -48,7 +53,7 @@ namespace FD3DW
 		std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> m_pIndexBufferView;
 
 
-	private:
+	protected:  //RT BLAS
 
 		
 

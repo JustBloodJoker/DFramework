@@ -85,6 +85,11 @@ RenderPass RenderableSimpleObject::GetRenderPass() const {
 	return RenderPass::Deferred;
 }
 
+void RenderableSimpleObject::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list)
+{
+	m_vBLASBuffers = FD3DW::CreateBLASForObject(device, list, m_pObject.get(), true);
+}
+
 void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string pathTo, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pMaterial->SetTexture(pathTo, type, device, list);
 	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(type), D3D12_SRV_DIMENSION_TEXTURE2D, type, device);

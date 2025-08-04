@@ -55,3 +55,7 @@ void RenderableSkyboxObject::ForwardRender(ID3D12GraphicsCommandList* list) {
 RenderPass RenderableSkyboxObject::GetRenderPass() const {
 	return RenderPass::Forward;
 }
+
+void RenderableSkyboxObject::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
+	//nothing to do
+}

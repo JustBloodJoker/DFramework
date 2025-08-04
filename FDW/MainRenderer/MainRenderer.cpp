@@ -3,6 +3,11 @@
 #include <D3DFramework/Utilites/Serializer/BinarySerializer.h>
 #include <D3DFramework/GraphicUtilites/CommandList.h>
 
+#include <D3DFramework/Objects/RTObjectHelper.h>
+#include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
+#include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
+
+
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
 MainRenderer::MainRenderer() : WinWindow(L"FDW", 1024, 1024, false) {}
@@ -10,8 +15,12 @@ MainRenderer::MainRenderer() : WinWindow(L"FDW", 1024, 1024, false) {}
 void MainRenderer::UserInit()
 {
 	auto device = GetDevice();
+	auto dxrDevice = GetDXRDevice();
 
 	InitMainRendererParts(device);
+	if(dxrDevice) InitMainRendererDXRParts(dxrDevice);
+
+	InitMainRendererComponents();
 
 	SetVSync(true);
 
@@ -19,7 +28,7 @@ void MainRenderer::UserInit()
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
 
-	auto wndSettins = GetMainWNDSettings();
+	auto wndSettings = GetMainWNDSettings();
 
 	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;
 	auto gbuffersNum = (UINT)gBufferFormats.size();
@@ -27,7 +36,7 @@ void MainRenderer::UserInit()
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
 
 	for (const auto& format : gBufferFormats) {
-		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height));
+		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height));
 		auto& gbuffer = m_pGBuffers.back();
 		
 		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
@@ -36,40 +45,77 @@ void MainRenderer::UserInit()
 
 	m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
 
-	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettins.Width, wndSettins.Height);
+	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height);
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
 	m_pForwardRenderPassSRVPack = CreateSRVPack(1u);
 	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
 	m_pForwardRenderPassSRVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
-
 	m_pScreen = CreateRectangle(m_pPCML);
+	
+	if (IsRTSupported()) {
+		auto pso = PSOManager::GetInstance()->GetPSOObjectAs<FD3DW::RTPipelineObject>(PSOType::RT_TEST_CONFIG);
+		m_pSoftShadowsSBT = std::make_unique<FD3DW::RTShaderBindingTable>(pso);
+		m_pSoftShadowsSBT->InitSBT(dxrDevice);
+		m_pSoftShadowsResource = CreateAnonimTexture(1, DXGI_FORMAT_R32G32B32A32_FLOAT, wndSettings.Width, wndSettings.Height, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+		m_pSoftShadowsResource->ResourceBarrierChange(m_pDXRPCML, 1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		m_pSoftShadowsUAVPacker = std::make_unique<FD3DW::UAVPacker>(GetCBV_SRV_UAVDescriptorSize(dxrDevice), 1u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, dxrDevice);
+		FD3DW::UAVResourceDesc desc;
+		desc.Resource = m_pSoftShadowsResource->GetResource();
+		desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+		desc.MipSlice = 0;
+		desc.PlaneSlice = 0;
+		m_pSoftShadowsUAVPacker->PushResource(desc, dxrDevice);
+	}
 
 	m_xSceneViewPort.MaxDepth = 1.0f;
 	m_xSceneViewPort.MinDepth = 0.0f;
-	m_xSceneViewPort.Height = (float)wndSettins.Height;
-	m_xSceneViewPort.Width = (float)wndSettins.Width;
+	m_xSceneViewPort.Height = (float)wndSettings.Height;
+	m_xSceneViewPort.Width = (float)wndSettings.Width;
 	m_xSceneViewPort.TopLeftX = 0;
 	m_xSceneViewPort.TopLeftY = 0;
 
 	m_xSceneRect.left = 0;
-	m_xSceneRect.right = wndSettins.Width;
+	m_xSceneRect.right = wndSettings.Width;
 	m_xSceneRect.top = 0;
-	m_xSceneRect.bottom = wndSettins.Height;
+	m_xSceneRect.bottom = wndSettings.Height;
 
 	ExecuteMainQueue();
+	m_pDXRCommandQueue->ExecuteQueue(true);
 	FD3DW::FResource::ReleaseUploadBuffers();
 }
 
 void MainRenderer::UserLoop()
 {
 	m_pCommandList->ResetList();
+	if(m_pDXRCommandList) m_pDXRCommandList->ResetList();
 
 	m_pLightsManager->BeforeRender(m_pPCML);
 	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
 
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
+	///////////////////////
+	//	DXR PASS | CURRENTLY USED ONLY FOR TESTING RT
+	{
+		if (IsRTSupported()) {
+			auto tlas = m_pRenderableObjectsManager->GetTLASData(GetDXRDevice(), m_pDXRPCML).pResult;
+			if (tlas) {
+				auto wndSettings = GetMainWNDSettings();
+				PSOManager::GetInstance()->GetPSOObject(PSOType::RT_TEST_CONFIG)->Bind(m_pDXRPCML);
+				m_pDXRPCML->SetComputeRootShaderResourceView(0, tlas->GetGPUVirtualAddress());
+				ID3D12DescriptorHeap* r[1] = { m_pSoftShadowsUAVPacker->GetResult()->GetDescriptorPtr() };
+				m_pDXRPCML->SetDescriptorHeaps(1u, r);
+				m_pDXRPCML->SetComputeRootDescriptorTable(1, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
+				m_pDXRPCML->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(wndSettings.Width, wndSettings.Height, 1));
+			}
+		}
+	}
+	///
+	///////////////////////////
+
+
 	///////////////////////
 	//	DEFERRED FIRST PASS
 	{
@@ -180,8 +226,9 @@ void MainRenderer::UserLoop()
 		EndDraw(m_pCommandList->GetPtrCommandList());
 	}
 
-	ExecuteMainQueue();
-	
+	if(m_pDXRCommandQueue)m_pDXRCommandQueue->ExecuteQueue(true);
+	ExecuteMainQueue();			
+
 	m_pRenderableObjectsManager->AfterRender();
 
 	CallAfterRenderLoop();
@@ -195,6 +242,11 @@ void MainRenderer::UserClose()
 	DestroyComponent(m_pUIComponent);
 
 	PSOManager::FreeInstance();
+}
+
+ID3D12GraphicsCommandList4* MainRenderer::GetDXRCommandList()
+{
+	return m_pDXRPCML;
 }
 
 dx::XMMATRIX MainRenderer::GetCurrentProjectionMatrix() const {
@@ -227,31 +279,45 @@ std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 }
 
 void MainRenderer::AddScene(std::string path) {
-	m_pRenderableObjectsManager->CreateObject<RenderableMesh>(GetDevice(), m_pPCML, path);
+	ScheduleCreation([this, path]() {
+		m_pRenderableObjectsManager->CreateObject<RenderableMesh>(m_pPCML, m_pDXRPCML, path);
+	});
 }
 
 void MainRenderer::AddSkybox(std::string path) {
-	m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(GetDevice(), m_pPCML, path);
+	ScheduleCreation([this, path]() {
+		m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(m_pPCML, m_pDXRPCML, path);
+	});
 }
 
 void MainRenderer::AddAudio(std::string path) {
-	m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(GetDevice(), m_pPCML, path);
+	ScheduleCreation([this, path]() {
+		m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(m_pPCML, m_pDXRPCML, path);
+	});
 }
 
 void MainRenderer::AddSimplePlane() {
-	m_pRenderableObjectsManager->CreatePlane(m_pPCML);
+	ScheduleCreation([this]() {
+		m_pRenderableObjectsManager->CreatePlane(m_pPCML, m_pDXRPCML);
+	});
 }
 
 void MainRenderer::AddSimpleCone() {
-	m_pRenderableObjectsManager->CreateCone(m_pPCML);
+	ScheduleCreation([this]() {
+		m_pRenderableObjectsManager->CreateCone(m_pPCML, m_pDXRPCML);
+	});
 }
 
 void MainRenderer::AddSimpleCube() {
-	m_pRenderableObjectsManager->CreateCube(m_pPCML);
+	ScheduleCreation([this]() {
+		m_pRenderableObjectsManager->CreateCube(m_pPCML, m_pDXRPCML);
+	});
 }
 
 void MainRenderer::AddSimpleSphere() {
-	m_pRenderableObjectsManager->CreateSphere(m_pPCML);
+	ScheduleCreation([this]() {
+		m_pRenderableObjectsManager->CreateSphere(m_pPCML, m_pDXRPCML);
+	});
 }
 
 void MainRenderer::RemoveObject(BaseRenderableObject* obj) {
@@ -312,6 +378,14 @@ void MainRenderer::DeleteLight(int idx) {
 	m_pLightsManager->DeleteLight(idx);
 }
 
+void MainRenderer::InitMainRendererComponents()
+{
+	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
+	m_pCameraComponent = CreateUniqueComponent<MainRenderer_CameraComponent>();
+	m_pRenderableObjectsManager = CreateUniqueComponent<MainRenderer_RenderableObjectsManager>();
+	m_pLightsManager = CreateUniqueComponent<MainRenderer_LightsManager>();
+}
+
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
@@ -321,11 +395,16 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	m_pPCML = m_pCommandList->GetPtrCommandList();
 	BindMainCommandList(m_pCommandList.get());
 
-	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
-	m_pCameraComponent = CreateUniqueComponent<MainRenderer_CameraComponent>();
-	m_pRenderableObjectsManager = CreateUniqueComponent<MainRenderer_RenderableObjectsManager>();
-	m_pLightsManager = CreateUniqueComponent<MainRenderer_LightsManager>();
+}
 
+void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
+{
+	PSOManager::GetInstance()->InitPSOjectsDevice5(device);
+
+	m_pDXRCommandList = FD3DW::DXRCommandList::CreateList(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pDXRPCML = m_pDXRCommandList->GetPtrCommandList();
+	m_pDXRCommandQueue = FD3DW::CommandQueue::CreateQueue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pDXRCommandQueue->BindCommandList(m_pDXRCommandList.get());
 }
 
 void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
@@ -334,6 +413,7 @@ void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
 
 void MainRenderer::CallAfterRenderLoop() {
 	m_pCommandList->ResetList();
+	if (m_pDXRCommandList) m_pDXRCommandList->ResetList();
 
 	auto vv = m_vCallAfterRenderLoop;
 	m_vCallAfterRenderLoop.clear();
@@ -342,6 +422,7 @@ void MainRenderer::CallAfterRenderLoop() {
 	}
 
 	ExecuteMainQueue();
+	if (m_pDXRCommandQueue) m_pDXRCommandQueue->ExecuteQueue(true);
 }
 
 

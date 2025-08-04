@@ -7,7 +7,8 @@ namespace FD3DW {
 		CompileFileType::RootSignature,
 		CompileFileType::VS,
 		CompileFileType::PS,
-		CompileFileType::CS
+		CompileFileType::CS,
+		CompileFileType::RayGen
 	};
 
 	BasePipelineObject::BasePipelineObject(ID3D12Device* device)

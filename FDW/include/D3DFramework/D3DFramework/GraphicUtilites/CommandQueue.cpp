@@ -27,7 +27,7 @@ namespace FD3DW
 	{
 		for (const auto& el : m_vBindedLists)
 		{
-			el->TryCloseList();
+			auto close = el->TryCloseList();
 			m_vExecutedlists.push_back(el->GetPtrDefaultCommandList());
 		}
 

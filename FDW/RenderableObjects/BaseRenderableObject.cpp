@@ -1,4 +1,5 @@
 #include <RenderableObjects/BaseRenderableObject.h>
+#include "RenderableMesh.h"
 
 std::unique_ptr<FD3DW::StructuredBuffer> s_sEmptyStructuredBuffer;
 
@@ -62,6 +63,17 @@ const std::string& BaseRenderableObject::GetName() const { return m_sName; }
 
 bool BaseRenderableObject::IsCanRenderInPass(RenderPass pass) {
     return (GetRenderPass() & pass) == pass;
+}
+
+std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> BaseRenderableObject::GetBLASInstances()
+{
+    std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> ret;
+
+    for (const auto& buffer : m_vBLASBuffers) {
+        ret.push_back({ buffer , m_xWorldMatrix });
+    }
+
+    return ret;
 }
 
 UINT BaseRenderableObject::GetIndexSize(FD3DW::Object* obj, const size_t index)

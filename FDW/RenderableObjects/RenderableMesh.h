@@ -27,6 +27,9 @@ public:
 
 	std::vector<RenderableMeshElement*> GetRenderableElements();
 
+	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
+	virtual std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> GetBLASInstances() override;
+
 public:
 	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject)
 		REGISTER_FIELD(m_sPath);

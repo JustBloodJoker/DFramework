@@ -48,6 +48,11 @@ void RenderableAudioObject::Loop(bool loop) {
 	m_bIsLoop = loop;
 }
 
+void RenderableAudioObject::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list)
+{
+	//nothing to do
+}
+
 void RenderableAudioObject::TickAudioUpdate() {
 	if ((m_bIsLoop != m_pAudio->IsLoop()) && m_pAudio->IsEnded()) {
 		m_pAudio->Restart();

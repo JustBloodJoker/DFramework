@@ -4,6 +4,7 @@
 #include <D3DFramework/Objects/Object.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <D3DFramework/Objects/RTObjectHelper.h>
 
 enum RenderPass
 {
@@ -40,6 +41,7 @@ public:
     virtual void DeferredRender(ID3D12GraphicsCommandList* list) = 0;
     virtual void ForwardRender(ID3D12GraphicsCommandList* list) = 0;
     virtual RenderPass GetRenderPass() const = 0;
+    virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) = 0;
 
     void SetPosition(const dx::XMFLOAT3& pos);
     void SetRotation(const dx::XMFLOAT3& rot);
@@ -57,6 +59,8 @@ public:
     const std::string& GetName() const;
 
     bool IsCanRenderInPass(RenderPass pass);
+
+    virtual std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> GetBLASInstances();
 
 public:
     static UINT GetIndexSize(FD3DW::Object* obj, const size_t index);
@@ -85,4 +89,7 @@ protected:
     dx::XMFLOAT3 m_xScaling = { 1, 1, 1 };
 
     std::string m_sName;
+
+    std::vector<FD3DW::AccelerationStructureBuffers> m_vBLASBuffers;
+
 };

@@ -32,6 +32,10 @@ namespace FD3DW
 			m_vObjectParameters.emplace_back(ObjectDesc{vertices.size(), 0,indices.size(), 0, 0});
 		}
 
+		virtual size_t GetVertexStructSize() const override {
+			return sizeof(TVertex);
+		}
+
 		virtual ~SimpleObject() = default;
 
 	protected:

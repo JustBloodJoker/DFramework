@@ -26,6 +26,8 @@ public:
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
 	
+	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
+
 	FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>* GetFDWObject() const {
 		return m_pObject.get();
 	}

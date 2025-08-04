@@ -4,24 +4,20 @@
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 
-RenderableSimpleSphere* MainRenderer_RenderableObjectsManager::CreateSphere(ID3D12GraphicsCommandList* list) {
-    auto device = m_pOwner->GetDevice();
-    return CreateObject<RenderableSimpleSphere>(device, list);
+RenderableSimpleSphere* MainRenderer_RenderableObjectsManager::CreateSphere(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+    return CreateObject<RenderableSimpleSphere>(list, dxrList);
 }
 
-RenderableSimpleCube* MainRenderer_RenderableObjectsManager::CreateCube(ID3D12GraphicsCommandList* list) {
-    auto device = m_pOwner->GetDevice();
-    return CreateObject<RenderableSimpleCube>(device, list);
+RenderableSimpleCube* MainRenderer_RenderableObjectsManager::CreateCube(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+    return CreateObject<RenderableSimpleCube>(list, dxrList);
 }
 
-RenderableSimpleCone* MainRenderer_RenderableObjectsManager::CreateCone(ID3D12GraphicsCommandList* list) {
-    auto device = m_pOwner->GetDevice();
-    return CreateObject<RenderableSimpleCone>(device, list);
+RenderableSimpleCone* MainRenderer_RenderableObjectsManager::CreateCone(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+    return CreateObject<RenderableSimpleCone>(list, dxrList);
 }
 
-RenderableSimplePlane* MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12GraphicsCommandList* list) {
-    auto device = m_pOwner->GetDevice();
-    return CreateObject<RenderableSimplePlane>(device, list);
+RenderableSimplePlane* MainRenderer_RenderableObjectsManager::CreatePlane(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+    return CreateObject<RenderableSimplePlane>(list, dxrList);
 }
 
 void MainRenderer_RenderableObjectsManager::RemoveObject(BaseRenderableObject* obj) {
@@ -79,11 +75,35 @@ void MainRenderer_RenderableObjectsManager::AfterRender() {
     FD3DW::FResource::ReleaseUploadBuffers();
 }
 
+FD3DW::AccelerationStructureBuffers MainRenderer_RenderableObjectsManager::GetTLASData(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
+    if (m_bIsNeedUpdateTLAS && m_pOwner->IsRTSupported() && !m_vObjects.empty() ) {
+        std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> instances;
+        for (const auto& object : m_vObjects) {
+            if (!object->IsCanRenderInPass(RenderPass::Deferred)) continue;
+
+            auto objInstances = object->GetBLASInstances();
+            instances.insert(instances.end(), objInstances.begin(), objInstances.end());
+        }
+        if (instances.empty()) {
+            m_xTLASBufferData = {};
+        }
+        else {
+            FD3DW::UpdateTopLevelAS(device, list, m_xTLASBufferData, instances);
+        }
+    }
+    else if (m_vObjects.empty()) {
+        m_xTLASBufferData = {};
+    }
+
+    m_bIsNeedUpdateTLAS = false;
+    return m_xTLASBufferData;
+}
+
 void MainRenderer_RenderableObjectsManager::AfterConstruction() {
     auto cmList = m_pOwner->GetBindedCommandList();
-    auto device = m_pOwner->GetDevice();
+    auto dxrList = m_pOwner->GetDXRCommandList();
     for (const auto& obj : m_vObjects) {
-        DoInitObject(obj.get(), device, cmList);
+        DoInitObject(obj.get(), cmList, dxrList);
     }
 }
 
@@ -98,9 +118,16 @@ RenderableSkyboxObject* MainRenderer_RenderableObjectsManager::FindSkyboxObject(
     return nullptr;
 }
 
-void MainRenderer_RenderableObjectsManager::DoInitObject(BaseRenderableObject* obj, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+void MainRenderer_RenderableObjectsManager::DoInitObject(BaseRenderableObject* obj, ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+    auto device = m_pOwner->GetDevice();
     obj->Init(device, list);
+
     SpecificPostLoadForOblect(obj);
+
+    if (m_pOwner->IsRTSupported() && dxrList != nullptr) {
+        auto dxrDevice = m_pOwner->GetDXRDevice();
+        obj->InitBLASBuffers(dxrDevice, dxrList);
+    }
 }
 
 void MainRenderer_RenderableObjectsManager::SpecificPostLoadForOblect(BaseRenderableObject* obj) {
@@ -118,4 +145,6 @@ void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject*
     if (it != m_vObjects.end()) {
         m_vObjects.erase(it, m_vObjects.end());
     }
+
+    m_bIsNeedUpdateTLAS = true;
 }

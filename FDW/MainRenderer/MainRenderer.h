@@ -10,6 +10,7 @@
 #include <Lights/MainRenderer_LightsManager.h>
 
 #include <RenderableObjects/RenderableMesh.h>
+#include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -20,6 +21,8 @@ public:
 	void UserInit() override;
 	void UserLoop() override;
 	void UserClose()  override;
+
+	ID3D12GraphicsCommandList4* GetDXRCommandList();
 
 public:
 	///////////////////////////////////////////////////
@@ -58,14 +61,27 @@ public:
 
 
 private:
+	void InitMainRendererComponents();
 	void InitMainRendererParts(ID3D12Device* device);
-
+	void InitMainRendererDXRParts(ID3D12Device5* device);
 
 private:
 
 	void AddToCallAfterRenderLoop(std::function<void(void)> foo);
 	void CallAfterRenderLoop();
 	std::vector<std::function<void(void)>> m_vCallAfterRenderLoop;
+
+	template<typename Func>
+	void ScheduleCreation(Func&& func, bool deferToRenderLoop = true) {
+		if (deferToRenderLoop) {
+			AddToCallAfterRenderLoop([this, func = std::move(func)]() mutable {
+				func();
+			});
+		}
+		else {
+			func();
+		}
+	}
 
 private:
 
@@ -93,6 +109,11 @@ protected:
 	std::unique_ptr<FD3DW::CommandList> m_pCommandList;
 	ID3D12GraphicsCommandList* m_pPCML;
 
+	std::unique_ptr<FD3DW::CommandQueue> m_pDXRCommandQueue;
+	std::unique_ptr<FD3DW::DXRCommandList> m_pDXRCommandList;
+	ID3D12GraphicsCommandList4* m_pDXRPCML;
+
+
 protected:
 	//TEST FIELDS
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;
@@ -104,6 +125,12 @@ protected:
 	std::unique_ptr<FD3DW::RenderTarget> m_pForwardRenderPassRTV;
 	std::unique_ptr<FD3DW::RTVPacker> m_pForwardRenderPassRTVPack;
 	std::unique_ptr<FD3DW::SRVPacker> m_pForwardRenderPassSRVPack;
+
+
+	std::unique_ptr<FD3DW::RTShaderBindingTable> m_pSoftShadowsSBT;
+	std::unique_ptr<FD3DW::UAVPacker> m_pSoftShadowsUAVPacker;
+	std::unique_ptr<FD3DW::FResource> m_pSoftShadowsResource;
+
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;

@@ -31,6 +31,7 @@ namespace FD3DW {
 		std::vector<D3D12_INPUT_ELEMENT_DESC> ReflectInputLayout(IDxcBlob* blob);
 		GraphicPipelineObjectDesc m_xConfig;
 		std::vector<D3D12_INPUT_ELEMENT_DESC> m_vInputLayout;
+		wrl::ComPtr<ID3D12PipelineState> m_pPSO;
 	};
 
 }

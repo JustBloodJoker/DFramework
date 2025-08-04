@@ -17,6 +17,7 @@ public:
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
 
+	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
 public:
 	BEGIN_FIELD_REGISTRATION(RenderableSkyboxObject, BaseRenderableObject)
 		REGISTER_FIELD(m_sTexturePath);

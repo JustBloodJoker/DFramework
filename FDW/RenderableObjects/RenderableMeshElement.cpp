@@ -27,9 +27,10 @@ void RenderableMeshElement::Init(ID3D12Device* device, ID3D12GraphicsCommandList
 
 void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 	MeshMatricesStructure cmb;
+	m_xWorldMatrix *= data.AdditionalWorld;
 	cmb.Projection = dx::XMMatrixTranspose(data.Projection);
 	cmb.View = dx::XMMatrixTranspose(data.View);
-	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
+	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
 	cmb.IsActiveAnimation = m_bIsAnimationPlaying;
 	cmb.CameraPosition = data.CameraPosition;
 
@@ -40,6 +41,20 @@ void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 
 void RenderableMeshElement::SetAnimationPlaying(bool isP) {
 	m_bIsAnimationPlaying = isP;
+}
+
+size_t RenderableMeshElement::ElementID()
+{
+	return m_xData.ID;
+}
+
+void RenderableMeshElement::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
+	//nothing to do
+}
+
+void RenderableMeshElement::SetBLASBuffer(const FD3DW::AccelerationStructureBuffers& buffer) {
+	m_vBLASBuffers.clear();
+	m_vBLASBuffers.push_back(buffer);
 }
 
 void RenderableMeshElement::DeferredRender(ID3D12GraphicsCommandList* list) {

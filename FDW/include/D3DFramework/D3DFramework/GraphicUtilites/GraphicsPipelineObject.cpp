@@ -66,6 +66,7 @@ namespace FD3DW {
 	void GraphicsPipelineObject::SetConfig(const GraphicPipelineObjectDesc& config) {
 		m_xConfig = config;
 	}
+	
 	GraphicPipelineObjectDesc GraphicsPipelineObject::GetConfig() const {
 		return m_xConfig;
 	}

@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <D3DFramework/GraphicUtilites/GraphicsPipelineObject.h>
 #include <D3DFramework/GraphicUtilites/ComputePipelineObject.h>
+#include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
 
 //////////////////////////////////////////////
 //				GBUFFERS DATA
@@ -28,14 +29,21 @@ struct PSODescriptor {
     FD3DW::GraphicPipelineObjectDesc pipelineDesc;
 };
 
+struct PSORTDescriptor {
+	std::wstring shaderFolderName;
+	FD3DW::RayTracingPipelineConfig rtPSOConfig;
+};
+
 enum class PSOType {
 	DefferedFirstPassDefaultConfig,
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 	PostProcessDefaultConfig,
+	RT_TEST_CONFIG,
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors();
+const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors();
 const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>>& GetKnownShadersData();
 
 #define SHADERS_DEFAULT_INCLUDE_PATH L"Content/Shaders/DefaultInclude"

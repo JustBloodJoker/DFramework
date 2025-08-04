@@ -45,7 +45,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		auto matIndex = GetMaterialIndex(m_pScene.get(), ind);
 		data.SRVPack = m_vSRVPacks[matIndex].get();
 		data.MaterialCBufferData = meshMaterialStructures[matIndex];
-
+		data.ID = ind;
 		if (m_vRenderableElements.size() <= ind) 
 		{
 			auto elem = std::make_unique<RenderableMeshElement>(data);
@@ -122,6 +122,31 @@ std::vector<RenderableMeshElement*> RenderableMesh::GetRenderableElements() {
 		ret.push_back(elem.get());
 	}
 
+	return ret;
+}
+
+void RenderableMesh::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list)
+{
+	auto buffers = FD3DW::CreateBLASForObject(device, list, m_pScene.get(), true);
+
+	auto idx = 0;
+	for (auto idx = 0; idx < buffers.size(); ++idx) {
+		for (const auto& element : m_vRenderableElements) {
+			if (idx != element->ElementID()) continue;
+
+			element->SetBLASBuffer(buffers[idx]);
+		}
+	}
+
+}
+
+std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> RenderableMesh::GetBLASInstances()
+{
+	std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> ret;
+	for (const auto& element : m_vRenderableElements) {
+		auto getInstances = element->GetBLASInstances();
+		ret.insert(ret.end(), getInstances.begin(), getInstances.end());
+	}
 	return ret;
 }
 

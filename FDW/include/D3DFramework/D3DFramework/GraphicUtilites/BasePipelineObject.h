@@ -9,7 +9,7 @@
 namespace FD3DW {
 
 	enum class CompileFileType {
-		VS, PS, GS, HS, DS, CS, RootSignature
+		VS, PS, GS, HS, DS, CS, RootSignature, RayGen, Miss, ClosestHit
 	};
 
 	struct CompileDesc {
@@ -53,7 +53,6 @@ namespace FD3DW {
 		std::unordered_map<CompileFileType, wrl::ComPtr<IDxcBlob>> m_mCompiledShaders;
 
 		wrl::ComPtr<ID3D12RootSignature> m_pRootSignature;
-		wrl::ComPtr<ID3D12PipelineState> m_pPSO;
 
 		wrl::ComPtr<IDxcUtils> m_pUtils;
 		wrl::ComPtr<IDxcCompiler3> m_pCompiler;

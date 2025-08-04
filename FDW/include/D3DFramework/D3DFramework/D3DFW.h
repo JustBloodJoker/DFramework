@@ -39,6 +39,7 @@ namespace FD3DW
 		virtual void UserClose() = 0;
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
+		bool IsRTSupported() const;
 
 	protected:  //METHODS
 

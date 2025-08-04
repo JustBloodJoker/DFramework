@@ -10,9 +10,11 @@ struct RenderableMeshElementData {
 	FD3DW::SRVPacker* SRVPack = nullptr;
 	FD3DW::ObjectDesc ObjectDescriptor;
 	MeshMaterialStructure MaterialCBufferData;
+	size_t ID;
 
 	BEGIN_FIELD_REGISTRATION(RenderableMeshElementData)
 		REGISTER_FIELD(MaterialCBufferData);
+		REGISTER_FIELD(ID);
 	END_FIELD_REGISTRATION()
 };
 
@@ -37,6 +39,10 @@ public:
 	virtual RenderPass GetRenderPass() const override;
 
 	void SetAnimationPlaying(bool isP);
+
+	size_t ElementID();
+	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
+	void SetBLASBuffer(const FD3DW::AccelerationStructureBuffers& buffer);
 
 	////////////////////////////////////
 	///////    MATERIAL SETTER INFO

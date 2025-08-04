@@ -30,6 +30,8 @@ public:
 	bool IsLoop();
 	void Loop(bool loop);
 
+	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
+
 	BEGIN_FIELD_REGISTRATION(RenderableAudioObject, BaseRenderableObject)
 		REGISTER_FIELD(m_sPath)
 	END_FIELD_REGISTRATION()

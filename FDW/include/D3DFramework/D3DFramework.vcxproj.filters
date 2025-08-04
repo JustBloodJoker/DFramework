@@ -123,6 +123,12 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\RTObjectHelper.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -192,6 +198,12 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\RTObjectHelper.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>

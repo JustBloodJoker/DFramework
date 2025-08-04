@@ -10,6 +10,9 @@ namespace FD3DW {
 		bool CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders) override;
 		void Bind(ID3D12GraphicsCommandList* cmdList) override;
 		std::unique_ptr<BasePipelineObject> MakeCopy() const override;
+
+	private:
+		wrl::ComPtr<ID3D12PipelineState> m_pPSO;
 	};
 
 }

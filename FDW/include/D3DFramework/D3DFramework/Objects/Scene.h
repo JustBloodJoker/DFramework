@@ -46,6 +46,8 @@ namespace FD3DW
 		size_t GetBonesCount() const;
 		std::string GetPath() const;
 
+		virtual size_t GetVertexStructSize() const override;
+	
 	protected:
 
 		std::pair<unsigned, float> GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& duration);

@@ -52,6 +52,11 @@ namespace FD3DW
 		return m_sPath;
 	}
 
+	size_t Scene::GetVertexStructSize() const
+	{
+		return sizeof(SceneVertexFrameWork);
+	}
+
 	void Scene::InitScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		ParseScene(path, pDevice, pCommandList);

@@ -153,6 +153,11 @@ namespace FD3DW
 		return qualityLevels.NumQualityLevels;
 	}
 
+
+	bool D3DFW::IsRTSupported() const {
+		return m_bIsRTSupported;
+	}
+
 	void D3DFW::ChildLoop()
 	{
 		Update();

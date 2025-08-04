@@ -26,6 +26,33 @@ void PSOManager::InitPSOjects(ID3D12Device* device)
         pipeline->CreatePSO(shaderFiles);
         m_mCreatedPSO[type] = std::move(pipeline);
     }
+
+}
+
+void PSOManager::InitPSOjectsDevice5(ID3D12Device5* device)
+{
+
+    const auto& rtDescriptors = GetRTPSODescriptors();
+    for (const auto& [type, descriptor] : rtDescriptors) {
+        std::wstring shaderDir = SHADERS_DEFAULT_PATH + descriptor.shaderFolderName;
+
+        auto pipeline = std::make_unique<FD3DW::RTPipelineObject>(device);
+        pipeline->SetIncludeDirectories({ SHADERS_DEFAULT_INCLUDE_PATH, shaderDir });
+
+        std::unordered_map<FD3DW::CompileFileType, FD3DW::CompileDesc> shaderFiles;
+        const auto& knownShaders = GetKnownShadersData();
+        for (const auto& [fileName, meta] : knownShaders) {
+            std::filesystem::path filePath = std::filesystem::path(shaderDir) / fileName;
+            if (std::filesystem::exists(filePath)) {
+                auto [type, entry, target] = meta;
+                shaderFiles[type] = { filePath.wstring(), entry, target };
+            }
+        }
+
+        pipeline->SetConfig(descriptor.rtPSOConfig);
+        pipeline->CreatePSO(shaderFiles);
+        m_mCreatedPSO[type] = std::move(pipeline);
+    }
 }
 
 
