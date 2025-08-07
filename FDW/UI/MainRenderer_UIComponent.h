@@ -13,7 +13,7 @@ class RenderableAudioObject;
 class RenderableMesh;
 
 namespace FD3DW {
-	class SRVPacker;
+	class SRV_UAVPacker;
 }
 
 class MainRenderer_UIComponent : virtual public MainRendererComponent {
@@ -74,7 +74,7 @@ private:
 
 private:
 	std::unique_ptr<UIInputLayer> m_pUILayer = nullptr;
-	std::unique_ptr<FD3DW::SRVPacker> m_pUISRVPack;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pUISRVPack;
 	bool m_bIsInited = false;
 
 

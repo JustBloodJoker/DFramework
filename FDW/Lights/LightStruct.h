@@ -54,3 +54,4 @@ struct LightBuffer {
     int LightCount;
     dx::XMFLOAT3 CameraPos;
 };
+

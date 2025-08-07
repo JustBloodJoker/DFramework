@@ -1,6 +1,8 @@
 #ifndef _UTILITS_HLSLI_
 #define _UTILITS_HLSLI_
 
+#define PI 3.14159265359
+
 void AlphaClipping(float alpha)
 {
     clip(alpha < 0.1f ? -1.0f : 1.0f);

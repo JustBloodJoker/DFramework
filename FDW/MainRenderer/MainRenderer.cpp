@@ -7,6 +7,7 @@
 #include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
 
+#include <Lights/MainRenderer_RTSoftShadowsComponent.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -21,6 +22,7 @@ void MainRenderer::UserInit()
 	if(dxrDevice) InitMainRendererDXRParts(dxrDevice);
 
 	InitMainRendererComponents();
+
 
 	SetVSync(true);
 
@@ -53,22 +55,6 @@ void MainRenderer::UserInit()
 
 	m_pScreen = CreateRectangle(m_pPCML);
 	
-	if (IsRTSupported()) {
-		auto pso = PSOManager::GetInstance()->GetPSOObjectAs<FD3DW::RTPipelineObject>(PSOType::RT_TEST_CONFIG);
-		m_pSoftShadowsSBT = std::make_unique<FD3DW::RTShaderBindingTable>(pso);
-		m_pSoftShadowsSBT->InitSBT(dxrDevice);
-		m_pSoftShadowsResource = CreateAnonimTexture(1, DXGI_FORMAT_R32G32B32A32_FLOAT, wndSettings.Width, wndSettings.Height, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-		m_pSoftShadowsResource->ResourceBarrierChange(m_pDXRPCML, 1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		m_pSoftShadowsUAVPacker = std::make_unique<FD3DW::UAVPacker>(GetCBV_SRV_UAVDescriptorSize(dxrDevice), 1u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, dxrDevice);
-		FD3DW::UAVResourceDesc desc;
-		desc.Resource = m_pSoftShadowsResource->GetResource();
-		desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-		desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-		desc.MipSlice = 0;
-		desc.PlaneSlice = 0;
-		m_pSoftShadowsUAVPacker->PushResource(desc, dxrDevice);
-	}
-
 	m_xSceneViewPort.MaxDepth = 1.0f;
 	m_xSceneViewPort.MinDepth = 0.0f;
 	m_xSceneViewPort.Height = (float)wndSettings.Height;
@@ -81,6 +67,15 @@ void MainRenderer::UserInit()
 	m_xSceneRect.top = 0;
 	m_xSceneRect.bottom = wndSettings.Height;
 
+	TryInitShadowComponent();
+
+	if (m_pShadowsComponent) {
+		m_pShadowsComponent->BindResultResource(device, m_pGBuffersSRVPack.get(), SHADOW_FACTOR_LOCATION_IN_HEAP);
+	}
+	else {
+		m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	}
+
 	ExecuteMainQueue();
 	m_pDXRCommandQueue->ExecuteQueue(true);
 	FD3DW::FResource::ReleaseUploadBuffers();
@@ -89,27 +84,19 @@ void MainRenderer::UserInit()
 void MainRenderer::UserLoop()
 {
 	m_pCommandList->ResetList();
-	if(m_pDXRCommandList) m_pDXRCommandList->ResetList();
+	if (m_pDXRCommandList) m_pDXRCommandList->ResetList();
 
-	m_pLightsManager->BeforeRender(m_pPCML);
+	m_pLightsManager->BeforeRender(m_pDXRPCML);
 	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
+	if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(m_pPCML);
 
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
-	//	DXR PASS | CURRENTLY USED ONLY FOR TESTING RT
+	//	Shadow PASS Before gbuffer pass
 	{
-		if (IsRTSupported()) {
-			auto tlas = m_pRenderableObjectsManager->GetTLASData(GetDXRDevice(), m_pDXRPCML).pResult;
-			if (tlas) {
-				auto wndSettings = GetMainWNDSettings();
-				PSOManager::GetInstance()->GetPSOObject(PSOType::RT_TEST_CONFIG)->Bind(m_pDXRPCML);
-				m_pDXRPCML->SetComputeRootShaderResourceView(0, tlas->GetGPUVirtualAddress());
-				ID3D12DescriptorHeap* r[1] = { m_pSoftShadowsUAVPacker->GetResult()->GetDescriptorPtr() };
-				m_pDXRPCML->SetDescriptorHeaps(1u, r);
-				m_pDXRPCML->SetComputeRootDescriptorTable(1, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
-				m_pDXRPCML->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(wndSettings.Width, wndSettings.Height, 1));
-			}
+		if (m_pShadowsComponent) {
+			m_pShadowsComponent->BeforeGBufferPass();
 		}
 	}
 	///
@@ -145,6 +132,18 @@ void MainRenderer::UserLoop()
 	///
 	///////////////////////////
 
+	///////////////////////
+	//	Shadow PASS After GBuffer pass
+	{
+		if (m_pShadowsComponent) {
+			ExecuteMainQueue();
+			m_pCommandList->ResetList();
+			m_pShadowsComponent->AfterGBufferPass();
+		}
+	}
+	///
+	///////////////////////////
+
 	//////////////////////////
 	// DEFERRED SECOND PASS
 
@@ -167,7 +166,7 @@ void MainRenderer::UserLoop()
 
 		m_pPCML->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
-		m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pPCML);
+		m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pPCML, false);
 
 		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
@@ -331,6 +330,11 @@ void MainRenderer::RemoveAllObjects() {
 	}
 }
 
+FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS(ID3D12GraphicsCommandList4* list)
+{
+	return m_pRenderableObjectsManager->GetTLASData(GetDXRDevice(), list);
+}
+
 void MainRenderer::CreateLight() {
 	LightStruct light;
 	m_pLightsManager->AddLight(light);
@@ -348,10 +352,15 @@ int MainRenderer::GetLightsCount() {
 	return m_pLightsManager->GetLightsCount();
 }
 
+void MainRenderer::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute) {
+	m_pLightsManager->BindLightConstantBuffer(cbSlot, rootSRVSlot, list, IsCompute);
+}
+
+
 void MainRenderer::SaveSceneToFile(std::string pathTo) {
 	AddToCallAfterRenderLoop([this, pathTo]() {
 		BinarySerializer ser;
-		ser.LoadFromObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager);
+		ser.LoadFromObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
 
 		ser.SaveToFile(pathTo);
 	});
@@ -365,12 +374,21 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		this->DestroyComponent(m_pCameraComponent);
 		this->DestroyComponent(m_pLightsManager);
 		this->DestroyComponent(m_pRenderableObjectsManager);
+		this->DestroyComponent(m_pShadowsComponent);
 
-		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager);
+		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
 		m_pCameraComponent->SetAfterConstruction(this);
 		m_pLightsManager->SetAfterConstruction(this);
 		m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
 		m_pRenderableObjectsManager->SetAfterConstruction(this);
+
+		if (!m_pShadowsComponent->IsCanBeEnabled(this)) {
+			this->DestroyComponent(m_pShadowsComponent);
+			this->TryInitShadowComponent();
+		}
+		else {
+			m_pShadowsComponent->SetAfterConstruction(this);
+		}
 	});
 }
 
@@ -405,6 +423,14 @@ void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
 	m_pDXRPCML = m_pDXRCommandList->GetPtrCommandList();
 	m_pDXRCommandQueue = FD3DW::CommandQueue::CreateQueue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pDXRCommandQueue->BindCommandList(m_pDXRCommandList.get());
+}
+
+void MainRenderer::TryInitShadowComponent() {
+	if (IsRTSupported()) {
+		auto rtSoftShadow = CreateUniqueComponent<MainRenderer_RTSoftShadowsComponent>();
+		rtSoftShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), GetDevice());
+		m_pShadowsComponent = std::move(rtSoftShadow);
+	}
 }
 
 void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {

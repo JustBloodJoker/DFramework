@@ -31,21 +31,47 @@ namespace FD3DW
 
 	};
 
-	class SRVPacker
+
+	struct UAVResourceDesc
+	{
+		ID3D12Resource* Resource = nullptr;
+		ID3D12Resource* CounterResource = nullptr;
+
+		UINT NumElements = 0;
+		UINT FirstElement = 0;
+		UINT Stride = 0;
+		UINT CounterOffsetBytes = 0;
+
+		D3D12_UAV_DIMENSION ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+		DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN;
+
+		UINT MipSlice = 0;
+		UINT FirstArraySlice = 0;
+		UINT ArraySize = 1;
+		UINT PlaneSlice = 0;
+		UINT FirstWSlice = 0;
+		UINT WSize = -1;
+	};
+
+
+	class SRV_UAVPacker
 		: public ResourcePacker
 	{
 
 	public:
-		static std::unique_ptr<SRVPacker> CreatePack(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		static std::unique_ptr<SRV_UAVPacker> CreatePack(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 
 	public:
 
-		SRVPacker(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
-		virtual ~SRVPacker() = default;
+		SRV_UAVPacker(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
+		virtual ~SRV_UAVPacker() = default;
 
 		void AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice);
 		void PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice);
 		void AddNullResource(const size_t index, ID3D12Device* pDevice);
+
+		void AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice);
+		void PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice);
 	};
 
 	class SamplerPacker
@@ -100,39 +126,6 @@ namespace FD3DW
 
 		void AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice);
 		void PushResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, ID3D12Device* pDevice);
-	};
-
-	struct UAVResourceDesc
-	{
-		ID3D12Resource* Resource = nullptr;
-		ID3D12Resource* CounterResource = nullptr;
-
-		UINT NumElements = 0;
-		UINT FirstElement = 0;
-		UINT Stride = 0;
-		UINT CounterOffsetBytes = 0;
-
-		D3D12_UAV_DIMENSION ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-		DXGI_FORMAT Format = DXGI_FORMAT_UNKNOWN;
-
-		UINT MipSlice = 0;
-		UINT FirstArraySlice = 0;
-		UINT ArraySize = 1;
-		UINT PlaneSlice = 0;
-		UINT FirstWSlice = 0;
-		UINT WSize = -1;
-	};
-
-
-	class UAVPacker
-		: public ResourcePacker
-	{
-	public:
-		UAVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
-		virtual ~UAVPacker() = default;
-
-		void AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice);
-		void PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice);
 	};
 
 }

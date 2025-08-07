@@ -7,7 +7,7 @@
 #include <RenderableObjects/MeshMatricesStructure.h>
 
 struct RenderableMeshElementData {
-	FD3DW::SRVPacker* SRVPack = nullptr;
+	FD3DW::SRV_UAVPacker* SRVPack = nullptr;
 	FD3DW::ObjectDesc ObjectDescriptor;
 	MeshMaterialStructure MaterialCBufferData;
 	size_t ID;

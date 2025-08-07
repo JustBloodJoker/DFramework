@@ -26,20 +26,20 @@ namespace FD3DW
 	}
 
 
-	std::unique_ptr<SRVPacker> SRVPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+	std::unique_ptr<SRV_UAVPacker> SRV_UAVPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 	{
-		return std::make_unique<SRVPacker>(descriptorSize, descriptorsCount, NodeMask, flags, pDevice);
+		return std::make_unique<SRV_UAVPacker>(descriptorSize, descriptorsCount, NodeMask, flags, pDevice);
 	}
 
-	SRVPacker::SRVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
+	SRV_UAVPacker::SRV_UAVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
 	{
 
 	}
 
-	void SRVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
+	void SRV_UAVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("SRVPaker is adding resource"));
+		CONSOLE_MESSAGE(std::string("SRV_UAVPacker is adding resource"));
 
 		const auto& desc = resource->GetDesc();
 
@@ -110,7 +110,7 @@ namespace FD3DW
 			break;
 
 		default:
-			CONSOLE_ERROR_MESSAGE("SRVPacker: Unsupported SRV dimension");
+			CONSOLE_ERROR_MESSAGE("SRV_UAVPacker: Unsupported SRV dimension");
 			break;
 		}
 
@@ -118,12 +118,12 @@ namespace FD3DW
 			&srvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 	}
 
-	void SRVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
+	void SRV_UAVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
 	{
 		AddResource(resource, dimension, m_uCurrentIndex++, pDevice);
 	}
 
-	void SRVPacker::AddNullResource(const size_t index, ID3D12Device* pDevice)
+	void SRV_UAVPacker::AddNullResource(const size_t index, ID3D12Device* pDevice)
 	{
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -135,6 +135,67 @@ namespace FD3DW
 		srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 		pDevice->CreateShaderResourceView(nullptr, &srvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
+	}
+
+	void SRV_UAVPacker::AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice)
+	{
+		CONSOLE_MESSAGE("SRV_UAVPacker is adding resource");
+
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+		uavDesc.Format = desc.Format;
+		uavDesc.ViewDimension = desc.ViewDimension;
+
+		switch (desc.ViewDimension)
+		{
+		case D3D12_UAV_DIMENSION_BUFFER:
+			uavDesc.Buffer.FirstElement = desc.FirstElement;
+			uavDesc.Buffer.NumElements = desc.NumElements;
+			uavDesc.Buffer.StructureByteStride = desc.Stride;
+			uavDesc.Buffer.CounterOffsetInBytes = desc.CounterOffsetBytes;
+			uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+			break;
+
+		case D3D12_UAV_DIMENSION_TEXTURE1D:
+			uavDesc.Texture1D.MipSlice = desc.MipSlice;
+			break;
+
+		case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
+			uavDesc.Texture1DArray.MipSlice = desc.MipSlice;
+			uavDesc.Texture1DArray.FirstArraySlice = desc.FirstArraySlice;
+			uavDesc.Texture1DArray.ArraySize = desc.ArraySize;
+			break;
+
+		case D3D12_UAV_DIMENSION_TEXTURE2D:
+			uavDesc.Texture2D.MipSlice = desc.MipSlice;
+			uavDesc.Texture2D.PlaneSlice = desc.PlaneSlice;
+			break;
+
+		case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
+			uavDesc.Texture2DArray.MipSlice = desc.MipSlice;
+			uavDesc.Texture2DArray.FirstArraySlice = desc.FirstArraySlice;
+			uavDesc.Texture2DArray.ArraySize = desc.ArraySize;
+			uavDesc.Texture2DArray.PlaneSlice = desc.PlaneSlice;
+			break;
+
+		case D3D12_UAV_DIMENSION_TEXTURE3D:
+			uavDesc.Texture3D.MipSlice = desc.MipSlice;
+			uavDesc.Texture3D.FirstWSlice = desc.FirstWSlice;
+			uavDesc.Texture3D.WSize = desc.WSize;
+			break;
+
+		default:
+			CONSOLE_MESSAGE("Unsupported UAV dimension!");
+			return;
+		}
+
+		auto handle = m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0);
+		pDevice->CreateUnorderedAccessView(desc.Resource, desc.CounterResource, &uavDesc, handle);
+
+	}
+
+	void SRV_UAVPacker::PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice)
+	{
+		AddResource(desc, m_uCurrentIndex++, pDevice);
 	}
 
 	std::unique_ptr<SamplerPacker> SamplerPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
@@ -236,70 +297,6 @@ namespace FD3DW
 		AddResource(resource, dsvDesc, m_uCurrentIndex++, pDevice);
 	}
 
-	UAVPacker::UAVPacker(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
-		: ResourcePacker(descriptorSize, descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, flags, pDevice)
-	{
-	}
 
-	void UAVPacker::AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice)
-	{
-		CONSOLE_MESSAGE("UAVPacker is adding resource");
-
-		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-		uavDesc.Format = desc.Format;
-		uavDesc.ViewDimension = desc.ViewDimension;
-
-		switch (desc.ViewDimension)
-		{
-		case D3D12_UAV_DIMENSION_BUFFER:
-			uavDesc.Buffer.FirstElement = desc.FirstElement;
-			uavDesc.Buffer.NumElements = desc.NumElements;
-			uavDesc.Buffer.StructureByteStride = desc.Stride;
-			uavDesc.Buffer.CounterOffsetInBytes = desc.CounterOffsetBytes;
-			uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-			break;
-
-		case D3D12_UAV_DIMENSION_TEXTURE1D:
-			uavDesc.Texture1D.MipSlice = desc.MipSlice;
-			break;
-
-		case D3D12_UAV_DIMENSION_TEXTURE1DARRAY:
-			uavDesc.Texture1DArray.MipSlice = desc.MipSlice;
-			uavDesc.Texture1DArray.FirstArraySlice = desc.FirstArraySlice;
-			uavDesc.Texture1DArray.ArraySize = desc.ArraySize;
-			break;
-
-		case D3D12_UAV_DIMENSION_TEXTURE2D:
-			uavDesc.Texture2D.MipSlice = desc.MipSlice;
-			uavDesc.Texture2D.PlaneSlice = desc.PlaneSlice;
-			break;
-
-		case D3D12_UAV_DIMENSION_TEXTURE2DARRAY:
-			uavDesc.Texture2DArray.MipSlice = desc.MipSlice;
-			uavDesc.Texture2DArray.FirstArraySlice = desc.FirstArraySlice;
-			uavDesc.Texture2DArray.ArraySize = desc.ArraySize;
-			uavDesc.Texture2DArray.PlaneSlice = desc.PlaneSlice;
-			break;
-
-		case D3D12_UAV_DIMENSION_TEXTURE3D:
-			uavDesc.Texture3D.MipSlice = desc.MipSlice;
-			uavDesc.Texture3D.FirstWSlice = desc.FirstWSlice;
-			uavDesc.Texture3D.WSize = desc.WSize;
-			break;
-
-		default:
-			CONSOLE_MESSAGE("Unsupported UAV dimension!");
-			return;
-		}
-
-		auto handle = m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0);
-		pDevice->CreateUnorderedAccessView(desc.Resource, desc.CounterResource, &uavDesc, handle);
-
-	}
-
-	void UAVPacker::PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice)
-	{
-		AddResource(desc, m_uCurrentIndex++, pDevice);
-	}
 
 }

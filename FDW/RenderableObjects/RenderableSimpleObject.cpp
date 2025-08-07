@@ -16,7 +16,7 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 
 	m_pMaterial = std::make_unique<FD3DW::Material>();
 	
-	m_pSRVPack = FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 	
 	if (!m_bIsInitedMaterialDesc) {
 		m_xMaterialCBufferData.Diffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -43,6 +43,7 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 		}
 	}
 
+	UpdateWorldMatrix();
 	NeedUpdateMaterials();
 }
 
@@ -87,7 +88,7 @@ RenderPass RenderableSimpleObject::GetRenderPass() const {
 
 void RenderableSimpleObject::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list)
 {
-	m_vBLASBuffers = FD3DW::CreateBLASForObject(device, list, m_pObject.get(), true);
+	m_vBLASBuffers = FD3DW::CreateBLASForObject(device, list, m_pObject.get(), BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX, true);
 }
 
 void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string pathTo, ID3D12Device* device, ID3D12GraphicsCommandList* list) {

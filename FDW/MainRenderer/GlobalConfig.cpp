@@ -19,7 +19,7 @@ const DXGI_FORMAT GetForwardRenderPassFormat() {
     return DXGI_FORMAT_R32G32B32A32_FLOAT;
 }
 
-const UINT& GetGBuffersNum() {
+UINT GetGBuffersNum() {
     return (UINT)s_sGBuffersData.GBuffersFormats.size();
 }
 
@@ -72,7 +72,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                 [rasterizerDesc, dsvFirstDefPassDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
-                    for (auto i = 0; i < desc.NumRenderTargets; ++i) {
+                    for (UINT i = 0; i < desc.NumRenderTargets; ++i) {
                         desc.RTVFormats[i] = s_sGBuffersData.GBuffersFormats[i];
                     }
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -136,9 +136,9 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
 const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
     static const std::unordered_map<PSOType, PSORTDescriptor> descriptors = {
         {
-            PSOType::RT_TEST_CONFIG,
+            PSOType::RTSoftShadowDefaultConfig,
             {
-                L"RT_TEST_SHADER",
+                L"RTSoftShadow",
                 [] {
                     FD3DW::RayTracingPipelineConfig config;
                     config.MaxPayloadSize = sizeof(dx::XMFLOAT4);
@@ -151,7 +151,7 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
                         L"",
                         L"",
                         D3D12_HIT_GROUP_TYPE_TRIANGLES
-                        });
+                    });
                     return config;
                 }()
             }

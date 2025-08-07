@@ -23,6 +23,8 @@ void RenderableMeshElement::Init(ID3D12Device* device, ID3D12GraphicsCommandList
 
 	m_pMaterialBuffer = FD3DW::UploadBuffer<MeshMaterialStructure>::CreateConstantBuffer(device, 1);
 	m_bIsMaterialDataChanged = true;
+
+	UpdateWorldMatrix();
 }
 
 void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {

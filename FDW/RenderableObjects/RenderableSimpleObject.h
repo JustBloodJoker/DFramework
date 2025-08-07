@@ -79,7 +79,7 @@ private:
 	std::map<FD3DW::TextureType, std::string> m_mPathToTextures;
 
 	std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> m_pObject = nullptr;
-	std::unique_ptr<FD3DW::SRVPacker> m_pSRVPack = nullptr;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pSRVPack = nullptr;
 	
 	std::unique_ptr<FD3DW::Material> m_pMaterial = nullptr;
 

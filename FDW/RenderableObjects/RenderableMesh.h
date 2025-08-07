@@ -30,6 +30,9 @@ public:
 	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
 	virtual std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> GetBLASInstances() override;
 
+
+	virtual bool IsNeedUpdateTLAS() override;
+
 public:
 	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject)
 		REGISTER_FIELD(m_sPath);
@@ -43,7 +46,7 @@ private:
 	void AnimationTickUpdate(const BeforeRenderInputData& data);
 
 private:
-	std::vector<std::unique_ptr<FD3DW::SRVPacker>> m_vSRVPacks;
+	std::vector<std::unique_ptr<FD3DW::SRV_UAVPacker>> m_vSRVPacks;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 	
 private:

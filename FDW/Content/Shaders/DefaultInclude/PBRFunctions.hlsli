@@ -1,7 +1,6 @@
 #ifndef _PBR_FUNCTIONS_HLSLI_
 #define _PBR_FUNCTIONS_HLSLI_
 
-#define PI 3.14159265359
 
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {

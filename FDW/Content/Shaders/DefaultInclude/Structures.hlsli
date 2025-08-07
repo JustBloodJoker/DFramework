@@ -26,6 +26,12 @@ struct Matrices
     matrix ProjectionMatrix;
 };
 
+struct ViewProjectionMatrices
+{
+    matrix ViewMatrix;
+    matrix ProjectionMatrix;
+};
+
 struct MeshMatrices
 {
     matrix WorldMatrix;

@@ -13,7 +13,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 
 	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
 	{
-		m_vSRVPacks.push_back(FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
+		m_vSRVPacks.push_back(FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
 		MeshMaterialStructure cbData;
 		
 		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
@@ -127,7 +127,7 @@ std::vector<RenderableMeshElement*> RenderableMesh::GetRenderableElements() {
 
 void RenderableMesh::InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list)
 {
-	auto buffers = FD3DW::CreateBLASForObject(device, list, m_pScene.get(), true);
+	auto buffers = FD3DW::CreateBLASForObject(device, list, m_pScene.get(), BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX, true);
 
 	auto idx = 0;
 	for (auto idx = 0; idx < buffers.size(); ++idx) {
@@ -148,6 +148,13 @@ std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> Render
 		ret.insert(ret.end(), getInstances.begin(), getInstances.end());
 	}
 	return ret;
+}
+
+bool RenderableMesh::IsNeedUpdateTLAS() {
+	for (const auto& element : m_vRenderableElements) {
+		if (element->IsNeedUpdateTLAS()) return true;
+	}
+	return false;
 }
 
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {

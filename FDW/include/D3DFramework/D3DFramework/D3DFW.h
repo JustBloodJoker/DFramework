@@ -166,9 +166,9 @@ namespace FD3DW
 
 		std::unique_ptr<RTVPacker> CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<DSVPacker> CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
-		std::unique_ptr<SRVPacker> CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
+		std::unique_ptr<SRV_UAVPacker> CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<CBVPacker> CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
-		std::unique_ptr<UAVPacker> CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
+		std::unique_ptr<SRV_UAVPacker> CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<SamplerPacker> CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 
 		std::unique_ptr<CommandList> CreateList(const D3D12_COMMAND_LIST_TYPE type);

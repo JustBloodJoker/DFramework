@@ -60,6 +60,9 @@ public:
 
     bool IsCanRenderInPass(RenderPass pass);
 
+    virtual bool IsNeedUpdateTLAS();
+    void AfterTLASUpdate();
+
     virtual std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> GetBLASInstances();
 
 public:
@@ -91,5 +94,5 @@ protected:
     std::string m_sName;
 
     std::vector<FD3DW::AccelerationStructureBuffers> m_vBLASBuffers;
-
+    bool m_bIsNeedUpdateTLAS;
 };

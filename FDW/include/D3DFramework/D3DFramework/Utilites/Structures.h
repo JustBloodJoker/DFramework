@@ -18,6 +18,12 @@ namespace FD3DW
 		float Weights[NUM_BONES_PER_VEREX];
 	};
 
+	struct ViewProjectionConstantBufferStructureFrameWork
+	{
+		dx::XMMATRIX View;
+		dx::XMMATRIX Projection;
+	};
+
 	struct MatricesConstantBufferStructureFrameWork
 	{
 		dx::XMMATRIX World;

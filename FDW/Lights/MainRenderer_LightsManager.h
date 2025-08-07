@@ -16,7 +16,7 @@ public:
 
 	virtual void AfterConstruction() override;
 
-	virtual void InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRVPacker* srvPack);
+	virtual void InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRV_UAVPacker* srvPack);
 
 	void AddLight(LightStruct light);
 	void DeleteLight(int idx);
@@ -29,7 +29,7 @@ public:
 	void BeforeRender(ID3D12GraphicsCommandList* list);
 
 public:
-	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list);
+	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
 
 public:
 	BEGIN_FIELD_REGISTRATION(MainRenderer_LightsManager, MainRendererComponent)

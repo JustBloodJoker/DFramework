@@ -11,6 +11,7 @@
 
 #include <RenderableObjects/RenderableMesh.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
+#include <Lights/MainRenderer_ShadowsComponent.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -47,6 +48,8 @@ public:
 	void AddSimpleSphere();
 	void RemoveObject(BaseRenderableObject* obj);
 	void RemoveAllObjects();
+	FD3DW::AccelerationStructureBuffers GetTLAS(ID3D12GraphicsCommandList4* list);
+
 
 	//LIGHTS MANAGER
 	void CreateLight();
@@ -54,6 +57,8 @@ public:
 	const LightStruct& GetLight(int idx);
 	void SetLightData(LightStruct newData, int idx);
 	int GetLightsCount();
+	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
+	
 
 public:
 	void SaveSceneToFile(std::string pathTo);
@@ -64,6 +69,7 @@ private:
 	void InitMainRendererComponents();
 	void InitMainRendererParts(ID3D12Device* device);
 	void InitMainRendererDXRParts(ID3D12Device5* device);
+	void TryInitShadowComponent();
 
 private:
 
@@ -89,6 +95,7 @@ private:
 	std::unique_ptr<MainRenderer_CameraComponent> m_pCameraComponent = nullptr;
 	std::unique_ptr<MainRenderer_RenderableObjectsManager> m_pRenderableObjectsManager = nullptr;
 	std::unique_ptr<MainRenderer_LightsManager> m_pLightsManager = nullptr;
+	std::unique_ptr<MainRenderer_ShadowsComponent> m_pShadowsComponent = nullptr;
 
 protected:
 
@@ -118,19 +125,13 @@ protected:
 	//TEST FIELDS
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;
 	std::unique_ptr<FD3DW::RTVPacker> m_pGBuffersRTVPack;
-	std::unique_ptr<FD3DW::SRVPacker> m_pGBuffersSRVPack;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
 	std::unique_ptr<FD3DW::RenderTarget> m_pForwardRenderPassRTV;
 	std::unique_ptr<FD3DW::RTVPacker> m_pForwardRenderPassRTVPack;
-	std::unique_ptr<FD3DW::SRVPacker> m_pForwardRenderPassSRVPack;
-
-
-	std::unique_ptr<FD3DW::RTShaderBindingTable> m_pSoftShadowsSBT;
-	std::unique_ptr<FD3DW::UAVPacker> m_pSoftShadowsUAVPacker;
-	std::unique_ptr<FD3DW::FResource> m_pSoftShadowsResource;
-
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pForwardRenderPassSRVPack;
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;

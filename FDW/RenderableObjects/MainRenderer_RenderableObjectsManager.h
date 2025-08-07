@@ -65,6 +65,8 @@ public:
     virtual void AfterConstruction() override;
     virtual void BeforeDestruction() override;
 
+    bool IsNeedUpdateTLAS();
+
     RenderableSkyboxObject* FindSkyboxObject();
 
     BEGIN_FIELD_REGISTRATION(MainRenderer_RenderableObjectsManager, MainRendererComponent)

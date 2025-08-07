@@ -25,7 +25,7 @@ public:
 
 protected:
 	std::string m_sTexturePath;
-	std::unique_ptr<FD3DW::SRVPacker> m_pSRVPack;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pSRVPack;
 	std::unique_ptr<FD3DW::Material> m_pMaterial;
 	std::unique_ptr<FD3DW::Cube> m_pCube;
 	std::unique_ptr<FD3DW::UploadBuffer<FD3DW::MatricesConstantBufferStructureFrameWork>> m_pMatricesBuffer;

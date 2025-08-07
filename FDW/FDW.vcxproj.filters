@@ -114,6 +114,12 @@
     <ClCompile Include="RenderableObjects\RenderableSimpleSphere.cpp">
       <Filter>RenderableObjects</Filter>
     </ClCompile>
+    <ClCompile Include="Lights\MainRenderer_ShadowsComponent.cpp">
+      <Filter>Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\MainRenderer_RTSoftShadowsComponent.cpp">
+      <Filter>Lights</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -190,6 +196,12 @@
     </ClInclude>
     <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h">
       <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\MainRenderer_ShadowsComponent.h">
+      <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\MainRenderer_RTSoftShadowsComponent.h">
+      <Filter>Lights</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

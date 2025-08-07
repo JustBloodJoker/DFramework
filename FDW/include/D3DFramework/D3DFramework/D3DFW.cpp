@@ -402,10 +402,10 @@ namespace FD3DW
 		return std::make_unique<DSVPacker>(Get_DSV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, m_pDevice.Get());
 	}
 
-	std::unique_ptr<SRVPacker> D3DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
+	std::unique_ptr<SRV_UAVPacker> D3DFW::CreateSRVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating SRV pack");
-		return  SRVPacker::CreatePack(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
+		return  SRV_UAVPacker::CreatePack(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
 	}
 
 	std::unique_ptr<CBVPacker> D3DFW::CreateCBVPack(const UINT descriptorsCount, const UINT NodeMask)
@@ -414,10 +414,10 @@ namespace FD3DW
 		return std::make_unique<CBVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
 	}
 
-	std::unique_ptr<UAVPacker> D3DFW::CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask)
+	std::unique_ptr<SRV_UAVPacker> D3DFW::CreateUAVPack(const UINT descriptorsCount, const UINT NodeMask)
 	{
 		CONSOLE_MESSAGE("D3DFW is creating UAV pack");
-		return std::make_unique<UAVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
+		return std::make_unique<SRV_UAVPacker>(Get_CBV_SRV_UAV_DescriptorSize(), descriptorsCount, NodeMask, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, m_pDevice.Get());
 	}
 
 	std::unique_ptr<SamplerPacker> D3DFW::CreateSamplerPack(const UINT descriptorsCount, const UINT NodeMask)

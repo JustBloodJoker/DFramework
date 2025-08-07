@@ -10,7 +10,7 @@ void MainRenderer_LightsManager::AfterConstruction() {
 	if (!m_vLights.empty()) m_bIsNeedUpdateLightsStructuredBuffer = true;
 }
 
-void MainRenderer_LightsManager::InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRVPacker* srvPack) {
+void MainRenderer_LightsManager::InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRV_UAVPacker* srvPack) {
 	auto device = m_pOwner->GetDevice();
 	auto size = GetCBV_SRV_UAVDescriptorSize(device);
 
@@ -60,9 +60,15 @@ void MainRenderer_LightsManager::BeforeRender(ID3D12GraphicsCommandList* list) {
 	UpdateLightsStructuredBuffer(list);
 }
 
-void MainRenderer_LightsManager::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list) {
-	list->SetGraphicsRootConstantBufferView(cbSlot, m_pLightsHelperConstantBuffer->GetGPULocation(0));
-	list->SetGraphicsRootShaderResourceView(rootSRVSlot, m_pLightsStructuredBuffer->GetResource()->GetGPUVirtualAddress());
+void MainRenderer_LightsManager::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute) {
+	if (IsCompute) {
+		list->SetComputeRootConstantBufferView(cbSlot, m_pLightsHelperConstantBuffer->GetGPULocation(0));
+		list->SetComputeRootShaderResourceView(rootSRVSlot, m_pLightsStructuredBuffer->GetResource()->GetGPUVirtualAddress());
+	}
+	else {
+		list->SetGraphicsRootConstantBufferView(cbSlot, m_pLightsHelperConstantBuffer->GetGPULocation(0));
+		list->SetGraphicsRootShaderResourceView(rootSRVSlot, m_pLightsStructuredBuffer->GetResource()->GetGPUVirtualAddress());
+	}
 }
 
 void MainRenderer_LightsManager::UpdateLightsConstantBuffer() {

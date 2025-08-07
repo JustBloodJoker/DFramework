@@ -3,7 +3,7 @@
 namespace FD3DW {
 
 
-    std::vector<AccelerationStructureBuffers> CreateBottomLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, const std::vector<AccelerationStructureInput>& geometries, bool isStandaloneGeometries)
+    std::vector<AccelerationStructureBuffers> CreateBottomLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, const std::vector<AccelerationStructureInput>& geometries, UINT hitGroupIndex, bool isStandaloneGeometries)
     {
         std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
         for (const auto& geom : geometries) {
@@ -11,14 +11,16 @@ namespace FD3DW {
             desc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             desc.Flags = geom.flags;
 
-            desc.Triangles.VertexBuffer.StartAddress = geom.vertexBuffer->GetGPUVirtualAddress() + geom.vertexOffset;
+            desc.Triangles.VertexBuffer.StartAddress = geom.vertexBuffer->GetGPUVirtualAddress() + geom.vertexOffset*geom.vertexStride;
             desc.Triangles.VertexBuffer.StrideInBytes = geom.vertexStride;
             desc.Triangles.VertexCount = geom.vertexCount;
             desc.Triangles.VertexFormat = geom.vertexFormat;
 
-            desc.Triangles.IndexBuffer = geom.indexBuffer->GetGPUVirtualAddress() + geom.indexOffset;
+            desc.Triangles.IndexBuffer = geom.indexBuffer->GetGPUVirtualAddress() + geom.indexOffset*geom.indexStride;
             desc.Triangles.IndexCount = geom.indexCount;
             desc.Triangles.IndexFormat = geom.indexFormat;
+
+            
 
             geometryDescs.push_back(desc);
         }
@@ -79,6 +81,8 @@ namespace FD3DW {
             CD3DX12_RESOURCE_BARRIER uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(buffer.pResult.Get());
             cmdList->ResourceBarrier(1, &uavBarrier);
 
+            buffer.HitGroupIndex = hitGroupIndex;
+
             buffers.push_back(buffer);
         }
         
@@ -98,7 +102,7 @@ namespace FD3DW {
             desc.InstanceMask = 1;
             desc.AccelerationStructure = blas.pResult->GetGPUVirtualAddress();
             desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            desc.InstanceContributionToHitGroupIndex = i;
+            desc.InstanceContributionToHitGroupIndex = blas.HitGroupIndex;
         }
 
         AccelerationStructureBuffers buffers;
@@ -168,7 +172,7 @@ namespace FD3DW {
             desc.InstanceMask = 1;
             desc.AccelerationStructure = blas.pResult->GetGPUVirtualAddress();
             desc.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-            desc.InstanceContributionToHitGroupIndex = i;
+            desc.InstanceContributionToHitGroupIndex = blas.HitGroupIndex;
         }
 
         D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
@@ -253,6 +257,7 @@ namespace FD3DW {
             ret[i].indexCount = params.IndicesCount;
             ret[i].indexFormat = DEFAULT_INDEX_BUFFER_FORMAT;
             ret[i].indexOffset = params.IndicesOffset;
+            ret[i].indexStride = GetFormatSizeInBytes(DEFAULT_INDEX_BUFFER_FORMAT);
             ret[i].vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
             ret[i].vertexCount = params.VerticesCount;
             ret[i].vertexOffset = params.VerticesOffset;
@@ -262,17 +267,17 @@ namespace FD3DW {
         return ret;
     }
 
-    std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, bool isStandaloneGeometries)
+    std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries)
     {
         auto geometries = CreateGeometriesForObject(obj);
 
-        return CreateBottomLevelAS(device, cmdList, geometries, isStandaloneGeometries);
+        return CreateBottomLevelAS(device, cmdList, geometries, hitGroupIndex, isStandaloneGeometries);
     }
 
-    RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj)
+    RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UINT hitGroupIndex, Object* obj)
     {
         RTObjectData data;
-        auto blas = CreateBLASForObject(device, cmdList, obj, true);
+        auto blas = CreateBLASForObject(device, cmdList, obj, hitGroupIndex,true);
         data.BLASBuffers = blas;
         data.Transforms.resize(blas.size(), dx::XMMatrixIdentity());
 

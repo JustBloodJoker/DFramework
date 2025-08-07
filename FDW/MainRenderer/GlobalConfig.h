@@ -15,7 +15,7 @@ struct GBuffersData {
 
 const GBuffersData& GetGBufferData();
 const DXGI_FORMAT GetForwardRenderPassFormat();
-const UINT& GetGBuffersNum();
+UINT GetGBuffersNum();
 
 //////////////////////////////////////////////
 
@@ -39,7 +39,7 @@ enum class PSOType {
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 	PostProcessDefaultConfig,
-	RT_TEST_CONFIG,
+	RTSoftShadowDefaultConfig,
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors();
@@ -51,6 +51,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 
 //////////////////////////////////////////////
 
+#define BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX 0
 
 ////////////////////////////////////////////
 //   DEFFERED FIRST PASS BINDS
@@ -68,10 +69,19 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 /////////////////////////////////////////////
 
 
+////////////////////////////////////////////
+///////		RT SOFT SHADOWS BINDING
+#define RT_SOFT_SHADOW_TLAS_BUFFER_POS_IN_ROOT_SIG				0
+#define RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG			1
+#define RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG					2
+#define RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG		3
+#define RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG			4
+/////////////////////////////////////////////
+
 /////////////////////////////////////////////
 ///////    DEFFERED SECOND PASS SRV HEAP LOCATIONS  
 
-#define COUNT_SRV_IN_GBUFFER_HEAP 8
+#define COUNT_SRV_IN_GBUFFER_HEAP 9
 
 #define GBUFFER_POSITION_LOCATION_IN_HEAP 0
 #define GBUFFER_NORMAL_LOCATION_IN_HEAP 1
@@ -81,6 +91,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define GBUFFER_MATERIALDATA_LOCATION_IN_HEAP 5
 #define LIGHTS_LTC_MAT_LOCATION_IN_HEAP 6
 #define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 7
+#define SHADOW_FACTOR_LOCATION_IN_HEAP 8
 
 
 
@@ -105,3 +116,9 @@ const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device);
 
 
 ////////////////////////////////////////////
+
+
+//<<<<
+//	посмотреть че за хуйня в тласе спонзы
+//	починить то что пишет инвалид дескрипторы в рт
+//	и поотом уже попробовать софт тени

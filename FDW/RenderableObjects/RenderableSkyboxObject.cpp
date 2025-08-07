@@ -14,7 +14,7 @@ void RenderableSkyboxObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 	m_pMaterial = std::make_unique<FD3DW::Material>();
 	m_pMaterial->SetTexture(m_sTexturePath, FD3DW::TextureType::BASE, device, list);
 
-	m_pSRVPack = FD3DW::SRVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURECUBE, 0, device);
 }
 

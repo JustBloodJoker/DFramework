@@ -65,6 +65,14 @@ bool BaseRenderableObject::IsCanRenderInPass(RenderPass pass) {
     return (GetRenderPass() & pass) == pass;
 }
 
+bool BaseRenderableObject::IsNeedUpdateTLAS() {
+    return m_bIsNeedUpdateTLAS;
+}
+
+void BaseRenderableObject::AfterTLASUpdate() {
+    m_bIsNeedUpdateTLAS = false;
+}
+
 std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> BaseRenderableObject::GetBLASInstances()
 {
     std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> ret;
@@ -110,4 +118,5 @@ void BaseRenderableObject::UpdateWorldMatrix() {
     dx::XMMATRIX transMat = dx::XMMatrixTranslation(m_xPosition.x, m_xPosition.y, m_xPosition.z);
 
     m_xWorldMatrix = scaleMat * rotXMat * rotYMat * rotZMat * transMat;
+    m_bIsNeedUpdateTLAS = true;
 }

@@ -22,6 +22,8 @@ Texture2D GBuffer_MaterialData : register(t6);  //roughness , metalness , specul
 Texture2D<float4> LTC_Mat : register(t7);
 Texture2D<float2> LTC_Amp : register(t8);
 
+Texture2D ShadowFactorTexture : register(t9);
+
 SamplerState ss : register(s0);
 
 float3 CalculatePBRLighting(
@@ -137,6 +139,8 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 albedo = albedoOut.rgb;
     float alpha = albedoOut.a;
 
+    float shadowFactor = ShadowFactorTexture.Sample(ss, uv).r;
+
     float4 matData = GBuffer_MaterialData.Sample(ss, uv);
     float roughness = matData.r;
     float metallic = matData.g;
@@ -168,6 +172,8 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 color = Lo * ao + emissive;
 
     color = color / (color + float3(1.0, 1.0, 1.0));
+
+    color *= shadowFactor;
 
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);

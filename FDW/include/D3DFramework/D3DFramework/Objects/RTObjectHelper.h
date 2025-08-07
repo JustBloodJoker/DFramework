@@ -15,7 +15,10 @@ namespace FD3DW {
 		ID3D12Resource* indexBuffer;
 		UINT64 indexOffset;
 		UINT indexCount;
+		UINT indexStride;
 		DXGI_FORMAT indexFormat;
+
+		UINT HitGroupIndex;
 
 		D3D12_RAYTRACING_GEOMETRY_FLAGS flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE;
 	};
@@ -24,6 +27,7 @@ namespace FD3DW {
 		wrl::ComPtr<ID3D12Resource> pScratch;
 		wrl::ComPtr<ID3D12Resource> pResult;
 		wrl::ComPtr<ID3D12Resource> pInstanceDesc;
+		UINT HitGroupIndex;
 	};
 
 
@@ -37,13 +41,13 @@ namespace FD3DW {
 	};
 
 
-	std::vector<AccelerationStructureBuffers> CreateBottomLevelAS(ID3D12Device5* device,ID3D12GraphicsCommandList4* cmdList,const std::vector<AccelerationStructureInput>& geometries, bool isStandaloneGeometries);
+	std::vector<AccelerationStructureBuffers> CreateBottomLevelAS(ID3D12Device5* device,ID3D12GraphicsCommandList4* cmdList,const std::vector<AccelerationStructureInput>& geometries, UINT hitGroupIndex, bool isStandaloneGeometries);
 	AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, const std::vector<std::pair<AccelerationStructureBuffers, dx::XMMATRIX>>& instances);
 	AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, std::vector<AccelerationStructureBuffers> buffers, dx::XMMATRIX defaultMatrix = dx::XMMatrixIdentity());
 	void UpdateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, AccelerationStructureBuffers& tlasBuffers, const std::vector<std::pair<AccelerationStructureBuffers, dx::XMMATRIX>>& instances);
 	
 	std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj);
-	std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, bool isStandaloneGeometries);
+	std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries);
 
-	RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj);
+	RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UINT hitGroupIndex, Object* obj);
 }

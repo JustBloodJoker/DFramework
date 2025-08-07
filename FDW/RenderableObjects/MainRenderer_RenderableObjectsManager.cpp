@@ -76,7 +76,7 @@ void MainRenderer_RenderableObjectsManager::AfterRender() {
 }
 
 FD3DW::AccelerationStructureBuffers MainRenderer_RenderableObjectsManager::GetTLASData(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
-    if (m_bIsNeedUpdateTLAS && m_pOwner->IsRTSupported() && !m_vObjects.empty() ) {
+    if (m_pOwner->IsRTSupported() && IsNeedUpdateTLAS() && !m_vObjects.empty()) {
         std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> instances;
         for (const auto& object : m_vObjects) {
             if (!object->IsCanRenderInPass(RenderPass::Deferred)) continue;
@@ -96,7 +96,22 @@ FD3DW::AccelerationStructureBuffers MainRenderer_RenderableObjectsManager::GetTL
     }
 
     m_bIsNeedUpdateTLAS = false;
+    for (const auto& obj : m_vObjects) {
+        obj->AfterTLASUpdate();
+    }
+
     return m_xTLASBufferData;
+}
+
+
+bool MainRenderer_RenderableObjectsManager::IsNeedUpdateTLAS() {
+    if (m_bIsNeedUpdateTLAS) return true;
+
+    for (const auto& obj : m_vObjects) {
+        if(obj->IsNeedUpdateTLAS()) return true;
+    }
+
+    return false;
 }
 
 void MainRenderer_RenderableObjectsManager::AfterConstruction() {
