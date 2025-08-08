@@ -13,11 +13,11 @@ namespace FD3DW
 
 	public:
 
-		static std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>> CreateConstantBuffer(ID3D12Device* pDevice, const size_t& elementCount) {
+		static std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>> CreateConstantBuffer(ID3D12Device* pDevice, UINT elementCount) {
 			return CreateUploadBuffer(pDevice, elementCount, true);
 		}
 
-		static std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>> CreateUploadBuffer(ID3D12Device* pDevice, const size_t& elementCount, bool IsConstantBuffer) {
+		static std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>> CreateUploadBuffer(ID3D12Device* pDevice, UINT elementCount, bool IsConstantBuffer) {
 			return std::make_unique<UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>>(pDevice, elementCount, IsConstantBuffer);
 		}
 

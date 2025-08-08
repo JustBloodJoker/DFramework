@@ -11,11 +11,11 @@ namespace FD3DW
 {
 	struct ObjectDesc
 	{
-		size_t VerticesCount;
-		size_t VerticesOffset;
-		size_t IndicesCount;
-		size_t IndicesOffset;
-		size_t MaterialIndex;
+		UINT VerticesCount;
+		UINT VerticesOffset;
+		UINT IndicesCount;
+		UINT IndicesOffset;
+		UINT MaterialIndex;
 	};
 
 	class Object

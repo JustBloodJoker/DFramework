@@ -29,7 +29,7 @@ namespace FD3DW
 			m_pIndexBufferView->Format = DEFAULT_INDEX_BUFFER_FORMAT;
 			m_pIndexBufferView->SizeInBytes = static_cast<UINT>(indices.size() * sizeof(std::uint32_t));
 			
-			m_vObjectParameters.emplace_back(ObjectDesc{vertices.size(), 0,indices.size(), 0, 0});
+			m_vObjectParameters.emplace_back(ObjectDesc{ UINT(vertices.size()), 0u,UINT(indices.size()), 0u, 0u});
 		}
 
 		virtual size_t GetVertexStructSize() const override {

@@ -175,7 +175,7 @@ namespace FD3DW
 				}
 			}
 
-			m_vObjectParameters.push_back(ObjectDesc{ verticesSize, offsetVertices, indicesSize, indices.size() - indicesSize, mesh->mMaterialIndex }); 
+			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(indices.size() - indicesSize), UINT(mesh->mMaterialIndex) });
 		}
 
 		for (size_t i = 0; i < scene->mNumMaterials; i++)

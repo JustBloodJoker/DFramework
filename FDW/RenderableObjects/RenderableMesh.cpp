@@ -34,7 +34,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	}
 	
 	if (m_pScene->GetBonesCount()) {
-		m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, m_pScene->GetBonesCount(), false);
+		m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), false);
 	}
 	
 	for (auto ind = 0; ind < m_pScene->GetObjectBuffersCount(); ind++)

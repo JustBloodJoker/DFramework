@@ -189,6 +189,7 @@
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\BilateralFilter.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
@@ -226,6 +227,7 @@
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\BilateralFilter.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />

@@ -76,6 +76,10 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG					2
 #define RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG		3
 #define RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG			4
+
+#define RT_SOFT_SHADOW_FRAME_BUFFER_POS_IN_ROOT_SIG				5
+#define RT_SOFT_SHADOW_INPUT_PREV_FRAME_SRV_POS_IN_ROOT_SIG		6
+#define RT_SOFT_SHADOW_OUTPUT_CURR_FRAME_UAV_POS_IN_ROOT_SIG	7
 /////////////////////////////////////////////
 
 /////////////////////////////////////////////

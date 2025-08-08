@@ -75,6 +75,7 @@ namespace FD3DW
                 HRESULT_ASSERT(DDSTextureLoaderDX12::Load(path, pDevice, pCommandList, resultData), "Cant create dds resource");
 
                 m_pResource = resultData.TextureResource;
+                SetResource(m_pResource.Get());
                 m_pUploadBuffer = std::move(resultData.ResultUploadBuffer);
             }
             else if (extension == ".hdr")
@@ -471,6 +472,26 @@ namespace FD3DW
                 delete h;
             }
         }
+    }
+
+    std::unique_ptr<FResource> FResource::MakeCopy(ID3D12Device* device)
+    {
+        D3D12_RESOURCE_DESC desc = m_pResource->GetDesc();
+
+        return CreateAnonimTexture(
+            device,
+            desc.DepthOrArraySize,
+            desc.Format,
+            static_cast<UINT>(desc.Width),
+            desc.Height,
+            desc.SampleDesc,
+            desc.Dimension,
+            desc.Flags,
+            desc.Layout,
+            D3D12_HEAP_FLAG_NONE,
+            &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+            desc.MipLevels
+        );
     }
 
 }

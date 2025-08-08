@@ -99,4 +99,14 @@ struct LightStruct {
     float3 Rotation;
 };
 
+struct RTSoftShadowFrameStruct {
+    matrix PrevViewProj;
+    matrix CurrViewProj;
+    float TemporalFeedbackMin;
+    float TemporalFeedbackMax;
+    float ReprojDistThreshold;
+    float NormalThreshold;
+};
+
+
 #endif

@@ -70,6 +70,8 @@ namespace FD3DW
 
 		static void ReleaseUploadBuffers();//CLEAR ALL UPLOAD BUFFERS
 
+		std::unique_ptr<FResource> MakeCopy(ID3D12Device* device);
+
 	protected:
 		UINT CalculateMipCount(UINT width, UINT height);
 		bool IsSupportMipMapping(D3D12_RESOURCE_DESC desc);

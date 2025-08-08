@@ -2,7 +2,6 @@
 #include "Utilits.hlsli"
 #include "SameShadersStructs.hlsli"
 #include "LTCFunctions.hlsli"
-
 RaytracingAccelerationStructure Scene : register(t0);
 RWTexture2D<float4> Output : register(u0);
 
@@ -11,6 +10,12 @@ Texture2D NormalGBuffer : register(t2);
 
 ConstantBuffer<LightsHelper> LightsHelperBuffer : register(b1);
 StructuredBuffer<LightStruct> Lights : register(t3);
+
+ConstantBuffer<RTSoftShadowFrameStruct> SoftShadowFrameData : register(b2);
+Texture2D PrevWorldPosAndShadowFactorBuffer : register(t4);   //IN: xyz world pos prev, w - prev shadow factor;
+RWTexture2D<float4> CurrentWorldPosAndShadowFactor : register(u1); //OUT: xyz world pos curr, w - curr shadow factor;
+
+SamplerState LinearClampSampler : register(s0);
 
 float RandomFloat(inout uint seed)
 {
@@ -99,17 +104,17 @@ float ComputeRectLightShadow(float3 worldPos, float3 rectPoints[4], int numSampl
 void RayGen()
 {
     uint2 dispatchIndex = DispatchRaysIndex().xy;
-    uint2 dispatchDim = DispatchRaysDimensions().xy;
+    uint2 dispatchDim   = DispatchRaysDimensions().xy;
 
     float3 worldPos = WorldPosGBuffer.Load(int3(dispatchIndex, 0)).xyz;
+    float3 normal   = NormalGBuffer.Load(int3(dispatchIndex, 0)).xyz;
 
     float totalShadow = 0.0f;
-    int totalLights = 0;
+    int totalLights   = 0;
 
     for (int i = 0; i < LightsHelperBuffer.LightCount; ++i)
     {
         LightStruct light = Lights[i];
-
         uint seed = dispatchIndex.x * 1973 + dispatchIndex.y * 9277 + i * 26699;
         float shadow = 1.0f;
 
@@ -130,17 +135,10 @@ void RayGen()
             float3 spotDir = normalize(-light.Direction);
 
             float cosAngle = dot(dir, spotDir);
-            float cosOuter = cos(light.OuterConeAngle);
-            float cosInner = cos(light.InnerConeAngle);
-
-            if (cosAngle >= cosOuter)
-            {
+            if (cosAngle >= cos(light.OuterConeAngle))
                 shadow = TraceShadowRay(worldPos, dir, dist);
-            }
             else
-            {
                 continue;
-            }
         }
         else if (light.LightType == LIGHT_RECT_LIGHT_ENUM_VALUE)
         {
@@ -152,6 +150,47 @@ void RayGen()
         totalShadow += shadow;
         totalLights++;
     }
-    float finalShadow = (totalLights > 0) ? (totalShadow / totalLights) : 1.0f;
-    Output[dispatchIndex] = float4(finalShadow, finalShadow, finalShadow, 1.0f);
+
+    float currShadow = (totalLights > 0) ? (totalShadow / totalLights) : 1.0f;
+
+    float4 currClip = mul(float4(worldPos, 1.0f), SoftShadowFrameData.CurrViewProj);
+    float4 prevClip = mul(float4(worldPos, 1.0f), SoftShadowFrameData.PrevViewProj);
+
+    float2 prevNDC  = prevClip.xy / prevClip.w;
+    float2 prevUV   = prevNDC * 0.5f + 0.5f;
+
+    bool validPrev = all(prevUV >= 0.0f) && all(prevUV <= 1.0f);
+
+    float prevShadow = currShadow;
+    if (validPrev)
+    {
+        float4 prevData = PrevWorldPosAndShadowFactorBuffer.SampleLevel(LinearClampSampler, prevUV, 0);
+        float3 prevPos  = prevData.xyz;
+        float prevFac = prevData.w;
+
+        float distDiff = distance(prevPos, worldPos);
+        float normDiff = abs(dot(normal, normalize(prevPos - worldPos)));
+
+        if (distDiff < SoftShadowFrameData.ReprojDistThreshold && normDiff < SoftShadowFrameData.NormalThreshold)
+        {
+            float feedback = lerp(SoftShadowFrameData.TemporalFeedbackMin,
+                                  SoftShadowFrameData.TemporalFeedbackMax,
+                                  saturate(1.0f - distDiff / SoftShadowFrameData.ReprojDistThreshold));
+
+            prevShadow = lerp(currShadow, prevFac, feedback);
+        }
+    }
+
+    Output[dispatchIndex] = float4(prevShadow, prevShadow, prevShadow, 1.0f);
+    CurrentWorldPosAndShadowFactor[dispatchIndex] = float4(worldPos, prevShadow);
 }
+
+
+
+
+
+
+/*
+
+
+*/

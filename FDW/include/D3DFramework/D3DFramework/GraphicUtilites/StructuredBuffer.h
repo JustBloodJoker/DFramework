@@ -10,7 +10,7 @@ class StructuredBuffer : public FResource {
 public:
 	template<typename T>
 	static std::unique_ptr<StructuredBuffer> CreateStructuredBuffer(ID3D12Device* pDevice, const UINT count, bool isDynamicScaled) {
-		return std::make_unique<StructuredBuffer>(pDevice, count, isDynamicScaled, sizeof(T));
+		return std::make_unique<StructuredBuffer>(pDevice, count, isDynamicScaled, UINT( sizeof(T) ));
 	}
 
 public:

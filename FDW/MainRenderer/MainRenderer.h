@@ -70,6 +70,7 @@ private:
 	void InitMainRendererParts(ID3D12Device* device);
 	void InitMainRendererDXRParts(ID3D12Device5* device);
 	void TryInitShadowComponent();
+	void CustomAfterInitShadowComponent(MainRenderer_ShadowsComponent* shadow);
 
 private:
 

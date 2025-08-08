@@ -388,6 +388,7 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		}
 		else {
 			m_pShadowsComponent->SetAfterConstruction(this);
+			CustomAfterInitShadowComponent(m_pShadowsComponent.get());
 		}
 	});
 }
@@ -428,8 +429,14 @@ void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
 void MainRenderer::TryInitShadowComponent() {
 	if (IsRTSupported()) {
 		auto rtSoftShadow = CreateUniqueComponent<MainRenderer_RTSoftShadowsComponent>();
-		rtSoftShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), GetDevice());
+		CustomAfterInitShadowComponent(rtSoftShadow.get());
 		m_pShadowsComponent = std::move(rtSoftShadow);
+	}
+}
+
+void MainRenderer::CustomAfterInitShadowComponent(MainRenderer_ShadowsComponent* shadow) {
+	if (auto rtShadow = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(shadow)) {
+		rtShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), GetDevice());
 	}
 }
 
