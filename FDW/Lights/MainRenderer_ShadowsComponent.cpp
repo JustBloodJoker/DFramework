@@ -7,3 +7,7 @@ void MainRenderer_ShadowsComponent::BindResultResource(ID3D12Device* device, FD3
 void MainRenderer_ShadowsComponent::BeforeRender(ID3D12GraphicsCommandList* list) {
 
 }
+
+ShadowType MainRenderer_ShadowsComponent::Type() {
+	return ShadowType::None;
+}

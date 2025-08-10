@@ -203,5 +203,8 @@
     <ClInclude Include="Lights\MainRenderer_RTSoftShadowsComponent.h">
       <Filter>Lights</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\ShadowsStructures.h">
+      <Filter>Lights</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

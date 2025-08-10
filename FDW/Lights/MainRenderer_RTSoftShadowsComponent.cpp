@@ -53,19 +53,23 @@ void MainRenderer_RTSoftShadowsComponent::AfterConstruction() {
 	FD3DW::BilateralParams params = {};
 	params.KernelRadius = 7;
 	params.SigmaS = 3;
-	params.SigmaR = 0.3;
+	params.SigmaR = 0.3f;
 	m_pBilateralFilter = std::make_unique<FD3DW::BilateralFilter>(dxrDevice, m_pSrcResultResource.get(), params);
 
-	m_xBufferData.PrevViewProj = dx::XMMatrixTranspose(m_pOwner->GetCurrentViewMatrix() * m_pOwner->GetCurrentProjectionMatrix());
+	m_xConfig.PrevViewProj = dx::XMMatrixTranspose(m_pOwner->GetCurrentViewMatrix() * m_pOwner->GetCurrentProjectionMatrix());
 }
 
 void MainRenderer_RTSoftShadowsComponent::BeforeRender(ID3D12GraphicsCommandList* list) {
 	MainRenderer_ShadowsComponent::BeforeRender(list);
 
 	m_iCurrentShadowBufferUsage = (m_iCurrentShadowBufferUsage + 1) % 2;
-	m_xBufferData.PrevViewProj = m_xBufferData.CurrViewProj;
-	m_xBufferData.CurrViewProj = dx::XMMatrixTranspose( m_pOwner->GetCurrentViewMatrix() * m_pOwner->GetCurrentProjectionMatrix()  );
-	m_pFrameBuffer->CpyData(0, m_xBufferData);
+	RTSoftShadowBuffer buffer = m_xConfig;
+	buffer.PrevViewProj = buffer.CurrViewProj;
+	buffer.CurrViewProj = dx::XMMatrixTranspose( m_pOwner->GetCurrentViewMatrix() * m_pOwner->GetCurrentProjectionMatrix()  );
+	m_pFrameBuffer->CpyData(0, buffer);
+
+	FD3DW::BilateralParams params = m_xConfig;
+	m_pBilateralFilter->SetParams(params);
 }
 
 bool MainRenderer_RTSoftShadowsComponent::IsCanBeEnabled(MainRenderer* renderer) {
@@ -128,4 +132,16 @@ void MainRenderer_RTSoftShadowsComponent::SetGBuffersResources(FD3DW::FResource*
 FD3DW::FResource* MainRenderer_RTSoftShadowsComponent::GetResultResource()
 {
 	return m_pBilateralFilter->GetDstResource();
+}
+
+RTSoftShadowConfig MainRenderer_RTSoftShadowsComponent::GetConfig() {
+	return m_xConfig;
+}
+
+void MainRenderer_RTSoftShadowsComponent::SetConfig(RTSoftShadowConfig config) {
+	m_xConfig = config;
+}
+
+ShadowType MainRenderer_RTSoftShadowsComponent::Type() {
+	return ShadowType::RTSoftShadow;
 }

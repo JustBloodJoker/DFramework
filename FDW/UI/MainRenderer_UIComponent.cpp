@@ -63,6 +63,11 @@ void MainRenderer_UIComponent::MainWindow() {
             ImGui::EndTabItem();
         }
 
+        if (ImGui::BeginTabItem("Shadows")) {
+            DrawShadowsTab();
+            ImGui::EndTabItem();
+        }
+
         if (ImGui::BeginTabItem("EditorUtilities")) {
             DrawEditorUtilitiesTab();
             ImGui::EndTabItem();
@@ -121,6 +126,33 @@ void MainRenderer_UIComponent::DrawCameraTab() {
     ImGui::SeparatorText("Actions");
     if (ImGui::Button("Reset Position")) {
         m_pOwner->SetDefaultPosition();
+    }
+}
+
+void MainRenderer_UIComponent::DrawShadowsTab() {
+    ImGui::SeparatorText("Shadow Settings");
+
+    auto shadowType = m_pOwner->CurrentShadowType();
+    bool changed = false;
+    if (shadowType == ShadowType::RTSoftShadow) {
+        RTSoftShadowConfig config = m_pOwner->GetRTShadowConfig();
+
+        changed |= ImGui::SliderFloat("Temporal Feedback Min", &config.TemporalFeedbackMin, 0.0f, 1.0f);
+        changed |= ImGui::SliderFloat("Temporal Feedback Max", &config.TemporalFeedbackMax, 0.0f, 1.0f);
+
+        changed |= ImGui::SliderFloat("Reprojection Distance Threshold", &config.ReprojDistThreshold, 0.0f, 1.0f);
+        changed |= ImGui::SliderFloat("Normal Threshold", &config.NormalThreshold, 0.0f, 1.0f);
+
+        changed |= ImGui::SliderFloat("Sigma Spatial (SigmaS)", &config.SigmaS, 0.1f, 10.0f);
+        changed |= ImGui::SliderFloat("Sigma Range (SigmaR)", &config.SigmaR, 0.0f, 1.0f);
+        changed |= ImGui::SliderInt("Kernel Radius", &config.KernelRadius, 1, 10);
+
+        if (changed) {
+            m_pOwner->SetRTShadowConfig(config);
+        }
+    }
+    else {
+        ImGui::TextDisabled("NotImpl");
     }
 }
 

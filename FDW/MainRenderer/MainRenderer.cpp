@@ -357,6 +357,23 @@ void MainRenderer::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12
 }
 
 
+ShadowType MainRenderer::CurrentShadowType() {
+	return m_pShadowsComponent ? m_pShadowsComponent->Type() : ShadowType::None;
+}
+
+void MainRenderer::SetRTShadowConfig(RTSoftShadowConfig config) {
+	if (auto rtSoftShadows = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(m_pShadowsComponent.get())) {
+		rtSoftShadows->SetConfig(config);
+	}
+}
+
+RTSoftShadowConfig MainRenderer::GetRTShadowConfig() {
+	if (auto rtSoftShadows = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(m_pShadowsComponent.get())) {
+		return rtSoftShadows->GetConfig();
+	}
+	return {};
+}
+
 void MainRenderer::SaveSceneToFile(std::string pathTo) {
 	AddToCallAfterRenderLoop([this, pathTo]() {
 		BinarySerializer ser;

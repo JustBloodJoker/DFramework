@@ -12,6 +12,8 @@
 #include <RenderableObjects/RenderableMesh.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
 #include <Lights/MainRenderer_ShadowsComponent.h>
+#include <Lights/ShadowsStructures.h>
+#include <Lights/MainRenderer_RTSoftShadowsComponent.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -59,6 +61,11 @@ public:
 	int GetLightsCount();
 	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
 	
+
+	//SHADOWS COMPONENT
+	ShadowType CurrentShadowType();
+	void SetRTShadowConfig(RTSoftShadowConfig config);
+	RTSoftShadowConfig GetRTShadowConfig();
 
 public:
 	void SaveSceneToFile(std::string pathTo);

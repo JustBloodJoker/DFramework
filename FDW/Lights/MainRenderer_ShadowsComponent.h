@@ -2,6 +2,7 @@
 
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
+#include <Lights/ShadowsStructures.h>
 #include <D3DFramework/GraphicUtilites/FResource.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
@@ -22,6 +23,8 @@ public:
 	virtual FD3DW::FResource* GetResultResource()=0;
 
 	virtual void BeforeRender(ID3D12GraphicsCommandList* list);
+
+	virtual ShadowType Type();
 public:
 	BEGIN_FIELD_REGISTRATION(MainRenderer_ShadowsComponent, MainRendererComponent)
 	END_FIELD_REGISTRATION();

@@ -42,6 +42,7 @@ private:
 	void DrawRenderableObjectsTab();
 	void DrawCameraTab();
 	void DrawLightsTab();
+	void DrawShadowsTab();
 	void DrawEditorUtilitiesTab();
 
 	void SceneBrowser();

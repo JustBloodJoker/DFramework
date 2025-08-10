@@ -7,15 +7,6 @@
 class MainRenderer;
 
 
-struct RTSoftShadowBuffer {
-	dx::XMMATRIX PrevViewProj;
-	dx::XMMATRIX CurrViewProj;
-	float TemporalFeedbackMin = 0.02f;
-	float TemporalFeedbackMax = 0.2f;
-	float ReprojDistThreshold = 0.02f;
-	float NormalThreshold = 0.9f;
-};
-
 class MainRenderer_RTSoftShadowsComponent : public MainRenderer_ShadowsComponent {
 public:
 	MainRenderer_RTSoftShadowsComponent() = default;
@@ -32,13 +23,19 @@ public:
 	void SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device);
 	
 	virtual FD3DW::FResource* GetResultResource() override;
+
+	RTSoftShadowConfig GetConfig();
+	void SetConfig(RTSoftShadowConfig config);
+
+	virtual ShadowType Type() override;
 public:
+	
 	BEGIN_FIELD_REGISTRATION(MainRenderer_RTSoftShadowsComponent, MainRendererComponent)
+		REGISTER_FIELD(m_xConfig);
 	END_FIELD_REGISTRATION();
 
-
 private:
-	RTSoftShadowBuffer m_xBufferData;
+	RTSoftShadowConfig m_xConfig;
 	std::unique_ptr<FD3DW::UploadBuffer<RTSoftShadowBuffer>> m_pFrameBuffer;
 	std::unique_ptr<FD3DW::RTShaderBindingTable> m_pSoftShadowsSBT;
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pSoftShadowsUAVPacker;
