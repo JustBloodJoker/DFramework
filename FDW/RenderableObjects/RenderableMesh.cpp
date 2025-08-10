@@ -157,6 +157,13 @@ bool RenderableMesh::IsNeedUpdateTLAS() {
 	return false;
 }
 
+void RenderableMesh::AfterTLASUpdate()
+{
+	for (const auto& element : m_vRenderableElements) {
+		element->AfterTLASUpdate();
+	}
+}
+
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {
 	if (pass==RenderPass::Forward) return; //forward not impl
 	

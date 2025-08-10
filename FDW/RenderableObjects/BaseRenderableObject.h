@@ -61,7 +61,7 @@ public:
     bool IsCanRenderInPass(RenderPass pass);
 
     virtual bool IsNeedUpdateTLAS();
-    void AfterTLASUpdate();
+    virtual void AfterTLASUpdate();
 
     virtual std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> GetBLASInstances();
 

@@ -79,6 +79,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
                     desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
             }
@@ -94,6 +95,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = secondPassDSVDesc;
                     desc.RasterizerState = rasterizerDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
             }
@@ -109,6 +111,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.RasterizerState = skyboxRasterizerDesc;
                     desc.DepthStencilState = skyboxDepthDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
             }
@@ -124,6 +127,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
                     desc.RasterizerState = skyboxRasterizerDesc;
                     desc.DepthStencilState = dsvPostProcessDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
             }

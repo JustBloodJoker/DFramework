@@ -32,6 +32,7 @@ public:
 
 
 	virtual bool IsNeedUpdateTLAS() override;
+	virtual void AfterTLASUpdate() override;
 
 public:
 	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject)

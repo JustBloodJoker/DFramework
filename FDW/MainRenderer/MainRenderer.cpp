@@ -69,13 +69,6 @@ void MainRenderer::UserInit()
 
 	TryInitShadowComponent();
 
-	if (m_pShadowsComponent) {
-		m_pShadowsComponent->BindResultResource(device, m_pGBuffersSRVPack.get(), SHADOW_FACTOR_LOCATION_IN_HEAP);
-	}
-	else {
-		m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
-	}
-
 	ExecuteMainQueue();
 	m_pDXRCommandQueue->ExecuteQueue(true);
 	FD3DW::FResource::ReleaseUploadBuffers();
@@ -138,6 +131,7 @@ void MainRenderer::UserLoop()
 		if (m_pShadowsComponent) {
 			ExecuteMainQueue();
 			m_pCommandList->ResetList();
+			m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			m_pShadowsComponent->AfterGBufferPass();
 		}
 	}
@@ -452,8 +446,17 @@ void MainRenderer::TryInitShadowComponent() {
 }
 
 void MainRenderer::CustomAfterInitShadowComponent(MainRenderer_ShadowsComponent* shadow) {
+	auto device = GetDevice();
+	if (shadow) {
+		shadow->BindResultResource(device, m_pGBuffersSRVPack.get(), SHADOW_FACTOR_LOCATION_IN_HEAP);
+
+	}
+	else {
+		m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	}
+
 	if (auto rtShadow = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(shadow)) {
-		rtShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), GetDevice());
+		rtShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
 	}
 }
 
