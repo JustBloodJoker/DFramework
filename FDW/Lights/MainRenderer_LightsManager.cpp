@@ -74,6 +74,7 @@ void MainRenderer_LightsManager::BindLightConstantBuffer(UINT cbSlot, UINT rootS
 void MainRenderer_LightsManager::UpdateLightsConstantBuffer() {
 	m_xLightBuffer.LightCount = int(m_vLights.size());
 	m_xLightBuffer.CameraPos = m_pOwner->GetCurrentCameraPosition();
+	m_xLightBuffer.IsShadowImpl = m_pOwner->CurrentShadowType() != ShadowType::None;
 
 	m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
 }

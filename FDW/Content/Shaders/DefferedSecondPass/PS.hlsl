@@ -173,7 +173,8 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     color = color / (color + float3(1.0, 1.0, 1.0));
 
-    color *= shadowFactor;
+    float shadowFactorRes = LHelper.IsShadowImpl==1 ? shadowFactor : 1.0;
+    color *= shadowFactorRes;
 
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);

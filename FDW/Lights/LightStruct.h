@@ -53,5 +53,7 @@ struct LightStruct {
 struct LightBuffer {
     int LightCount;
     dx::XMFLOAT3 CameraPos;
+    int IsShadowImpl;
+    dx::XMFLOAT3 margin;
 };
 

@@ -69,6 +69,8 @@ struct Materials
 struct LightsHelper{
     int LightCount;
     float3 CameraPos;
+    int IsShadowImpl;
+    float3 margin;
 };
 
 

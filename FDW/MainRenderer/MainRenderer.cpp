@@ -70,7 +70,7 @@ void MainRenderer::UserInit()
 	TryInitShadowComponent();
 
 	ExecuteMainQueue();
-	m_pDXRCommandQueue->ExecuteQueue(true);
+	if(m_pDXRCommandQueue) m_pDXRCommandQueue->ExecuteQueue(true);
 	FD3DW::FResource::ReleaseUploadBuffers();
 }
 
@@ -79,7 +79,7 @@ void MainRenderer::UserLoop()
 	m_pCommandList->ResetList();
 	if (m_pDXRCommandList) m_pDXRCommandList->ResetList();
 
-	m_pLightsManager->BeforeRender(m_pDXRPCML);
+	m_pLightsManager->BeforeRender(m_pPCML);
 	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
 	if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(m_pPCML);
 
@@ -385,7 +385,7 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		this->DestroyComponent(m_pCameraComponent);
 		this->DestroyComponent(m_pLightsManager);
 		this->DestroyComponent(m_pRenderableObjectsManager);
-		this->DestroyComponent(m_pShadowsComponent);
+		if(m_pShadowsComponent) this->DestroyComponent(m_pShadowsComponent);
 
 		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
 		m_pCameraComponent->SetAfterConstruction(this);
@@ -393,11 +393,18 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
 		m_pRenderableObjectsManager->SetAfterConstruction(this);
 
-		if (!m_pShadowsComponent->IsCanBeEnabled(this)) {
+		if (!m_pShadowsComponent) 
+		{
+			this->TryInitShadowComponent();
+
+		} 
+		else if (!m_pShadowsComponent->IsCanBeEnabled(this))
+		{
 			this->DestroyComponent(m_pShadowsComponent);
 			this->TryInitShadowComponent();
 		}
-		else {
+		else 
+		{
 			m_pShadowsComponent->SetAfterConstruction(this);
 			CustomAfterInitShadowComponent(m_pShadowsComponent.get());
 		}
