@@ -145,6 +145,9 @@ std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> Render
 	std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> ret;
 	for (const auto& element : m_vRenderableElements) {
 		auto getInstances = element->GetBLASInstances();
+		for (auto& instance : getInstances) {
+			instance.second *= m_xWorldMatrix;
+		}
 		ret.insert(ret.end(), getInstances.begin(), getInstances.end());
 	}
 	return ret;
@@ -154,7 +157,7 @@ bool RenderableMesh::IsNeedUpdateTLAS() {
 	for (const auto& element : m_vRenderableElements) {
 		if (element->IsNeedUpdateTLAS()) return true;
 	}
-	return false;
+	return BaseRenderableObject::IsNeedUpdateTLAS();
 }
 
 void RenderableMesh::AfterTLASUpdate()
@@ -162,6 +165,7 @@ void RenderableMesh::AfterTLASUpdate()
 	for (const auto& element : m_vRenderableElements) {
 		element->AfterTLASUpdate();
 	}
+	BaseRenderableObject::AfterTLASUpdate();
 }
 
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {

@@ -4,6 +4,6 @@
 #include <D3DFramework/GraphicUtilites/Materials.h>
 
 struct MeshMatricesStructure : FD3DW::MatricesConstantBufferStructureFrameWork {
-	bool IsActiveAnimation = false;
+	int IsActiveAnimation = false;
 	dx::XMFLOAT3 CameraPosition;
 };

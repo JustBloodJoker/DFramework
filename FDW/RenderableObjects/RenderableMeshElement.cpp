@@ -29,10 +29,9 @@ void RenderableMeshElement::Init(ID3D12Device* device, ID3D12GraphicsCommandList
 
 void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 	MeshMatricesStructure cmb;
-	m_xWorldMatrix *= data.AdditionalWorld;
 	cmb.Projection = dx::XMMatrixTranspose(data.Projection);
 	cmb.View = dx::XMMatrixTranspose(data.View);
-	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
+	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
 	cmb.IsActiveAnimation = m_bIsAnimationPlaying;
 	cmb.CameraPosition = data.CameraPosition;
 

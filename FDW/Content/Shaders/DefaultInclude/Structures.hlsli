@@ -37,7 +37,7 @@ struct MeshMatrices
     matrix WorldMatrix;
     matrix ViewMatrix;
     matrix ProjectionMatrix;
-    bool IsActiveAnimations;
+    int IsActiveAnimations;
     float3 CameraPosition;
 };
 
