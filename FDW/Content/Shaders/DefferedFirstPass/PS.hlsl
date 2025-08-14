@@ -5,10 +5,8 @@
 #include "ParallaxOcclusionMapping.hlsli"
 #include "NormalMapping.hlsli"
 
-StructuredBuffer<MeshMatrices> objectsMatrices : register(t10);
-StructuredBuffer<Materials> objectsMaterials : register(t11);
-
-ConstantBuffer<MeshBufferIndices> objIndices : register(b0);
+ConstantBuffer<MeshMatrices> objMatrices : register(b0);
+ConstantBuffer<Materials> objMaterials : register(b1);
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
@@ -35,10 +33,7 @@ struct PIXEL_OUTPUT
 // TODO:    TBN calcs remove to vertex shader
 PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 {
-    Materials objMaterials = objectsMaterials[objIndices.IndexInMaterialsBuffer];
-    MeshMatrices objMatrices = objectsMatrices[objIndices.IndexInMatricesBuffer];
-
-    const int LoadedTexture[TEXTURE_LOADING_FLAGS_COUNT] = objMaterials.LoadedTexture;
+    const int LoadedTexture[12] = (int[12])objMaterials.LoadedTexture;
     float3 normal = normalize(vsOut.normal);
     float3 tangent = normalize(vsOut.tangent);
     float3 bitangent = normalize(vsOut.bitangent);

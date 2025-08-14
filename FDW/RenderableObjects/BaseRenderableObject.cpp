@@ -3,13 +3,20 @@
 
 std::unique_ptr<FD3DW::StructuredBuffer> s_sEmptyStructuredBuffer;
 
+void BaseRenderableObject::CreateEmptyStructuredBuffer(ID3D12Device* device) {
+    s_sEmptyStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<uint8_t>(device, 1, false);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS BaseRenderableObject::GetEmptyStructuredBufferGPUVirtualAddress()
+{
+    return s_sEmptyStructuredBuffer->GetResource()->GetGPUVirtualAddress();
+}
+
 BaseRenderableObject::BaseRenderableObject(const std::string& name)
     : m_sName(name)
 {
     UpdateWorldMatrix();
 }
-
-void BaseRenderableObject::BeforeDelete() { }
 
 void BaseRenderableObject::SetPosition(const dx::XMFLOAT3& pos) {
     m_xPosition = pos;

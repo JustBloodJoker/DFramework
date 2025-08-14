@@ -5,15 +5,12 @@
 
 RenderableSimpleObject::RenderableSimpleObject(std::string name) :BaseRenderableObject(name) { }
 
-void RenderableSimpleObject::BeforeDelete() {
-	RenderableObjectsMatricesBuffer::GetInstance()->RemoveDataFromIndex(m_uMatricesIdxInBuffer);
-	RenderableObjectsMaterialsBuffer::GetInstance()->RemoveDataFromIndex(m_uMaterialIdxInBuffer);
-}
-
 void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pObject = CreateSimpleObject(device, list);
 
-	m_pBufferIndicesBuffer = FD3DW::UploadBuffer<MeshBufferIndices>::CreateConstantBuffer(device, 1);
+	m_pMatricesBuffer = FD3DW::UploadBuffer<MeshMatricesStructure>::CreateConstantBuffer(device, 1);
+
+	m_pMaterialBuffer = FD3DW::UploadBuffer<MeshMaterialStructure>::CreateConstantBuffer(device, 1);
 
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
 
@@ -46,19 +43,6 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 		}
 	}
 
-
-	m_uMatricesIdxInBuffer = RenderableObjectsMatricesBuffer::GetInstance()->GenerateIndexForBuffer();
-	MeshMatricesStructure cmb;
-	RenderableObjectsMatricesBuffer::GetInstance()->UploadDataToIndex(m_uMatricesIdxInBuffer, cmb);
-
-	m_uMaterialIdxInBuffer = RenderableObjectsMaterialsBuffer::GetInstance()->GenerateIndexForBuffer();
-	RenderableObjectsMaterialsBuffer::GetInstance()->UploadDataToIndex(m_uMaterialIdxInBuffer, m_xMaterialCBufferData);
-
-	MeshBufferIndices indicesStruct;
-	indicesStruct.MaterialIndex = m_uMaterialIdxInBuffer;
-	indicesStruct.MatricesIndex = m_uMatricesIdxInBuffer;
-	m_pBufferIndicesBuffer->CpyData(0, indicesStruct);
-
 	UpdateWorldMatrix();
 	NeedUpdateMaterials();
 }
@@ -68,25 +52,30 @@ void RenderableSimpleObject::BeforeRender(const BeforeRenderInputData& data) {
 	cmb.Projection = dx::XMMatrixTranspose(data.Projection);
 	cmb.View = dx::XMMatrixTranspose(data.View);
 	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
-	cmb.StartIndexInBoneBuffer = -1;
+	cmb.IsActiveAnimation = false;
 	cmb.CameraPosition = data.CameraPosition;
 
-	RenderableObjectsMatricesBuffer::GetInstance()->UploadDataToIndex(m_uMatricesIdxInBuffer, cmb);
+	m_pMatricesBuffer->CpyData(0, cmb);
 
 	BeforeRenderMaterialsUpdate();
 }
 
 void RenderableSimpleObject::DeferredRender(ID3D12GraphicsCommandList* list) {
+	list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, GetEmptyStructuredBufferGPUVirtualAddress());
+
 	list->IASetVertexBuffers(0, 1, m_pObject->GetVertexBufferView());
 	list->IASetIndexBuffer(m_pObject->GetIndexBufferView());
+
+	list->SetGraphicsRootConstantBufferView(CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG, m_pMatricesBuffer->GetGPULocation(0));
+
+	list->SetGraphicsRootConstantBufferView(CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG, m_pMaterialBuffer->GetGPULocation(0));
 
 	ID3D12DescriptorHeap* heaps[] = { m_pSRVPack->GetResult()->GetDescriptorPtr() };
 	list->SetDescriptorHeaps(_countof(heaps), heaps);
 	list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, m_pSRVPack->GetResult()->GetGPUDescriptorHandle(0));
-	list->SetGraphicsRootConstantBufferView(INDICES_CONSTANT_BUFFER_IN_ROOT_SIG, m_pBufferIndicesBuffer->GetGPULocation(0));
 
 	auto params = m_pObject->GetObjectParameters(0);
-	list->DrawIndexedInstanced(params.IndicesCount, 1u, params.IndicesOffset, params.VerticesOffset, 0u);
+	list->DrawIndexedInstanced((UINT)params.IndicesCount, 1u, (UINT)params.IndicesOffset, (INT)params.VerticesOffset, 0u);
 }
 
 void RenderableSimpleObject::ForwardRender(ID3D12GraphicsCommandList* list) {
@@ -134,7 +123,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE RenderableSimpleObject::GetTextureSRV(FD3DW::Texture
 
 void RenderableSimpleObject::BeforeRenderMaterialsUpdate() {
 	if (m_bIsMaterialDataChanged) {
-		RenderableObjectsMaterialsBuffer::GetInstance()->UploadDataToIndex(m_uMaterialIdxInBuffer, m_xMaterialCBufferData);
+		m_pMaterialBuffer->CpyData(0, m_xMaterialCBufferData);
 		m_bIsMaterialDataChanged = false;
 	}
 

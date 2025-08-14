@@ -206,11 +206,5 @@
     <ClInclude Include="Lights\ShadowsStructures.h">
       <Filter>Lights</Filter>
     </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableObjectsStructuredBufferManager.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\MeshIdxStructure.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

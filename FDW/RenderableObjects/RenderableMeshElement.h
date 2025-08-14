@@ -5,7 +5,6 @@
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <RenderableObjects/MeshMaterialStructure.h>
 #include <RenderableObjects/MeshMatricesStructure.h>
-#include <RenderableObjects/MeshIdxStructure.h>
 
 struct RenderableMeshElementData {
 	FD3DW::SRV_UAVPacker* SRVPack = nullptr;
@@ -33,15 +32,13 @@ public:
 public:
 	void SetRenderableMeshElementData(const RenderableMeshElementData& data);
 
-	virtual void BeforeDelete() override;
-
 	virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
 
-	void SetBonesIndex(int index);
+	void SetAnimationPlaying(bool isP);
 
 	size_t ElementID();
 	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
@@ -74,11 +71,9 @@ public:
 	END_FIELD_REGISTRATION()
 
 private:
-	std::unique_ptr<FD3DW::UploadBuffer<MeshBufferIndices>> m_pBufferIndicesBuffer;
-	
-private:
-	UINT m_uMatricesIdxInBuffer = 0;
-	UINT m_uMaterialIdxInBuffer = 0;
+
+	std::unique_ptr<FD3DW::UploadBuffer<MeshMatricesStructure>> m_pMatricesBuffer;
+	std::unique_ptr<FD3DW::UploadBuffer<MeshMaterialStructure>> m_pMaterialBuffer;
 
 private:
 	void BeforeRenderCBMaterial();
@@ -90,6 +85,6 @@ private:
 	///////////
 
 private:
-	int m_iStartIndexInBoneBuffer = -1;
+	bool m_bIsAnimationPlaying = false;
 
 };

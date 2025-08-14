@@ -67,13 +67,11 @@
     <ClInclude Include="RenderableObjects\BaseRenderableObject.h" />
     <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h" />
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
-    <ClInclude Include="RenderableObjects\MeshIdxStructure.h" />
     <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
     <ClInclude Include="RenderableObjects\MeshMatricesStructure.h" />
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />
-    <ClInclude Include="RenderableObjects\RenderableObjectsStructuredBufferManager.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleCone.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleCube.h" />
     <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h" />

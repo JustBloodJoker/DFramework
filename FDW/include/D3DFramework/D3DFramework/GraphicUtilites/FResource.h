@@ -60,7 +60,6 @@ namespace FD3DW
 		ID3D12Resource* GetResource() const;
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
-		void UploadDataRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT offsetInBytes, UINT sizeInBytes,D3D12_RESOURCE_STATES finalState);
 		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,bool bCopyAllMips=false);
 
 		std::vector<uint8_t> GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList);

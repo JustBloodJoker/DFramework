@@ -15,41 +15,21 @@ struct ANIMVERTEX_INPUT
     float Weight[NUM_BONES_PER_VEREX] : WEIGHT_BONES;
 };
 
-StructuredBuffer<MeshMatrices> objectsMatrices : register(t10);
-ConstantBuffer<MeshBufferIndices> objIndices : register(b0);
+ConstantBuffer<MeshMatrices> objMatrices : register(b0);
 StructuredBuffer<matrix> boneMatrices : register(t9);
 
 VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 {
-    MeshMatrices objMatrices = objectsMatrices[objIndices.IndexInMatricesBuffer];
-
     VERTEX_OUTPUT vsOut;
     
+    matrix ResultWorldMatrix = objMatrices.WorldMatrix;
     
-    matrix skinMatrix = 0.0f;
-    if (objMatrices.StartIndexInBoneBuffer >= 0) 
-    {
-        for (int i = 0; i < NUM_BONES_PER_VEREX; i++)
+    if(objMatrices.IsActiveAnimations) {
+        for(int i = 0; i < NUM_BONES_PER_VEREX; i++)
         {
-            uint boneIndex = vsIn.IDs[i];
-            float weight = vsIn.Weight[i];
-
-            if (weight > 0.0f) 
-            {
-                uint bufferIndex = boneIndex + objMatrices.StartIndexInBoneBuffer;
-                skinMatrix += boneMatrices[bufferIndex] * weight;
-            }
+            ResultWorldMatrix += boneMatrices[vsIn.IDs[i]] * vsIn.Weight[i];
         }
     }
-    else
-    {
-        skinMatrix = matrix(1,0,0,0,
-                            0,1,0,0,
-                            0,0,1,0,
-                            0,0,0,1);
-    }
-
-    matrix ResultWorldMatrix = mul(skinMatrix, objMatrices.WorldMatrix);
 
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
     vsOut.worldPos = vsOut.pos.xyz;
