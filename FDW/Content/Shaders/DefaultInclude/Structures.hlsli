@@ -37,8 +37,16 @@ struct MeshMatrices
     matrix WorldMatrix;
     matrix ViewMatrix;
     matrix ProjectionMatrix;
-    bool IsActiveAnimations;
+    int StartIndexInBoneBuffer;
     float3 CameraPosition;
+};
+
+struct MeshBufferIndices
+{
+    int IndexInMatricesBuffer;
+    int IndexInMaterialsBuffer;
+
+    float2 padding;
 };
 
 #define TEXTURE_BASE_LOAD_FLAG_LOCATION             0
@@ -53,6 +61,8 @@ struct MeshMatrices
 
 #define TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION   9
 
+#define TEXTURE_LOADING_FLAGS_COUNT 10
+
 struct Materials
 {
     float4 diffuse;
@@ -63,7 +73,7 @@ struct Materials
     float metalness;
     float specularPower;
     float heightScale;
-    int4 LoadedTexture[3];
+    int LoadedTexture[TEXTURE_LOADING_FLAGS_COUNT];
 };
 
 struct LightsHelper{

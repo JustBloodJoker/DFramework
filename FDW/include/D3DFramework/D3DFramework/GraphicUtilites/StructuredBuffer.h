@@ -23,7 +23,13 @@ public:
 
 	void ShrinkToFit(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
 
+	void UploadRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT elementIndex, UINT numElements,D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+
+	UINT GetCapacity() const;
+	UINT GetSize() const;
+
 private:
+	using FResource::UploadDataRegion;
 	using FResource::UploadData;
 
 private:

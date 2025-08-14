@@ -44,8 +44,40 @@ void StructuredBuffer::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandLi
 
 }
 
+UINT StructuredBuffer::GetCapacity() const {
+	return m_uCapacity;
+}
+
+UINT StructuredBuffer::GetSize() const {
+	return m_uSize;
+}
+
 void StructuredBuffer::ShrinkToFit(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList) {
 	if (m_uSize < m_uCapacity) RecreateBuffer(pDevice, pCommandList, m_uSize, true);
+}
+
+void StructuredBuffer::UploadRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT elementIndex, UINT numElements, D3D12_RESOURCE_STATES state) {
+	UINT requiredCapacity = elementIndex + numElements;
+
+	if (requiredCapacity > m_uCapacity)
+	{
+		if (m_bIsDynamicScaled)
+		{
+			UINT newCapacity = std::max(static_cast<UINT>(m_uCapacity * 1.5f), requiredCapacity);
+			RecreateBuffer(pDevice, pCommandList, newCapacity, true);
+		}
+		else
+		{
+			SAFE_ASSERT(false, "StructuredBuffer overflow in UploadRegion. Enable dynamic scaling or check index.");
+		}
+	}
+
+	m_uSize = std::max(m_uSize, requiredCapacity);
+
+	const UINT offsetInBytes = elementIndex * m_iElemSizeInBytes;
+	const UINT sizeInBytes = numElements * m_iElemSizeInBytes;
+
+	FResource::UploadDataRegion(pDevice, pCommandList, pData, offsetInBytes, sizeInBytes, state);
 }
 
 void StructuredBuffer::RecreateBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT newCapacity, bool preserveData) {

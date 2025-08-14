@@ -31,7 +31,6 @@ struct MeshMaterialStructure : FD3DW::MaterialFrameWork {
 		REGISTER_FIELD(Metalness)
 		REGISTER_FIELD(SpecularPower)
 		REGISTER_FIELD(HeightScale)
-} return s_sFields; } inline static StaticSerializerRegister<Self> _reg_serializer_Self{ [](IArchive& ar, void* ptr) { SerializeObject(ar, ptr, Self::GetFieldList()); } };
-
+	END_FIELD_REGISTRATION();
 };
 

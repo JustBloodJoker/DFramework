@@ -51,10 +51,22 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandLi
     for (auto& obj : m_vObjects) {
         obj->BeforeRender(data);
     }
+
+    RenderableObjectsMatricesBuffer::GetInstance()->BeforeRender(cmdList, m_pOwner->GetDevice());
+    RenderableObjectsMaterialsBuffer::GetInstance()->BeforeRender(cmdList, m_pOwner->GetDevice());
+    RenderableObjectsBoneMatricesBuffer::GetInstance()->BeforeRender(cmdList, m_pOwner->GetDevice());
 }
 
 void MainRenderer_RenderableObjectsManager::DeferredRender(ID3D12GraphicsCommandList* list) {
     PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
+
+    RenderableObjectsMatricesBuffer::GetInstance()->SetBufferState(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    RenderableObjectsMaterialsBuffer::GetInstance()->SetBufferState(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    RenderableObjectsBoneMatricesBuffer::GetInstance()->SetBufferState(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    list->SetGraphicsRootShaderResourceView(CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG, RenderableObjectsMatricesBuffer::GetInstance()->GetGPUBufferAddress());
+    list->SetGraphicsRootShaderResourceView(CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG, RenderableObjectsMaterialsBuffer::GetInstance()->GetGPUBufferAddress());
+    list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, RenderableObjectsBoneMatricesBuffer::GetInstance()->GetGPUBufferAddress());
+
     for (auto& obj : m_vObjects) {
         if(obj->IsCanRenderInPass(RenderPass::Deferred)) obj->DeferredRender(list);
     }
@@ -115,6 +127,10 @@ bool MainRenderer_RenderableObjectsManager::IsNeedUpdateTLAS() {
 }
 
 void MainRenderer_RenderableObjectsManager::AfterConstruction() {
+    RenderableObjectsMaterialsBuffer::GetInstance()->Init(RENDERABLE_OBJECTS_MATERIALS_BUFFER_PRECACHE_SIZE, m_pOwner->GetDevice());
+    RenderableObjectsMatricesBuffer::GetInstance()->Init(RENDERABLE_OBJECTS_MATRICES_BUFFER_PRECACHE_SIZE, m_pOwner->GetDevice());
+    RenderableObjectsBoneMatricesBuffer::GetInstance()->Init(RENDERABLE_OBJECTS_BONE_MATRICES_BUFFER_PRECACHE_SIZE, m_pOwner->GetDevice());
+
     auto cmList = m_pOwner->GetBindedCommandList();
     auto dxrList = m_pOwner->GetDXRCommandList();
     for (const auto& obj : m_vObjects) {
@@ -158,6 +174,7 @@ void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject*
         });
 
     if (it != m_vObjects.end()) {
+        (*it)->BeforeDelete();
         m_vObjects.erase(it, m_vObjects.end());
     }
 

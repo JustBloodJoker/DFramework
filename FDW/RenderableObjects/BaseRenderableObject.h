@@ -6,12 +6,12 @@
 #include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
 #include <D3DFramework/Objects/RTObjectHelper.h>
 
-enum RenderPass
+enum RenderPass : uint32_t
 {
     None = 0x0,
     Deferred = 0x1,
     Forward = 0x2,
-    DeferredAndForward = 0x3,
+    DeferredAndForward = Deferred | Forward
 };
 
 struct BeforeRenderInputData {
@@ -28,13 +28,11 @@ struct BeforeRenderInputData {
 class BaseRenderableObject {
 
 public:
-    static void CreateEmptyStructuredBuffer(ID3D12Device* device);
-    D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
-
-public:
     BaseRenderableObject()=default;
     BaseRenderableObject(const std::string& name);
     virtual ~BaseRenderableObject() = default;
+
+    virtual void BeforeDelete();
 
     virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) = 0;
     virtual void BeforeRender(const BeforeRenderInputData& data) = 0;

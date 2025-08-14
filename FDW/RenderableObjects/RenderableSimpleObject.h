@@ -6,6 +6,7 @@
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <RenderableObjects/MeshMaterialStructure.h>
 #include <RenderableObjects/MeshMatricesStructure.h>
+#include <RenderableObjects/MeshIdxStructure.h>
 
 
 
@@ -19,6 +20,8 @@ public:
 	virtual ~RenderableSimpleObject() = default;
 
 public:
+
+	virtual void BeforeDelete() override;
 
 	virtual void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
@@ -83,8 +86,10 @@ private:
 	
 	std::unique_ptr<FD3DW::Material> m_pMaterial = nullptr;
 
-	std::unique_ptr<FD3DW::UploadBuffer<MeshMatricesStructure>> m_pMatricesBuffer;
-	std::unique_ptr<FD3DW::UploadBuffer<MeshMaterialStructure>> m_pMaterialBuffer;
+	std::unique_ptr<FD3DW::UploadBuffer<MeshBufferIndices>> m_pBufferIndicesBuffer;
+
+	UINT m_uMatricesIdxInBuffer = 0;
+	UINT m_uMaterialIdxInBuffer = 0;
 
 private:
 	bool m_bIsInitedMaterialDesc = false;

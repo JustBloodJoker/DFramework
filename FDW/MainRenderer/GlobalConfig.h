@@ -4,6 +4,9 @@
 #include <D3DFramework/GraphicUtilites/GraphicsPipelineObject.h>
 #include <D3DFramework/GraphicUtilites/ComputePipelineObject.h>
 #include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
+#include <RenderableObjects/RenderableObjectsStructuredBufferManager.h>
+#include <RenderableObjects/MeshMaterialStructure.h>
+#include <RenderableObjects/MeshMatricesStructure.h>
 
 //////////////////////////////////////////////
 //				GBUFFERS DATA
@@ -19,7 +22,16 @@ UINT GetGBuffersNum();
 
 //////////////////////////////////////////////
 
+//////////////////////////////////////////////
+//////		RENDERABLEOBJECTS GLOBALS
 
+using RenderableObjectsMatricesBuffer = RenderableObjectsStructuredBufferManager<MeshMatricesStructure>;
+using RenderableObjectsMaterialsBuffer = RenderableObjectsStructuredBufferManager<MeshMaterialStructure>;
+using RenderableObjectsBoneMatricesBuffer = RenderableObjectsStructuredBufferManager<dx::XMMATRIX>;
+
+#define RENDERABLE_OBJECTS_MATRICES_BUFFER_PRECACHE_SIZE  100
+#define RENDERABLE_OBJECTS_MATERIALS_BUFFER_PRECACHE_SIZE 100
+#define RENDERABLE_OBJECTS_BONE_MATRICES_BUFFER_PRECACHE_SIZE 1000
 
 //////////////////////////////////////////////
 //////		PSO MANAGER GLOBALS
@@ -59,6 +71,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG			1
 #define TEXTURE_START_POSITION_IN_ROOT_SIG						2
 #define ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG					3
+#define INDICES_CONSTANT_BUFFER_IN_ROOT_SIG						4
 ////////////////////////////////////////////
 
 ////////////////////////////////////////////

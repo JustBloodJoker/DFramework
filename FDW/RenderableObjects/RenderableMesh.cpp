@@ -4,6 +4,13 @@ RenderableMesh::RenderableMesh(std::string path) : BaseRenderableObject(path) {
 	m_sPath = path;
 }
 
+
+void RenderableMesh::BeforeDelete() {
+	for (const auto& obj : m_vRenderableElements) {
+		obj->BeforeDelete();
+	}
+}
+
 void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
 
@@ -34,7 +41,10 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 	}
 	
 	if (m_pScene->GetBonesCount()) {
-		m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), false);
+		m_uStartIndexInBoneMatrices = RenderableObjectsBoneMatricesBuffer::GetInstance()->GenerateIndexForBuffer(m_pScene->GetBonesCount());
+		for (auto i = 0; i < m_pScene->GetBonesCount();++i) {
+			RenderableObjectsBoneMatricesBuffer::GetInstance()->UploadDataToIndex(m_uStartIndexInBoneMatrices + i, {});
+		}
 	}
 	
 	for (auto ind = 0; ind < m_pScene->GetObjectBuffersCount(); ind++)
@@ -81,7 +91,7 @@ void RenderableMesh::ForwardRender(ID3D12GraphicsCommandList* list) {
 }
 
 RenderPass RenderableMesh::GetRenderPass() const {
-	return RenderPass::DeferredAndForward;
+	return RenderPass::Deferred;
 }
 
 std::vector<std::string> RenderableMesh::GetAnimations() {
@@ -95,7 +105,7 @@ void RenderableMesh::PlayAnimation(std::string animName) {
 	m_fAnimationTime = 0.f;
 
 	for (auto& elem : m_vRenderableElements) {
-		elem->SetAnimationPlaying(m_pStructureBufferBones!=nullptr && true);
+		elem->SetBonesIndex(m_uStartIndexInBoneMatrices);
 	}
 }
 
@@ -106,7 +116,7 @@ void RenderableMesh::StopAnimation() {
 	m_bNeedResetBonesBuffer = true;
 
 	for (auto& elem : m_vRenderableElements) {
-		elem->SetAnimationPlaying(false);
+		elem->SetBonesIndex(-1);
 	}
 }
 
@@ -145,6 +155,9 @@ std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> Render
 	std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> ret;
 	for (const auto& element : m_vRenderableElements) {
 		auto getInstances = element->GetBLASInstances();
+		for (auto& inst : getInstances) {
+			inst.second *= m_xWorldMatrix;
+		}
 		ret.insert(ret.end(), getInstances.begin(), getInstances.end());
 	}
 	return ret;
@@ -154,7 +167,7 @@ bool RenderableMesh::IsNeedUpdateTLAS() {
 	for (const auto& element : m_vRenderableElements) {
 		if (element->IsNeedUpdateTLAS()) return true;
 	}
-	return false;
+	return BaseRenderableObject::IsNeedUpdateTLAS();
 }
 
 void RenderableMesh::AfterTLASUpdate()
@@ -162,14 +175,12 @@ void RenderableMesh::AfterTLASUpdate()
 	for (const auto& element : m_vRenderableElements) {
 		element->AfterTLASUpdate();
 	}
+	BaseRenderableObject::AfterTLASUpdate();
 }
 
 void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list) {
 	if (pass==RenderPass::Forward) return; //forward not impl
 	
-	auto gpuStructureBufferBonesAdress = m_pStructureBufferBones ? m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
-	list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, gpuStructureBufferBonesAdress);
-
 	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
 	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());
 
@@ -181,7 +192,7 @@ void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandL
 }
 
 void RenderableMesh::AnimationTickUpdate(const BeforeRenderInputData& data) {
-	if (!m_pStructureBufferBones || m_bNeedFreezeBonesBuffer) return;
+	if (m_uStartIndexInBoneMatrices==-1 || m_bNeedFreezeBonesBuffer) return;
 
 	std::vector<dx::XMMATRIX> dataVec;
 	if (!m_sCurrentAnimation.empty()) {
@@ -194,7 +205,7 @@ void RenderableMesh::AnimationTickUpdate(const BeforeRenderInputData& data) {
 	}
 
 	if (!dataVec.empty()) {
-		m_pStructureBufferBones->UploadData(data.Device, data.CommandList, dataVec.data(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		RenderableObjectsBoneMatricesBuffer::GetInstance()->UploadDataRange(m_uStartIndexInBoneMatrices, dataVec);
 	}
 
 }

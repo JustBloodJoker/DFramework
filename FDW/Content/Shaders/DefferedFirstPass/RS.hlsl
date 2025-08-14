@@ -1,6 +1,7 @@
 #define RS "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT)," \
-           "CBV(b0)," \
-           "CBV(b1)," \
+           "SRV(t10)," \
+           "SRV(t11)," \
            "DescriptorTable(SRV(t0, numDescriptors = 9))," \
            "StaticSampler(s0)," \
-           "SRV(t9)"
+           "SRV(t9),"  \
+           "CBV(b0)"

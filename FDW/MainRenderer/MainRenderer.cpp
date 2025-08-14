@@ -83,6 +83,7 @@ void MainRenderer::UserLoop()
 	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
 	if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(m_pPCML);
 
+
 	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	
 	///////////////////////
@@ -113,7 +114,7 @@ void MainRenderer::UserLoop()
 			m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
 		}
 		m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
+		
 		m_pRenderableObjectsManager->DeferredRender(m_pPCML);
 
 		for (auto& gbuffer : m_pGBuffers) {
@@ -426,12 +427,10 @@ void MainRenderer::InitMainRendererComponents()
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
-	BaseRenderableObject::CreateEmptyStructuredBuffer(device);
 
 	m_pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_pPCML = m_pCommandList->GetPtrCommandList();
 	BindMainCommandList(m_pCommandList.get());
-
 }
 
 void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
