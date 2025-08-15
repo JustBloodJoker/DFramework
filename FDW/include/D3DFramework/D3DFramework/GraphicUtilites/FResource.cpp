@@ -275,6 +275,27 @@ namespace FD3DW
         ResourceBarrierChange(pCommandList, 1, state);
     }
 
+    void FResource::UploadDataRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT offsetInBytes, UINT sizeInBytes, D3D12_RESOURCE_STATES finalState)
+    {
+        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize() != sizeInBytes)
+        {
+            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(sizeInBytes), false);
+        }
+
+        void* mappedData = nullptr;
+        CD3DX12_RANGE readRange(0, 0);
+        m_pUploadBuffer->GetResource()->Map(0, &readRange, &mappedData);
+        memcpy(mappedData, pData, sizeInBytes);
+        m_pUploadBuffer->GetResource()->Unmap(0, nullptr);
+
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_COPY_DEST);
+
+        pCommandList->CopyBufferRegion(m_pResource.Get(), offsetInBytes, m_pUploadBuffer->GetResource(), 0, sizeInBytes);
+
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, finalState);
+    }
+
+
     std::vector<uint8_t> FResource::GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList) {
         std::vector<uint8_t> fullData;
 

@@ -16,7 +16,7 @@ struct ANIMVERTEX_INPUT
 };
 
 ConstantBuffer<MeshMatrices> objMatrices : register(b0);
-StructuredBuffer<matrix> boneMatrices : register(t9);
+StructuredBuffer<matrix> boneMatrices : register(t9, space1);
 
 VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 {

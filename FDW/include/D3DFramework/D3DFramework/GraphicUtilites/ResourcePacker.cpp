@@ -14,6 +14,15 @@ namespace FD3DW
 		InitBufferDescriptorHeap(descriptorSize, descriptorsCount, NodeMask, type, flags, pDevice);
 	}
 
+
+	void ResourcePacker::ResizeHeap(UINT newDescriptorCount, ID3D12Device* pDevice) {
+
+		auto newHeap = std::make_unique<BufferDescriptorHeap>( m_pDescriptorHeap->GetDescriptorSize(),newDescriptorCount, 0, m_pDescriptorHeap->GetType(),m_pDescriptorHeap->GetFlags(),pDevice);
+		pDevice->CopyDescriptorsSimple( (UINT)m_uDescriptorCount, newHeap->GetCPUDescriptorHandle(0), m_pDescriptorHeap->GetCPUDescriptorHandle(0), m_pDescriptorHeap->GetType());
+		m_pDescriptorHeap = std::move(newHeap);
+		m_uDescriptorCount = newDescriptorCount;
+	}
+
 	std::unique_ptr<BufferDescriptorHeap>& ResourcePacker::GetResult() 
 	{
 		return m_pDescriptorHeap;
@@ -21,6 +30,8 @@ namespace FD3DW
 
 	void ResourcePacker::InitBufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 	{
+		if (!pDevice) return;
+		m_uDescriptorCount = descriptorsCount;
 		CONSOLE_MESSAGE(std::string("RESOURCE PACKER INIT DESCRIPTOR HEAP"));
 		m_pDescriptorHeap = std::make_unique<BufferDescriptorHeap>(descriptorSize, descriptorsCount > 0 ? descriptorsCount : 1U, NodeMask, type, flags, pDevice);
 	}

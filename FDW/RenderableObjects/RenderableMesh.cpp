@@ -1,4 +1,5 @@
 #include <RenderableObjects/RenderableMesh.h>
+#include <MainRenderer/GlobalTextureHeap.h>
 
 RenderableMesh::RenderableMesh(std::string path) : BaseRenderableObject(path) {
 	m_sPath = path;
@@ -13,19 +14,17 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 
 	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
 	{
-		m_vSRVPacks.push_back(FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device));
 		MeshMaterialStructure cbData;
 		
 		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
 		cbData = mat->GetMaterialDesc();
 		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
-			if ( cbData.LoadedTexture[i] = mat->IsHaveTexture(FD3DW::TextureType(i) ) )
+			if ( mat->IsHaveTexture(FD3DW::TextureType(i) ) )
 			{
-				m_vSRVPacks.back()->AddResource(mat->GetResourceTexture(FD3DW::TextureType(i)), D3D12_SRV_DIMENSION_TEXTURE2D, i, device);
+				cbData.LoadedTexture[i] = GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
 			}
 			else {
-
-				m_vSRVPacks.back()->AddNullResource(i, device);
+				cbData.LoadedTexture[i] = -1;
 			}
 		}
 		cbData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = mat->IsORMTextureType();
@@ -43,7 +42,6 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		data.ObjectDescriptor = m_pScene->GetObjectParameters(ind);
 		
 		auto matIndex = GetMaterialIndex(m_pScene.get(), ind);
-		data.SRVPack = m_vSRVPacks[matIndex].get();
 		data.MaterialCBufferData = meshMaterialStructures[matIndex];
 		data.ID = ind;
 		if (m_vRenderableElements.size() <= ind) 
@@ -82,6 +80,27 @@ void RenderableMesh::ForwardRender(ID3D12GraphicsCommandList* list) {
 
 RenderPass RenderableMesh::GetRenderPass() const {
 	return RenderPass::DeferredAndForward;
+}
+
+bool RenderableMesh::IsCanBeIndirectExecuted() {
+	return true;
+}
+
+std::vector<IndirectMeshRenderableData> RenderableMesh::GetDataToExecute() {
+	std::vector<IndirectMeshRenderableData> ret;
+	for (const auto& elem : m_vRenderableElements) {
+		if (elem->IsCanBeIndirectExecuted()) {
+			auto datas = elem->GetDataToExecute();
+			for (auto& data : datas) {
+				data.SRVBones = m_pStructureBufferBones ? m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
+				data.VertexBufferView = *m_pScene->GetVertexBufferView();
+				data.IndexBufferView = *m_pScene->GetIndexBufferView();
+
+			}
+			ret.insert(ret.end(), datas.begin(), datas.end());
+		}
+	}
+	return ret;
 }
 
 std::vector<std::string> RenderableMesh::GetAnimations() {

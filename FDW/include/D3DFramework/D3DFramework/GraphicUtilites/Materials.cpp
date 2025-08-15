@@ -16,6 +16,11 @@ namespace FD3DW
 	{
 	}
 
+	std::shared_ptr<FResource> Material::GetTexture(TextureType type) const
+	{
+		return m_mTextureMap.contains(type) ? m_mTextureMap.at(type) : nullptr;
+	}
+
 	ID3D12Resource* Material::GetResourceTexture(TextureType type) const
 	{
 		return m_mTextureMap.contains(type) ? m_mTextureMap.at(type)->GetResource() : nullptr;

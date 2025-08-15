@@ -196,6 +196,7 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandListTemplate.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\ComputePipelineObject.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
@@ -232,6 +233,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp" />

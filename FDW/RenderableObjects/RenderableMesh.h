@@ -3,10 +3,11 @@
 #include <pch.h>
 #include <D3DFramework/Objects/Scene.h>
 #include <RenderableObjects/BaseRenderableObject.h>
+#include <RenderableObjects/IndirectExecutionMeshObject.h>
 #include <RenderableObjects/RenderableMeshElement.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
-class RenderableMesh : public BaseRenderableObject {
+class RenderableMesh : virtual public BaseRenderableObject, virtual public IndirectExecutionMeshObject {
 public:
 	RenderableMesh() = default;
 	RenderableMesh(std::string path);
@@ -19,6 +20,10 @@ public:
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
+
+
+	virtual bool IsCanBeIndirectExecuted() override;
+	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
 
 	std::vector<std::string> GetAnimations();
 	void PlayAnimation(std::string animName);
@@ -47,7 +52,6 @@ private:
 	void AnimationTickUpdate(const BeforeRenderInputData& data);
 
 private:
-	std::vector<std::unique_ptr<FD3DW::SRV_UAVPacker>> m_vSRVPacks;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 	
 private:

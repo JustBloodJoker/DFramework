@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <set>
 #include <random>
+#include <queue>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>

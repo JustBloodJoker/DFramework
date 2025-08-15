@@ -16,16 +16,18 @@ namespace FD3DW
 		ResourcePacker(const UINT descriptorSize, const  UINT descriptorsCount, const  UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		virtual ~ResourcePacker() = default;
 
+		void ResizeHeap(UINT newDescriptorCount, ID3D12Device* pDevice);
+
 		std::unique_ptr<BufferDescriptorHeap>& GetResult();
 
 	protected:
 
 		std::unique_ptr <BufferDescriptorHeap> m_pDescriptorHeap;
 
-		const size_t m_uDescriptorCount;
+		size_t m_uDescriptorCount;
 		size_t m_uCurrentIndex;
 
-	private:
+	protected:
 
 		void InitBufferDescriptorHeap(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_TYPE type, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 

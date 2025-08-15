@@ -33,6 +33,9 @@ namespace FD3DW {
 		virtual void Bind(ID3D12GraphicsCommandList* cmdList) = 0;
 		virtual std::unique_ptr<BasePipelineObject> MakeCopy() const = 0;
 
+		//for RT PO returning global root signature
+		ID3D12RootSignature* GetRootSignature();
+
 	protected:
 		wrl::ComPtr<IDxcBlob> CompileShader(const CompileDesc& desc);
 		wrl::ComPtr<IDxcBlob> CompileShader(std::vector<char> data, std::wstring entry, std::wstring target);

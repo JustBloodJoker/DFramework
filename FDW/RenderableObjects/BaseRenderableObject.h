@@ -25,6 +25,7 @@ struct BeforeRenderInputData {
     ID3D12GraphicsCommandList* CommandList;
 };
 
+
 class BaseRenderableObject {
 
 public:

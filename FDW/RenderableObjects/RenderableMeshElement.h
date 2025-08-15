@@ -2,12 +2,12 @@
 
 #include <pch.h>
 #include <RenderableObjects/BaseRenderableObject.h>
+#include <RenderableObjects/IndirectExecutionMeshObject.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <RenderableObjects/MeshMaterialStructure.h>
 #include <RenderableObjects/MeshMatricesStructure.h>
 
 struct RenderableMeshElementData {
-	FD3DW::SRV_UAVPacker* SRVPack = nullptr;
 	FD3DW::ObjectDesc ObjectDescriptor;
 	MeshMaterialStructure MaterialCBufferData;
 	size_t ID;
@@ -20,7 +20,7 @@ struct RenderableMeshElementData {
 
 
 
-class RenderableMeshElement : public BaseRenderableObject {
+class RenderableMeshElement : virtual public BaseRenderableObject, virtual  public IndirectExecutionMeshObject {
 private:
 	static int __MeshElementsCreatedCount;
 
@@ -37,6 +37,10 @@ public:
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
+
+
+	virtual bool IsCanBeIndirectExecuted() override;
+	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
 
 	void SetAnimationPlaying(bool isP);
 

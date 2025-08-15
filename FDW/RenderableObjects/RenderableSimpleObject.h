@@ -3,13 +3,14 @@
 #include <pch.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <RenderableObjects/BaseRenderableObject.h>
+#include <RenderableObjects/IndirectExecutionMeshObject.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <RenderableObjects/MeshMaterialStructure.h>
 #include <RenderableObjects/MeshMatricesStructure.h>
 
 
 
-class RenderableSimpleObject : public BaseRenderableObject {
+class RenderableSimpleObject : virtual public BaseRenderableObject, virtual  public IndirectExecutionMeshObject {
 private:
 
 
@@ -28,9 +29,8 @@ public:
 	
 	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
 
-	FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>* GetFDWObject() const {
-		return m_pObject.get();
-	}
+	virtual bool IsCanBeIndirectExecuted() override;
+	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
 
 	//////////////////////////////////////////////////
 	//////   MATERIAL DATA & TEXTURE GET SET
@@ -79,7 +79,6 @@ private:
 	std::map<FD3DW::TextureType, std::string> m_mPathToTextures;
 
 	std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> m_pObject = nullptr;
-	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pSRVPack = nullptr;
 	
 	std::unique_ptr<FD3DW::Material> m_pMaterial = nullptr;
 

@@ -261,7 +261,7 @@ namespace FD3DW {
             ret[i].vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
             ret[i].vertexCount = params.VerticesCount;
             ret[i].vertexOffset = params.VerticesOffset;
-            ret[i].vertexStride = obj->GetVertexStructSize();
+            ret[i].vertexStride = (UINT)obj->GetVertexStructSize();
         }
 
         return ret;

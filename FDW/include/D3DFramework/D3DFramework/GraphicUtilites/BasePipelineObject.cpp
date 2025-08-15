@@ -34,6 +34,11 @@ namespace FD3DW {
 		m_bExternalRootSig = true;
 	}
 
+	ID3D12RootSignature* BasePipelineObject::GetRootSignature()
+	{
+		return m_pRootSignature.Get();
+	}
+
 	wrl::ComPtr<IDxcBlob> BasePipelineObject::CompileShader(const CompileDesc& desc) {
 		std::vector<char> data;
 		if (desc.isFile) {

@@ -78,6 +78,10 @@ private:
     void SpecificPostLoadForOblect(BaseRenderableObject* obj);
 
 private:
+    void DoDefferedRender(ID3D12GraphicsCommandList* list, std::vector<BaseRenderableObject*> objectsToRender);
+    void InitIndirectDeferredMeshExecution();
+
+private:
     void DoDeleteObject(BaseRenderableObject* obj);
 
 private:
@@ -87,4 +91,9 @@ private:
     std::vector < BaseRenderableObject* > m_vSheduleForDelete;
 
     std::vector<std::unique_ptr<BaseRenderableObject>> m_vObjects;
+
+private:
+    //Indirect data
+    wrl::ComPtr<ID3D12CommandSignature> m_pIndirectDeferredFirstPassCommandSignature = nullptr;
+    std::unique_ptr<FD3DW::StructuredBuffer> m_pIndirectDeferredFirstPassCommandsBuffer = nullptr;
 };

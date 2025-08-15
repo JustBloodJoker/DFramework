@@ -31,6 +31,7 @@ namespace FD3DW
 		Material();
 		~Material()=default;
 
+		std::shared_ptr<FResource> GetTexture(TextureType type) const;
 		ID3D12Resource* GetResourceTexture(TextureType type) const;
 		MaterialFrameWork GetMaterialDesc() const;
 

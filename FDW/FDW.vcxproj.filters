@@ -120,6 +120,12 @@
     <ClCompile Include="Lights\MainRenderer_RTSoftShadowsComponent.cpp">
       <Filter>Lights</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\IndirectExecutionMeshObject.cpp">
+      <Filter>RenderableObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -205,6 +211,15 @@
     </ClInclude>
     <ClInclude Include="Lights\ShadowsStructures.h">
       <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\IndirectMeshRenderableData.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\IndirectExecutionMeshObject.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="MainRenderer\GlobalTextureHeap.h">
+      <Filter>mainRenderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

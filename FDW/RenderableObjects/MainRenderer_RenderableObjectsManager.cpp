@@ -1,8 +1,9 @@
 #include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
+#include <MainRenderer/GlobalTextureHeap.h>
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
-
+#include <RenderableObjects/IndirectExecutionMeshObject.h>
 
 RenderableSimpleSphere* MainRenderer_RenderableObjectsManager::CreateSphere(ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
     return CreateObject<RenderableSimpleSphere>(list, dxrList);
@@ -55,9 +56,11 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandLi
 
 void MainRenderer_RenderableObjectsManager::DeferredRender(ID3D12GraphicsCommandList* list) {
     PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
+    std::vector<BaseRenderableObject*> objectsToRender;
     for (auto& obj : m_vObjects) {
-        if(obj->IsCanRenderInPass(RenderPass::Deferred)) obj->DeferredRender(list);
+        if (obj->IsCanRenderInPass(RenderPass::Deferred)) objectsToRender.push_back(obj.get());
     }
+    DoDefferedRender(list, objectsToRender);
 }
 
 void MainRenderer_RenderableObjectsManager::ForwardRender(ID3D12GraphicsCommandList* list) {
@@ -115,6 +118,8 @@ bool MainRenderer_RenderableObjectsManager::IsNeedUpdateTLAS() {
 }
 
 void MainRenderer_RenderableObjectsManager::AfterConstruction() {
+    InitIndirectDeferredMeshExecution();
+
     auto cmList = m_pOwner->GetBindedCommandList();
     auto dxrList = m_pOwner->GetDXRCommandList();
     for (const auto& obj : m_vObjects) {
@@ -150,6 +155,86 @@ void MainRenderer_RenderableObjectsManager::SpecificPostLoadForOblect(BaseRender
         audio->CreateAfterLoadAudio(m_pOwner->GetAudioMananger());
     }
 }
+
+void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsCommandList* list, std::vector<BaseRenderableObject*> objectsToRender) {
+    std::vector<IndirectExecutionMeshObject*> objectsForIndirectExecute;
+    std::vector<BaseRenderableObject*> objectsForDefaultRender;
+    
+    for (const auto& obj : objectsToRender) {
+        auto indirect = dynamic_cast<IndirectExecutionMeshObject*>(obj);
+        if (indirect && indirect->IsCanBeIndirectExecuted()) {
+            objectsForIndirectExecute.push_back(indirect);
+        }
+        else {
+            objectsForDefaultRender.push_back(obj);
+        }
+
+    }
+
+    if ( !objectsForIndirectExecute.empty() ) {
+        auto device = m_pOwner->GetDevice();
+        std::vector<IndirectMeshRenderableData> datas;
+        
+        for (const auto& obj : objectsForIndirectExecute) {
+            auto objIndirectDatas = obj->GetDataToExecute();
+            datas.insert(datas.end(), objIndirectDatas.begin(), objIndirectDatas.end());
+        }
+        
+        auto dataSize = (UINT)datas.size();
+        m_pIndirectDeferredFirstPassCommandsBuffer->UploadData(device, list, datas.data(), dataSize, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+        
+        
+        ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
+        list->SetDescriptorHeaps(_countof(heaps), heaps);
+        list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
+
+        list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, m_pIndirectDeferredFirstPassCommandsBuffer->GetResource(), 0, nullptr, 0);
+
+        /////////////////
+    }
+
+
+
+
+
+    //https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12ExecuteIndirect/src/D3D12ExecuteIndirect.cpp#L707
+    //тут нужно собрать все в структуру где в структуре агрументов нужно передавать адреса гпу на константные буферы, срв, юав и тд
+    //но не известно как это будет работать с текстурами. потому что текстуры (дескриптор таблица с 7 ресурсами) не считааются рут срв.
+    //1) сделать Commands Signature
+    //2) со всех обьектов собрать структуру где будут гпу адреса на все ресурсы + данные для рендера обьекта.
+    //3) сделать анбаунд срв что бы туда закинуть все текстуры. индексы на текстуры закинуть в буфер материалов. если текстуры нету - выставлять -1 на место индекса
+    //но когда я пробывал ставить анбаунд в рут сигнатуру - все рендерится но очень медленно (буквально 1 фрейм за минуты 3
+    
+    for (const auto& obj : objectsForDefaultRender) {
+        obj->DeferredRender(list);
+    }
+}
+
+void MainRenderer_RenderableObjectsManager::InitIndirectDeferredMeshExecution() {
+    D3D12_INDIRECT_ARGUMENT_DESC argumentDescs[6] = {};
+    argumentDescs[0].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW;
+    argumentDescs[0].ConstantBufferView.RootParameterIndex = CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG;
+    argumentDescs[1].Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT_BUFFER_VIEW;
+    argumentDescs[1].ConstantBufferView.RootParameterIndex = CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG;
+    argumentDescs[2].Type = D3D12_INDIRECT_ARGUMENT_TYPE_SHADER_RESOURCE_VIEW;
+    argumentDescs[2].ShaderResourceView.RootParameterIndex = ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG;
+    argumentDescs[3].Type = D3D12_INDIRECT_ARGUMENT_TYPE_VERTEX_BUFFER_VIEW;
+    argumentDescs[3].VertexBuffer.Slot = 0;
+    argumentDescs[4].Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
+    argumentDescs[5].Type = D3D12_INDIRECT_ARGUMENT_TYPE_DRAW_INDEXED;
+
+    D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = {};
+    commandSignatureDesc.pArgumentDescs = argumentDescs;
+    commandSignatureDesc.NumArgumentDescs = _countof(argumentDescs);
+    commandSignatureDesc.ByteStride = sizeof(IndirectMeshRenderableData);
+
+    auto rootSignature = PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->GetRootSignature();
+    HRESULT_ASSERT(m_pOwner->GetDevice()->CreateCommandSignature(&commandSignatureDesc, rootSignature, IID_PPV_ARGS(m_pIndirectDeferredFirstPassCommandSignature.ReleaseAndGetAddressOf())), "Incorrect creation of Indirect Command Signature");
+
+
+    m_pIndirectDeferredFirstPassCommandsBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<IndirectMeshRenderableData>(m_pOwner->GetDevice(), 1u, true);
+}
+
 
 void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject* obj) {
     auto it = std::remove_if(m_vObjects.begin(), m_vObjects.end(),

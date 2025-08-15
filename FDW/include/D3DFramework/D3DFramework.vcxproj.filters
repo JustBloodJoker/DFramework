@@ -132,6 +132,9 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\BilateralFilter.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -210,6 +213,9 @@
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\BilateralFilter.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClCompile>
   </ItemGroup>

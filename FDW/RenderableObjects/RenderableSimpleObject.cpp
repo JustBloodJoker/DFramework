@@ -1,9 +1,12 @@
 #include <RenderableObjects/RenderableSimpleObject.h>
 #include <MainRenderer/PSOManager.h>
+#include <MainRenderer/GlobalTextureHeap.h>
 #include <RenderableObjects/GeneratorsForSimpleObjects.h>
 
 
-RenderableSimpleObject::RenderableSimpleObject(std::string name) :BaseRenderableObject(name) { }
+RenderableSimpleObject::RenderableSimpleObject(std::string name) :BaseRenderableObject(name) { 
+	m_sName = name;
+}
 
 void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pObject = CreateSimpleObject(device, list);
@@ -15,8 +18,6 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
 
 	m_pMaterial = std::make_unique<FD3DW::Material>();
-	
-	m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, TEXTURE_TYPE_SIZE, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 	
 	if (!m_bIsInitedMaterialDesc) {
 		m_xMaterialCBufferData.Diffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
@@ -38,8 +39,7 @@ void RenderableSimpleObject::Init(ID3D12Device* device, ID3D12GraphicsCommandLis
 			SetupTexture(type, m_mPathToTextures.at(type), device, list);
 		} else 
 		{
-			m_xMaterialCBufferData.LoadedTexture[i] = false;
-			m_pSRVPack->AddNullResource(i, device);
+			m_xMaterialCBufferData.LoadedTexture[i] = -1;
 		}
 	}
 
@@ -61,25 +61,11 @@ void RenderableSimpleObject::BeforeRender(const BeforeRenderInputData& data) {
 }
 
 void RenderableSimpleObject::DeferredRender(ID3D12GraphicsCommandList* list) {
-	list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, GetEmptyStructuredBufferGPUVirtualAddress());
-
-	list->IASetVertexBuffers(0, 1, m_pObject->GetVertexBufferView());
-	list->IASetIndexBuffer(m_pObject->GetIndexBufferView());
-
-	list->SetGraphicsRootConstantBufferView(CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG, m_pMatricesBuffer->GetGPULocation(0));
-
-	list->SetGraphicsRootConstantBufferView(CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG, m_pMaterialBuffer->GetGPULocation(0));
-
-	ID3D12DescriptorHeap* heaps[] = { m_pSRVPack->GetResult()->GetDescriptorPtr() };
-	list->SetDescriptorHeaps(_countof(heaps), heaps);
-	list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, m_pSRVPack->GetResult()->GetGPUDescriptorHandle(0));
-
-	auto params = m_pObject->GetObjectParameters(0);
-	list->DrawIndexedInstanced((UINT)params.IndicesCount, 1u, (UINT)params.IndicesOffset, (INT)params.VerticesOffset, 0u);
+	//nothing to do
 }
 
 void RenderableSimpleObject::ForwardRender(ID3D12GraphicsCommandList* list) {
-	//TODO
+	//nothing to do
 }
 
 RenderPass RenderableSimpleObject::GetRenderPass() const {
@@ -91,23 +77,47 @@ void RenderableSimpleObject::InitBLASBuffers(ID3D12Device5* device, ID3D12Graphi
 	m_vBLASBuffers = FD3DW::CreateBLASForObject(device, list, m_pObject.get(), BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX, true);
 }
 
+bool RenderableSimpleObject::IsCanBeIndirectExecuted() {
+	return true;
+}
+
+std::vector<IndirectMeshRenderableData> RenderableSimpleObject::GetDataToExecute() {
+	IndirectMeshRenderableData data;
+	data.CBMaterials = m_pMaterialBuffer->GetGPULocation(0);
+	data.CBMatrices = m_pMatricesBuffer->GetGPULocation(0);
+	data.SRVBones = GetEmptyStructuredBufferGPUVirtualAddress();
+	data.VertexBufferView = *m_pObject->GetVertexBufferView();
+	data.IndexBufferView = *m_pObject->GetIndexBufferView();
+	auto params = m_pObject->GetObjectParameters(0);
+
+	data.DrawArguments.IndexCountPerInstance = params.IndicesCount;
+	data.DrawArguments.InstanceCount = 1u;
+	data.DrawArguments.StartIndexLocation = params.IndicesOffset;
+	data.DrawArguments.BaseVertexLocation = (INT)params.VerticesOffset;
+	data.DrawArguments.StartInstanceLocation = 0u;
+
+	return { data };
+}
+
 void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string pathTo, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pMaterial->SetTexture(pathTo, type, device, list);
-	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(type), D3D12_SRV_DIMENSION_TEXTURE2D, type, device);
-
+	
 	m_mPathToTextures[type] = pathTo;
-	m_xMaterialCBufferData.LoadedTexture[type] = true;
+	m_xMaterialCBufferData.LoadedTexture[type] = GlobalTextureHeap::GetInstance()->AddTexture( m_pMaterial->GetTexture(type), device);
 	m_xMaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
 	
 	NeedUpdateMaterials();
 }
 
 void RenderableSimpleObject::EraseTexture(FD3DW::TextureType type, ID3D12Device* device) {
+	
+	auto texture = m_pMaterial->GetTexture(type);
+	GlobalTextureHeap::GetInstance()->RemoveTexture(texture.get(), device);
 	m_pMaterial->DeleteTexture(type);
-	m_pSRVPack->AddNullResource(type, device);
-
+	
 	m_mPathToTextures.erase(type);
-	m_xMaterialCBufferData.LoadedTexture[type] = false;
+	
+	m_xMaterialCBufferData.LoadedTexture[type] = -1;
 	m_xMaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
 	
 	NeedUpdateMaterials();
@@ -118,7 +128,7 @@ ID3D12Resource* RenderableSimpleObject::GetTexture(FD3DW::TextureType type) {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE RenderableSimpleObject::GetTextureSRV(FD3DW::TextureType type) {
-	return m_pSRVPack->GetResult()->GetGPUDescriptorHandle(type);
+	return GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle( GlobalTextureHeap::GetInstance()->GetIndex( m_pMaterial->GetTexture(type).get() ) );
 }
 
 void RenderableSimpleObject::BeforeRenderMaterialsUpdate() {

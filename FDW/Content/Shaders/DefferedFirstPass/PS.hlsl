@@ -8,15 +8,7 @@
 ConstantBuffer<MeshMatrices> objMatrices : register(b0);
 ConstantBuffer<Materials> objMaterials : register(b1);
 
-Texture2D DiffuseTexture : register(t0);
-Texture2D NormalTexture : register(t1);
-Texture2D RoughnessTexture: register(t2);
-Texture2D MetalnessTexture : register(t3);
-Texture2D HeightTexture : register(t4);
-Texture2D SpecularTexture : register(t5);
-Texture2D OpacityTexture : register(t6);
-Texture2D AmbientTexture : register(t7);
-Texture2D EmissiveTexture : register(t8);
+Texture2D GlobalTextures[] : register(t0, space0);
 
 SamplerState wraps : register(s0);
 
@@ -42,75 +34,75 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
                         normalize(bitangent),
                         normalize(normal));
 
-    if (LoadedTexture[TEXTURE_HEIGHT_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_HEIGHT_LOAD_FLAG_LOCATION]!=-1)
     {
         POMInputData inData;
         inData.WorldPosition = vsOut.worldPos;
         inData.CameraPosition = objMatrices.CameraPosition;
         inData.TBN = TBN;
         inData.HeightScale = objMaterials.heightScale;
-        inData.HeightTexture = HeightTexture;
+        inData.HeightTexture = GlobalTextures[LoadedTexture[TEXTURE_HEIGHT_LOAD_FLAG_LOCATION]];
         inData.Sampler = wraps;
         inData.TextureCoords = texCoord;
         texCoord = ParallaxOcclusionMapping(inData);
     }
 
-    if (LoadedTexture[TEXTURE_NORMAL_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_NORMAL_LOAD_FLAG_LOCATION]!=-1)
     {
         NMInputData inData;
         inData.TextureCoords = texCoord;
         inData.TBN = TBN;
-        inData.NormalTexture = NormalTexture;
+        inData.NormalTexture = GlobalTextures[LoadedTexture[TEXTURE_NORMAL_LOAD_FLAG_LOCATION]];
         inData.Sampler = wraps;
         normal = NormalMapping(inData);
     }
 
     float4 albedo = objMaterials.diffuse;
-    if (LoadedTexture[TEXTURE_BASE_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_BASE_LOAD_FLAG_LOCATION]!=-1)
     {
-        albedo = DiffuseTexture.Sample(wraps, texCoord);
+        albedo = GlobalTextures[LoadedTexture[TEXTURE_BASE_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord);
     }
 
     float roughness = objMaterials.roughness;
-    if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION]!=-1)
     {
         if(LoadedTexture[TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION])
         {
-            roughness = RoughnessTexture.Sample(wraps, texCoord).g;
+            roughness = GlobalTextures[LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).g;
         } else
         {
-            roughness = RoughnessTexture.Sample(wraps, texCoord).r;
+            roughness = GlobalTextures[LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).r;
         }
     }
 
     float metalness = objMaterials.metalness;
-    if (LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION]!=-1)
     {
         if(LoadedTexture[TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION])
         {
-            metalness = MetalnessTexture.Sample(wraps, texCoord).b;
+            metalness = GlobalTextures[LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).b;
         } else
         {
-            metalness = MetalnessTexture.Sample(wraps, texCoord).r;
+            metalness = GlobalTextures[LoadedTexture[TEXTURE_METALNESS_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).r;
         }
     }
 
     float4 specular = objMaterials.specular;
-    if (LoadedTexture[TEXTURE_SPECULAR_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_SPECULAR_LOAD_FLAG_LOCATION]!=-1)
     {
-        specular.w = SpecularTexture.Sample(wraps, texCoord).r;
+        specular.w = GlobalTextures[LoadedTexture[TEXTURE_SPECULAR_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).r;
     }
     
     float4 emissive = objMaterials.emissive;
-    if (LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION]!=-1)
     {
-        emissive.rgb = EmissiveTexture.Sample(wraps, texCoord).rgb;
+        emissive.rgb = GlobalTextures[LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).rgb;
     }
     
     float ao = 1.0f;
-    if (LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION])
+    if (LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION]!=-1)
     {
-        ao = AmbientTexture.Sample(wraps, texCoord).r;
+        ao = GlobalTextures[LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).r;
     }
 
     AlphaClipping(albedo.a);
