@@ -189,22 +189,8 @@ void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsComma
         list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
 
         list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, m_pIndirectDeferredFirstPassCommandsBuffer->GetResource(), 0, nullptr, 0);
-
-        /////////////////
     }
 
-
-
-
-
-    //https://github.com/microsoft/DirectX-Graphics-Samples/blob/master/Samples/Desktop/D3D12ExecuteIndirect/src/D3D12ExecuteIndirect.cpp#L707
-    //тут нужно собрать все в структуру где в структуре агрументов нужно передавать адреса гпу на константные буферы, срв, юав и тд
-    //но не известно как это будет работать с текстурами. потому что текстуры (дескриптор таблица с 7 ресурсами) не считааются рут срв.
-    //1) сделать Commands Signature
-    //2) со всех обьектов собрать структуру где будут гпу адреса на все ресурсы + данные для рендера обьекта.
-    //3) сделать анбаунд срв что бы туда закинуть все текстуры. индексы на текстуры закинуть в буфер материалов. если текстуры нету - выставлять -1 на место индекса
-    //но когда я пробывал ставить анбаунд в рут сигнатуру - все рендерится но очень медленно (буквально 1 фрейм за минуты 3
-    
     for (const auto& obj : objectsForDefaultRender) {
         obj->DeferredRender(list);
     }

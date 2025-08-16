@@ -15,21 +15,31 @@ namespace FD3DW
 			std::vector<std::uint32_t> indices;
 			generator(vertices, indices);
 
-			BufferManager::CreateDefaultBuffer<TVertex>(pDevice, pCommandList, vertices.data(), static_cast<UINT>(vertices.size()),m_pVertexBuffer, m_pVertexUploadBuffer);
+			BufferManager::CreateDefaultBuffer<TVertex>(pDevice, pCommandList, vertices.data(),
+				static_cast<UINT>(vertices.size()), m_pVertexBuffer, m_pVertexUploadBuffer);
 
 			m_pVertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
 			m_pVertexBufferView->BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 			m_pVertexBufferView->SizeInBytes = static_cast<UINT>(vertices.size() * sizeof(TVertex));
 			m_pVertexBufferView->StrideInBytes = sizeof(TVertex);
 
-			BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(),static_cast<UINT>(indices.size()),m_pIndexBuffer, m_pIndexUploadBuffer);
+			BufferManager::CreateDefaultBuffer<std::uint32_t>(pDevice, pCommandList, indices.data(),
+				static_cast<UINT>(indices.size()), m_pIndexBuffer, m_pIndexUploadBuffer);
 
 			m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
 			m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 			m_pIndexBufferView->Format = DEFAULT_INDEX_BUFFER_FORMAT;
 			m_pIndexBufferView->SizeInBytes = static_cast<UINT>(indices.size() * sizeof(std::uint32_t));
-			
-			m_vObjectParameters.emplace_back(ObjectDesc{ UINT(vertices.size()), 0u,UINT(indices.size()), 0u, 0u});
+
+			m_vObjectParameters.emplace_back(ObjectDesc{
+				UINT(vertices.size()),
+				0u,
+				UINT(indices.size()),
+				0u,
+				0u,
+				ComputeMin(vertices),
+				ComputeMax(vertices)
+				});
 		}
 
 		virtual size_t GetVertexStructSize() const override {
@@ -37,6 +47,26 @@ namespace FD3DW
 		}
 
 		virtual ~SimpleObject() = default;
+
+		dx::XMFLOAT3 ComputeMin(const std::vector<TVertex>& vertices) {
+			dx::XMFLOAT3 minPt(FLT_MAX, FLT_MAX, FLT_MAX);
+			for (const auto& v : vertices) {
+				minPt.x = std::min(minPt.x, v.Pos.x);
+				minPt.y = std::min(minPt.y, v.Pos.y);
+				minPt.z = std::min(minPt.z, v.Pos.z);
+			}
+			return minPt;
+		}
+
+		dx::XMFLOAT3 ComputeMax(const std::vector<TVertex>& vertices) {
+			dx::XMFLOAT3 maxPt(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+			for (const auto& v : vertices) {
+				maxPt.x = std::max(maxPt.x, v.Pos.x);
+				maxPt.y = std::max(maxPt.y, v.Pos.y);
+				maxPt.z = std::max(maxPt.z, v.Pos.z);
+			}
+			return maxPt;
+		}
 
 	protected:
 		std::unique_ptr<UploadBuffer<TVertex>> m_pVertexUploadBuffer;

@@ -16,6 +16,8 @@ namespace FD3DW
 		UINT IndicesCount;
 		UINT IndicesOffset;
 		UINT MaterialIndex;
+		dx::XMFLOAT3 ObjectMin;
+		dx::XMFLOAT3 ObjectMax;
 	};
 
 	class Object

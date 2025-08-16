@@ -113,34 +113,48 @@ namespace FD3DW
 			
 			offsetVertices += verticesSize;
 			vertices.insert(vertices.end(), mesh->mNumVertices, SceneVertexFrameWork());
+
+			dx::XMFLOAT3 objectMin(FLT_MAX, FLT_MAX, FLT_MAX);
+			dx::XMFLOAT3 objectMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
 			for (size_t j = 0; j < mesh->mNumVertices; j++)
 			{
-				
-				vertices[j + offsetVertices].Pos.x = mesh->mVertices[j].x;
-				vertices[j + offsetVertices].Pos.y = mesh->mVertices[j].y;
-				vertices[j + offsetVertices].Pos.z = mesh->mVertices[j].z;
+
+				auto& v = vertices[j + offsetVertices];
+				v.Pos.x = mesh->mVertices[j].x;
+				v.Pos.y = mesh->mVertices[j].y;
+				v.Pos.z = mesh->mVertices[j].z;
+
+
+				objectMin.x = std::min(objectMin.x, v.Pos.x);
+				objectMin.y = std::min(objectMin.y, v.Pos.y);
+				objectMin.z = std::min(objectMin.z, v.Pos.z);
+
+				objectMax.x = std::max(objectMax.x, v.Pos.x);
+				objectMax.y = std::max(objectMax.y, v.Pos.y);
+				objectMax.z = std::max(objectMax.z, v.Pos.z);
 
 				if (mesh->HasTextureCoords(0))
 				{
-					vertices[j + offsetVertices].TexCoord.x = mesh->mTextureCoords[0][j].x;
-					vertices[j + offsetVertices].TexCoord.y = mesh->mTextureCoords[0][j].y;
+					v.TexCoord.x = mesh->mTextureCoords[0][j].x;
+					v.TexCoord.y = mesh->mTextureCoords[0][j].y;
 				}
 
-				vertices[j + offsetVertices].Normal.x = mesh->mNormals[j].x;
-				vertices[j + offsetVertices].Normal.y = mesh->mNormals[j].y;
-				vertices[j + offsetVertices].Normal.z = mesh->mNormals[j].z;
+				v.Normal.x = mesh->mNormals[j].x;
+				v.Normal.y = mesh->mNormals[j].y;
+				v.Normal.z = mesh->mNormals[j].z;
 
-				vertices[j + offsetVertices].Tangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
-				vertices[j + offsetVertices].Bitangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
+				v.Tangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
+				v.Bitangent = dx::XMFLOAT3(0.0f, 0.0f, 0.0f);
 				if (mesh->HasTangentsAndBitangents())
 				{
-					vertices[j + offsetVertices].Tangent.x = mesh->mTangents[j].x;
-					vertices[j + offsetVertices].Tangent.y = mesh->mTangents[j].y;
-					vertices[j + offsetVertices].Tangent.z = mesh->mTangents[j].z;
+					v.Tangent.x = mesh->mTangents[j].x;
+					v.Tangent.y = mesh->mTangents[j].y;
+					v.Tangent.z = mesh->mTangents[j].z;
 
-					vertices[j + offsetVertices].Bitangent.x = mesh->mBitangents[j].x;
-					vertices[j + offsetVertices].Bitangent.y = mesh->mBitangents[j].y;
-					vertices[j + offsetVertices].Bitangent.z = mesh->mBitangents[j].z;
+					v.Bitangent.x = mesh->mBitangents[j].x;
+					v.Bitangent.y = mesh->mBitangents[j].y;
+					v.Bitangent.z = mesh->mBitangents[j].z;
 				}
 
 			}

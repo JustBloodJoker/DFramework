@@ -7,7 +7,7 @@ RenderableMesh::RenderableMesh(std::string path) : BaseRenderableObject(path) {
 
 void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
-
+	
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
 
 	std::vector<MeshMaterialStructure> meshMaterialStructures;
