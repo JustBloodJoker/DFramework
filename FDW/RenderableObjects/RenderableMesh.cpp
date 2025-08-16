@@ -57,16 +57,13 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		}
 	}
 
+	UpdateWorldMatrix();
 }
 
 void RenderableMesh::BeforeRender(const BeforeRenderInputData& data) {
 	AnimationTickUpdate(data);
-
-	auto cpyData = data;
-	cpyData.AdditionalWorld = m_xWorldMatrix * data.AdditionalWorld;
-
 	for (auto& elem : m_vRenderableElements) {
-		elem->BeforeRender(cpyData);
+		elem->BeforeRender(data);
 	}
 }
 
@@ -86,16 +83,15 @@ bool RenderableMesh::IsCanBeIndirectExecuted() {
 	return true;
 }
 
-std::vector<IndirectMeshRenderableData> RenderableMesh::GetDataToExecute() {
-	std::vector<IndirectMeshRenderableData> ret;
+std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> RenderableMesh::GetDataToExecute() {
+	std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> ret;
 	for (const auto& elem : m_vRenderableElements) {
 		if (elem->IsCanBeIndirectExecuted()) {
 			auto datas = elem->GetDataToExecute();
-			for (auto& data : datas) {
+			for (auto& [data, instance] : datas) {
 				data.SRVBones = m_pStructureBufferBones ? m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
 				data.VertexBufferView = *m_pScene->GetVertexBufferView();
 				data.IndexBufferView = *m_pScene->GetIndexBufferView();
-
 			}
 			ret.insert(ret.end(), datas.begin(), datas.end());
 		}
@@ -200,6 +196,14 @@ void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandL
 		if (elem->IsCanRenderInPass(pass)) {
 			elem->IsCanRenderInPass(RenderPass::Deferred) ? elem->DeferredRender(list) : elem->ForwardRender(list);
 		}
+	}
+}
+
+void RenderableMesh::UpdateWorldMatrix() {
+	BaseRenderableObject::UpdateWorldMatrix();
+
+	for (auto& el : m_vRenderableElements) {
+		el->SetParentWorldMatrix(m_xWorldMatrix);
 	}
 }
 

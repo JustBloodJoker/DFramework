@@ -23,7 +23,7 @@ public:
 
 
 	virtual bool IsCanBeIndirectExecuted() override;
-	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
+	virtual std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> GetDataToExecute() override;
 
 	std::vector<std::string> GetAnimations();
 	void PlayAnimation(std::string animName);
@@ -48,6 +48,7 @@ public:
 private:
 	void RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandList* list);
 
+	virtual void UpdateWorldMatrix() override;
 private:
 	void AnimationTickUpdate(const BeforeRenderInputData& data);
 

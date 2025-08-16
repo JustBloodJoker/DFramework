@@ -109,6 +109,34 @@ UINT BaseRenderableObject::GetMaterialIndex(FD3DW::Object* obj, const size_t ind
     return (UINT)obj->GetObjectParameters(index).MaterialIndex;
 }
 
+std::pair<dx::XMFLOAT3, float> BaseRenderableObject::GetBoundingSphereFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world) {
+    std::pair<dx::XMFLOAT3, float> ret;
+
+    dx::XMFLOAT3 center;
+    center.x = (desc.ObjectMin.x + desc.ObjectMax.x) * 0.5f;
+    center.y = (desc.ObjectMin.y + desc.ObjectMax.y) * 0.5f;
+    center.z = (desc.ObjectMin.z + desc.ObjectMax.z) * 0.5f;
+
+    dx::XMFLOAT3 extents;
+    extents.x = (desc.ObjectMax.x - desc.ObjectMin.x) * 0.5f;
+    extents.y = (desc.ObjectMax.y - desc.ObjectMin.y) * 0.5f;
+    extents.z = (desc.ObjectMax.z - desc.ObjectMin.z) * 0.5f;
+
+    dx::XMVECTOR vecCenter = dx::XMLoadFloat3(&center);
+    vecCenter = dx::XMVector3Transform(vecCenter, world);
+    dx::XMStoreFloat3(&ret.first, vecCenter);
+
+    dx::XMVECTOR scaleVec;
+    scaleVec = dx::XMVectorSet(extents.x, extents.y, extents.z, 0.0f);
+    scaleVec = dx::XMVector3Transform(scaleVec, world);
+
+    dx::XMFLOAT3 scaledExtents;
+    dx::XMStoreFloat3(&scaledExtents, scaleVec);
+    ret.second = sqrtf(scaledExtents.x * scaledExtents.x + scaledExtents.y * scaledExtents.y + scaledExtents.z * scaledExtents.z);
+
+    return ret;
+}
+
 void BaseRenderableObject::UpdateWorldMatrix() {
     
     dx::XMMATRIX scaleMat = dx::XMMatrixScaling(m_xScaling.x, m_xScaling.y, m_xScaling.z);

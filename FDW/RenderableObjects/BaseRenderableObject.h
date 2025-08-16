@@ -19,7 +19,6 @@ struct BeforeRenderInputData {
     float DT;
     dx::XMMATRIX Projection;
     dx::XMMATRIX View;
-    dx::XMMATRIX AdditionalWorld;
     dx::XMFLOAT3 CameraPosition;
     ID3D12Device* Device;
     ID3D12GraphicsCommandList* CommandList;
@@ -83,7 +82,10 @@ public:
     END_FIELD_REGISTRATION()
 
 protected:
-    void UpdateWorldMatrix();
+    virtual void UpdateWorldMatrix();
+
+protected:
+    std::pair<dx::XMFLOAT3, float> GetBoundingSphereFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world);
 
 protected:
     dx::XMMATRIX m_xWorldMatrix = dx::XMMatrixIdentity();

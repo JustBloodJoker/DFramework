@@ -47,7 +47,6 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandLi
     data.Projection = m_pOwner->GetCurrentProjectionMatrix();
     data.View = m_pOwner->GetCurrentViewMatrix();
     data.CameraPosition = m_pOwner->GetCurrentCameraPosition();
-    data.AdditionalWorld = dx::XMMatrixIdentity();
 
     for (auto& obj : m_vObjects) {
         obj->BeforeRender(data);
@@ -174,16 +173,32 @@ void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsComma
     if ( !objectsForIndirectExecute.empty() ) {
         auto device = m_pOwner->GetDevice();
         std::vector<IndirectMeshRenderableData> datas;
+        std::vector<InstanceData> instanceData;
         
         for (const auto& obj : objectsForIndirectExecute) {
             auto objIndirectDatas = obj->GetDataToExecute();
-            datas.insert(datas.end(), objIndirectDatas.begin(), objIndirectDatas.end());
+            for (auto [data, instance] : objIndirectDatas) {
+
+                datas.push_back(data);
+
+                instance.DrawIndex = (UINT)(datas.size() - 1);
+                instanceData.push_back(instance);
+            }
         }
         
         auto dataSize = (UINT)datas.size();
         m_pIndirectDeferredFirstPassCommandsBuffer->UploadData(device, list, datas.data(), dataSize, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
         
-        
+
+
+
+
+
+
+
+
+
+
         ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
         list->SetDescriptorHeaps(_countof(heaps), heaps);
         list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));

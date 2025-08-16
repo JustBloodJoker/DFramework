@@ -32,7 +32,6 @@ namespace FD3DW
 	{
 		if (!pDevice) return;
 		m_uDescriptorCount = descriptorsCount;
-		CONSOLE_MESSAGE(std::string("RESOURCE PACKER INIT DESCRIPTOR HEAP"));
 		m_pDescriptorHeap = std::make_unique<BufferDescriptorHeap>(descriptorSize, descriptorsCount > 0 ? descriptorsCount : 1U, NodeMask, type, flags, pDevice);
 	}
 
@@ -50,7 +49,6 @@ namespace FD3DW
 
 	void SRV_UAVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("SRV_UAVPacker is adding resource"));
 
 		const auto& desc = resource->GetDesc();
 
@@ -150,7 +148,6 @@ namespace FD3DW
 
 	void SRV_UAVPacker::AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE("SRV_UAVPacker is adding resource");
 
 		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
 		uavDesc.Format = desc.Format;
@@ -195,7 +192,7 @@ namespace FD3DW
 			break;
 
 		default:
-			CONSOLE_MESSAGE("Unsupported UAV dimension!");
+			CONSOLE_ERROR_MESSAGE("Unsupported UAV dimension!");
 			return;
 		}
 
@@ -222,7 +219,6 @@ namespace FD3DW
 
 	void SamplerPacker::AddResource(D3D12_SAMPLER_DESC desc, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("SAMPLERPaker is adding resource"));
 		pDevice->CreateSampler(&desc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 	}
 
@@ -261,7 +257,6 @@ namespace FD3DW
 
 	void CBVPacker::AddResource(ID3D12Resource* resource, UINT sizeInBytes, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("CBVPaker is adding resource"));
 		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 		cbvDesc.BufferLocation = resource->GetGPUVirtualAddress();
 		cbvDesc.SizeInBytes = sizeInBytes;
@@ -280,7 +275,6 @@ namespace FD3DW
 
 	void RTVPacker::AddResource(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC rtvDesc, const size_t index, ID3D12Device* pDevice)
 	{
-		CONSOLE_MESSAGE(std::string("RTVPaker is adding resource"));
 		pDevice->CreateRenderTargetView(resource, &rtvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 
 	}
@@ -298,7 +292,6 @@ namespace FD3DW
 	void DSVPacker::AddResource(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc, const size_t index, ID3D12Device* pDevice)
 	{
 		
-		CONSOLE_MESSAGE(std::string("DSVPaker is adding resource"));
 		pDevice->CreateDepthStencilView(resource, &dsvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 
 	}

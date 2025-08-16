@@ -30,7 +30,7 @@ public:
 	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
 
 	virtual bool IsCanBeIndirectExecuted() override;
-	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
+	virtual std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> GetDataToExecute() override;
 
 	//////////////////////////////////////////////////
 	//////   MATERIAL DATA & TEXTURE GET SET

@@ -81,6 +81,12 @@ private:
     void DoDefferedRender(ID3D12GraphicsCommandList* list, std::vector<BaseRenderableObject*> objectsToRender);
     void InitIndirectDeferredMeshExecution();
 
+
+
+private:
+    void ComputeBVHTree();
+
+
 private:
     void DoDeleteObject(BaseRenderableObject* obj);
 

@@ -30,7 +30,7 @@ void RenderableMeshElement::BeforeRender(const BeforeRenderInputData& data) {
 	MeshMatricesStructure cmb;
 	cmb.Projection = dx::XMMatrixTranspose(data.Projection);
 	cmb.View = dx::XMMatrixTranspose(data.View);
-	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
+	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * m_xParentWorldMatrix);
 	cmb.IsActiveAnimation = m_bIsAnimationPlaying;
 	cmb.CameraPosition = data.CameraPosition;
 
@@ -57,6 +57,10 @@ void RenderableMeshElement::SetBLASBuffer(const FD3DW::AccelerationStructureBuff
 	m_vBLASBuffers.push_back(buffer);
 }
 
+void RenderableMeshElement::SetParentWorldMatrix(dx::XMMATRIX worldMatrix) {
+	m_xParentWorldMatrix = worldMatrix;
+}
+
 void RenderableMeshElement::DeferredRender(ID3D12GraphicsCommandList* list) {
 	//nothing to do
 }
@@ -73,7 +77,7 @@ bool RenderableMeshElement::IsCanBeIndirectExecuted() {
 	return true;
 }
 
-std::vector<IndirectMeshRenderableData> RenderableMeshElement::GetDataToExecute() {
+std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> RenderableMeshElement::GetDataToExecute() {
 	IndirectMeshRenderableData data;
 	data.CBMaterials = m_pMaterialBuffer->GetGPULocation(0);
 	data.CBMatrices = m_pMatricesBuffer->GetGPULocation(0);
@@ -82,7 +86,14 @@ std::vector<IndirectMeshRenderableData> RenderableMeshElement::GetDataToExecute(
 	data.DrawArguments.StartIndexLocation = m_xData.ObjectDescriptor.IndicesOffset;
 	data.DrawArguments.BaseVertexLocation = (INT)m_xData.ObjectDescriptor.VerticesOffset;
 	data.DrawArguments.StartInstanceLocation = 0u;
-	return { data };
+
+
+	InstanceData instanceData;
+
+	auto [sphereCenter, sphereRadius] = GetBoundingSphereFromObjectDesc(m_xData.ObjectDescriptor, m_xWorldMatrix * m_xParentWorldMatrix);
+	instanceData.CenterWS = sphereCenter;
+	instanceData.RadiusWS = sphereRadius;
+	return { {data, instanceData} };
 }
 
 

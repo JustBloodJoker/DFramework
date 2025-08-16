@@ -51,7 +51,7 @@ void RenderableSimpleObject::BeforeRender(const BeforeRenderInputData& data) {
 	MeshMatricesStructure cmb;
 	cmb.Projection = dx::XMMatrixTranspose(data.Projection);
 	cmb.View = dx::XMMatrixTranspose(data.View);
-	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix * data.AdditionalWorld);
+	cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
 	cmb.IsActiveAnimation = false;
 	cmb.CameraPosition = data.CameraPosition;
 
@@ -81,7 +81,7 @@ bool RenderableSimpleObject::IsCanBeIndirectExecuted() {
 	return true;
 }
 
-std::vector<IndirectMeshRenderableData> RenderableSimpleObject::GetDataToExecute() {
+std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> RenderableSimpleObject::GetDataToExecute() {
 	IndirectMeshRenderableData data;
 	data.CBMaterials = m_pMaterialBuffer->GetGPULocation(0);
 	data.CBMatrices = m_pMatricesBuffer->GetGPULocation(0);
@@ -96,7 +96,13 @@ std::vector<IndirectMeshRenderableData> RenderableSimpleObject::GetDataToExecute
 	data.DrawArguments.BaseVertexLocation = (INT)params.VerticesOffset;
 	data.DrawArguments.StartInstanceLocation = 0u;
 
-	return { data };
+	InstanceData instanceData;
+
+	auto [sphereCenter, sphereRadius] = GetBoundingSphereFromObjectDesc(m_pObject->GetObjectParameters(0), m_xWorldMatrix);
+	instanceData.CenterWS = sphereCenter;
+	instanceData.RadiusWS = sphereRadius;
+
+	return { {data,instanceData} };
 }
 
 void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string pathTo, ID3D12Device* device, ID3D12GraphicsCommandList* list) {

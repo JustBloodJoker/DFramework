@@ -40,13 +40,14 @@ public:
 
 
 	virtual bool IsCanBeIndirectExecuted() override;
-	virtual std::vector< IndirectMeshRenderableData> GetDataToExecute() override;
+	virtual std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> GetDataToExecute() override;
 
 	void SetAnimationPlaying(bool isP);
 
 	size_t ElementID();
 	virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
 	void SetBLASBuffer(const FD3DW::AccelerationStructureBuffers& buffer);
+	void SetParentWorldMatrix(dx::XMMATRIX worldMatrix);
 
 	////////////////////////////////////
 	///////    MATERIAL SETTER INFO
@@ -89,6 +90,7 @@ private:
 	///////////
 
 private:
+	dx::XMMATRIX m_xParentWorldMatrix;
 	bool m_bIsAnimationPlaying = false;
 
 };
