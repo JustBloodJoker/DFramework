@@ -7,7 +7,12 @@ namespace FD3DW {
 		m_pDXRDevice = device;
 	}
 
-	bool RTPipelineObject::CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders)
+    bool RTPipelineObject::CreatePSOAfterCopy()
+    {
+        return false;
+    }
+
+    bool RTPipelineObject::CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders)
 	{
         CompileShaders(shaders);
         ExtractRootSignature();

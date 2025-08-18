@@ -445,7 +445,6 @@ namespace FD3DW
 
 	std::unique_ptr<DepthStencilView> D3DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const UINT msaaSampleCount, const D3D12_DSV_FLAGS flags)
 	{
-		CONSOLE_MESSAGE("D3DFW is creating DSV");
 		return std::make_unique<DepthStencilView>(m_pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ msaaSampleCount, m_uQuality }), flags);
 	}
 

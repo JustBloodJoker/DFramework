@@ -26,6 +26,9 @@ public:
 	void UserClose()  override;
 
 	ID3D12GraphicsCommandList4* GetDXRCommandList();
+	FD3DW::DepthStencilView* GetDepthResource();
+	bool IsEnabledPreDepth();
+	void EnablePreDepth(bool in);
 
 public:
 	///////////////////////////////////////////////////
@@ -131,6 +134,7 @@ protected:
 	std::unique_ptr<FD3DW::DXRCommandList> m_pDXRCommandList;
 	ID3D12GraphicsCommandList4* m_pDXRPCML;
 
+	bool m_bIsEnabledPreDepth = false;
 
 protected:
 	//TEST FIELDS

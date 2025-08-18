@@ -45,16 +45,7 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 
 
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
-    vsOut.worldPos = vsOut.pos.xyz;
     vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);
     vsOut.pos = mul(vsOut.pos, objMatrices.ProjectionMatrix);
-    vsOut.texCoord = vsIn.texCoord;
-
-    vsOut.normal = normalize(mul(vsIn.normal, (float3x3)ResultWorldMatrix));
-    vsOut.tangent = normalize(mul(vsIn.tangent, (float3x3)ResultWorldMatrix)); 
-    vsOut.bitangent = normalize(mul(vsIn.bitangent, (float3x3)ResultWorldMatrix));
-    
-    vsOut.instance = Instance;
-
     return vsOut;
 }

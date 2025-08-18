@@ -30,27 +30,32 @@ UINT GetGBuffersNum();
 //////////////////////////////////////////////
 //////		PSO MANAGER GLOBALS
 
-struct PSODescriptor {
-    std::wstring shaderFolderName;
-    FD3DW::GraphicPipelineObjectDesc pipelineDesc;
-};
-
-struct PSORTDescriptor {
-	std::wstring shaderFolderName;
-	FD3DW::RayTracingPipelineConfig rtPSOConfig;
-};
-
-struct PSOComputeDescriptor {
-	std::wstring shaderFolderName;
-};
-
 enum class PSOType {
+	None,
 	DefferedFirstPassDefaultConfig,
+	DefferedFirstPassWithPreDepth,
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 	PostProcessDefaultConfig,
 	RTSoftShadowDefaultConfig,
 	ObjectsCullingDefaultConfig,
+	PreDepthDefaultConfig,
+};
+
+struct BasePSODescriptor {
+	PSOType Parent;
+	std::wstring ShaderFolderName;
+};
+
+struct PSODescriptor : public BasePSODescriptor {
+    FD3DW::GraphicPipelineObjectDesc GraphicsDesc;
+};
+
+struct PSORTDescriptor : public BasePSODescriptor {
+	FD3DW::RayTracingPipelineConfig RTConfig;
+};
+
+struct PSOComputeDescriptor : public BasePSODescriptor {
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors();
@@ -64,6 +69,12 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 //////////////////////////////////////////////
 
 #define BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX 0
+
+////////////////////////////////////////////
+//   PRE DEPTH PASS BINDS
+#define PRE_DEPTH_CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG	0
+#define PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG		1
+////////////////////////////////////////////
 
 ////////////////////////////////////////////
 //   DEFFERED FIRST PASS BINDS

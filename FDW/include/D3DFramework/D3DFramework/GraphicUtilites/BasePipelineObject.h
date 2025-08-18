@@ -29,6 +29,7 @@ namespace FD3DW {
 		void SetIncludeDirectories(const std::vector<std::wstring>& includeDirs);
 		void SetExternalRootSignature(ID3D12RootSignature* externalRootSig);
 
+		virtual bool CreatePSOAfterCopy() = 0;
 		virtual bool CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders) = 0;
 		virtual void Bind(ID3D12GraphicsCommandList* cmdList) = 0;
 		virtual std::unique_ptr<BasePipelineObject> MakeCopy() const = 0;

@@ -69,6 +69,11 @@ void RenderableMeshElement::ForwardRender(ID3D12GraphicsCommandList* list) {
 	//nothing to do
 }
 
+void RenderableMeshElement::PreDepthRender(ID3D12GraphicsCommandList* list) {
+	list->SetGraphicsRootConstantBufferView(PRE_DEPTH_CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG, m_pMatricesBuffer->GetGPULocation(0));
+	list->DrawIndexedInstanced(m_xData.ObjectDescriptor.IndicesCount, 1, m_xData.ObjectDescriptor.IndicesOffset, m_xData.ObjectDescriptor.VerticesOffset, 0);
+}
+
 RenderPass RenderableMeshElement::GetRenderPass() const {
 	return RenderPass::Deferred;
 }

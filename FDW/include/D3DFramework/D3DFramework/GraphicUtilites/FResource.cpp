@@ -270,8 +270,7 @@ namespace FD3DW
                 h = std::max(1u, h >> 1);
             }
         }
-        
-        requiredSize = std::max(requiredSizeFull, requiredSize);
+         
         if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize()<=requiredSize)
         {
             m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(requiredSize), false);

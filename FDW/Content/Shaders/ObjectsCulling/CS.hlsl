@@ -38,7 +38,7 @@ cbuffer CameraCB : register(b0)
 {
     Frustum frustum;
     uint InstanceCount;
-    uint pad0;
+    uint MipLevels;
     uint pad1;
     uint pad2;
 };

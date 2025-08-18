@@ -5,14 +5,10 @@
 namespace FD3DW
 {
 
-	DepthStencilView::DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags)
+	DepthStencilView::DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags, UINT mipsCount)
+        : FResource(pDevice, arrSize, format, width, height, sampleDesc, GetDimensionForDSV(dimension), D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)) ,mipsCount)
 	{
         InitDSV(pDevice, format, dimension, width, height, sampleDesc, arrSize, flags);
-	}
-
-	ID3D12Resource* DepthStencilView::GetDSVResource() const
-	{
-		return m_pDSVTexture->GetResource();
 	}
 
     D3D12_DEPTH_STENCIL_VIEW_DESC DepthStencilView::GetDSVDesc() const
@@ -22,20 +18,43 @@ namespace FD3DW
 
     void DepthStencilView::DepthWrite(ID3D12GraphicsCommandList* pCommandList)
     {
-        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_DEPTH_WRITE);
     }
 
     void DepthStencilView::DepthRead(ID3D12GraphicsCommandList* pCommandList)
     {
-        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_DEPTH_READ);
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_DEPTH_READ);
     }
 
     void DepthStencilView::SRVPass(ID3D12GraphicsCommandList* pCommandList)
     {
-        m_pDSVTexture->ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     }
 
-	void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
+    D3D12_RESOURCE_DIMENSION DepthStencilView::GetDimensionForDSV(D3D12_DSV_DIMENSION dimension)
+    {
+        D3D12_RESOURCE_DIMENSION ret = D3D12_RESOURCE_DIMENSION::D3D12_RESOURCE_DIMENSION_UNKNOWN;
+        switch (dimension)
+        {
+        case D3D12_DSV_DIMENSION_TEXTURE1D:
+        case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
+            ret = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
+            break;
+        case D3D12_DSV_DIMENSION_TEXTURE2D:
+        case D3D12_DSV_DIMENSION_TEXTURE2DMS:
+        case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
+        case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
+            ret = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+            break;
+        default:
+            ret = D3D12_RESOURCE_DIMENSION_UNKNOWN;
+            break;
+        }
+
+        return ret;
+    }
+
+    void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
 	{
         CONSOLE_MESSAGE(std::string("INITING CUSTOM DSV DESC"));
 
@@ -45,33 +64,27 @@ namespace FD3DW
         m_xDSVDesc.Format = format;
         m_xDSVDesc.ViewDimension = dimension;
 
-        D3D12_RESOURCE_DIMENSION textureDimension;
-
         switch (dimension)
         {
         case D3D12_DSV_DIMENSION_TEXTURE1D:
             m_xDSVDesc.Texture1D.MipSlice = 0;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
             m_xDSVDesc.Texture1DArray.MipSlice = 0;
             m_xDSVDesc.Texture1DArray.FirstArraySlice = 0;
             m_xDSVDesc.Texture1DArray.ArraySize = arrSize;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE2D:
             if (sampleDesc.Count == 1)
             {
                 m_xDSVDesc.Texture2D.MipSlice = 0;
-                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
             m_xDSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DMS:
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
 
         case D3D12_DSV_DIMENSION_TEXTURE2DARRAY: 
@@ -80,7 +93,6 @@ namespace FD3DW
                 m_xDSVDesc.Texture2DArray.MipSlice = 0;
                 m_xDSVDesc.Texture2DArray.FirstArraySlice = 0;
                 m_xDSVDesc.Texture2DArray.ArraySize = arrSize;
-                textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 break;
             }
             m_xDSVDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
@@ -88,15 +100,10 @@ namespace FD3DW
         case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
             m_xDSVDesc.Texture2DMSArray.FirstArraySlice = 0;
             m_xDSVDesc.Texture2DMSArray.ArraySize = arrSize;
-            textureDimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             break;
         default:
-            
-            textureDimension = D3D12_RESOURCE_DIMENSION_UNKNOWN;
             break;
         }
-        m_pDSVTexture = std::make_unique<FResource>(pDevice, arrSize, format, width, height, sampleDesc, textureDimension, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES);
-
 	}
 
 }

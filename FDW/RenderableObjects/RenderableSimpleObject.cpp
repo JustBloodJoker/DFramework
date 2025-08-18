@@ -68,6 +68,17 @@ void RenderableSimpleObject::ForwardRender(ID3D12GraphicsCommandList* list) {
 	//nothing to do
 }
 
+void RenderableSimpleObject::PreDepthRender(ID3D12GraphicsCommandList* list) {
+	list->SetGraphicsRootShaderResourceView(PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, GetEmptyStructuredBufferGPUVirtualAddress());
+
+	list->IASetVertexBuffers(0, 1, m_pObject->GetVertexBufferView());
+	list->IASetIndexBuffer(m_pObject->GetIndexBufferView());
+	list->SetGraphicsRootConstantBufferView(PRE_DEPTH_CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG, m_pMatricesBuffer->GetGPULocation(0));
+
+	auto params = m_pObject->GetObjectParameters(0);
+	list->DrawIndexedInstanced(params.IndicesCount, 1, params.IndicesOffset, params.VerticesOffset, 0);
+}
+
 RenderPass RenderableSimpleObject::GetRenderPass() const {
 	return RenderPass::Deferred;
 }

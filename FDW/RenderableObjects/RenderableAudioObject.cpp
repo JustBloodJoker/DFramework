@@ -14,6 +14,8 @@ void RenderableAudioObject::DeferredRender(ID3D12GraphicsCommandList* list) {}
 
 void RenderableAudioObject::ForwardRender(ID3D12GraphicsCommandList* list) {}
 
+void RenderableAudioObject::PreDepthRender(ID3D12GraphicsCommandList* list) {}
+
 RenderPass RenderableAudioObject::GetRenderPass() const {
 	return RenderPass::None;
 }

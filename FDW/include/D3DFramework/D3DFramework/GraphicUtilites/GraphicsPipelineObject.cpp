@@ -3,10 +3,46 @@
 namespace FD3DW {
 	GraphicsPipelineObject::GraphicsPipelineObject(ID3D12Device* device) :BasePipelineObject(device) {}
 
+	bool GraphicsPipelineObject::CreatePSOAfterCopy()
+	{
+		return CreatePSO();
+	}
+
 	bool GraphicsPipelineObject::CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders) {
 		SAFE_ASSERT(HasGraphicsStages(shaders), "Cannot create graphics pipelone object - missing VS shader");
 
 		CompileShaders(shaders);
+		
+		return CreatePSO();
+	}
+	void GraphicsPipelineObject::Bind(ID3D12GraphicsCommandList* cmdList) {
+		cmdList->SetPipelineState(m_pPSO.Get());
+		cmdList->SetGraphicsRootSignature(m_pRootSignature.Get());
+	}
+	std::unique_ptr<BasePipelineObject> GraphicsPipelineObject::MakeCopy() const {
+		if (m_mCompiledShaders.empty()) {
+			CONSOLE_ERROR_MESSAGE("Graphics Pipeline Object copy failed: shaders not compiled");
+			return nullptr;
+		}
+
+		std::unique_ptr<GraphicsPipelineObject> copy = std::make_unique<GraphicsPipelineObject>(m_pDevice);
+		copy->m_xConfig = m_xConfig;
+		copy->m_mCompiledShaders = this->m_mCompiledShaders;
+		if (m_bExternalRootSig) copy->SetExternalRootSignature(m_pRootSignature.Get());
+
+		return copy;
+	}
+
+	void GraphicsPipelineObject::SetConfig(const GraphicPipelineObjectDesc& config) {
+		m_xConfig = config;
+	}
+	
+	GraphicPipelineObjectDesc GraphicsPipelineObject::GetConfig() const {
+		return m_xConfig;
+	}
+
+	bool GraphicsPipelineObject::CreatePSO()
+	{
 		ExtractRootSignature();
 
 		if (m_mCompiledShaders.count(CompileFileType::VS)) {
@@ -44,31 +80,6 @@ namespace FD3DW {
 		HRESULT_ASSERT(m_pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(m_pPSO.ReleaseAndGetAddressOf())), "CreateGraphicsPipelineState failed");
 
 		return true;
-	}
-	void GraphicsPipelineObject::Bind(ID3D12GraphicsCommandList* cmdList) {
-		cmdList->SetPipelineState(m_pPSO.Get());
-		cmdList->SetGraphicsRootSignature(m_pRootSignature.Get());
-	}
-	std::unique_ptr<BasePipelineObject> GraphicsPipelineObject::MakeCopy() const {
-		if (m_mCompiledShaders.empty()) {
-			CONSOLE_ERROR_MESSAGE("Graphics Pipeline Object copy failed: shaders not compiled");
-			return nullptr;
-		}
-
-		std::unique_ptr<GraphicsPipelineObject> copy = std::make_unique<GraphicsPipelineObject>(m_pDevice);
-		copy->m_xConfig = m_xConfig;
-		copy->m_mCompiledShaders = this->m_mCompiledShaders;
-		if (m_bExternalRootSig) copy->SetExternalRootSignature(m_pRootSignature.Get());
-
-		return copy;
-	}
-
-	void GraphicsPipelineObject::SetConfig(const GraphicPipelineObjectDesc& config) {
-		m_xConfig = config;
-	}
-	
-	GraphicPipelineObjectDesc GraphicsPipelineObject::GetConfig() const {
-		return m_xConfig;
 	}
 
 

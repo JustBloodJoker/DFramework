@@ -52,6 +52,10 @@ void RenderableSkyboxObject::ForwardRender(ID3D12GraphicsCommandList* list) {
 	list->DrawIndexedInstanced( GetIndexSize(cubeptr,0), 1, GetIndexStartPos(cubeptr, 0), GetVertexStartPos(cubeptr, 0), 0);
 }
 
+void RenderableSkyboxObject::PreDepthRender(ID3D12GraphicsCommandList* list) {
+	//nothing to do
+}
+
 RenderPass RenderableSkyboxObject::GetRenderPass() const {
 	return RenderPass::Forward;
 }

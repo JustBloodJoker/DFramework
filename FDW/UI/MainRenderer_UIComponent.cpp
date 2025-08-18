@@ -224,6 +224,11 @@ void MainRenderer_UIComponent::DrawEditorUtilitiesTab() {
         m_pOwner->SetMeshCullingType(static_cast<CullingType>(currentIndex));
     }
 
+    auto bb = m_pOwner->IsEnabledPreDepth();
+    if (ImGui::Checkbox("Enable Pre Depth pass", &bb)) {
+        m_pOwner->EnablePreDepth(bb);
+    }
+
     ImGui::SeparatorText("Scene I/O");
 
     if (ImGui::Button("Save Scene")) {

@@ -7,7 +7,7 @@ namespace FD3DW
 {
 
 
-	class DepthStencilView
+	class DepthStencilView : public FD3DW::FResource
 	{
 
 	public:
@@ -15,10 +15,10 @@ namespace FD3DW
 		DepthStencilView() = delete;
 		DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
 			const UINT width, const UINT height,
-			const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+			const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE,
+			UINT mipsCount=1u);
 		~DepthStencilView()=default;
 
-		ID3D12Resource* GetDSVResource() const;
 		D3D12_DEPTH_STENCIL_VIEW_DESC GetDSVDesc() const;
 
 		void DepthWrite(ID3D12GraphicsCommandList* pCommandList);
@@ -27,11 +27,12 @@ namespace FD3DW
 
 	private:
 
+		D3D12_RESOURCE_DIMENSION GetDimensionForDSV(D3D12_DSV_DIMENSION dimension);
+
 		void InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension,
 			const UINT width, const UINT height,
 			const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags);
 
-		std::unique_ptr<FResource> m_pDSVTexture;
 		D3D12_DEPTH_STENCIL_VIEW_DESC m_xDSVDesc;
 	};
 

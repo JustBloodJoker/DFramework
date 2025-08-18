@@ -75,6 +75,10 @@ void RenderableMesh::ForwardRender(ID3D12GraphicsCommandList* list) {
 	RenderObjectsInPass(RenderPass::Forward, list);
 }
 
+void RenderableMesh::PreDepthRender(ID3D12GraphicsCommandList* list) {
+	RenderObjectsInPass(RenderPass::PreDepth, list);
+}
+
 RenderPass RenderableMesh::GetRenderPass() const {
 	return RenderPass::DeferredAndForward;
 }
@@ -187,13 +191,19 @@ void RenderableMesh::RenderObjectsInPass(RenderPass pass, ID3D12GraphicsCommandL
 	if (pass==RenderPass::Forward) return; //forward not impl
 	
 	auto gpuStructureBufferBonesAdress = m_pStructureBufferBones ? m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
-	list->SetGraphicsRootShaderResourceView(ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, gpuStructureBufferBonesAdress);
+	auto animsPosInRoot = pass == RenderPass::PreDepth ? PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG : ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG;
+	list->SetGraphicsRootShaderResourceView(animsPosInRoot, gpuStructureBufferBonesAdress);
 
 	list->IASetVertexBuffers(0, 1, m_pScene->GetVertexBufferView());
 	list->IASetIndexBuffer(m_pScene->GetIndexBufferView());
 
 	for (const auto& elem : m_vRenderableElements) {
-		if (elem->IsCanRenderInPass(pass)) {
+		if (pass == RenderPass::PreDepth) 
+		{
+			elem->PreDepthRender(list);
+		} 
+		else if (elem->IsCanRenderInPass(pass))
+		{
 			elem->IsCanRenderInPass(RenderPass::Deferred) ? elem->DeferredRender(list) : elem->ForwardRender(list);
 		}
 	}

@@ -19,7 +19,7 @@
 enum class CullingType {
     None,
     CPUFrustum,
-    GPUFrustum
+    GPUCulling
 };
 
 class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
@@ -46,6 +46,7 @@ public:
     std::vector<BaseRenderableObject*> GetRenderableObjects() const;
 
     void BeforeRender(ID3D12GraphicsCommandList* cmdList);
+    void PreDepthRender(ID3D12GraphicsCommandList* list);
     void DeferredRender(ID3D12GraphicsCommandList* list);
     void ForwardRender(ID3D12GraphicsCommandList* list);
     void AfterRender();

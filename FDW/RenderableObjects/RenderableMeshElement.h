@@ -36,6 +36,7 @@ public:
 	virtual void BeforeRender(const BeforeRenderInputData& data) override;
 	virtual void DeferredRender(ID3D12GraphicsCommandList* list) override;
 	virtual void ForwardRender(ID3D12GraphicsCommandList* list) override;
+	virtual void PreDepthRender(ID3D12GraphicsCommandList* list) override;
 	virtual RenderPass GetRenderPass() const override;
 
 

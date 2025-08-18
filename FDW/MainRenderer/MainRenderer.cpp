@@ -24,12 +24,12 @@ void MainRenderer::UserInit()
 
 	InitMainRendererComponents();
 
-
 	SetVSync(true);
 
 	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	
 	m_pDSVPack = CreateDSVPack(1u);
-	m_pDSVPack->PushResource(m_pDSV->GetDSVResource(), m_pDSV->GetDSVDesc(), device);
+	m_pDSVPack->PushResource(m_pDSV->GetResource(), m_pDSV->GetDSVDesc(), device);
 
 	auto wndSettings = GetMainWNDSettings();
 
@@ -93,8 +93,26 @@ void MainRenderer::UserLoop()
 			m_pShadowsComponent->BeforeGBufferPass();
 		}
 	}
-	///
+	///	
 	///////////////////////////
+
+	///////////////////////
+	//	PRE DEPTH PASS
+	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	{
+		if (m_bIsEnabledPreDepth)
+		{
+			PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(m_pPCML);
+			m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
+			m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
+			m_pPCML->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+			m_pRenderableObjectsManager->PreDepthRender(m_pPCML);
+		}
+	}
+	///////////////////////
 
 
 	///////////////////////
@@ -106,10 +124,13 @@ void MainRenderer::UserLoop()
 			gbuffer->StartDraw(m_pPCML);
 		}
 
+		//PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(m_pPCML);
+		PSOManager::GetInstance()->GetPSOObject(m_bIsEnabledPreDepth ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(m_pPCML);
+		m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
 		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
 
-		m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		for (UINT i = 0; i < gBuffersCount; ++i) {
 			m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
 		}
@@ -241,6 +262,18 @@ void MainRenderer::UserClose()
 ID3D12GraphicsCommandList4* MainRenderer::GetDXRCommandList()
 {
 	return m_pDXRPCML;
+}
+
+FD3DW::DepthStencilView* MainRenderer::GetDepthResource() {
+	return m_pDSV.get();
+}
+
+bool MainRenderer::IsEnabledPreDepth() {
+	return m_bIsEnabledPreDepth;
+}
+
+void MainRenderer::EnablePreDepth(bool in) {
+	m_bIsEnabledPreDepth = in;
 }
 
 dx::XMMATRIX MainRenderer::GetCurrentProjectionMatrix() const {

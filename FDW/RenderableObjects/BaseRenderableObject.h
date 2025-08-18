@@ -12,6 +12,7 @@ enum RenderPass
     Deferred = 0x1,
     Forward = 0x2,
     DeferredAndForward = 0x3,
+    PreDepth = 0x4,
 };
 
 struct BeforeRenderInputData {
@@ -40,6 +41,7 @@ public:
     virtual void BeforeRender(const BeforeRenderInputData& data) = 0;
     virtual void DeferredRender(ID3D12GraphicsCommandList* list) = 0;
     virtual void ForwardRender(ID3D12GraphicsCommandList* list) = 0;
+    virtual void PreDepthRender(ID3D12GraphicsCommandList* list) = 0;
     virtual RenderPass GetRenderPass() const = 0;
     virtual void InitBLASBuffers(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) = 0;
 

@@ -6,6 +6,10 @@ namespace FD3DW {
 
 ComputePipelineObject::ComputePipelineObject(ID3D12Device* device) : BasePipelineObject(device) {}
 
+bool ComputePipelineObject::CreatePSOAfterCopy(){
+	return false;
+}
+
 bool ComputePipelineObject::CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders) {
 	
 	SAFE_ASSERT(HasComputeStage(shaders), "Compute pipeline object doesn't have CS shader");

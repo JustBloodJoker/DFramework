@@ -53,6 +53,13 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandLi
     }
 }
 
+void MainRenderer_RenderableObjectsManager::PreDepthRender(ID3D12GraphicsCommandList* list)
+{
+    for (auto& obj : m_vObjects) {
+        obj->PreDepthRender(list);
+    }
+}
+
 void MainRenderer_RenderableObjectsManager::DeferredRender(ID3D12GraphicsCommandList* list) {
     std::vector<BaseRenderableObject*> objectsToRender;
     for (auto& obj : m_vObjects) {
@@ -193,22 +200,22 @@ void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsComma
         auto dataSize = (UINT)datas.size();
         m_pIndirectDeferredFirstPassCommandsBuffer->UploadData(device, list, datas.data(), dataSize, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         
-        if (m_xCullingType==CullingType::GPUFrustum) {
+        if (m_xCullingType==CullingType::GPUCulling) {
             InputObjectCullingProcessData data;
             data.CommandList = list;
             data.Device = device;
+            data.DepthResource = m_pOwner->GetDepthResource();
             data.InputCommandsBuffer = m_pIndirectDeferredFirstPassCommandsBuffer.get();
             data.Instances = instanceData;
             data.CameraFrustum = frustum;
             m_pObjectCulling->ProcessGPUCulling(data);
         }
 
-        PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
         ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
         list->SetDescriptorHeaps(_countof(heaps), heaps);
         list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
 
-        if (m_xCullingType == CullingType::GPUFrustum) {
+        if (m_xCullingType == CullingType::GPUCulling) {
             auto cullingRes = m_pObjectCulling->GetResultBuffer();
             cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
             list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pObjectCulling->CountBufferOffset((UINT)instanceData.size()));

@@ -14,7 +14,7 @@ bool ObjectCulling::CheckFrustumCulling(CameraFrustum fr, const InstanceData& da
 void ObjectCulling::ProcessGPUCulling(const InputObjectCullingProcessData& data) {
 	auto sizeInstances = (UINT)data.Instances.size();
 
-	LoadDataToCameraBuffer(data.CameraFrustum, sizeInstances);
+	LoadDataToCameraBuffer(data.CameraFrustum, sizeInstances, data.DepthResource);
 	LoadDataToInstancesBuffer(data.Device, data.CommandList, data.Instances);
 	RecreateOutputCommandBuffer(data.Device, data.CommandList, sizeInstances);
 
@@ -68,10 +68,11 @@ void ObjectCulling::LoadDataToInstancesBuffer(ID3D12Device* device, ID3D12Graphi
 	m_pInstancesDataBuffer->UploadData(device, list, data.data(), (UINT)data.size(), D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 }
 
-void ObjectCulling::LoadDataToCameraBuffer(CameraFrustum frustum, UINT instancesCount) {
+void ObjectCulling::LoadDataToCameraBuffer(CameraFrustum frustum, UINT instancesCount, FD3DW::DepthStencilView* resource) {
 	CullingCameraStructure ccs;
 	ccs.CameraPlanes = frustum.GetPlanes();
 	ccs.InstancesCount = instancesCount;
+	ccs.MipLevels = resource ? resource->GetResource()->GetDesc().MipLevels : -1;
 	m_pCullingCameraBuffer->CpyData(0, ccs);
 }
 

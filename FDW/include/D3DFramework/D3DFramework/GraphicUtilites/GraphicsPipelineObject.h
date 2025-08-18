@@ -20,12 +20,16 @@ namespace FD3DW {
 	public:
 		GraphicsPipelineObject(ID3D12Device* device);
 
+		virtual bool CreatePSOAfterCopy() override;
 		bool CreatePSO(const std::unordered_map<CompileFileType, CompileDesc>& shaders) override;
 		void Bind(ID3D12GraphicsCommandList* cmdList) override;
 		std::unique_ptr<BasePipelineObject> MakeCopy() const override;
 
 		void SetConfig(const GraphicPipelineObjectDesc& config);
 		GraphicPipelineObjectDesc GetConfig() const;
+
+	private:
+		bool CreatePSO();
 
 	private:
 		std::vector<D3D12_INPUT_ELEMENT_DESC> ReflectInputLayout(IDxcBlob* blob);

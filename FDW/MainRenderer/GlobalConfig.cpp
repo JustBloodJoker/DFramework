@@ -38,8 +38,8 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
     CD3DX12_DEPTH_STENCIL_DESC dsvFirstDefPassDesc;
     dsvFirstDefPassDesc.DepthEnable = true;
     dsvFirstDefPassDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    dsvFirstDefPassDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-    dsvFirstDefPassDesc.StencilEnable = true;
+    dsvFirstDefPassDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    dsvFirstDefPassDesc.StencilEnable = false;
     dsvFirstDefPassDesc.StencilReadMask = 0xFF;
     dsvFirstDefPassDesc.StencilWriteMask = 0xFF;
     dsvFirstDefPassDesc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
@@ -68,6 +68,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
         {
             PSOType::DefferedFirstPassDefaultConfig,
             {
+                PSOType::None,
                 L"DefferedFirstPass",
                 [rasterizerDesc, dsvFirstDefPassDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
@@ -85,8 +86,51 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             }
         },
         {
+            PSOType::DefferedFirstPassWithPreDepth,
+            {
+                PSOType::DefferedFirstPassDefaultConfig,
+                L"DefferedFirstPass",
+                [rasterizerDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
+                    for (UINT i = 0; i < desc.NumRenderTargets; ++i) {
+                        desc.RTVFormats[i] = s_sGBuffersData.GBuffersFormats[i];
+                    }
+                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    CD3DX12_DEPTH_STENCIL_DESC dsvFirstPassWithPre(D3D12_DEFAULT);
+                    dsvFirstPassWithPre.DepthEnable = true;
+                    dsvFirstPassWithPre.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+                    dsvFirstPassWithPre.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+                    dsvFirstPassWithPre.StencilEnable = false;
+                    desc.DepthStencilState = dsvFirstPassWithPre;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::PreDepthDefaultConfig,
+            {
+                PSOType::None,
+                L"PreDepth",
+                [rasterizerDesc, dsvFirstDefPassDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 0;
+                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.DepthStencilState = dsvFirstDefPassDesc;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
+        },
+        {
             PSOType::DefferedSecondPassDefaultConfig,
             {
+                PSOType::None,
                 L"DefferedSecondPass",
                 [rasterizerDesc, secondPassDSVDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
@@ -103,6 +147,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
         {
             PSOType::SimpleSkyboxDefaultConfig,
             {
+                PSOType::None,
                 L"SimpleSkybox",
                 [skyboxRasterizerDesc, skyboxDepthDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
@@ -119,6 +164,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
         {
             PSOType::PostProcessDefaultConfig,
             {
+                PSOType::None,
                 L"PostProcess",
                 [dsvPostProcessDesc, skyboxRasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
@@ -142,6 +188,7 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
         {
             PSOType::RTSoftShadowDefaultConfig,
             {
+                PSOType::None,
                 L"RTSoftShadow",
                 [] {
                     FD3DW::RayTracingPipelineConfig config;
@@ -167,12 +214,13 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
 
 const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptors() {
     static const std::unordered_map<PSOType, PSOComputeDescriptor> descriptors = {
-         {
-             PSOType::ObjectsCullingDefaultConfig,
-             {
-                 L"ObjectsCulling"
-             }
-         }
+        {
+            PSOType::ObjectsCullingDefaultConfig,
+            {
+                PSOType::None,
+                L"ObjectsCulling"
+            }
+        }
     };
     return descriptors;
 }
