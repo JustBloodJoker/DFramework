@@ -21,7 +21,7 @@ void RenderableMesh::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list)
 		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
 			if ( mat->IsHaveTexture(FD3DW::TextureType(i) ) )
 			{
-				cbData.LoadedTexture[i] = GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
+				cbData.LoadedTexture[i] = (int)GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
 			}
 			else {
 				cbData.LoadedTexture[i] = -1;

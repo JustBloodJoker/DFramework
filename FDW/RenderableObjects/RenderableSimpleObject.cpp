@@ -98,9 +98,9 @@ std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> RenderableSimpl
 
 	InstanceData instanceData;
 
-	auto [sphereCenter, sphereRadius] = GetBoundingSphereFromObjectDesc(m_pObject->GetObjectParameters(0), m_xWorldMatrix);
-	instanceData.CenterWS = sphereCenter;
-	instanceData.RadiusWS = sphereRadius;
+	auto [min, max] = GetBoundingBoxFromObjectDesc(m_pObject->GetObjectParameters(0), m_xWorldMatrix);
+	instanceData.MinP = min;
+	instanceData.MaxP = max;
 
 	return { {data,instanceData} };
 }
@@ -109,7 +109,7 @@ void RenderableSimpleObject::SetupTexture(FD3DW::TextureType type, std::string p
 	m_pMaterial->SetTexture(pathTo, type, device, list);
 	
 	m_mPathToTextures[type] = pathTo;
-	m_xMaterialCBufferData.LoadedTexture[type] = GlobalTextureHeap::GetInstance()->AddTexture( m_pMaterial->GetTexture(type), device);
+	m_xMaterialCBufferData.LoadedTexture[type] = (int)GlobalTextureHeap::GetInstance()->AddTexture( m_pMaterial->GetTexture(type), device);
 	m_xMaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
 	
 	NeedUpdateMaterials();
@@ -134,7 +134,7 @@ ID3D12Resource* RenderableSimpleObject::GetTexture(FD3DW::TextureType type) {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE RenderableSimpleObject::GetTextureSRV(FD3DW::TextureType type) {
-	return GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle( GlobalTextureHeap::GetInstance()->GetIndex( m_pMaterial->GetTexture(type).get() ) );
+	return GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle( (UINT)GlobalTextureHeap::GetInstance()->GetIndex( m_pMaterial->GetTexture(type).get() ) );
 }
 
 void RenderableSimpleObject::BeforeRenderMaterialsUpdate() {

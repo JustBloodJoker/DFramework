@@ -38,6 +38,7 @@ public:
 	float GetCameraSpeed();
 	void SetCameraSpeed(float speed);
 	void SetDefaultPosition();
+	CameraFrustum GetCameraFrustum();
 
 	//RENDERABLE OBJECTS MANAGER
 	std::vector<BaseRenderableObject*> GetRenderableObjects() const;
@@ -50,6 +51,8 @@ public:
 	void AddSimpleSphere();
 	void RemoveObject(BaseRenderableObject* obj);
 	void RemoveAllObjects();
+	void SetMeshCullingType(CullingType in);
+	CullingType GetMeshCullingType();
 	FD3DW::AccelerationStructureBuffers GetTLAS(ID3D12GraphicsCommandList4* list);
 
 

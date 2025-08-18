@@ -13,23 +13,13 @@
 #include <RenderableObjects/RenderableSimpleSphere.h>
 #include <RenderableObjects/RenderableSkyboxObject.h>
 #include <RenderableObjects/RenderableAudioObject.h>
+#include <RenderableObjects/ObjectsCulling/ObjectCulling.h>
 
-template<typename TObject, typename = void>
-struct RenderableType;
 
-template<typename TObject>
-struct RenderableType< TObject, std::enable_if_t<std::is_base_of_v<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>, TObject>> > {
-    using type = RenderableSimpleObject;
-};
-
-template<>
-struct RenderableType<FD3DW::Scene> {
-    using type = RenderableMesh;
-};
-
-template<>
-struct RenderableType<FD3DW::Audio> {
-    using type = RenderableAudioObject;
+enum class CullingType {
+    None,
+    CPUFrustum,
+    GPUFrustum
 };
 
 class MainRenderer_RenderableObjectsManager : public MainRendererComponent {
@@ -69,6 +59,11 @@ public:
 
     RenderableSkyboxObject* FindSkyboxObject();
 
+    void SetMeshCullingType(CullingType in);
+    CullingType GetMeshCullingType();
+
+public:
+
     BEGIN_FIELD_REGISTRATION(MainRenderer_RenderableObjectsManager, MainRendererComponent)
         REGISTER_FIELD(m_vObjects)
     END_FIELD_REGISTRATION()
@@ -80,12 +75,6 @@ private:
 private:
     void DoDefferedRender(ID3D12GraphicsCommandList* list, std::vector<BaseRenderableObject*> objectsToRender);
     void InitIndirectDeferredMeshExecution();
-
-
-
-private:
-    void ComputeBVHTree();
-
 
 private:
     void DoDeleteObject(BaseRenderableObject* obj);
@@ -102,4 +91,7 @@ private:
     //Indirect data
     wrl::ComPtr<ID3D12CommandSignature> m_pIndirectDeferredFirstPassCommandSignature = nullptr;
     std::unique_ptr<FD3DW::StructuredBuffer> m_pIndirectDeferredFirstPassCommandsBuffer = nullptr;
+
+    CullingType m_xCullingType = CullingType::None;
+    std::unique_ptr<ObjectCulling> m_pObjectCulling = nullptr;
 };

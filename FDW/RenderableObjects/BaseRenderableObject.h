@@ -86,6 +86,7 @@ protected:
 
 protected:
     std::pair<dx::XMFLOAT3, float> GetBoundingSphereFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world);
+    std::pair<dx::XMFLOAT3, dx::XMFLOAT3> GetBoundingBoxFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world);
 
 protected:
     dx::XMMATRIX m_xWorldMatrix = dx::XMMatrixIdentity();

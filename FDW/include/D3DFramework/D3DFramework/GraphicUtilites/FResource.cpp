@@ -229,7 +229,15 @@ namespace FD3DW
 
         size_t expectedSubresources = static_cast<size_t>(mipLevels) * arrSize;
 
-        UINT64 totalBytes = GetRequiredIntermediateSize(uresource, 0, UINT(expectedSubresources));
+        UINT64 requiredSize = 0;
+        UINT64 requiredSizeFull = 0;
+        UINT numSubresources = mipLevels * arrSize;
+
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(numSubresources);
+        std::vector<UINT> numRows(numSubresources);
+        std::vector<UINT64> rowSizes(numSubresources);
+
+        pDevice->GetCopyableFootprints(&desc,0,numSubresources,0,layouts.data(),numRows.data(),rowSizes.data(),&requiredSize);
 
         std::vector<D3D12_SUBRESOURCE_DATA> subResData;
         subResData.reserve(expectedSubresources);
@@ -245,23 +253,28 @@ namespace FD3DW
             {
                 UINT subresourceIndex = mipIdx + arrayIdx * mipLevels;
 
+                const auto& footprint = layouts[subresourceIndex];
+
+
                 D3D12_SUBRESOURCE_DATA textureData = {};
                 textureData.pData = ptrData;
-                textureData.RowPitch = w * GetFormatSizeInBytes(desc.Format);
-                textureData.SlicePitch = textureData.RowPitch * h;
+                textureData.RowPitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch);
+                textureData.SlicePitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch) * numRows[subresourceIndex];
+                requiredSizeFull += textureData.SlicePitch;
 
                 subResData[subresourceIndex] = textureData;
 
-                ptrData += textureData.SlicePitch;
+                ptrData += rowSizes[subresourceIndex] * numRows[subresourceIndex];
                
                 w = std::max(1u, w >> 1);
                 h = std::max(1u, h >> 1);
             }
         }
         
-        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize()!=totalBytes)
+        requiredSize = std::max(requiredSizeFull, requiredSize);
+        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize()<=requiredSize)
         {
-            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(totalBytes), false);
+            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(requiredSize), false);
         }
 
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);

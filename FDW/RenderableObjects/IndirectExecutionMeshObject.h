@@ -4,14 +4,9 @@
 #include <RenderableObjects/IndirectMeshRenderableData.h>
 #include <RenderableObjects/MeshMatricesStructure.h>
 #include <RenderableObjects/MeshMaterialStructure.h>
+#include <RenderableObjects/ObjectsCulling/InstanceData.h>
 
 
-struct InstanceData {
-	dx::XMFLOAT3 CenterWS;
-	float RadiusWS;
-	UINT DrawIndex;
-	UINT Pad[3];
-};
 
 class IndirectExecutionMeshObject {
 public:

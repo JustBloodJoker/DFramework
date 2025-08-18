@@ -40,16 +40,22 @@ struct PSORTDescriptor {
 	FD3DW::RayTracingPipelineConfig rtPSOConfig;
 };
 
+struct PSOComputeDescriptor {
+	std::wstring shaderFolderName;
+};
+
 enum class PSOType {
 	DefferedFirstPassDefaultConfig,
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 	PostProcessDefaultConfig,
 	RTSoftShadowDefaultConfig,
+	ObjectsCullingDefaultConfig,
 };
 
 const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors();
 const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors();
+const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptors();
 const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>>& GetKnownShadersData();
 
 #define SHADERS_DEFAULT_INCLUDE_PATH L"Content/Shaders/DefaultInclude"
@@ -72,6 +78,16 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define DEFFERED_GBUFFERS_POS_IN_ROOT_SIG						0
 #define LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG					1
 #define LIGHTS_BUFFER_POS_IN_ROOT_SIG							2
+/////////////////////////////////////////////
+
+/////////////////////////////////////////////
+//////		OBJECTS CULLING COMPUTE PASS
+#define CULLING_THREAD_GROUP_SIZE 64
+
+#define CULLING_CONSTANT_BUFFER_VIEW_POS_IN_ROOT_SIG			0
+#define CULLING_SRV_BUFFER_INSTANCES_DATA_POS_IN_ROOT_SIG		1
+#define CULLING_SRV_BUFFER_INPUT_COMMANDS_POS_IN_ROOT_SIG		2
+#define CULLING_UAV_BUFFER_OUTPUT_COMMANDS_POS_IN_ROOT_SIG		3
 /////////////////////////////////////////////
 
 

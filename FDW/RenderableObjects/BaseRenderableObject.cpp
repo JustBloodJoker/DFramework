@@ -137,6 +137,48 @@ std::pair<dx::XMFLOAT3, float> BaseRenderableObject::GetBoundingSphereFromObject
     return ret;
 }
 
+std::pair<dx::XMFLOAT3, dx::XMFLOAT3> BaseRenderableObject::GetBoundingBoxFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world) {
+    std::pair<dx::XMFLOAT3, dx::XMFLOAT3> ret;
+
+    dx::XMFLOAT3 localMin = desc.ObjectMin;
+    dx::XMFLOAT3 localMax = desc.ObjectMax;
+
+    dx::XMFLOAT3 corners[8] = {
+        { localMin.x, localMin.y, localMin.z },
+        { localMax.x, localMin.y, localMin.z },
+        { localMin.x, localMax.y, localMin.z },
+        { localMax.x, localMax.y, localMin.z },
+        { localMin.x, localMin.y, localMax.z },
+        { localMax.x, localMin.y, localMax.z },
+        { localMin.x, localMax.y, localMax.z },
+        { localMax.x, localMax.y, localMax.z }
+    };
+
+    dx::XMFLOAT3 transformed[8];
+    for (int i = 0; i < 8; i++) {
+        dx::XMVECTOR v = dx::XMLoadFloat3(&corners[i]);
+        v = dx::XMVector3TransformCoord(v, world);
+        dx::XMStoreFloat3(&transformed[i], v);
+    }
+
+    dx::XMFLOAT3 worldMin = transformed[0];
+    dx::XMFLOAT3 worldMax = transformed[0];
+
+    for (int i = 1; i < 8; i++) {
+        worldMin.x = std::min(worldMin.x, transformed[i].x);
+        worldMin.y = std::min(worldMin.y, transformed[i].y);
+        worldMin.z = std::min(worldMin.z, transformed[i].z);
+
+        worldMax.x = std::max(worldMax.x, transformed[i].x);
+        worldMax.y = std::max(worldMax.y, transformed[i].y);
+        worldMax.z = std::max(worldMax.z, transformed[i].z);
+    }
+
+    ret.first = worldMin;
+    ret.second = worldMax;
+    return ret;
+}
+
 void BaseRenderableObject::UpdateWorldMatrix() {
     
     dx::XMMATRIX scaleMat = dx::XMMatrixScaling(m_xScaling.x, m_xScaling.y, m_xScaling.z);

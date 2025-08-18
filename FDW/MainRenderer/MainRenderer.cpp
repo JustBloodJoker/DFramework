@@ -267,6 +267,9 @@ void MainRenderer::SetDefaultPosition() {
 	m_pCameraComponent->ResetPosition();
 }
 
+CameraFrustum MainRenderer::GetCameraFrustum() {
+	return m_pCameraComponent->GetCameraFrustum();
+}
 
 std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 	return m_pRenderableObjectsManager->GetRenderableObjects();
@@ -323,6 +326,14 @@ void MainRenderer::RemoveAllObjects() {
 	for (const auto obj : objs) {
 		RemoveObject(obj);
 	}
+}
+
+void MainRenderer::SetMeshCullingType(CullingType in) {
+	m_pRenderableObjectsManager->SetMeshCullingType(in);
+}
+
+CullingType MainRenderer::GetMeshCullingType() {
+	return m_pRenderableObjectsManager->GetMeshCullingType();
 }
 
 FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS(ID3D12GraphicsCommandList4* list)

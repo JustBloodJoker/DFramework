@@ -165,6 +165,18 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
     return descriptors;
 }
 
+const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptors() {
+    static const std::unordered_map<PSOType, PSOComputeDescriptor> descriptors = {
+         {
+             PSOType::ObjectsCullingDefaultConfig,
+             {
+                 L"ObjectsCulling"
+             }
+         }
+    };
+    return descriptors;
+}
+
 const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>>& GetKnownShadersData()
 {
     static const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, std::wstring>> s_mKnownShaders = {

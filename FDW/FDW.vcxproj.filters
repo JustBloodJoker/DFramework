@@ -25,6 +25,9 @@
     <Filter Include="Lights">
       <UniqueIdentifier>{640379cf-94af-44b2-a5b7-8aa0711dc627}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderableObjects\ObjectsCulling">
+      <UniqueIdentifier>{298a9949-1529-4d78-ba3d-e983bf3ef135}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -126,6 +129,15 @@
     <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
+    <ClCompile Include="RenderableObjects\ObjectsCulling\BVHBuilder.cpp">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera\CameraFrustum.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -220,6 +232,21 @@
     </ClInclude>
     <ClInclude Include="MainRenderer\GlobalTextureHeap.h">
       <Filter>mainRenderer</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\ObjectsCulling\BVHBuilder.h">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\ObjectsCulling\InstanceData.h">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h">
+      <Filter>RenderableObjects\ObjectsCulling</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera\CameraFrustum.h">
+      <Filter>Camera</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

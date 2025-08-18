@@ -2,7 +2,7 @@
 
 namespace FD3DW {
 
-StructuredBuffer::StructuredBuffer(ID3D12Device* pDevice, const UINT count, bool isDynamicScaled, UINT elemSizeInBytes) :
+StructuredBuffer::StructuredBuffer(ID3D12Device* pDevice, const UINT count, bool isDynamicScaled, UINT elemSizeInBytes, D3D12_RESOURCE_FLAGS flags, D3D12_HEAP_TYPE heapType) :
 	FResource(
 		pDevice,
 		1u,
@@ -11,16 +11,19 @@ StructuredBuffer::StructuredBuffer(ID3D12Device* pDevice, const UINT count, bool
 		1,
 		DXGI_SAMPLE_DESC({ 1, 0 }),
 		D3D12_RESOURCE_DIMENSION_BUFFER,
-		D3D12_RESOURCE_FLAG_NONE,
+		flags,
 		D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-		D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-		&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+		(heapType == D3D12_HEAP_TYPE_DEFAULT) ? D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES : D3D12_HEAP_FLAG_NONE,
+		&keep(CD3DX12_HEAP_PROPERTIES(heapType)),
 		1) 
 {
+
 	m_bIsDynamicScaled = isDynamicScaled;
 	m_uSize = count;
 	m_uCapacity = count;
 	m_iElemSizeInBytes = elemSizeInBytes;
+	m_xResourceFlags = flags;
+	m_xHeapType = heapType;
 }
 
 void StructuredBuffer::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT num, D3D12_RESOURCE_STATES state) {
@@ -39,6 +42,8 @@ void StructuredBuffer::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandLi
 	}
 
 	m_uSize = num;
+	if (m_uSize < 1) return;
+
 	FResource::UploadData(pDevice, pCommandList, pData, state, false);
 
 
@@ -61,9 +66,11 @@ void StructuredBuffer::UploadRegion(ID3D12Device* pDevice, ID3D12GraphicsCommand
 	}
 
 	m_uSize = std::max(m_uSize, requiredCapacity);
+	if (m_uSize < 1) return;
 
 	const UINT offsetInBytes = elementIndex * m_iElemSizeInBytes;
 	const UINT sizeInBytes = numElements * m_iElemSizeInBytes;
+
 
 	FResource::UploadDataRegion(pDevice, pCommandList, pData, offsetInBytes, sizeInBytes, state);
 }
@@ -99,19 +106,37 @@ void StructuredBuffer::ReserveSize(ID3D12Device* pDevice, UINT newCapacity)
 		1,
 		DXGI_SAMPLE_DESC({ 1, 0 }),
 		D3D12_RESOURCE_DIMENSION_BUFFER,
-		D3D12_RESOURCE_FLAG_NONE,
+		m_xResourceFlags,
 		D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-		D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-		&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+		(m_xHeapType == D3D12_HEAP_TYPE_DEFAULT) ? D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES : D3D12_HEAP_FLAG_NONE,
+		&keep(CD3DX12_HEAP_PROPERTIES(m_xHeapType)),
 		1
 	);
 
 	m_uCapacity = newCapacity;
 }
 
+void StructuredBuffer::ReserveSize(ID3D12Device* pDevice, UINT sizeInBytes, UINT elemSize) {
+	ReserveSize(pDevice, CalculateElementsCount(sizeInBytes, elemSize));
+}
+
 
 void StructuredBuffer::ShrinkToFit(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList) {
 	if (m_uSize < m_uCapacity) RecreateBuffer(pDevice, pCommandList, m_uSize, true);
+}
+
+void StructuredBuffer::Clear(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, D3D12_RESOURCE_STATES state)
+{
+	if (m_uCapacity == 0) return;
+
+	std::vector<uint8_t> zeros(m_uCapacity * m_iElemSizeInBytes, 0);
+	m_uSize = m_uCapacity;
+
+	FResource::UploadData(pDevice, pCommandList, zeros.data(), state, false);
+}
+
+UINT StructuredBuffer::CalculateElementsCount(UINT sizeInBytes, UINT elemSize) {
+	return (UINT)std::ceil((double)sizeInBytes / (double)elemSize);
 }
 
 void StructuredBuffer::RecreateBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT newCapacity, bool preserveData) {
@@ -130,10 +155,10 @@ void StructuredBuffer::RecreateBuffer(ID3D12Device* pDevice, ID3D12GraphicsComma
 		1,
 		DXGI_SAMPLE_DESC({ 1, 0 }),
 		D3D12_RESOURCE_DIMENSION_BUFFER,
-		D3D12_RESOURCE_FLAG_NONE,
+		m_xResourceFlags,
 		D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-		D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES,
-		&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+		(m_xHeapType == D3D12_HEAP_TYPE_DEFAULT) ? D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES : D3D12_HEAP_FLAG_NONE,
+		&keep(CD3DX12_HEAP_PROPERTIES(m_xHeapType)),
 		1
 	);
 

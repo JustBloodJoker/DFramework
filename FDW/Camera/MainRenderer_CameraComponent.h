@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <Camera/CameraInputLayer.h>
+#include <Camera/CameraFrustum.h>
 
 
 class MainRenderer;
@@ -39,6 +40,9 @@ public:
 	
 	void OnMouseMove(WPARAM btnState, int x, int y);
 
+	CameraFrustum GetCameraFrustum();
+
+
 public:
 
 
@@ -56,9 +60,13 @@ public:
 	END_FIELD_REGISTRATION()
 
 private:
-	dx::XMMATRIX m_xProjectionMatrix;
+	void UpdateCameraFrustum();
 
+private:
+	dx::XMMATRIX m_xProjectionMatrix;
 	dx::XMMATRIX m_xView;
+
+	CameraFrustum m_xFrustum;
 
 	float m_fCameraSpeed = 1000.0f;
 	float m_fCamYaw;

@@ -189,7 +189,7 @@ namespace FD3DW
 				}
 			}
 
-			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(indices.size() - indicesSize), UINT(mesh->mMaterialIndex) });
+			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(indices.size() - indicesSize), UINT(mesh->mMaterialIndex),objectMin,objectMax });
 		}
 
 		for (size_t i = 0; i < scene->mNumMaterials; i++)

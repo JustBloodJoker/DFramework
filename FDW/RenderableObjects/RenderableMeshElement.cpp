@@ -87,12 +87,10 @@ std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> RenderableMeshE
 	data.DrawArguments.BaseVertexLocation = (INT)m_xData.ObjectDescriptor.VerticesOffset;
 	data.DrawArguments.StartInstanceLocation = 0u;
 
-
 	InstanceData instanceData;
-
-	auto [sphereCenter, sphereRadius] = GetBoundingSphereFromObjectDesc(m_xData.ObjectDescriptor, m_xWorldMatrix * m_xParentWorldMatrix);
-	instanceData.CenterWS = sphereCenter;
-	instanceData.RadiusWS = sphereRadius;
+	auto [min, max] = GetBoundingBoxFromObjectDesc(m_xData.ObjectDescriptor, m_xWorldMatrix*m_xParentWorldMatrix);
+	instanceData.MinP = min;
+	instanceData.MaxP = max;
 	return { {data, instanceData} };
 }
 

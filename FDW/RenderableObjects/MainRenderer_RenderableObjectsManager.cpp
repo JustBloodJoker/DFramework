@@ -54,7 +54,6 @@ void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandLi
 }
 
 void MainRenderer_RenderableObjectsManager::DeferredRender(ID3D12GraphicsCommandList* list) {
-    PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
     std::vector<BaseRenderableObject*> objectsToRender;
     for (auto& obj : m_vObjects) {
         if (obj->IsCanRenderInPass(RenderPass::Deferred)) objectsToRender.push_back(obj.get());
@@ -137,6 +136,10 @@ RenderableSkyboxObject* MainRenderer_RenderableObjectsManager::FindSkyboxObject(
     return nullptr;
 }
 
+void MainRenderer_RenderableObjectsManager::SetMeshCullingType(CullingType in) { m_xCullingType = in; }
+
+CullingType MainRenderer_RenderableObjectsManager::GetMeshCullingType() { return m_xCullingType; }
+
 void MainRenderer_RenderableObjectsManager::DoInitObject(BaseRenderableObject* obj, ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
     auto device = m_pOwner->GetDevice();
     obj->Init(device, list);
@@ -155,6 +158,7 @@ void MainRenderer_RenderableObjectsManager::SpecificPostLoadForOblect(BaseRender
     }
 }
 
+std::vector<IndirectMeshRenderableData> datas;
 void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsCommandList* list, std::vector<BaseRenderableObject*> objectsToRender) {
     std::vector<IndirectExecutionMeshObject*> objectsForIndirectExecute;
     std::vector<BaseRenderableObject*> objectsForDefaultRender;
@@ -167,45 +171,55 @@ void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsComma
         else {
             objectsForDefaultRender.push_back(obj);
         }
-
     }
 
+    const auto& frustum = m_pOwner->GetCameraFrustum();
     if ( !objectsForIndirectExecute.empty() ) {
         auto device = m_pOwner->GetDevice();
-        std::vector<IndirectMeshRenderableData> datas;
         std::vector<InstanceData> instanceData;
-        
+        datas.clear();
+
         for (const auto& obj : objectsForIndirectExecute) {
             auto objIndirectDatas = obj->GetDataToExecute();
             for (auto [data, instance] : objIndirectDatas) {
+                if (m_xCullingType == CullingType::CPUFrustum && !m_pObjectCulling->CheckFrustumCulling(frustum, instance)) continue;
 
                 datas.push_back(data);
-
-                instance.DrawIndex = (UINT)(datas.size() - 1);
+                instance.CommandIndex = (UINT)(datas.size() - 1);
                 instanceData.push_back(instance);
             }
         }
-        
+
         auto dataSize = (UINT)datas.size();
-        m_pIndirectDeferredFirstPassCommandsBuffer->UploadData(device, list, datas.data(), dataSize, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+        m_pIndirectDeferredFirstPassCommandsBuffer->UploadData(device, list, datas.data(), dataSize, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
         
+        if (m_xCullingType==CullingType::GPUFrustum) {
+            InputObjectCullingProcessData data;
+            data.CommandList = list;
+            data.Device = device;
+            data.InputCommandsBuffer = m_pIndirectDeferredFirstPassCommandsBuffer.get();
+            data.Instances = instanceData;
+            data.CameraFrustum = frustum;
+            m_pObjectCulling->ProcessGPUCulling(data);
+        }
 
-
-
-
-
-
-
-
-
-
+        PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
         ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
         list->SetDescriptorHeaps(_countof(heaps), heaps);
         list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
 
-        list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, m_pIndirectDeferredFirstPassCommandsBuffer->GetResource(), 0, nullptr, 0);
+        if (m_xCullingType == CullingType::GPUFrustum) {
+            auto cullingRes = m_pObjectCulling->GetResultBuffer();
+            cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+            list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pObjectCulling->CountBufferOffset((UINT)instanceData.size()));
+        }
+        else {
+            m_pIndirectDeferredFirstPassCommandsBuffer->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+            list->ExecuteIndirect(m_pIndirectDeferredFirstPassCommandSignature.Get(), dataSize, m_pIndirectDeferredFirstPassCommandsBuffer->GetResource(), 0, nullptr, 0);
+        }
     }
 
+    PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
     for (const auto& obj : objectsForDefaultRender) {
         obj->DeferredRender(list);
     }
@@ -232,10 +246,10 @@ void MainRenderer_RenderableObjectsManager::InitIndirectDeferredMeshExecution() 
     auto rootSignature = PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->GetRootSignature();
     HRESULT_ASSERT(m_pOwner->GetDevice()->CreateCommandSignature(&commandSignatureDesc, rootSignature, IID_PPV_ARGS(m_pIndirectDeferredFirstPassCommandSignature.ReleaseAndGetAddressOf())), "Incorrect creation of Indirect Command Signature");
 
-
     m_pIndirectDeferredFirstPassCommandsBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<IndirectMeshRenderableData>(m_pOwner->GetDevice(), 1u, true);
-}
 
+    m_pObjectCulling = std::make_unique<ObjectCulling>( m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList() );
+}
 
 void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject* obj) {
     auto it = std::remove_if(m_vObjects.begin(), m_vObjects.end(),

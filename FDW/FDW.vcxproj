@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera\CameraFrustum.cpp" />
     <ClCompile Include="Camera\CameraInputLayer.cpp" />
     <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_dx12.cpp" />
@@ -41,6 +42,8 @@
     <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp" />
     <ClCompile Include="RenderableObjects\IndirectExecutionMeshObject.cpp" />
     <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
+    <ClCompile Include="RenderableObjects\ObjectsCulling\BVHBuilder.cpp" />
+    <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
     <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp" />
@@ -54,6 +57,7 @@
     <ClCompile Include="UI\UIInputLayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera\CameraFrustum.h" />
     <ClInclude Include="Camera\CameraInputLayer.h" />
     <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
     <ClInclude Include="Lights\LightStruct.h" />
@@ -74,6 +78,10 @@
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
     <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
     <ClInclude Include="RenderableObjects\MeshMatricesStructure.h" />
+    <ClInclude Include="RenderableObjects\ObjectsCulling\BVHBuilder.h" />
+    <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h" />
+    <ClInclude Include="RenderableObjects\ObjectsCulling\InstanceData.h" />
+    <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h" />
     <ClInclude Include="RenderableObjects\RenderableMesh.h" />
     <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
     <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />

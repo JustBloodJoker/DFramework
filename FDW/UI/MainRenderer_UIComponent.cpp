@@ -215,6 +215,15 @@ void MainRenderer_UIComponent::DrawLightsTab() {
 }
 
 void MainRenderer_UIComponent::DrawEditorUtilitiesTab() {
+    ImGui::SeparatorText("Scene culling");
+
+    CullingType current = m_pOwner->GetMeshCullingType();
+    const char* cullingNames[] = { "None", "CPU Frustum", "GPU Culling" };
+    int currentIndex = static_cast<int>(current);
+    if (ImGui::Combo("Culling Type", &currentIndex, cullingNames, IM_ARRAYSIZE(cullingNames))) {
+        m_pOwner->SetMeshCullingType(static_cast<CullingType>(currentIndex));
+    }
+
     ImGui::SeparatorText("Scene I/O");
 
     if (ImGui::Button("Save Scene")) {

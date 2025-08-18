@@ -225,6 +225,7 @@ namespace FD3DW
 		case DXGI_FORMAT_R8_SNORM:
 		case DXGI_FORMAT_R8_SINT:
 		case DXGI_FORMAT_A8_UNORM:
+		case DXGI_FORMAT_UNKNOWN:
 			return 1;
 
 		case DXGI_FORMAT_BC1_TYPELESS:

@@ -113,15 +113,28 @@ void MainRenderer_CameraComponent::OnMouseMove(WPARAM btnState, int x, int y) {
 	UpdateViewMatrix();
 }
 
+CameraFrustum MainRenderer_CameraComponent::GetCameraFrustum() {
+	return m_xFrustum;
+}
+
+void MainRenderer_CameraComponent::UpdateCameraFrustum() {
+	m_xFrustum.UpdatePlanes(m_xView * m_xProjectionMatrix);
+}
+
+
 void MainRenderer_CameraComponent::UpdateViewMatrix() {
 	m_xAt = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
 		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), m_xEye);
 
 	m_xUp = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
 	m_xView = dx::XMMatrixLookAtLH(m_xEye, m_xAt, m_xUp);
+
+	UpdateCameraFrustum();
 }
 
 void MainRenderer_CameraComponent::UpdateProjectionMatrix() {
 	const auto& WndSet = m_pOwner->WNDSettings();
 	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 0.1f, 10000.0f);
+
+	UpdateCameraFrustum();
 }

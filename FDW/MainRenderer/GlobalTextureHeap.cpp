@@ -7,6 +7,10 @@ void GlobalTextureHeap::Init(ID3D12Device* device, UINT descriptorsCount, UINT n
 {
     UINT descriptorSize = GetCBV_SRV_UAVDescriptorSize(device);
     InitBufferDescriptorHeap(descriptorSize, descriptorsCount, nodeMask, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+
+    for(UINT i=0;i<descriptorsCount;++i){
+        AddNullResource(i, device);
+    }
 }
 
 GlobalTextureHeap::GlobalTextureHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice) : DynamicSRV_UAVPacker(descriptorSize, descriptorsCount, NodeMask, flags, pDevice) {}

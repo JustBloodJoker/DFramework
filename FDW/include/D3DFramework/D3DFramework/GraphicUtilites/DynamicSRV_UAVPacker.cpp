@@ -36,7 +36,7 @@ namespace FD3DW {
      
         if (m_uCurrentIndex >= m_uDescriptorCount)
         {
-            ResizeHeap(m_uDescriptorCount * 2, device);
+            ResizeHeap(UINT(m_uDescriptorCount * 2), device);
         }
 
         return m_uCurrentIndex++;
