@@ -11,17 +11,8 @@ namespace FD3DW
 		BindCommandList(pCommandList);
 	}
 
-	CommandQueue::CommandQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, INT priority, UINT nodeMask)
-	{
-		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-		queueDesc.Flags = flags;
-		queueDesc.Priority = priority;
-		queueDesc.NodeMask = nodeMask;
-		queueDesc.Type = type;
-		
-		HRESULT_ASSERT(pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(m_pCommandQueue.ReleaseAndGetAddressOf())), "Command queue create error");
-		HRESULT_ASSERT(pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(m_pFence.ReleaseAndGetAddressOf())), "Fence create error");
-	}
+	CommandQueue::CommandQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, INT priority, UINT nodeMask) 
+		: BaseCommandQueue(pDevice, type, flags, priority, nodeMask){}
 
 	void CommandQueue::ExecuteQueue(bool synch)
 	{
@@ -66,10 +57,6 @@ namespace FD3DW
 		}
 	}
 
-	ID3D12CommandQueue* CommandQueue::GetQueue() const
-	{
-		return m_pCommandQueue.Get();
-	}
 
 	void CommandQueue::FlushQueue()
 	{

@@ -22,6 +22,9 @@
     <ClCompile Include="WinWindowTest\SerializerTest.cpp">
       <Filter>WinWindowTest</Filter>
     </ClCompile>
+    <ClCompile Include="WinWindow\Utils\WorkerThread.cpp">
+      <Filter>WinWindow\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinWindow\Utils\Macroses.h">
@@ -77,6 +80,9 @@
     </ClInclude>
     <ClInclude Include="WinWindow\Utils\Serializer\DynamicSerializerRegistry.h">
       <Filter>WinWindow\Utils\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\WorkerThread.h">
+      <Filter>WinWindow\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

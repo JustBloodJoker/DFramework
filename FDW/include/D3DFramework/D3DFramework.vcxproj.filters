@@ -19,6 +19,9 @@
     <Filter Include="D3DFramework\Utilites\Serializer">
       <UniqueIdentifier>{fa96ef0e-c1f3-4f03-9ae4-23a414fd5601}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3DFramework\GraphicUtilites\RenderThreadUtils">
+      <UniqueIdentifier>{4b050713-0044-4611-93e7-7966adf30639}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h">
@@ -135,6 +138,27 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.h">
       <Filter>D3DFramework\GraphicUtilites</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BaseCommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\GlobalRenderThreadManager.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -217,6 +241,24 @@
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp">
       <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BaseCommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

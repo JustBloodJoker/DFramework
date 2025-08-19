@@ -7,6 +7,7 @@
 #include <string>
 #include <memory>
 #include <fstream>
+#include <queue>
 #include <array>
 #include <tuple>
 #include <vector>

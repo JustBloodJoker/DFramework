@@ -14,7 +14,7 @@ namespace FD3DW
         }
 
     public:
-        CommandListTemplate() = delete;
+        CommandListTemplate() = default;
         virtual ~CommandListTemplate() {
             TryCloseList();
         }

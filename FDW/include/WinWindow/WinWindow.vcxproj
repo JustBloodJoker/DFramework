@@ -48,6 +48,7 @@
     <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
     <ClInclude Include="WinWindow\Utils\WindowSettings.h" />
+    <ClInclude Include="WinWindow\Utils\WorkerThread.h" />
     <ClInclude Include="WinWindow\WinWindow.h" />
   </ItemGroup>
   <ItemGroup>
@@ -63,6 +64,7 @@
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp" />
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp" />
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
+    <ClCompile Include="WinWindow\Utils\WorkerThread.cpp" />
     <ClCompile Include="WinWindow\WinWindow.cpp" />
   </ItemGroup>
   <ItemGroup>

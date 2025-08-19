@@ -1,12 +1,13 @@
 #pragma once
 #include "../pch.h"
 #include "ICommandList.h"
+#include "BaseCommandQueue.h"
 
 
 namespace FD3DW
 {
 
-	class CommandQueue
+	class CommandQueue : public BaseCommandQueue
 	{
 
 	public:
@@ -19,23 +20,16 @@ namespace FD3DW
 		CommandQueue()=delete;
 		~CommandQueue()=default;
 
-
 		void ExecuteQueue(bool synch);
 
 		void BindCommandList(ICommandList* pCommandList);
 		void UnbindCommandList(ICommandList* pCommandList);
 
-		ID3D12CommandQueue* GetQueue() const;
-
 		void FlushQueue();
 
-	private:
-
-
+	protected:
 		std::vector<ID3D12CommandList*> m_vExecutedlists;
 		std::vector<ICommandList*> m_vBindedLists;
-		wrl::ComPtr<ID3D12CommandQueue> m_pCommandQueue;
-		wrl::ComPtr<ID3D12Fence> m_pFence;
 	};
 
 }

@@ -188,6 +188,7 @@
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\BaseCommandQueue.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BilateralFilter.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
@@ -199,6 +200,12 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\GlobalRenderThreadManager.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h" />
@@ -227,6 +234,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\BaseCommandQueue.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BilateralFilter.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
@@ -235,6 +243,11 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp" />

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "D3DFW.h"
+#include "GraphicUtilites/RenderThreadUtils/GlobalRenderThreadManager.h"
 
 
 namespace FD3DW
@@ -182,6 +183,8 @@ namespace FD3DW
 
 		UserInit();
 		
+		GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
 		return true;
 	}
 
@@ -260,6 +263,13 @@ namespace FD3DW
 		{
 			CONSOLE_MESSAGE("Failed to query Raytracing tier");
 		}
+
+		RenderThreadManagerConfig config{};
+		config.QueuesConfig = { {D3D12_COMMAND_LIST_TYPE_DIRECT, {1,1,1}},
+			{D3D12_COMMAND_LIST_TYPE_COPY, {1,10,1}},
+			{D3D12_COMMAND_LIST_TYPE_COMPUTE, {1,1,1}}
+		};
+		GlobalRenderThreadManager::GetInstance()->Init(m_pDevice.Get(), config);
 
 		if (m_bIsRTSupported) {
 			hr = m_pDevice->QueryInterface(IID_PPV_ARGS(m_pDXRDevice.ReleaseAndGetAddressOf()));
