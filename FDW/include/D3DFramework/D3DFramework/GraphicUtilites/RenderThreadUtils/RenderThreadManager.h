@@ -6,47 +6,37 @@
 #include "CommandRecipe.h"
 
 namespace FD3DW {
-   
-    struct PerTypeQueueConfig {
-        UINT InitialQueuesCount = 1;
-        UINT MaxQueuesCount = 1;
-        UINT LoadThresholdToSpawn = 10;
-    };
 
-    struct RenderThreadManagerConfig {
-        std::map<D3D12_COMMAND_LIST_TYPE, PerTypeQueueConfig> QueuesConfig;
-    };
-
-
-
-    class RenderThreadManager
-    {
-
+    class RenderThreadManager {
     public:
-        static void CorrectConfig(RenderThreadManagerConfig& config);
+        RenderThreadManager() = default;
+        virtual ~RenderThreadManager() = default;
 
-    public:
+        std::shared_ptr<ExecutionHandle> CreateWaitHandle(D3D12_COMMAND_LIST_TYPE type);
         void WaitIdle();
         void WaitIdle(D3D12_COMMAND_LIST_TYPE type);
 
-        void Init(ID3D12Device* device, RenderThreadManagerConfig config);
+        void Init(ID3D12Device* device);
         void Shutdown();
 
-        std::shared_ptr<ExecutionHandle> Submit(const std::shared_ptr<ICommandRecipe>& recipe);
-        std::shared_ptr<ExecutionHandle> SubmitChain(const std::vector<std::shared_ptr<ICommandRecipe>>& recipes);
+        AsyncCommandQueue* GetQueue(D3D12_COMMAND_LIST_TYPE type);
+
+        std::shared_ptr<ExecutionHandle> Submit(const std::shared_ptr<ICommandRecipe>& recipe, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {});
+        std::shared_ptr<ExecutionHandle> SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {});
+        std::shared_ptr<ExecutionHandle> SubmitChain(const std::vector<std::shared_ptr<ICommandRecipe>>& recipes, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {});
+
+        void GarbageCollectAll();
 
     private:
-        AsyncCommandQueue* PickLeastLoaded(D3D12_COMMAND_LIST_TYPE type);
-        void EnqueueBuildAndSubmit(const std::vector<std::shared_ptr<ICommandRecipe>>& recipes, std::shared_ptr<ExecutionHandle> handle, bool forceSameQueue);
-        
-
+        AsyncCommandQueue* PickCommandQueue(D3D12_COMMAND_LIST_TYPE type);
 
     private:
         ID3D12Device* m_pDevice = nullptr;
+        FDWWIN::WorkerThread m_xRenderThread;
 
-        std::unordered_map<D3D12_COMMAND_LIST_TYPE, std::vector<std::unique_ptr<AsyncCommandQueue>>> m_mQueues;
-        FDWWIN::WorkerThread m_xBuilder;
-        RenderThreadManagerConfig m_xConfig;
+        std::unordered_map<D3D12_COMMAND_LIST_TYPE, std::unique_ptr<AsyncCommandQueue>> m_mQueues;
+        std::unordered_map<D3D12_COMMAND_LIST_TYPE, std::unique_ptr<CommandListPool>>   m_mPools;
     };
+
 
 }

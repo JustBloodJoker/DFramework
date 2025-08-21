@@ -703,7 +703,7 @@ void MainRenderer_UIComponent::InitImGui() {
     m_bIsInited = true;
 }
 
-void MainRenderer_UIComponent::RenderImGui() {
+void MainRenderer_UIComponent::RenderImGui(ID3D12GraphicsCommandList* list) {
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -711,7 +711,7 @@ void MainRenderer_UIComponent::RenderImGui() {
     DrawUI();
 
     ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pOwner->GetBindedCommandList());
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), list);
 }
 
 void MainRenderer_UIComponent::ShutDownImGui() {
@@ -748,7 +748,11 @@ void MainRenderer_UIComponent::AfterConstruction() {
         m_vTextureOps.push_back({
             name,
             [this, type](RenderableSimpleObject* obj, const std::string& path) {
-                obj->SetupTexture(type, path, m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList());
+                auto hh = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COPY, [this, obj, type, path](ID3D12GraphicsCommandList* list) {
+                    obj->SetupTexture(type, path, m_pOwner->GetDevice(), list);
+                });
+                GlobalRenderThreadManager::GetInstance()->Submit(recipe, { hh });
             },
             [this, type](RenderableSimpleObject* obj) {
                 obj->EraseTexture(type, m_pOwner->GetDevice());

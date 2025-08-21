@@ -37,6 +37,7 @@ namespace FD3DW
 		virtual void UserInit() = 0;
 		virtual void UserLoop() = 0;
 		virtual void UserClose() = 0;
+		virtual FD3DW::BaseCommandQueue* UserSwapchainCommandQueue(ID3D12Device* device) = 0;
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
 		bool IsRTSupported() const;
@@ -72,8 +73,6 @@ namespace FD3DW
 		wrl::ComPtr<ID3D12DescriptorHeap> m_pRTVDescriptorHeap;
 		wrl::ComPtr<ID3D12Resource> m_aSwapChainRTV[BUFFERS_COUNT];
 
-		std::unique_ptr<CommandQueue> m_pCommandQueue;
-
 		bool m_bVSync = false;
 
 		//////////////////////////
@@ -92,10 +91,7 @@ namespace FD3DW
 
 		bool m_bIsRTSupported;
 
-	private:
-		CommandList* m_pBindedMainCommandList = nullptr;
-
-	private:
+	protected:
 		void				PresentSwapchain();
 
 	protected:
@@ -120,16 +116,10 @@ namespace FD3DW
 		ID3D12Resource*			    GetCurrBackBufferResource()			const noexcept;
 		DXGI_FORMAT					GetMainRTVFormat()					const noexcept;
 		AudioManager*				GetAudioMananger()					const noexcept;
-		ID3D12CommandQueue*			GetCommandQueue()					const noexcept;
-		ID3D12GraphicsCommandList*	GetBindedCommandList()				const noexcept;
-
+		
 	protected:
 		void				BindMainViewPort(ID3D12GraphicsCommandList* pCommandList);
 		void				BindMainRect(ID3D12GraphicsCommandList* pCommandList);
-		void				BindListToMainQueue(CommandList* pCommandList);
-		void				BindMainCommandList(CommandList* pCommandList);
-		void				UnbindListFromMainQueue(CommandList* pCommandList);
-		void				ExecuteMainQueue();
 		void				SetVSync(bool enable);
 		
 	public:

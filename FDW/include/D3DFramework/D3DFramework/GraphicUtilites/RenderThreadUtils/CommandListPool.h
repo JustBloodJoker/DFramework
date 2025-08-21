@@ -2,27 +2,27 @@
 
 #include "../../pch.h"
 #include "CommandRecipe.h"
-#include "..\CommandListTemplate.h"
+#include "../CommandListTemplate.h"
 
-namespace FD3DW
-{
+namespace FD3DW {
+
     class CommandListPool {
     public:
         CommandListPool(ID3D12Device* dev, D3D12_COMMAND_LIST_TYPE type);
-        virtual ~CommandListPool() = default;
-        
-        std::unique_ptr<CommandListTemplate<ID3D12GraphicsCommandList>> BuildFromRecipe(const std::shared_ptr<ICommandRecipe>& recipe) {
-            auto ret = CommandListTemplate<ID3D12GraphicsCommandList>::CreateList(m_pDevice, m_xType);
 
-            recipe->Record(ret->GetPtrCommandList());
+        std::unique_ptr<CommandListTemplate<ID3D12GraphicsCommandList>> BuildFromRecipe(const std::shared_ptr<ICommandRecipe>& recipe);
 
-            ret->CloseList();
-            return std::move(ret);
-        }
+        void Recycle(std::unique_ptr<ICommandList> listBase);
 
-    protected:
+    private:
+        std::unique_ptr<CommandListTemplate<ID3D12GraphicsCommandList>> Acquire();
+
+    private:
         ID3D12Device* m_pDevice = nullptr;
         D3D12_COMMAND_LIST_TYPE m_xType;
+
+        std::mutex m_xMutex;
+        std::vector<std::unique_ptr<CommandListTemplate<ID3D12GraphicsCommandList>>> m_vFree;
     };
 
 }

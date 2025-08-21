@@ -66,6 +66,7 @@
     <ClInclude Include="Lights\MainRenderer_ShadowsComponent.h" />
     <ClInclude Include="Lights\ShadowsStructures.h" />
     <ClInclude Include="MainRenderer\GlobalConfig.h" />
+    <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h" />
     <ClInclude Include="MainRenderer\GlobalTextureHeap.h" />
     <ClInclude Include="MainRenderer\MainRenderer.h" />
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />

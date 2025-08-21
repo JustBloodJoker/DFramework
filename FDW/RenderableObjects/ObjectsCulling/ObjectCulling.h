@@ -21,7 +21,7 @@ struct InputObjectCullingProcessData {
 
 class ObjectCulling {
 public:
-	ObjectCulling(ID3D12Device* device, ID3D12GraphicsCommandList* list);
+	ObjectCulling(ID3D12Device* device);
 	~ObjectCulling() = default;
 	
 	bool CheckFrustumCulling(CameraFrustum fr ,const InstanceData& data);
@@ -31,7 +31,7 @@ public:
 	UINT CountBufferOffset(UINT count);
 
 private:
-	void Init(ID3D12Device* device, ID3D12GraphicsCommandList* list);
+	void Init(ID3D12Device* device);
 	void RecreateOutputCommandBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* list, UINT count);
 	void LoadDataToInstancesBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* list, std::vector<InstanceData> data);
 	void LoadDataToCameraBuffer(CameraFrustum frustum, UINT instancesCount, FD3DW::DepthStencilView* resource);

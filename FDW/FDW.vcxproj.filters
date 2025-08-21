@@ -248,5 +248,8 @@
     <ClInclude Include="Camera\CameraFrustum.h">
       <Filter>Camera</Filter>
     </ClInclude>
+    <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h">
+      <Filter>mainRenderer</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

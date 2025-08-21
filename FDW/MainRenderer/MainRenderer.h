@@ -8,6 +8,7 @@
 #include <Camera/MainRenderer_CameraComponent.h>
 #include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
 #include <Lights/MainRenderer_LightsManager.h>
+#include <MainRenderer/GlobalRenderThreadManager.h>
 
 #include <RenderableObjects/RenderableMesh.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
@@ -24,8 +25,8 @@ public:
 	void UserInit() override;
 	void UserLoop() override;
 	void UserClose()  override;
+	FD3DW::BaseCommandQueue* UserSwapchainCommandQueue(ID3D12Device* device) override;
 
-	ID3D12GraphicsCommandList4* GetDXRCommandList();
 	FD3DW::DepthStencilView* GetDepthResource();
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
@@ -95,11 +96,41 @@ private:
 	void ScheduleCreation(Func&& func, bool deferToRenderLoop = true) {
 		if (deferToRenderLoop) {
 			AddToCallAfterRenderLoop([this, func = std::move(func)]() mutable {
-				func();
+				std::shared_ptr<FD3DW::ICommandRecipe> recipe;
+
+				if (IsRTSupported())
+				{
+					recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList4* list) {
+						func(list, list);
+					});
+				}
+				else
+				{
+					recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList* list) {
+						func(list, nullptr);
+					});
+				}
+
+				auto h = GlobalRenderThreadManager::GetInstance()->Submit(recipe);
 			});
 		}
 		else {
-			func();
+			std::shared_ptr<FD3DW::ICommandRecipe> recipe;
+
+			if (IsRTSupported())
+			{
+				recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList4* list) {
+					func(list, list);
+				});
+			}
+			else
+			{
+				recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList* list) {
+					func(list, nullptr);
+				});
+			}
+
+			auto h = GlobalRenderThreadManager::GetInstance()->Submit(recipe);
 		}
 	}
 
@@ -110,6 +141,8 @@ private:
 	std::unique_ptr<MainRenderer_RenderableObjectsManager> m_pRenderableObjectsManager = nullptr;
 	std::unique_ptr<MainRenderer_LightsManager> m_pLightsManager = nullptr;
 	std::unique_ptr<MainRenderer_ShadowsComponent> m_pShadowsComponent = nullptr;
+	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_inFlight;
+	size_t m_uMaxFramesInFlight = 5;
 
 protected:
 
@@ -127,13 +160,6 @@ protected:
 	}
 
 protected:
-	std::unique_ptr<FD3DW::CommandList> m_pCommandList;
-	ID3D12GraphicsCommandList* m_pPCML;
-
-	std::unique_ptr<FD3DW::CommandQueue> m_pDXRCommandQueue;
-	std::unique_ptr<FD3DW::DXRCommandList> m_pDXRCommandList;
-	ID3D12GraphicsCommandList4* m_pDXRPCML;
-
 	bool m_bIsEnabledPreDepth = false;
 
 protected:

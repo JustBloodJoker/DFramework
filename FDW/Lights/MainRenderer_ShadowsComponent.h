@@ -19,6 +19,7 @@ public:
 	virtual void AfterGBufferPass() = 0;
 	virtual D3D12_SRV_DIMENSION GetSRVResultDimension() = 0;
 	
+	virtual void OnDrawResource(ID3D12GraphicsCommandList* list);
 	virtual void BindResultResource(ID3D12Device* device, FD3DW::SRV_UAVPacker* srv, size_t index);
 	virtual FD3DW::FResource* GetResultResource()=0;
 

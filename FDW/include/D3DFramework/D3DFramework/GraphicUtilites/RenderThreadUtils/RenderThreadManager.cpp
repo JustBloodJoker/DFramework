@@ -1,169 +1,141 @@
 #include "RenderThreadManager.h"
 
 namespace FD3DW {
-    
-    static const UINT s_uInitialQueuesCountDefault = 1u;
-    static const UINT s_uMaxQueuesCountDefault = 1u;
-    static const UINT s_uLoadThresholdToSpawnDefault = 10u;
 
-    void RenderThreadManager::CorrectConfig(RenderThreadManagerConfig& config)
-    {
-        for (auto& [type, perQueueConfig] : config.QueuesConfig) {
-            perQueueConfig.InitialQueuesCount = std::max(perQueueConfig.InitialQueuesCount, 1u);
-            perQueueConfig.MaxQueuesCount = std::max(perQueueConfig.MaxQueuesCount, 1u);
+    void RenderThreadManager::Init(ID3D12Device* device) {
+        m_pDevice = device;
 
-            if (perQueueConfig.LoadThresholdToSpawn==0) perQueueConfig.LoadThresholdToSpawn = 10u;
-        }
+        m_mQueues[D3D12_COMMAND_LIST_TYPE_DIRECT] = std::make_unique<AsyncCommandQueue>(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+        m_mQueues[D3D12_COMMAND_LIST_TYPE_COMPUTE] = std::make_unique<AsyncCommandQueue>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        m_mQueues[D3D12_COMMAND_LIST_TYPE_COPY] = std::make_unique<AsyncCommandQueue>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+
+        m_mPools[D3D12_COMMAND_LIST_TYPE_DIRECT] = std::make_unique<CommandListPool>(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+        m_mPools[D3D12_COMMAND_LIST_TYPE_COMPUTE] = std::make_unique<CommandListPool>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+        m_mPools[D3D12_COMMAND_LIST_TYPE_COPY] = std::make_unique<CommandListPool>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+
+        m_xRenderThread.Start();
     }
 
-    void RenderThreadManager::Init(ID3D12Device* device, RenderThreadManagerConfig config) {
-		m_xConfig = config;
-		m_pDevice = device;
-        
-        for (const auto& [type, perQueueConfig] : m_xConfig.QueuesConfig) {
-            auto initialVal = std::min(perQueueConfig.InitialQueuesCount, perQueueConfig.MaxQueuesCount);
-            for (UINT i = 0; i < initialVal; ++i) {
-                m_mQueues[type].emplace_back(std::make_unique<AsyncCommandQueue>(m_pDevice, type));
-            }
-        }
-
-        m_xBuilder.Start();
-	}
-
-    void RenderThreadManager::Shutdown()
-    {
-        m_xBuilder.Stop();
+    void RenderThreadManager::Shutdown() {
+        WaitIdle();
+        m_mPools.clear();
         m_mQueues.clear();
+
+        m_xRenderThread.Stop();
     }
 
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::Submit(const std::shared_ptr<ICommandRecipe>& recipe)
-    {
-        auto handle = std::make_shared<ExecutionHandle>();
-        EnqueueBuildAndSubmit({ recipe }, handle, false);
-        return handle;
+    AsyncCommandQueue* RenderThreadManager::GetQueue(D3D12_COMMAND_LIST_TYPE type) {
+        return m_mQueues.contains(type) ? m_mQueues[type].get() : nullptr;
     }
 
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitChain(const std::vector<std::shared_ptr<ICommandRecipe>>& recipes)
-    {
-        auto handle = std::make_shared<ExecutionHandle>();
-        EnqueueBuildAndSubmit(recipes, handle, true);
-        return handle;
+    AsyncCommandQueue* RenderThreadManager::PickCommandQueue(D3D12_COMMAND_LIST_TYPE type) {
+        return GetQueue(type);
     }
 
-    void RenderThreadManager::WaitIdle()
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::CreateWaitHandle(D3D12_COMMAND_LIST_TYPE type) {
+        if (m_mQueues.contains(type)) return m_mQueues[type]->CreateExecutionHandle();
+
+        auto h = std::make_shared<ExecutionHandle>();
+        h->Bind(nullptr, 0);
+        return h;
+    }
+
+    void RenderThreadManager::WaitIdle() {
+        for (auto& [t, q] : m_mQueues) q->WaitIdle();
+    }
+
+    void RenderThreadManager::WaitIdle(D3D12_COMMAND_LIST_TYPE type) {
+        if (auto* q = GetQueue(type)) q->WaitIdle();
+    }
+
+    void RenderThreadManager::GarbageCollectAll() {
+        for (auto& [t, q] : m_mQueues) q->GarbageCollect();
+    }
+
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::Submit(const std::shared_ptr<ICommandRecipe>& recipe, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
     {
-        for (const auto& [type, queues] : m_mQueues) {
-            for (const auto& queue : queues) {
-                queue->WaitIdle();
-            }
+        if (!recipe) {
+            auto h = std::make_shared<ExecutionHandle>();
+            h->Bind(nullptr, 0);
+            return h;
         }
-    }
+        auto batch = std::make_shared<ClosedBatch>();
+        batch->Handle = std::make_shared<ExecutionHandle>();
 
+        m_xRenderThread.PostTask([recipe, batch, this, dependencies]() {
+            auto* q = PickCommandQueue(recipe->GetType());
+            auto* pool = m_mPools[recipe->GetType()].get();
 
-    void RenderThreadManager::WaitIdle(D3D12_COMMAND_LIST_TYPE type)
-    {
-        auto& queues = m_mQueues[type];
-        for (const auto& queue : queues) {
-            queue->WaitIdle();
-        }
-    }
-
-    AsyncCommandQueue* RenderThreadManager::PickLeastLoaded(D3D12_COMMAND_LIST_TYPE type)
-    {
-        auto& arr = m_mQueues[type];
-        auto& config = m_xConfig.QueuesConfig[type];
-        if (arr.empty()) return nullptr;
-
-        auto best = 0u;
-        auto bestLoad = arr[0]->GetLoadApprox();
-
-        auto allAboveThreshold = (bestLoad >= config.LoadThresholdToSpawn);
-
-        for (UINT i = 1; i < arr.size(); ++i) 
-        {
-            auto l = arr[i]->GetLoadApprox();
-            if (l < bestLoad) 
-            {
-                bestLoad = l;
-                best = i;
-            }
-
-            if (l < config.LoadThresholdToSpawn)
-            {
-                allAboveThreshold = false;
-            }
-               
-        }
-
-        if (allAboveThreshold && arr.size() < config.MaxQueuesCount) 
-        {
-            auto q = std::make_unique<AsyncCommandQueue>(m_pDevice, type);
-            auto qPtr = q.get();
-            arr.push_back(std::move(q));
-            return qPtr;
-        }
-
-        return arr[best].get();
-    }
-
-    void RenderThreadManager::EnqueueBuildAndSubmit(const std::vector<std::shared_ptr<ICommandRecipe>>& recipes, std::shared_ptr<ExecutionHandle> handle, bool forceSameQueue)
-    {
-        m_xBuilder.PostTask([this, recipes = recipes, handle = handle, forceSameQueue]() {
-
-            if (recipes.empty()) { if (handle) handle->Bind(nullptr, 0); return; }
-
-            CommandListPool direct(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
-            CommandListPool compute(m_pDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-            CommandListPool copy(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
-
-            auto buildOne = [&](const std::shared_ptr<ICommandRecipe>& r) -> auto {
-                switch (r->GetType()) {
-                    case D3D12_COMMAND_LIST_TYPE_DIRECT:  return direct.BuildFromRecipe(r);
-                    case D3D12_COMMAND_LIST_TYPE_COMPUTE: return compute.BuildFromRecipe(r);
-                    case D3D12_COMMAND_LIST_TYPE_COPY:    return copy.BuildFromRecipe(r);
-                    default: return direct.BuildFromRecipe(r);
-                }
+            auto list = pool->BuildFromRecipe(recipe);
+            batch->Lists.push_back(std::move(list));
+            batch->Recycle = [pool](std::unique_ptr<ICommandList> l) { 
+                pool->Recycle(std::move(l)); 
             };
-            
-            if (forceSameQueue) {
-                AsyncCommandQueue* prevQueue = nullptr;
-                for (const auto& r : recipes) {
-                    auto q = PickLeastLoaded(r->GetType());
 
-                    auto rec = buildOne(r);
+            for (auto& d : dependencies) if (d) q->WaitFence(d);
 
-                    auto singleBatch = std::make_shared<ClosedBatch>();
-                    singleBatch->Handle = handle;
-                    singleBatch->Lists.push_back(std::move(rec));
+            q->Submit(batch);      
+        });
 
-                    if (prevQueue && prevQueue != q) {
-                        UINT64 fenceVal = prevQueue->SignalFence();
-                        q->WaitFence(fenceVal, prevQueue);
-                    }
+        
+        return batch->Handle;
+    }
 
-                    q->Submit(singleBatch);
-                    prevQueue = q;
-                }
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
+    {
+        auto handle = std::make_shared<ExecutionHandle>();
+
+        m_xRenderThread.PostTask([this,func = std::move(func), deps = std::move(dependencies), handle]() mutable {
+            for (auto& d : deps) {
+                if (d) d->WaitForExecute();
             }
-            else {
-                for (auto& r : recipes) {
-                    auto q = PickLeastLoaded(r->GetType());
 
-                    auto rec = buildOne(r);
+            if (func) func();
 
-                    auto batch = std::make_shared<ClosedBatch>();
-                    batch->Handle = handle;
+            handle->Bind(nullptr, 0); 
+        });
 
-                    auto recPtr = rec->GetPtrDefaultCommandList();
-                    batch->Lists.push_back(std::move(rec));
+        return handle;
+    }
 
-                    q->Submit(batch);
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitChain( const std::vector<std::shared_ptr<ICommandRecipe>>& recipes, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
+    {
+        auto handle = std::make_shared<ExecutionHandle>();
+        if (recipes.empty()) {
+            handle->Bind(nullptr, 0);
+            return handle;
+        }
+        m_xRenderThread.PostTask([handle, recipes, this, dependencies]() {
+
+            AsyncCommandQueue* prevQ = nullptr;
+            UINT64 prevFence = 0;
+
+            for (auto& r : recipes) {
+                auto* q = PickCommandQueue(r->GetType());
+                auto* pool = m_mPools[r->GetType()].get();
+
+                auto list = pool->BuildFromRecipe(r);
+
+                auto batch = std::make_shared<ClosedBatch>();
+                batch->Handle = handle;
+                batch->Lists.push_back(std::move(list));
+                batch->Recycle = [pool](std::unique_ptr<ICommandList> l) { pool->Recycle(std::move(l)); };
+
+                if (prevQ && prevQ != q) {
+                    if (prevFence == 0) prevFence = prevQ->SignalFence();
+                    q->WaitFence(prevFence, prevQ);
+                    prevFence = 0;
                 }
+                else if (!prevQ) {
+                    for (auto& d : dependencies) if (d) q->WaitFence(d);
+                }
+
+                q->Submit(batch);
+                prevQ = q;
             }
-            });
+        });
+
+        return handle;
     }
 
 }
-
-
-

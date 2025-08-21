@@ -46,16 +46,22 @@ void MainRenderer::UserInit()
 		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 	}
 
-	m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
-
+	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		m_pLightsManager->InitLTC(list, m_pGBuffersSRVPack.get());
+	});
+	GlobalRenderThreadManager::GetInstance()->Submit(ltcRecipe);
+	
 	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height);
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
 	m_pForwardRenderPassSRVPack = CreateSRVPack(1u);
 	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
 	m_pForwardRenderPassSRVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
 
-	m_pScreen = CreateRectangle(m_pPCML);
-	
+	auto rtvRectangleCreation = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		m_pScreen = CreateRectangle(list);
+	});
+	GlobalRenderThreadManager::GetInstance()->Submit(rtvRectangleCreation);
+
 	m_xSceneViewPort.MaxDepth = 1.0f;
 	m_xSceneViewPort.MinDepth = 0.0f;
 	m_xSceneViewPort.Height = (float)wndSettings.Height;
@@ -70,22 +76,19 @@ void MainRenderer::UserInit()
 
 	TryInitShadowComponent();
 
-	ExecuteMainQueue();
-	if(m_pDXRCommandQueue) m_pDXRCommandQueue->ExecuteQueue(true);
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	FD3DW::FResource::ReleaseUploadBuffers();
 }
 
 void MainRenderer::UserLoop()
 {
-	m_pCommandList->ResetList();
-	if (m_pDXRCommandList) m_pDXRCommandList->ResetList();
+	auto beforeRenderCopyRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		m_pLightsManager->BeforeRender(list);
+		m_pRenderableObjectsManager->BeforeRender(list);
+		if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(list);
+	});
+	auto beforeRenderH = GlobalRenderThreadManager::GetInstance()->Submit(beforeRenderCopyRecipe);
 
-	m_pLightsManager->BeforeRender(m_pPCML);
-	m_pRenderableObjectsManager->BeforeRender(m_pPCML);
-	if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(m_pPCML);
-
-	m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	
 	///////////////////////
 	//	Shadow PASS Before gbuffer pass
 	{
@@ -96,161 +99,183 @@ void MainRenderer::UserLoop()
 	///	
 	///////////////////////////
 
-	///////////////////////
-	//	PRE DEPTH PASS
-	m_pPCML->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-	{
-		if (m_bIsEnabledPreDepth)
+	auto gBuffersPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		///////////////////////
+		//	PRE DEPTH PASS
+		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		{
-			PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(m_pPCML);
-			m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			if (m_bIsEnabledPreDepth)
+			{
+				PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
+				list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-			m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
-			m_pPCML->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+				list->RSSetScissorRects(1, &m_xSceneRect);
+				list->RSSetViewports(1, &m_xSceneViewPort);
+				list->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
-			m_pRenderableObjectsManager->PreDepthRender(m_pPCML);
+				m_pRenderableObjectsManager->PreDepthRender(list);
+			}
 		}
-	}
-	///////////////////////
+		///////////////////////
 
+		///////////////////////
+		//	DEFERRED FIRST PASS
+		{
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			auto gBuffersCount = GetGBuffersNum();
 
-	///////////////////////
-	//	DEFERRED FIRST PASS
-	{
-		auto gBuffersCount = GetGBuffersNum();
+			for (auto& gbuffer : m_pGBuffers) {
+				gbuffer->StartDraw(list);
+			}
 
-		for (auto& gbuffer : m_pGBuffers) {
-			gbuffer->StartDraw(m_pPCML);
+			PSOManager::GetInstance()->GetPSOObject(m_bIsEnabledPreDepth ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			list->RSSetScissorRects(1, &m_xSceneRect);
+			list->RSSetViewports(1, &m_xSceneViewPort);
+
+			for (UINT i = 0; i < gBuffersCount; ++i) {
+				list->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
+			}
+			list->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+			m_pRenderableObjectsManager->DeferredRender(list);
+
+			for (auto& gbuffer : m_pGBuffers) {
+				gbuffer->EndDraw(list);
+			}
+
 		}
 
-		//PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->Bind(m_pPCML);
-		PSOManager::GetInstance()->GetPSOObject(m_bIsEnabledPreDepth ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(m_pPCML);
-		m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
-
-		for (UINT i = 0; i < gBuffersCount; ++i) {
-			m_pPCML->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
-		}
-		m_pPCML->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-		m_pRenderableObjectsManager->DeferredRender(m_pPCML);
-
-		for (auto& gbuffer : m_pGBuffers) {
-			gbuffer->EndDraw(m_pPCML);
-		}
-
-	}
-
-	///
-	///////////////////////////
-
+		///
+		///////////////////////////
+	});
+	auto gBufferH = GlobalRenderThreadManager::GetInstance()->Submit(gBuffersPassRecipe,{ beforeRenderH });
+	
 	///////////////////////
 	//	Shadow PASS After GBuffer pass
 	{
 		if (m_pShadowsComponent) {
-			ExecuteMainQueue();
-			m_pCommandList->ResetList();
-			m_pPCML->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			m_pShadowsComponent->AfterGBufferPass();
 		}
 	}
 	///
 	///////////////////////////
-
-	//////////////////////////
-	// DEFERRED SECOND PASS
-
-	{
-		m_pForwardRenderPassRTV->StartDraw(m_pPCML);
-
-		m_pPCML->RSSetScissorRects(1, &m_xSceneRect);
-		m_pPCML->RSSetViewports(1, &m_xSceneViewPort);
-
-		m_pPCML->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(m_pPCML);
-
-		m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-		m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
-
-		ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
-		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
-
-		m_pPCML->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
-
-		m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pPCML, false);
-
-		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
-
-
-		m_pRenderableObjectsManager->ForwardRender(m_pPCML);
-
-
-		m_pForwardRenderPassRTV->EndDraw(m_pPCML);
-	}
-
-	//
-	///////////////////////////
-
-	//////////////////////////
-	// POSTPROCESS PASS
-
-	BindMainViewPort(m_pPCML);
-	BindMainRect(m_pPCML);
-	BeginDraw(m_pCommandList->GetPtrCommandList());
-
-	{
-
-		m_pPCML->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
-		m_pPCML->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
-
-		PSOManager::GetInstance()->GetPSOObject(PSOType::PostProcessDefaultConfig)->Bind(m_pPCML);
-
-		m_pPCML->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-		m_pPCML->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
-
-		ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
-		m_pPCML->SetDescriptorHeaps(_countof(heaps), heaps);
-
-		m_pPCML->SetGraphicsRootDescriptorTable(0, m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(0));
-
-
-		m_pPCML->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
-
-	}
-
-	///
-	///////////////////////////
 	
+	auto shadowsH = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	//////////////////////////
-	//			UI PASS
 
-	{
-		m_pUIComponent->RenderImGui();
+	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+
+		//////////////////////////
+		// DEFERRED SECOND PASS
+
+		{
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			m_pForwardRenderPassRTV->StartDraw(list);
+
+			if(m_pShadowsComponent) m_pShadowsComponent->OnDrawResource(list);
+
+			list->RSSetScissorRects(1, &m_xSceneRect);
+			list->RSSetViewports(1, &m_xSceneViewPort);
+
+			list->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+			list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+			PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
+
+			list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+			list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+
+			ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
+			list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+			list->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+
+			m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, list, false);
+
+			list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+
+
+			m_pRenderableObjectsManager->ForwardRender(list);
+
+
+			m_pForwardRenderPassRTV->EndDraw(list);
+		}
+
+		//
+		///////////////////////////
+
+		//////////////////////////
+		// POSTPROCESS PASS
+
+		BindMainViewPort(list);
+		BindMainRect(list);
+		BeginDraw(list);
+
+		{
+
+			list->ClearRenderTargetView(GetCurrBackBufferView(), COLOR, 0, nullptr);
+			list->OMSetRenderTargets(1, &FD3DW::keep(GetCurrBackBufferView()), true, nullptr);
+
+			PSOManager::GetInstance()->GetPSOObject(PSOType::PostProcessDefaultConfig)->Bind(list);
+
+			list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+			list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+
+			ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
+			list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+			list->SetGraphicsRootDescriptorTable(0, m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+
+
+			list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+
+		}
+
+		/////
+		/////////////////////////////
+
+
+		////////////////////////////
+		////			UI PASS
+
+		{
+			m_pUIComponent->RenderImGui(list);
+		}
+
+		/////
+		/////////////////////////////
+
+		{
+			EndDraw(list);
+		}
+	});
+	auto iii = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { gBufferH,shadowsH });
+
+	auto present = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { PresentSwapchain(); }, { iii });
+
+	m_inFlight.push_back(present);
+
+	while (m_inFlight.size() >= m_uMaxFramesInFlight) {
+		auto& front = m_inFlight.front();
+		if (front && !front->IsDone()) {
+			front->WaitForExecute();
+		}
+		m_inFlight.pop_front();
 	}
-	
-	///
-	///////////////////////////
-
-	{
-		EndDraw(m_pCommandList->GetPtrCommandList());
-	}
-
-	if(m_pDXRCommandQueue)m_pDXRCommandQueue->ExecuteQueue(true);
-	ExecuteMainQueue();			
 
 	m_pRenderableObjectsManager->AfterRender();
-
 	CallAfterRenderLoop();
+
+	GlobalRenderThreadManager::GetInstance()->GarbageCollectAll();
 }
 
 void MainRenderer::UserClose()
 {
+	GlobalRenderThreadManager::GetInstance()->Shutdown();
+
 	DestroyComponent(m_pLightsManager);
 	DestroyComponent(m_pRenderableObjectsManager);
 	DestroyComponent(m_pCameraComponent);
@@ -259,9 +284,10 @@ void MainRenderer::UserClose()
 	PSOManager::FreeInstance();
 }
 
-ID3D12GraphicsCommandList4* MainRenderer::GetDXRCommandList()
+FD3DW::BaseCommandQueue* MainRenderer::UserSwapchainCommandQueue(ID3D12Device* device)
 {
-	return m_pDXRPCML;
+	GlobalRenderThreadManager::GetInstance()->Init(device);
+	return GlobalRenderThreadManager::GetInstance()->GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 }
 
 FD3DW::DepthStencilView* MainRenderer::GetDepthResource() {
@@ -309,44 +335,44 @@ std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
 }
 
 void MainRenderer::AddScene(std::string path) {
-	ScheduleCreation([this, path]() {
-		m_pRenderableObjectsManager->CreateObject<RenderableMesh>(m_pPCML, m_pDXRPCML, path);
+	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreateObject<RenderableMesh>(list, dxrList, path);
 	});
 }
 
 void MainRenderer::AddSkybox(std::string path) {
-	ScheduleCreation([this, path]() {
-		m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(m_pPCML, m_pDXRPCML, path);
+	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(list, dxrList, path);
 	});
 }
 
 void MainRenderer::AddAudio(std::string path) {
-	ScheduleCreation([this, path]() {
-		m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(m_pPCML, m_pDXRPCML, path);
+	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(list, dxrList, path);
 	});
 }
 
 void MainRenderer::AddSimplePlane() {
-	ScheduleCreation([this]() {
-		m_pRenderableObjectsManager->CreatePlane(m_pPCML, m_pDXRPCML);
+	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreatePlane(list, dxrList);
 	});
 }
 
 void MainRenderer::AddSimpleCone() {
-	ScheduleCreation([this]() {
-		m_pRenderableObjectsManager->CreateCone(m_pPCML, m_pDXRPCML);
+	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreateCone(list, dxrList);
 	});
 }
 
 void MainRenderer::AddSimpleCube() {
-	ScheduleCreation([this]() {
-		m_pRenderableObjectsManager->CreateCube(m_pPCML, m_pDXRPCML);
+	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
+		m_pRenderableObjectsManager->CreateCube(list, dxrList);
 	});
 }
 
 void MainRenderer::AddSimpleSphere() {
-	ScheduleCreation([this]() {
-		m_pRenderableObjectsManager->CreateSphere(m_pPCML, m_pDXRPCML);
+	ScheduleCreation([this](ID3D12GraphicsCommandList*list, ID3D12GraphicsCommandList4*dxrList) {
+		m_pRenderableObjectsManager->CreateSphere(list, dxrList);
 	});
 }
 
@@ -435,7 +461,13 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
 		m_pCameraComponent->SetAfterConstruction(this);
 		m_pLightsManager->SetAfterConstruction(this);
-		m_pLightsManager->InitLTC(m_pPCML, m_pGBuffersSRVPack.get());
+		
+		auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+			m_pLightsManager->InitLTC(list, m_pGBuffersSRVPack.get());
+		});
+		auto ltcH = GlobalRenderThreadManager::GetInstance()->Submit(ltcRecipe);
+		ltcH->WaitForExecute();
+
 		m_pRenderableObjectsManager->SetAfterConstruction(this);
 
 		if (!m_pShadowsComponent) 
@@ -472,23 +504,13 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
 	BaseRenderableObject::CreateEmptyStructuredBuffer(device);
-
 	GlobalTextureHeap::GetInstance()->Init(device, GLOBAL_TEXTURE_HEAP_PRECACHE_SIZE,GLOBAL_TEXTURE_HEAP_NODE_MASK);
-
-	m_pCommandList = CreateList(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pPCML = m_pCommandList->GetPtrCommandList();
-	BindMainCommandList(m_pCommandList.get());
-
+	
 }
 
 void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
 {
 	PSOManager::GetInstance()->InitPSOjectsDevice5(device);
-
-	m_pDXRCommandList = FD3DW::DXRCommandList::CreateList(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pDXRPCML = m_pDXRCommandList->GetPtrCommandList();
-	m_pDXRCommandQueue = FD3DW::CommandQueue::CreateQueue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_pDXRCommandQueue->BindCommandList(m_pDXRCommandList.get());
 }
 
 void MainRenderer::TryInitShadowComponent() {
@@ -519,17 +541,11 @@ void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
 }
 
 void MainRenderer::CallAfterRenderLoop() {
-	m_pCommandList->ResetList();
-	if (m_pDXRCommandList) m_pDXRCommandList->ResetList();
-
 	auto vv = m_vCallAfterRenderLoop;
 	m_vCallAfterRenderLoop.clear();
 	for (auto han : vv) {
 		if (han) han();
 	}
-
-	ExecuteMainQueue();
-	if (m_pDXRCommandQueue) m_pDXRCommandQueue->ExecuteQueue(true);
 }
 
 

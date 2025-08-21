@@ -3,8 +3,8 @@
 #include <MainRenderer/GlobalConfig.h>
 #include <MainRenderer/PSOManager.h>
 
-ObjectCulling::ObjectCulling(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
-	Init(device, list);
+ObjectCulling::ObjectCulling(ID3D12Device* device) {
+	Init(device);
 }
 
 bool ObjectCulling::CheckFrustumCulling(CameraFrustum fr, const InstanceData& data) {
@@ -38,7 +38,7 @@ FD3DW::StructuredBuffer* ObjectCulling::GetResultBuffer() {
 	return m_pOutputCommandsBuffer.get();
 }
 
-void ObjectCulling::Init(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+void ObjectCulling::Init(ID3D12Device* device) {
 	m_pInstancesDataBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<InstanceData>(device, 1, true);
 	m_pCullingCameraBuffer = FD3DW::UploadBuffer<CullingCameraStructure>::CreateConstantBuffer(device, 1);
 }

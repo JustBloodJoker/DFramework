@@ -75,6 +75,10 @@ void MainRenderer_RenderableObjectsManager::ForwardRender(ID3D12GraphicsCommandL
 }
 
 void MainRenderer_RenderableObjectsManager::AfterRender() {
+    if (m_vSheduleForDelete.empty()) return;
+
+    GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
     for (const auto& obj : m_vSheduleForDelete) {
         DoDeleteObject(obj);
     }
@@ -125,11 +129,26 @@ bool MainRenderer_RenderableObjectsManager::IsNeedUpdateTLAS() {
 void MainRenderer_RenderableObjectsManager::AfterConstruction() {
     InitIndirectDeferredMeshExecution();
 
-    auto cmList = m_pOwner->GetBindedCommandList();
-    auto dxrList = m_pOwner->GetDXRCommandList();
-    for (const auto& obj : m_vObjects) {
-        DoInitObject(obj.get(), cmList, dxrList);
+    if (m_vObjects.empty()) return;
+
+    GlobalRenderThreadManager::GetInstance()->WaitIdle();
+    std::shared_ptr<FD3DW::ICommandRecipe> recipe = nullptr;
+    if (m_pOwner->IsRTSupported()) {
+        recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
+            for (const auto& obj : m_vObjects) {
+                DoInitObject(obj.get(), list, list);
+            }
+        });
     }
+    else {
+        recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+            for (const auto& obj : m_vObjects) {
+                DoInitObject(obj.get(), list, nullptr);
+            }
+        });
+    }
+    GlobalRenderThreadManager::GetInstance()->Submit(recipe);
+    GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
 
 void MainRenderer_RenderableObjectsManager::BeforeDestruction() {
@@ -255,7 +274,7 @@ void MainRenderer_RenderableObjectsManager::InitIndirectDeferredMeshExecution() 
 
     m_pIndirectDeferredFirstPassCommandsBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<IndirectMeshRenderableData>(m_pOwner->GetDevice(), 1u, true);
 
-    m_pObjectCulling = std::make_unique<ObjectCulling>( m_pOwner->GetDevice(), m_pOwner->GetBindedCommandList() );
+    m_pObjectCulling = std::make_unique<ObjectCulling>( m_pOwner->GetDevice() );
 }
 
 void MainRenderer_RenderableObjectsManager::DoDeleteObject(BaseRenderableObject* obj) {

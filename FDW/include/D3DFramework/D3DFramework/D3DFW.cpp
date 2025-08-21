@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "D3DFW.h"
-#include "GraphicUtilites/RenderThreadUtils/GlobalRenderThreadManager.h"
 
 
 namespace FD3DW
@@ -25,18 +24,7 @@ namespace FD3DW
 	{
 		return m_pAudioMananger.get();
 	}
-
-	ID3D12CommandQueue* D3DFW::GetCommandQueue() const noexcept
-	{
-		return m_pCommandQueue->GetQueue();
-	}
-
-	ID3D12GraphicsCommandList* D3DFW::GetBindedCommandList() const noexcept 
-	{
-		return m_pBindedMainCommandList->GetPtrCommandList();
-	}
-
-
+	
 	IDXGISwapChain* D3DFW::GetSwapChain() const noexcept 
 	{
 		return m_pSwapChain.Get();
@@ -99,32 +87,6 @@ namespace FD3DW
 		pCommandList->RSSetScissorRects(1, &m_xMainRect);
 	}
 
-	void D3DFW::BindMainCommandList(CommandList* pCommandList)
-	{
-		if (m_pBindedMainCommandList) 
-		{
-			UnbindListFromMainQueue(m_pBindedMainCommandList);
-		}
-
-		m_pBindedMainCommandList = pCommandList;
-		BindListToMainQueue(m_pBindedMainCommandList);
-	}
-
-	void D3DFW::BindListToMainQueue(CommandList* pCommandList)
-	{
-		m_pCommandQueue->BindCommandList(pCommandList);
-	}
-
-	void D3DFW::UnbindListFromMainQueue(CommandList* pCommandList)
-	{
-		m_pCommandQueue->UnbindCommandList(pCommandList);
-	}
-
-	void D3DFW::ExecuteMainQueue()
-	{
-		m_pCommandQueue->ExecuteQueue(true);
-	}
-
 	void D3DFW::SetVSync(bool enable)
 	{
 		if (enable) 
@@ -182,8 +144,6 @@ namespace FD3DW
 		InitMessageLayer();
 
 		UserInit();
-		
-		GlobalRenderThreadManager::GetInstance()->WaitIdle();
 
 		return true;
 	}
@@ -264,13 +224,6 @@ namespace FD3DW
 			CONSOLE_MESSAGE("Failed to query Raytracing tier");
 		}
 
-		RenderThreadManagerConfig config{};
-		config.QueuesConfig = { {D3D12_COMMAND_LIST_TYPE_DIRECT, {1,1,1}},
-			{D3D12_COMMAND_LIST_TYPE_COPY, {1,10,1}},
-			{D3D12_COMMAND_LIST_TYPE_COMPUTE, {1,1,1}}
-		};
-		GlobalRenderThreadManager::GetInstance()->Init(m_pDevice.Get(), config);
-
 		if (m_bIsRTSupported) {
 			hr = m_pDevice->QueryInterface(IID_PPV_ARGS(m_pDXRDevice.ReleaseAndGetAddressOf()));
 			m_bIsRTSupported = SUCCEEDED(hr);
@@ -280,7 +233,7 @@ namespace FD3DW
 		m_uCBV_SRV_UAVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		m_uDSVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-		m_pCommandQueue = CreateQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+		auto swapchainQueue = UserSwapchainCommandQueue(m_pDevice.Get());
 
 		const auto& WndSet = WNDSettings();
 
@@ -301,7 +254,7 @@ namespace FD3DW
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		HRESULT_ASSERT(m_pFactory->CreateSwapChain(m_pCommandQueue->GetQueue(), &swapChainDesc, m_pSwapChain.GetAddressOf()), "Swapchain create error");
+		HRESULT_ASSERT(m_pFactory->CreateSwapChain(swapchainQueue->GetQueue(), &swapChainDesc, m_pSwapChain.GetAddressOf()), "Swapchain create error");
 
 		ClearSwapchainData();
 		CreateSwapchainData();
@@ -315,25 +268,16 @@ namespace FD3DW
 	
 	void D3DFW::Update()
 	{
-		if (!m_pBindedMainCommandList) {
-			CONSOLE_ERROR_MESSAGE(" Main command list not binded. Check code and call BindMainCommandList() ");
-			return;
-		}
-
-
 		/////////////////// 
 		// USER DRAW
 		UserLoop();
 		//////////////////
 
-		PresentSwapchain();
 	}
 
 	void D3DFW::ResizeHandler()
 	{
 		const auto& WndSet = WNDSettings();
-
-		m_pCommandQueue->FlushQueue();
 
 		ClearSwapchainData();
 

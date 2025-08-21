@@ -1,12 +1,12 @@
 #include <Lights/MainRenderer_RTSoftShadowsComponent.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
+#include <MainRenderer/GlobalRenderThreadManager.h>
 
 void MainRenderer_RTSoftShadowsComponent::AfterConstruction() {
     MainRenderer_ShadowsComponent::AfterConstruction();
 
 	auto dxrDevice = m_pOwner->GetDXRDevice();
-	auto dxrCommandList = m_pOwner->GetDXRCommandList();
 	auto wndSettings = m_pOwner->GetMainWNDSettings();
 
 	m_pFrameBuffer = std::make_unique<FD3DW::UploadBuffer< RTSoftShadowBuffer>>(dxrDevice, 1, true);
@@ -16,7 +16,6 @@ void MainRenderer_RTSoftShadowsComponent::AfterConstruction() {
 	m_pSoftShadowsSBT->InitSBT(dxrDevice);
 	
 	m_pSrcResultResource = FD3DW::FResource::CreateAnonimTexture(dxrDevice, 1, DXGI_FORMAT_R32G32B32A32_FLOAT, wndSettings.Width, wndSettings.Height, {1,0}, D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_NONE, &FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),1u);
-	m_pSrcResultResource->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 	
 	m_pSoftShadowsUAVPacker = std::make_unique<FD3DW::SRV_UAVPacker>(GetCBV_SRV_UAVDescriptorSize(dxrDevice), 7u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, dxrDevice);
 	
@@ -79,45 +78,49 @@ bool MainRenderer_RTSoftShadowsComponent::IsCanBeEnabled(MainRenderer* renderer)
 void MainRenderer_RTSoftShadowsComponent::BeforeGBufferPass() {}
 
 void MainRenderer_RTSoftShadowsComponent::AfterGBufferPass() {
-	auto dxrCommandList = m_pOwner->GetDXRCommandList();
-	auto tlas = m_pOwner->GetTLAS(dxrCommandList).pResult;
-
-	if (!tlas) return;
-
-	auto wndSettings = m_pOwner->GetMainWNDSettings();
-
-	PSOManager::GetInstance()->GetPSOObject(PSOType::RTSoftShadowDefaultConfig)->Bind(dxrCommandList);
-
-	dxrCommandList->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_TLAS_BUFFER_POS_IN_ROOT_SIG, tlas->GetGPUVirtualAddress());
-
-	m_pSrcResultResource->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-
-	ID3D12DescriptorHeap* r[1] = { m_pSoftShadowsUAVPacker->GetResult()->GetDescriptorPtr() };
-	dxrCommandList->SetDescriptorHeaps(ARRAYSIZE(r), r);
-	dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
-	dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(1));
 	
-	m_pOwner->BindLightConstantBuffer(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, dxrCommandList, true);
-	dxrCommandList->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_FRAME_BUFFER_POS_IN_ROOT_SIG, m_pFrameBuffer->GetGPULocation(0));
+	auto directH = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-	if (m_iCurrentShadowBufferUsage == 1) {
-		m_vInOutWorldPosAndShadowInfo[0]->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		m_vInOutWorldPosAndShadowInfo[1]->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_INPUT_PREV_FRAME_SRV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(4));
-		dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_OUTPUT_CURR_FRAME_UAV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(5));
-	}
-	else {
-		m_vInOutWorldPosAndShadowInfo[1]->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-		m_vInOutWorldPosAndShadowInfo[0]->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_INPUT_PREV_FRAME_SRV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(6));
-		dxrCommandList->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_OUTPUT_CURR_FRAME_UAV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(3));
-	}
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list){
+		auto tlas = m_pOwner->GetTLAS(list).pResult;
 
-	dxrCommandList->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(wndSettings.Width, wndSettings.Height, 1));
+		if (!tlas) return;
 
-	m_pSrcResultResource->ResourceBarrierChange(dxrCommandList, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		auto wndSettings = m_pOwner->GetMainWNDSettings();
 
-	m_pBilateralFilter->Apply(dxrCommandList);
+		PSOManager::GetInstance()->GetPSOObject(PSOType::RTSoftShadowDefaultConfig)->Bind(list);
+
+		list->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_TLAS_BUFFER_POS_IN_ROOT_SIG, tlas->GetGPUVirtualAddress());
+
+		m_pSrcResultResource->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+		ID3D12DescriptorHeap* r[1] = { m_pSoftShadowsUAVPacker->GetResult()->GetDescriptorPtr() };
+		list->SetDescriptorHeaps(ARRAYSIZE(r), r);
+		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
+		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(1));
+
+		m_pOwner->BindLightConstantBuffer(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, list, true);
+		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_FRAME_BUFFER_POS_IN_ROOT_SIG, m_pFrameBuffer->GetGPULocation(0));
+
+		if (m_iCurrentShadowBufferUsage == 1) {
+			m_vInOutWorldPosAndShadowInfo[0]->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			m_vInOutWorldPosAndShadowInfo[1]->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_INPUT_PREV_FRAME_SRV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(4));
+			list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_OUTPUT_CURR_FRAME_UAV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(5));
+		}
+		else {
+			m_vInOutWorldPosAndShadowInfo[1]->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+			m_vInOutWorldPosAndShadowInfo[0]->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_INPUT_PREV_FRAME_SRV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(6));
+			list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_OUTPUT_CURR_FRAME_UAV_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(3));
+		}
+
+		list->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(wndSettings.Width, wndSettings.Height, 1));
+
+		m_pBilateralFilter->Apply(list);
+	});
+
+	GlobalRenderThreadManager::GetInstance()->Submit(recipe, { directH });
 }
 
 D3D12_SRV_DIMENSION MainRenderer_RTSoftShadowsComponent::GetSRVResultDimension() {

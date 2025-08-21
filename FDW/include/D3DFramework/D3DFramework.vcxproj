@@ -204,7 +204,6 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.h" />
-    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\GlobalRenderThreadManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h" />

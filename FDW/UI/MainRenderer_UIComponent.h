@@ -23,7 +23,7 @@ public:
 
 public:
 	void InitImGui();
-	void RenderImGui();
+	void RenderImGui(ID3D12GraphicsCommandList* list);
 	void ShutDownImGui();
 	bool ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
