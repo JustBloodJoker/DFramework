@@ -9,7 +9,14 @@ namespace FD3DW {
 
 	void AsyncCommandQueue::Submit(std::shared_ptr<ClosedBatch> batch)
     {
-        if (batch && !batch->Lists.empty()) {
+        const UINT64 ticket = ReserveFenceTicket();
+        batch->FenceValue = ticket;
+
+        if (batch->Handle) {
+            batch->Handle->Bind(m_pFence.Get(), ticket);
+        }
+
+        if (!batch->Lists.empty()) {
             std::vector<ID3D12CommandList*> lists;
             lists.reserve(batch->Lists.size());
             for (const auto& l : batch->Lists) {
@@ -18,8 +25,8 @@ namespace FD3DW {
             m_pCommandQueue->ExecuteCommandLists((UINT)lists.size(), lists.data());
         }
 
-        batch->FenceValue = SignalFence();
-        if (batch->Handle) batch->Handle->Bind(m_pFence.Get(), batch->FenceValue);
+        HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(), ticket), "Signal error");
+        m_uLastFenceEvent.store(ticket, std::memory_order_release);
 
         {
             std::lock_guard<std::mutex> lock(m_xMutex);
@@ -32,11 +39,9 @@ namespace FD3DW {
         return m_uLastFenceEvent - m_pFence->GetCompletedValue();
     }
 
-    UINT64 AsyncCommandQueue::SignalFence()
+    UINT64 AsyncCommandQueue::ReserveFenceTicket()
     {
-        m_uLastFenceEvent = m_uLastFenceEvent + 1;
-        HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(), m_uLastFenceEvent), "Signal error");
-        return m_uLastFenceEvent;
+        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed) + 1;
     }
 
     void AsyncCommandQueue::WaitFence(std::shared_ptr<ExecutionHandle> dependency)
@@ -53,17 +58,21 @@ namespace FD3DW {
 
 
     void AsyncCommandQueue::WaitIdle() {
-        const UINT64 sf = SignalFence();
+        const UINT64 ticket = ReserveFenceTicket();
+        HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(), ticket), "Signal error");
+        m_uLastFenceEvent.store(ticket, std::memory_order_release);
+
         ExecutionHandle h;
-        h.Bind(m_pFence.Get(), sf);
+        h.Bind(m_pFence.Get(), ticket);
         h.WaitForExecute();
     }
 
-    std::shared_ptr<ExecutionHandle> AsyncCommandQueue::CreateExecutionHandle()
+    std::shared_ptr<ExecutionHandle> AsyncCommandQueue::CreateReservedExecutionHandle()
     {
-        auto exHandle = std::make_shared<ExecutionHandle>();
-        exHandle->Bind(m_pFence.Get(), m_uLastFenceEvent);
-        return exHandle;
+        auto h = std::make_shared<ExecutionHandle>();
+        const UINT64 ticket = ReserveFenceTicket();
+        h->Bind(m_pFence.Get(), ticket);
+        return h;
     }
 
     void AsyncCommandQueue::GarbageCollect()

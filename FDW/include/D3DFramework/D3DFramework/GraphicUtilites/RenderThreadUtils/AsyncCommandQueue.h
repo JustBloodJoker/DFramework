@@ -26,7 +26,8 @@ namespace FD3DW {
         void Submit(std::shared_ptr<ClosedBatch> batch);
 
         UINT64 GetLoadApprox() const;
-        UINT64 SignalFence();
+
+        UINT64 ReserveFenceTicket();
 
         void WaitFence(std::shared_ptr<ExecutionHandle> dependency);
         void WaitFence(UINT64 value, AsyncCommandQueue* fromQueue);
@@ -34,12 +35,13 @@ namespace FD3DW {
 
         void WaitIdle();
 
-        std::shared_ptr<ExecutionHandle> CreateExecutionHandle();
+        std::shared_ptr<ExecutionHandle> CreateReservedExecutionHandle();
 
         void GarbageCollect();
 
     private:
         std::atomic<UINT64> m_uLastFenceEvent = 0;
+        std::atomic<UINT64> m_uNextFenceTicket = 0;
         mutable std::mutex m_xMutex;
         std::deque<std::shared_ptr<ClosedBatch>> m_dInFlight;
     };

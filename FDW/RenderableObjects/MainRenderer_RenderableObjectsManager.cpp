@@ -36,6 +36,10 @@ std::vector<BaseRenderableObject*> MainRenderer_RenderableObjectsManager::GetRen
     return ret;
 }
 
+void MainRenderer_RenderableObjectsManager::UpdateHiZResource(ID3D12GraphicsCommandList* cmdList) {
+
+}
+
 void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandList* cmdList) {
     auto timer = m_pOwner->GetTimer();
 
@@ -230,6 +234,7 @@ void MainRenderer_RenderableObjectsManager::DoDefferedRender(ID3D12GraphicsComma
             m_pObjectCulling->ProcessGPUCulling(data);
         }
 
+        PSOManager::GetInstance()->GetPSOObject(m_pOwner->IsEnabledPreDepth() ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
         ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
         list->SetDescriptorHeaps(_countof(heaps), heaps);
         list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));

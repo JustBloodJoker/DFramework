@@ -45,6 +45,7 @@ public:
 
     std::vector<BaseRenderableObject*> GetRenderableObjects() const;
 
+    void UpdateHiZResource(ID3D12GraphicsCommandList* cmdList);
     void BeforeRender(ID3D12GraphicsCommandList* cmdList);
     void PreDepthRender(ID3D12GraphicsCommandList* list);
     void DeferredRender(ID3D12GraphicsCommandList* list);

@@ -163,10 +163,10 @@ protected:
 	bool m_bIsEnabledPreDepth = false;
 
 protected:
-	//TEST FIELDS
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;
 	std::unique_ptr<FD3DW::RTVPacker> m_pGBuffersRTVPack;
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
+
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
@@ -177,7 +177,6 @@ protected:
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
-	///////////////
-
+	
 };
 

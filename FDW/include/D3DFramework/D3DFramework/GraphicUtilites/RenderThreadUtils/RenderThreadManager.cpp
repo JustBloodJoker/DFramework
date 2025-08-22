@@ -18,10 +18,13 @@ namespace FD3DW {
 
     void RenderThreadManager::Shutdown() {
         WaitIdle();
-        m_mPools.clear();
-        m_mQueues.clear();
 
         m_xRenderThread.Stop();
+
+        GarbageCollectAll();
+
+        m_mPools.clear();
+        m_mQueues.clear();
     }
 
     AsyncCommandQueue* RenderThreadManager::GetQueue(D3D12_COMMAND_LIST_TYPE type) {
@@ -33,7 +36,7 @@ namespace FD3DW {
     }
 
     std::shared_ptr<ExecutionHandle> RenderThreadManager::CreateWaitHandle(D3D12_COMMAND_LIST_TYPE type) {
-        if (m_mQueues.contains(type)) return m_mQueues[type]->CreateExecutionHandle();
+        if (m_mQueues.contains(type)) return m_mQueues[type]->CreateReservedExecutionHandle();
 
         auto h = std::make_shared<ExecutionHandle>();
         h->Bind(nullptr, 0);
@@ -122,7 +125,7 @@ namespace FD3DW {
                 batch->Recycle = [pool](std::unique_ptr<ICommandList> l) { pool->Recycle(std::move(l)); };
 
                 if (prevQ && prevQ != q) {
-                    if (prevFence == 0) prevFence = prevQ->SignalFence();
+                    if (prevFence == 0) prevFence = prevQ->ReserveFenceTicket();
                     q->WaitFence(prevFence, prevQ);
                     prevFence = 0;
                 }

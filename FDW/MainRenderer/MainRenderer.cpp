@@ -99,25 +99,47 @@ void MainRenderer::UserLoop()
 	///	
 	///////////////////////////
 
-	auto gBuffersPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+
+	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = beforeRenderH;
+	if (m_bIsEnabledPreDepth)
+	{
 		///////////////////////
 		//	PRE DEPTH PASS
-		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		{
-			if (m_bIsEnabledPreDepth)
+		auto preDepthPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			{
-				PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
-				list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+				if (m_bIsEnabledPreDepth)
+				{
+					list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-				list->RSSetScissorRects(1, &m_xSceneRect);
-				list->RSSetViewports(1, &m_xSceneViewPort);
-				list->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+					PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
+					list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				m_pRenderableObjectsManager->PreDepthRender(list);
+					list->RSSetScissorRects(1, &m_xSceneRect);
+					list->RSSetViewports(1, &m_xSceneViewPort);
+					list->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+
+					m_pRenderableObjectsManager->PreDepthRender(list);
+				}
 			}
-		}
+		});
 		///////////////////////
+		preDepthH = GlobalRenderThreadManager::GetInstance()->Submit(preDepthPassRecipe, { beforeRenderH });
+	}
+
+	auto HiZUpdateH = preDepthH;
+	if (m_pRenderableObjectsManager->GetMeshCullingType() == CullingType::GPUCulling) {
+		//auto updateHiZ = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
+		//	m_pRenderableObjectsManager->UpdateHiZResource(list);
+		//});
+		//HiZUpdateH = GlobalRenderThreadManager::GetInstance()->Submit(updateHiZ, { preDepthH });
+	}
+
+	auto gBuffersPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {		
+		if (!m_bIsEnabledPreDepth) 
+		{
+			list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		}
 
 		///////////////////////
 		//	DEFERRED FIRST PASS
@@ -129,7 +151,6 @@ void MainRenderer::UserLoop()
 				gbuffer->StartDraw(list);
 			}
 
-			PSOManager::GetInstance()->GetPSOObject(m_bIsEnabledPreDepth ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
 			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			list->RSSetScissorRects(1, &m_xSceneRect);
@@ -151,7 +172,7 @@ void MainRenderer::UserLoop()
 		///
 		///////////////////////////
 	});
-	auto gBufferH = GlobalRenderThreadManager::GetInstance()->Submit(gBuffersPassRecipe,{ beforeRenderH });
+	auto gBufferH = GlobalRenderThreadManager::GetInstance()->Submit(gBuffersPassRecipe,{ HiZUpdateH });
 	
 	///////////////////////
 	//	Shadow PASS After GBuffer pass
@@ -164,7 +185,6 @@ void MainRenderer::UserLoop()
 	///////////////////////////
 	
 	auto shadowsH = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
-
 
 	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 
