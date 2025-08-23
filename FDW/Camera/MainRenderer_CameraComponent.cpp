@@ -2,7 +2,7 @@
 #include <MainRenderer/MainRenderer.h>
 
 MainRenderer_CameraComponent::MainRenderer_CameraComponent() {
-	m_xEye = dx::XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+	m_xEye = dx::XMVectorSet(0.0f, 2.0f, -1.0f, 1.0f);
 	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -112,13 +112,13 @@ void MainRenderer_CameraComponent::OnMouseMove(WPARAM btnState, int x, int y) {
 
 	UpdateViewMatrix();
 }
-
+	
 CameraFrustum MainRenderer_CameraComponent::GetCameraFrustum() {
 	return m_xFrustum;
 }
 
 void MainRenderer_CameraComponent::UpdateCameraFrustum() {
-	m_xFrustum.UpdatePlanes(m_xView * m_xProjectionMatrix);
+	m_xFrustum.UpdatePlanes(m_xView * m_xProjectionMatrix, m_fZNear, m_fZFar);
 }
 
 

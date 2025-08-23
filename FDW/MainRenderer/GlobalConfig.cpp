@@ -79,7 +79,6 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
-                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
                     desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
@@ -104,7 +103,6 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     dsvFirstPassWithPre.StencilEnable = false;
                     desc.DepthStencilState = dsvFirstPassWithPre;
                     desc.RasterizerState = rasterizerDesc;
-                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
                     desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
@@ -121,7 +119,6 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
                     desc.DepthStencilState = dsvFirstDefPassDesc;
                     desc.RasterizerState = rasterizerDesc;
-                    desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
                     desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
                     return desc;
                 }()
@@ -219,6 +216,13 @@ const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptor
             {
                 PSOType::None,
                 L"ObjectsCulling"
+            }
+        },
+        {
+            PSOType::CopyDepthToHIZ,
+            {
+                PSOType::None,
+                L"CopyDepthToHIZ"
             }
         }
     };

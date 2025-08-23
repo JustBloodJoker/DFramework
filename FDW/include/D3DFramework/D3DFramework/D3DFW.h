@@ -151,8 +151,8 @@ namespace FD3DW
 
 		std::unique_ptr<RenderTarget>		CreateRenderTarget(const DXGI_FORMAT format, const D3D12_RTV_DIMENSION dimension, const UINT arrSize,
 																const UINT width, const UINT height, const UINT msaaSampleCount = 1u);
-		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
-																const UINT width, const UINT height, const UINT msaaSampleCount = 1u, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
+		std::unique_ptr<DepthStencilView>	CreateDepthStencilView(const DXGI_FORMAT format, const DXGI_FORMAT depthFormat, const DXGI_FORMAT srvFormat, const D3D12_DSV_DIMENSION dimension, const UINT arrSize,
+																const UINT width, const UINT height, const UINT mipCount = 1u, const UINT msaaSampleCount = 1u, const D3D12_DSV_FLAGS flags = D3D12_DSV_FLAG_NONE);
 
 		std::unique_ptr<RTVPacker> CreateRTVPack(const UINT descriptorsCount, const UINT NodeMask = 0);
 		std::unique_ptr<DSVPacker> CreateDSVPack(const UINT descriptorsCount, const UINT NodeMask = 0);

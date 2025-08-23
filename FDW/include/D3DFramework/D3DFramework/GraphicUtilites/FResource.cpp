@@ -376,99 +376,111 @@ namespace FD3DW
         return fullData;*/
     }
 
-    void FResource::GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
+    void FResource::GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, D3D12_RESOURCE_STATES stateAfter)
     {
         auto desc = m_pResource->GetDesc();
         if (desc.MipLevels <= 1) return;
 
-        UINT numMips = desc.MipLevels;
-        UINT numDescriptors = 2 * (numMips - 1);
+        const UINT numMips = desc.MipLevels;
+        const UINT numDescriptors = 2 * (numMips - 1);
 
-        D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-        heapDesc.NumDescriptors = numDescriptors;
-        heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        
-        ID3D12DescriptorHeap* descriptorHeap;
-        HRESULT_ASSERT(pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&descriptorHeap)), "Failed to create descriptor heap for mipmap generation");
+        if (!m_pMipsGenerationDescriptorHeap || m_pMipsGenerationDescriptorHeap->GetDesc().NumDescriptors != numDescriptors)
+        {
+            D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+            heapDesc.NumDescriptors = numDescriptors;
+            heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+            heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+            HRESULT_ASSERT( pDevice->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(m_pMipsGenerationDescriptorHeap.ReleaseAndGetAddressOf())), "Failed to create descriptor heap for mipmap generation" );
+
+            UINT descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_pMipsGenerationDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+            for (UINT topMip = 0; topMip < numMips - 1; ++topMip)
+            {
+                D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+                srvDesc.Format = desc.Format;
+                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+                srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+                srvDesc.Texture2D.MostDetailedMip = topMip;
+                srvDesc.Texture2D.MipLevels = 1;
+                pDevice->CreateShaderResourceView(m_pResource.Get(), &srvDesc, cpuHandle);
+
+                cpuHandle.Offset(1, descriptorSize);
+
+                D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                uavDesc.Format = desc.Format;
+                uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+                uavDesc.Texture2D.MipSlice = topMip + 1;
+                pDevice->CreateUnorderedAccessView(m_pResource.Get(), nullptr, &uavDesc, cpuHandle);
+
+                cpuHandle.Offset(1, descriptorSize);
+            }
+        }
+
+        auto mipGenPSO = GetMipGenerationPSO(pDevice);
+        mipGenPSO->Bind(pCommandList);
+
+        ID3D12DescriptorHeap* heaps[] = { m_pMipsGenerationDescriptorHeap.Get() };
+        pCommandList->SetDescriptorHeaps(1, heaps);
 
         UINT descriptorSize = pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        
-        auto mipGenPSO = GetMipGenerationPSO(pDevice);
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_pMipsGenerationDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-        CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(descriptorHeap->GetGPUDescriptorHandleForHeapStart());
         for (UINT topMip = 0; topMip < numMips - 1; ++topMip)
         {
-
             UINT srcSubresource = D3D12CalcSubresource(topMip, 0, 0, numMips, 1);
             UINT dstSubresource = D3D12CalcSubresource(topMip + 1, 0, 0, numMips, 1);
 
-            D3D12_RESOURCE_BARRIER setBarriers[] = {
-                CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(),
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-                    srcSubresource),
-                CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(),
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                    dstSubresource)
-            };
+            std::array<D3D12_RESOURCE_BARRIER, 2> barriers;
+            UINT numBarriers = 0;
+            if (m_xCurrState != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE)
+            {
+                barriers[numBarriers++] = CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(), m_xCurrState, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, srcSubresource);
+            }
 
-            pCommandList->ResourceBarrier(ARRAYSIZE(setBarriers), setBarriers);
+            if (m_xCurrState != D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+            {
+                barriers[numBarriers++] = CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(), m_xCurrState, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, dstSubresource);
+            }
 
-            D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-            srvDesc.Format = desc.Format;
-            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-            srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-            srvDesc.Texture2D.MostDetailedMip = topMip;
-            srvDesc.Texture2D.MipLevels = 1;
-            srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-            pDevice->CreateShaderResourceView(m_pResource.Get(), &srvDesc, cpuHandle);
-
-            cpuHandle.Offset(1, descriptorSize);
-
-            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.Format = desc.Format;
-            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-            uavDesc.Texture2D.MipSlice = topMip + 1;
-            uavDesc.Texture2D.PlaneSlice = 0;
-            pDevice->CreateUnorderedAccessView(m_pResource.Get(), nullptr, &uavDesc, cpuHandle);
-
-            mipGenPSO->Bind(pCommandList);
-
-            ID3D12DescriptorHeap* heaps[] = { descriptorHeap };
-            pCommandList->SetDescriptorHeaps(1, heaps);
-
-            uint32_t dstWidth = std::max( (UINT)desc.Width >> (topMip + 1), 1u );
-            uint32_t dstHeight = std::max( (UINT)desc.Height >> (topMip + 1), 1u );
+            if (numBarriers > 0) 
+            {
+                pCommandList->ResourceBarrier(numBarriers, barriers.data());
+            }
+            UINT dstWidth = std::max<UINT>(desc.Width >> (topMip + 1), 1u);
+            UINT dstHeight = std::max<UINT>(desc.Height >> (topMip + 1), 1u);
             float texelSize[2] = { 1.0f / dstWidth, 1.0f / dstHeight };
 
             pCommandList->SetComputeRoot32BitConstants(2, 2, texelSize, 0);
+
             pCommandList->SetComputeRootDescriptorTable(0, gpuHandle);
             gpuHandle.Offset(1, descriptorSize);
-            pCommandList->SetComputeRootDescriptorTable(1, gpuHandle);
-
-
-            pCommandList->Dispatch((dstWidth + 7) / 8, (dstHeight + 7) / 8, 1);
             
-            D3D12_RESOURCE_BARRIER resetBarriers[] = {
-                CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(),
-                    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    srcSubresource),
-                CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(),
-                    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                    D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-                    dstSubresource)
-            };
-            pCommandList->ResourceBarrier(ARRAYSIZE(resetBarriers), resetBarriers);
-
-            cpuHandle.Offset(1, descriptorSize);
+            pCommandList->SetComputeRootDescriptorTable(1, gpuHandle);
             gpuHandle.Offset(1, descriptorSize);
 
+            pCommandList->Dispatch((dstWidth + 7) / 8, (dstHeight + 7) / 8, 1);
+
+            numBarriers = 0;
+            if (stateAfter != D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE) 
+            {
+                barriers[numBarriers++] = CD3DX12_RESOURCE_BARRIER::Transition(m_pResource.Get(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, stateAfter, srcSubresource);
+            }
+            if (stateAfter != D3D12_RESOURCE_STATE_UNORDERED_ACCESS) 
+            {
+                barriers[numBarriers++] = CD3DX12_RESOURCE_BARRIER::Transition( m_pResource.Get(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, stateAfter, dstSubresource);
+            }
+
+            if (numBarriers > 0)
+            {
+                pCommandList->ResourceBarrier(numBarriers, barriers.data());
+            }
+
+            m_xCurrState = stateAfter;
         }
     }
+
 
     bool FResource::DeleteUploadBuffer()
     {
@@ -492,6 +504,11 @@ namespace FD3DW
     ID3D12Resource* FResource::GetResource() const
     {
         return m_pResource.Get();
+    }
+
+    void FResource::ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter)
+    {
+        ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, resourceStateAfter);
     }
 
     void FResource::ReleaseUploadBuffers() 

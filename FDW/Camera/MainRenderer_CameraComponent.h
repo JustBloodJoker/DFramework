@@ -57,6 +57,8 @@ public:
 		REGISTER_FIELD(m_xStartUp)
 		REGISTER_FIELD(m_xStartEye)
 		REGISTER_FIELD(m_xStartAt)
+		REGISTER_FIELD(m_fZFar)
+		REGISTER_FIELD(m_fZNear)
 	END_FIELD_REGISTRATION()
 
 private:
@@ -76,6 +78,9 @@ private:
 	dx::XMVECTOR m_xEye;
 	dx::XMVECTOR m_xUp;
 	dx::XMVECTOR m_xAt;
+
+	float m_fZNear = 0.1f;
+	float m_fZFar = 10000.0f;
 
 	dx::XMVECTOR m_xStartUp;
 	dx::XMVECTOR m_xStartEye = dx::XMVectorZero();

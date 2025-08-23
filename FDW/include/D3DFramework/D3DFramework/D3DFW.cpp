@@ -397,9 +397,9 @@ namespace FD3DW
 		return std::unique_ptr<Audio>(m_pAudioMananger->CreateAudio(path));
 	}
 
-	std::unique_ptr<DepthStencilView> D3DFW::CreateDepthStencilView(const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const UINT msaaSampleCount, const D3D12_DSV_FLAGS flags)
+	std::unique_ptr<DepthStencilView> D3DFW::CreateDepthStencilView(const DXGI_FORMAT format, const DXGI_FORMAT depthFormat, const DXGI_FORMAT srvFormat, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const UINT mipCount, const UINT msaaSampleCount, const D3D12_DSV_FLAGS flags)
 	{
-		return std::make_unique<DepthStencilView>(m_pDevice.Get(), format, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ msaaSampleCount, m_uQuality }), flags);
+		return std::make_unique<DepthStencilView>(m_pDevice.Get(), format, depthFormat, srvFormat, dimension, arrSize, width, height, DXGI_SAMPLE_DESC({ msaaSampleCount, m_uQuality }), flags, mipCount);
 	}
 
 	UINT D3DFW::GetIndexSize(Object* obj, const size_t index) const

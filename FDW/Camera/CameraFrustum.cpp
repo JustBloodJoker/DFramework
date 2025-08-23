@@ -1,6 +1,10 @@
 #include <Camera/CameraFrustum.h>
 
-void CameraFrustum::UpdatePlanes(const dx::XMMATRIX& vp) {
+void CameraFrustum::UpdatePlanes(const dx::XMMATRIX& vp, const float zNear, const float zFar) {
+    m_xViewProjection = vp;
+    m_fZNear = zNear;
+    m_fZFar = zFar;
+
     dx::XMFLOAT4X4 m;
     dx::XMStoreFloat4x4(&m, vp);
 
@@ -20,6 +24,18 @@ void CameraFrustum::UpdatePlanes(const dx::XMMATRIX& vp) {
 
 std::array<dx::XMFLOAT4, 6> CameraFrustum::GetPlanes() {
 	return m_aPlanes;
+}
+
+dx::XMMATRIX CameraFrustum::GetViewProjection() {
+    return m_xViewProjection;
+}
+
+float CameraFrustum::GetZNear() {
+    return m_fZNear;
+}
+
+float CameraFrustum::GetZFar() {
+    return m_fZFar;
 }
 
 bool CameraFrustum::IsAABBInsideFrustum(const dx::XMFLOAT3& boxMin, const dx::XMFLOAT3& boxMax) {

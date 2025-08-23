@@ -47,14 +47,13 @@ namespace FD3DW
 
 	}
 
-	void SRV_UAVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
+	void SRV_UAVPacker::AddResource(ID3D12Resource* resource, const DXGI_FORMAT format, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
 	{
-
 		const auto& desc = resource->GetDesc();
 
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		srvDesc.Format = desc.Format;
+		srvDesc.Format = format;
 		srvDesc.ViewDimension = dimension;
 
 		switch (dimension)
@@ -127,9 +126,9 @@ namespace FD3DW
 			&srvDesc, m_pDescriptorHeap->GetCPUDescriptorHandle(index < m_uDescriptorCount ? (UINT)index : 0));
 	}
 
-	void SRV_UAVPacker::PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice)
+	void SRV_UAVPacker::AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice)
 	{
-		AddResource(resource, dimension, m_uCurrentIndex++, pDevice);
+		AddResource(resource, resource->GetDesc().Format, dimension, index, pDevice);
 	}
 
 	void SRV_UAVPacker::AddNullResource(const size_t index, ID3D12Device* pDevice)
@@ -201,9 +200,9 @@ namespace FD3DW
 
 	}
 
-	void SRV_UAVPacker::PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice)
+	void SRV_UAVPacker::AddResource(DepthStencilView* dsv, size_t index, ID3D12Device* pDevice)
 	{
-		AddResource(desc, m_uCurrentIndex++, pDevice);
+		AddResource(dsv->GetResource(), dsv->SRVFormat(), ConvertDSVDimensionToSRVDimension(dsv->GetDSVDesc().ViewDimension), index, pDevice);
 	}
 
 	std::unique_ptr<SamplerPacker> SamplerPacker::CreatePack(const UINT descriptorSize, const UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)

@@ -4,8 +4,9 @@
 
 struct CullingCameraStructure {
     std::array<dx::XMFLOAT4,6> CameraPlanes;
-    UINT     InstancesCount;
-    UINT     MipLevels;
-    UINT     pad1;
-    UINT     pad2;
+    dx::XMMATRIX ViewProjection;
+    UINT InstancesCount;
+    INT MipLevels;
+    INT HiZWidth;
+    INT HiZHeight;
 };

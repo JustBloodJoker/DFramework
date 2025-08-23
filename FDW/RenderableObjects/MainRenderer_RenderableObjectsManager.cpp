@@ -37,7 +37,7 @@ std::vector<BaseRenderableObject*> MainRenderer_RenderableObjectsManager::GetRen
 }
 
 void MainRenderer_RenderableObjectsManager::UpdateHiZResource(ID3D12GraphicsCommandList* cmdList) {
-
+    m_pObjectCulling->UpdateHiZResource(m_pOwner->GetDepthResource(), m_pOwner->GetDevice(), cmdList);
 }
 
 void MainRenderer_RenderableObjectsManager::BeforeRender(ID3D12GraphicsCommandList* cmdList) {

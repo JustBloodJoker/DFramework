@@ -59,6 +59,34 @@ namespace FD3DW
 		return aiMat;
 	}
 
+
+	inline UINT AlignForUavCounter(UINT bufferSize)
+	{
+		const UINT alignment = D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT;
+		return (bufferSize + (alignment - 1)) & ~(alignment - 1);
+	}
+
+	inline D3D12_SRV_DIMENSION ConvertDSVDimensionToSRVDimension(D3D12_DSV_DIMENSION dimension)
+	{
+		switch (dimension)
+		{
+		case D3D12_DSV_DIMENSION_TEXTURE1D:
+			return D3D12_SRV_DIMENSION_TEXTURE1D;
+		case D3D12_DSV_DIMENSION_TEXTURE1DARRAY:
+			return D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+		case D3D12_DSV_DIMENSION_TEXTURE2D:
+			return D3D12_SRV_DIMENSION_TEXTURE2D;
+		case D3D12_DSV_DIMENSION_TEXTURE2DARRAY:
+			return D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+		case D3D12_DSV_DIMENSION_TEXTURE2DMS:
+			return D3D12_SRV_DIMENSION_TEXTURE2DMS;
+		case D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY:
+			return D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+		default:
+			return D3D12_SRV_DIMENSION_UNKNOWN;
+		}
+	}
+
 	inline unsigned GetChannelsCount(DXGI_FORMAT format)
 	{
 		switch (format)

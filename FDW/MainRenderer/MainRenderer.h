@@ -141,7 +141,7 @@ private:
 	std::unique_ptr<MainRenderer_RenderableObjectsManager> m_pRenderableObjectsManager = nullptr;
 	std::unique_ptr<MainRenderer_LightsManager> m_pLightsManager = nullptr;
 	std::unique_ptr<MainRenderer_ShadowsComponent> m_pShadowsComponent = nullptr;
-	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_inFlight;
+	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
 	size_t m_uMaxFramesInFlight = 5;
 
 protected:

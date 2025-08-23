@@ -27,6 +27,8 @@ public:
 	bool CheckFrustumCulling(CameraFrustum fr ,const InstanceData& data);
 	void ProcessGPUCulling(const InputObjectCullingProcessData& data);
 
+	void UpdateHiZResource(FD3DW::DepthStencilView* mainDSV, ID3D12Device* device, ID3D12GraphicsCommandList* list);
+
 	FD3DW::StructuredBuffer* GetResultBuffer();
 	UINT CountBufferOffset(UINT count);
 
@@ -34,7 +36,7 @@ private:
 	void Init(ID3D12Device* device);
 	void RecreateOutputCommandBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* list, UINT count);
 	void LoadDataToInstancesBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* list, std::vector<InstanceData> data);
-	void LoadDataToCameraBuffer(CameraFrustum frustum, UINT instancesCount, FD3DW::DepthStencilView* resource);
+	void LoadDataToCameraBuffer(CameraFrustum frustum, UINT instancesCount);
 	FD3DW::UAVResourceDesc GetDefaultDescriptor(UINT commandsNum);
 
 private:
@@ -43,5 +45,10 @@ private:
 
 	std::unique_ptr<FD3DW::StructuredBuffer> m_pOutputCommandsBuffer;
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pPack;
+
+	FD3DW::DepthStencilView* m_pLastDepthBufferResource = nullptr;
+	std::unique_ptr<FD3DW::FResource> m_pHiZResource;
+
+	bool m_bIsCanDoHiZOcclusion = false;
 
 };

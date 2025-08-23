@@ -2,6 +2,7 @@
 #include "../pch.h"
 
 #include "BufferDescriptorHeap.h"
+#include "DepthStencilView.h"
 
 
 namespace FD3DW
@@ -68,12 +69,19 @@ namespace FD3DW
 		SRV_UAVPacker(const UINT descriptorSize, const  UINT descriptorsCount, const UINT NodeMask, const D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice);
 		virtual ~SRV_UAVPacker() = default;
 
+		void AddResource(ID3D12Resource* resource, const DXGI_FORMAT format, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice);
+		
 		void AddResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, const size_t index, ID3D12Device* pDevice);
-		void PushResource(ID3D12Resource* resource, const D3D12_SRV_DIMENSION dimension, ID3D12Device* pDevice);
 		void AddNullResource(const size_t index, ID3D12Device* pDevice);
 
 		void AddResource(const UAVResourceDesc& desc, size_t index, ID3D12Device* pDevice);
-		void PushResource(const UAVResourceDesc& desc, ID3D12Device* pDevice);
+
+		void AddResource(DepthStencilView* dsv, size_t index, ID3D12Device* pDevice);
+
+		template<typename ...Args>
+		void PushResource(ID3D12Device* pDevice,Args&& ... args) {
+			AddResource(std::forward<Args>(args)..., m_uCurrentIndex++, pDevice);
+		}
 	};
 
 	class SamplerPacker

@@ -5,10 +5,10 @@
 namespace FD3DW
 {
 
-	DepthStencilView::DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags, UINT mipsCount)
+	DepthStencilView::DepthStencilView(ID3D12Device* pDevice, const DXGI_FORMAT format, const DXGI_FORMAT depthFormat, const DXGI_FORMAT srvFormat, const D3D12_DSV_DIMENSION dimension, const UINT arrSize, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const D3D12_DSV_FLAGS flags, UINT mipsCount)
         : FResource(pDevice, arrSize, format, width, height, sampleDesc, GetDimensionForDSV(dimension), D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_ALLOW_ALL_BUFFERS_AND_TEXTURES, &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)) ,mipsCount)
 	{
-        InitDSV(pDevice, format, dimension, width, height, sampleDesc, arrSize, flags);
+        InitDSV(pDevice, format, depthFormat, srvFormat, dimension, width, height, sampleDesc, arrSize, flags);
 	}
 
     D3D12_DEPTH_STENCIL_VIEW_DESC DepthStencilView::GetDSVDesc() const
@@ -29,6 +29,11 @@ namespace FD3DW
     void DepthStencilView::SRVPass(ID3D12GraphicsCommandList* pCommandList)
     {
         ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
+
+    DXGI_FORMAT DepthStencilView::SRVFormat()
+    {
+        return m_xSrvFormat;
     }
 
     D3D12_RESOURCE_DIMENSION DepthStencilView::GetDimensionForDSV(D3D12_DSV_DIMENSION dimension)
@@ -54,14 +59,17 @@ namespace FD3DW
         return ret;
     }
 
-    void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
+
+    void DepthStencilView::InitDSV(ID3D12Device* pDevice, const DXGI_FORMAT format, const DXGI_FORMAT depthFormat, const DXGI_FORMAT srvFormat, const D3D12_DSV_DIMENSION dimension, const UINT width, const UINT height, const DXGI_SAMPLE_DESC sampleDesc, const UINT arrSize, const D3D12_DSV_FLAGS flags)
 	{
         CONSOLE_MESSAGE(std::string("INITING CUSTOM DSV DESC"));
 
         ZeroMemory(&m_xDSVDesc, sizeof(m_xDSVDesc));
 
+        m_xSrvFormat = srvFormat;
+
         m_xDSVDesc.Flags = flags;
-        m_xDSVDesc.Format = format;
+        m_xDSVDesc.Format = depthFormat;
         m_xDSVDesc.ViewDimension = dimension;
 
         switch (dimension)

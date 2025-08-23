@@ -26,7 +26,7 @@ void MainRenderer::UserInit()
 
 	SetVSync(true);
 
-	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_D24_UNORM_S8_UINT, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
 	
 	m_pDSVPack = CreateDSVPack(1u);
 	m_pDSVPack->PushResource(m_pDSV->GetResource(), m_pDSV->GetDSVDesc(), device);
@@ -43,7 +43,7 @@ void MainRenderer::UserInit()
 		auto& gbuffer = m_pGBuffers.back();
 		
 		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
-		m_pGBuffersSRVPack->PushResource(gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+		m_pGBuffersSRVPack->PushResource(device, gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 	}
 
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
@@ -55,7 +55,7 @@ void MainRenderer::UserInit()
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
 	m_pForwardRenderPassSRVPack = CreateSRVPack(1u);
 	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
-	m_pForwardRenderPassSRVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, device);
+	m_pForwardRenderPassSRVPack->PushResource(device, m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 
 	auto rtvRectangleCreation = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		m_pScreen = CreateRectangle(list);
@@ -110,6 +110,7 @@ void MainRenderer::UserLoop()
 			{
 				if (m_bIsEnabledPreDepth)
 				{
+					m_pDSV->DepthWrite(list);
 					list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 					PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
@@ -129,16 +130,21 @@ void MainRenderer::UserLoop()
 
 	auto HiZUpdateH = preDepthH;
 	if (m_pRenderableObjectsManager->GetMeshCullingType() == CullingType::GPUCulling) {
-		//auto updateHiZ = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
-		//	m_pRenderableObjectsManager->UpdateHiZResource(list);
-		//});
-		//HiZUpdateH = GlobalRenderThreadManager::GetInstance()->Submit(updateHiZ, { preDepthH });
+		auto updateHiZ = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
+			m_pRenderableObjectsManager->UpdateHiZResource(list);
+		});
+		HiZUpdateH = GlobalRenderThreadManager::GetInstance()->Submit(updateHiZ, { preDepthH });
 	}
 
 	auto gBuffersPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {		
 		if (!m_bIsEnabledPreDepth) 
 		{
+			m_pDSV->DepthWrite(list);
 			list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		}
+		else
+		{
+			m_pDSV->DepthRead(list);
 		}
 
 		///////////////////////
@@ -274,20 +280,21 @@ void MainRenderer::UserLoop()
 	});
 	auto iii = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { gBufferH,shadowsH });
 
-	auto present = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { PresentSwapchain(); }, { iii });
+	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { PresentSwapchain(); }, { iii });
 
-	m_inFlight.push_back(present);
+	auto afterSwap = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
+		m_pRenderableObjectsManager->AfterRender();
+		CallAfterRenderLoop(); 
+	}, { presentH });
 
-	while (m_inFlight.size() >= m_uMaxFramesInFlight) {
-		auto& front = m_inFlight.front();
+	m_dInFlight.push_back(afterSwap);
+	while (m_dInFlight.size() >= m_uMaxFramesInFlight) {
+		auto& front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
 			front->WaitForExecute();
 		}
-		m_inFlight.pop_front();
+		m_dInFlight.pop_front();
 	}
-
-	m_pRenderableObjectsManager->AfterRender();
-	CallAfterRenderLoop();
 
 	GlobalRenderThreadManager::GetInstance()->GarbageCollectAll();
 }

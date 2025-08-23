@@ -58,6 +58,7 @@ namespace FD3DW
 		~FResource();
 
 		ID3D12Resource* GetResource() const;
+		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter);
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
 		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,bool bCopyAllMips=false);
@@ -65,7 +66,7 @@ namespace FD3DW
 
 		std::vector<uint8_t> GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList);
 
-		void GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+		void GenerateMips(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, D3D12_RESOURCE_STATES stateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
 		bool DeleteUploadBuffer();
 
@@ -97,6 +98,8 @@ namespace FD3DW
 
 		wrl::ComPtr<ID3D12Resource> m_pResource;
 		std::unique_ptr<UploadBuffer<char>> m_pUploadBuffer;
+		wrl::ComPtr<ID3D12DescriptorHeap> m_pMipsGenerationDescriptorHeap;
+
 
 		std::string m_sPath;
 	};
