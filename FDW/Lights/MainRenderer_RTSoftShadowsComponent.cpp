@@ -64,6 +64,7 @@ void MainRenderer_RTSoftShadowsComponent::BeforeRender(ID3D12GraphicsCommandList
 	m_iCurrentShadowBufferUsage = (m_iCurrentShadowBufferUsage + 1) % 2;
 	RTSoftShadowBuffer buffer = m_xConfig;
 	buffer.PrevViewProj = buffer.CurrViewProj;
+	buffer.FrameIndex = m_pOwner->GetFrameIndex();
 	buffer.CurrViewProj = dx::XMMatrixTranspose( m_pOwner->GetCurrentViewMatrix() * m_pOwner->GetCurrentProjectionMatrix()  );
 	m_pFrameBuffer->CpyData(0, buffer);
 

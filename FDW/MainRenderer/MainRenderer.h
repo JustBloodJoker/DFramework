@@ -27,6 +27,7 @@ public:
 	void UserClose()  override;
 	FD3DW::BaseCommandQueue* UserSwapchainCommandQueue(ID3D12Device* device) override;
 
+	UINT GetFrameIndex();
 	FD3DW::DepthStencilView* GetDepthResource();
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
@@ -143,6 +144,7 @@ private:
 	std::unique_ptr<MainRenderer_ShadowsComponent> m_pShadowsComponent = nullptr;
 	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
 	size_t m_uMaxFramesInFlight = 5;
+	UINT m_uFrameIndex = 0;
 
 protected:
 

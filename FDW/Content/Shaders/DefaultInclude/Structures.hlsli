@@ -108,6 +108,8 @@ struct RTSoftShadowFrameStruct {
     float TemporalFeedbackMax;
     float ReprojDistThreshold;
     float NormalThreshold;
+    uint FrameIndex;
+    int3 padding;
 };
 
 

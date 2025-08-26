@@ -16,6 +16,8 @@ struct RTSoftShadowBuffer {
 	float TemporalFeedbackMax = 0.2f;
 	float ReprojDistThreshold = 0.02f;
 	float NormalThreshold = 0.9f;
+	UINT FrameIndex;
+	int padding[3];
 };
 
 struct RTSoftShadowConfig : public RTSoftShadowBuffer, public FD3DW::BilateralParams {

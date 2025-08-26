@@ -55,6 +55,8 @@ float3 ApplyPointLight(in LightStruct light, float3 WorldPos, float3 N, float3 V
     float distance = length(L);
     L /= distance;
 
+
+
     float angularRadius = light.SourceRadius / distance;
     roughness = sqrt(roughness * roughness + angularRadius * angularRadius);   
     roughness = clamp(roughness, 0.0, 1.0);

@@ -284,7 +284,8 @@ void MainRenderer::UserLoop()
 
 	auto afterSwap = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		m_pRenderableObjectsManager->AfterRender();
-		CallAfterRenderLoop(); 
+		CallAfterRenderLoop();
+		++m_uFrameIndex;
 	}, { presentH });
 
 	m_dInFlight.push_back(afterSwap);
@@ -315,6 +316,11 @@ FD3DW::BaseCommandQueue* MainRenderer::UserSwapchainCommandQueue(ID3D12Device* d
 {
 	GlobalRenderThreadManager::GetInstance()->Init(device);
 	return GlobalRenderThreadManager::GetInstance()->GetQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+}
+
+UINT MainRenderer::GetFrameIndex()
+{
+	return m_uFrameIndex;
 }
 
 FD3DW::DepthStencilView* MainRenderer::GetDepthResource() {
