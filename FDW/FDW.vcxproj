@@ -60,6 +60,7 @@
     <ClInclude Include="Camera\CameraFrustum.h" />
     <ClInclude Include="Camera\CameraInputLayer.h" />
     <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
+    <ClInclude Include="Lights\ClusteredShadingPassData.h" />
     <ClInclude Include="Lights\LightStruct.h" />
     <ClInclude Include="Lights\MainRenderer_LightsManager.h" />
     <ClInclude Include="Lights\MainRenderer_RTSoftShadowsComponent.h" />

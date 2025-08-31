@@ -11,6 +11,9 @@ struct PIXEL_OUTPUT
 
 ConstantBuffer<LightsHelper> LHelper : register(b0);
 StructuredBuffer<LightStruct> Lights : register(t0);
+StructuredBuffer<Cluster> Clusters : register(t10);
+ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
+
 
 Texture2D GBuffer_Position : register(t1);      //x         , y         , z                 , empty
 Texture2D GBuffer_Normal : register(t2);        //x         , y         , z                 , empty
@@ -25,6 +28,26 @@ Texture2D<float2> LTC_Amp : register(t8);
 Texture2D ShadowFactorTexture : register(t9);
 
 SamplerState ss : register(s0);
+
+uint ComputeZTile(float viewZAbs, ClusterParamsPS data)
+{
+    float zLog = log(viewZAbs / data.ZNear) / log(data.ZFar / data.ZNear);
+    uint zTile = (uint)floor(zLog * data.GridSize2);
+    return clamp(zTile, 0, data.GridSize2 - 1);
+}
+
+uint ComputeClusterIndex(float2 fragCoord, float viewZAbs, ClusterParamsPS data)
+{
+    float2 tileSize = float2((float)data.ScreenWidth / (float)data.GridSize0, (float)data.ScreenHeight / (float)data.GridSize1);
+    uint2 tileXY = (uint2)(fragCoord / tileSize);
+    tileXY.x = clamp(tileXY.x, 0, data.GridSize0- 1);
+    tileXY.y = clamp(tileXY.y, 0, data.GridSize1 - 1);
+
+    uint zTile = ComputeZTile(viewZAbs, data);
+
+    uint tileIndex = tileXY.x + tileXY.y * data.GridSize0 + zTile    * (data.GridSize0 * data.GridSize1);
+    return tileIndex;
+}
 
 float3 CalculatePBRLighting(
     float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness, float3 F0
@@ -150,9 +173,18 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
 
+    float3 posVS = mul(float4(WorldPos, 1.0), ClustersData.ViewMatrix).xyz;
+    float  viewZAbs = abs(posVS.z);
+    float2 fragCoord = uv;
+    uint tileIndex = ComputeClusterIndex(fragCoord, viewZAbs, ClustersData);
+    uint lightCount = Clusters[tileIndex].Count;
+    
     float3 Lo = float3(0.0, 0.0, 0.0);
-    for (int i = 0; i < LHelper.LightCount; ++i) {
-        LightStruct light = Lights[i];
+    for (int i = 0; i < lightCount; ++i) {
+        
+        uint lightIndex = Clusters[tileIndex].LightIndices[i];
+        LightStruct light = Lights[lightIndex];
+
         switch (light.LightType) {
             case LIGHT_POINT_LIGHT_ENUM_VALUE:
                 Lo += ApplyPointLight(light, WorldPos, N, V, albedo, metallic, roughness, F0);

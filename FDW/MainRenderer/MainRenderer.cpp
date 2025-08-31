@@ -89,6 +89,7 @@ void MainRenderer::UserLoop()
 	});
 	auto beforeRenderH = GlobalRenderThreadManager::GetInstance()->Submit(beforeRenderCopyRecipe);
 
+
 	///////////////////////
 	//	Shadow PASS Before gbuffer pass
 	{
@@ -98,6 +99,7 @@ void MainRenderer::UserLoop()
 	}
 	///	
 	///////////////////////////
+	auto clusterGenerationsH = m_pLightsManager->ClusteredShadingPass(beforeRenderH);
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = beforeRenderH;
@@ -219,7 +221,7 @@ void MainRenderer::UserLoop()
 
 			list->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
-			m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, list, false);
+			m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, list, false);
 
 			list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
@@ -278,7 +280,7 @@ void MainRenderer::UserLoop()
 			EndDraw(list);
 		}
 	});
-	auto iii = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { gBufferH,shadowsH });
+	auto iii = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { gBufferH,shadowsH,clusterGenerationsH });
 
 	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { PresentSwapchain(); }, { iii });
 
@@ -450,8 +452,8 @@ int MainRenderer::GetLightsCount() {
 	return m_pLightsManager->GetLightsCount();
 }
 
-void MainRenderer::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute) {
-	m_pLightsManager->BindLightConstantBuffer(cbSlot, rootSRVSlot, list, IsCompute);
+void MainRenderer::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, UINT rootSRVClustersSlot, UINT cbClusterDataSlot, ID3D12GraphicsCommandList* list, bool IsCompute) {
+	m_pLightsManager->BindLightConstantBuffer(cbSlot, rootSRVSlot, rootSRVClustersSlot, cbClusterDataSlot, list, IsCompute);
 }
 
 

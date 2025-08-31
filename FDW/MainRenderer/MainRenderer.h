@@ -67,7 +67,7 @@ public:
 	const LightStruct& GetLight(int idx);
 	void SetLightData(LightStruct newData, int idx);
 	int GetLightsCount();
-	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
+	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, UINT rootSRVClustersSlot, UINT cbClusterDataSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
 	
 
 	//SHADOWS COMPONENT

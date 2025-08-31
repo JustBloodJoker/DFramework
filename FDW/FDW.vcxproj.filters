@@ -251,5 +251,8 @@
     <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
+    <ClInclude Include="Lights\ClusteredShadingPassData.h">
+      <Filter>Lights</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

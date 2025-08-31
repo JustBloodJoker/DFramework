@@ -41,11 +41,15 @@ enum class PSOType {
 	ObjectsCullingDefaultConfig,
 	PreDepthDefaultConfig,
 	CopyDepthToHIZ,
+	ClusteredShading_BuildGridPass,
+	ClusteredShading_LightsToClusteresPass,
+
 };
 
 struct BasePSODescriptor {
 	PSOType Parent;
 	std::wstring ShaderFolderName;
+	std::vector<std::wstring> AdditionalInclude = {};
 };
 
 struct PSODescriptor : public BasePSODescriptor {
@@ -78,6 +82,24 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 ////////////////////////////////////////////
 
 ////////////////////////////////////////////
+//   CLUSTERED SHADING PASS BINDS
+#define CLUSTERED_THREADS_PER_GROUP_X_1		1
+#define CLUSTERED_THREADS_PER_GROUP_X_2		128
+
+#define CLUSTERED_NUM_X_CLUSTERS			16
+#define CLUSTERED_NUM_Y_CLUSTERS			9
+#define CLUSTERED_NUM_Z_CLUSTERS			24
+
+#define CLUSTERED_FIRST_PASS_CBV_CLUSTERS_PARAMS_POS_IN_ROOT_SIG		0
+#define CLUSTERED_FIRST_PASS_UAV_CLUSTERS_POS_IN_ROOT_SIG				1
+
+#define CLUSTERED_SECOND_PASS_SRV_LIGHTS_POS_IN_ROOT_SIG				0
+#define CLUSTERED_SECOND_PASS_UAV_CLUSTERS_POS_IN_ROOT_SIG				1
+#define CLUSTERED_SECOND_PASS_CBV_VIEWP_POS_IN_ROOT_SIG					2
+
+////////////////////////////////////////////
+
+////////////////////////////////////////////
 //   DEFFERED FIRST PASS BINDS
 #define CONSTANT_BUFFER_MATRICES_POSITION_IN_ROOT_SIG			0
 #define CONSTANT_BUFFER_MATERIALS_POSITION_IN_ROOT_SIG			1
@@ -90,6 +112,8 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define DEFFERED_GBUFFERS_POS_IN_ROOT_SIG						0
 #define LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG					1
 #define LIGHTS_BUFFER_POS_IN_ROOT_SIG							2
+#define LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG					3
+#define LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG				4
 /////////////////////////////////////////////
 
 /////////////////////////////////////////////
@@ -107,7 +131,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 
 #define OBJECT_GPU_CULLING_THREAD_GROUP_SIZE 64
 
-#define OBJECT_GPU_CULLING_CONSTANT_BUFFER_VIEW_POS_IN_ROOT_SIG			0
+#define OBJECT_GPU_CULLING_CONSTANT_BUFFER_VIEW_POS_IN_ROOT_SIG				0
 #define OBJECT_GPU_CULLING_SRV_BUFFER_INSTANCES_DATA_POS_IN_ROOT_SIG		1
 #define OBJECT_GPU_CULLING_SRV_BUFFER_INPUT_COMMANDS_POS_IN_ROOT_SIG		2
 #define OBJECT_GPU_CULLING_HIZ_RESOURCE_POS_IN_ROOT_SIG						3

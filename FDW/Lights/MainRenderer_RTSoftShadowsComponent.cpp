@@ -100,7 +100,8 @@ void MainRenderer_RTSoftShadowsComponent::AfterGBufferPass() {
 		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
 		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(1));
 
-		m_pOwner->BindLightConstantBuffer(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, list, true);
+		//todo cluster using in rt
+		m_pOwner->BindLightConstantBuffer(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, -1, -1, list, true);
 		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_FRAME_BUFFER_POS_IN_ROOT_SIG, m_pFrameBuffer->GetGPULocation(0));
 
 		if (m_iCurrentShadowBufferUsage == 1) {

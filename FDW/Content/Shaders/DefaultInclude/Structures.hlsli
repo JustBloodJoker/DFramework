@@ -32,6 +32,13 @@ struct ViewProjectionMatrices
     matrix ProjectionMatrix;
 };
 
+struct ViewProjectionMatrices_Mul
+{
+    matrix ViewMatrix;
+    matrix ProjectionMatrix;
+    matrix ViewProjectionMatrix;
+};
+
 struct MeshMatrices
 {
     matrix WorldMatrix;
@@ -112,5 +119,94 @@ struct RTSoftShadowFrameStruct {
     int3 padding;
 };
 
+struct AABB
+{
+    float3 MinV;
+    float3 MaxV;
+};
+
+struct Frustum { 
+    float4 Planes[6]; 
+    float3 Corners[8]; 
+};
+
+struct Frustum_ObjectCulling
+{
+    float4 Planes[6];
+};
+
+struct InstanceGPU
+{
+    float3 MaxP;
+    uint padd;
+    float3 MinP;
+    uint CommandIndex;
+};
+
+struct IndirectMeshCommand{
+    uint2 CBMatricesAddress;
+    uint2 CBMaterialsAddress;
+    uint2 SRVBonesAddress;
+
+    //Vertex buffer view
+    uint2 VBVAddress;
+    uint VBVSizeInBytes;
+    uint VBVStrideInBytes;
+
+    //Index buffer view
+    uint2 IBVAddress;
+    uint IBVSizeInBytes;
+    uint IBVFormat;
+
+    //Draw args indexed
+    uint IndexCountPerInstance;
+    uint InstanceCount;
+    uint StartIndexLocation;
+    int BaseVertexLocation;
+    uint StartInstanceLocation;
+    uint padd;
+};
+
+struct OcclusionDataStruct {
+    Frustum_ObjectCulling Frustum;
+    matrix ViewProjection;
+    uint InstanceCount;
+    int MipLevels;
+    int HiZWidth;
+    int HiZHeight;
+};
+
+struct Cluster
+{
+    float4 MinPoint;
+    float4 MaxPoint;
+    uint Count;
+    uint LightIndices[100];
+};
+
+struct ClusterParams
+{
+    float ZNear;
+    float ZFar;
+    uint GridSize0;
+    uint GridSize1;
+    uint GridSize2;
+    uint ScreenWidth;
+    uint ScreenHeight;
+    uint padd;
+    float4x4 InverseProjection;
+};
+
+struct ClusterParamsPS {
+    float ZNear;
+    float ZFar;
+    uint GridSize0;
+    uint GridSize1;
+    uint GridSize2;
+    uint ScreenWidth;
+    uint ScreenHeight;
+    uint padd;
+    float4x4 ViewMatrix;
+};
 
 #endif

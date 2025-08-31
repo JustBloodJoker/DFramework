@@ -1,49 +1,4 @@
-
-struct InstanceGPU
-{
-    float3 MaxP;
-    uint padd;
-    float3 MinP;
-    uint CommandIndex;
-};
-
-struct IndirectMeshCommand{
-    uint2 CBMatricesAddress;
-    uint2 CBMaterialsAddress;
-    uint2 SRVBonesAddress;
-
-    //Vertex buffer view
-    uint2 VBVAddress;
-    uint VBVSizeInBytes;
-    uint VBVStrideInBytes;
-
-    //Index buffer view
-    uint2 IBVAddress;
-    uint IBVSizeInBytes;
-    uint IBVFormat;
-
-    //Draw args indexed
-    uint IndexCountPerInstance;
-    uint InstanceCount;
-    uint StartIndexLocation;
-    int BaseVertexLocation;
-    uint StartInstanceLocation;
-    uint padd;
-};
-
-struct Frustum
-{
-    float4 planes[6];
-};
-
-struct OcclusionDataStruct {
-    Frustum Frustum;
-    matrix ViewProjection;
-    uint InstanceCount;
-    int MipLevels;
-    int HiZWidth;
-    int HiZHeight;
-};
+#include "Structures.hlsli"
 
 ConstantBuffer<OcclusionDataStruct> OcclusionData : register(b0);
 
@@ -58,7 +13,7 @@ SamplerState HIZSampler : register(s0);
 //OUT
 AppendStructuredBuffer<IndirectMeshCommand> OutputCommands : register(u0);
 
-bool IntersectFrustum(InstanceGPU inst, Frustum frustum)
+bool IntersectFrustum(InstanceGPU inst, Frustum_ObjectCulling frustum)
 {
     float3 center = 0.5f * (inst.MinP + inst.MaxP);
     float3 extents = 0.5f * (inst.MaxP - inst.MinP);
@@ -66,7 +21,7 @@ bool IntersectFrustum(InstanceGPU inst, Frustum frustum)
     [unroll]
     for (int i = 0; i < 6; i++)
     {
-        float4 plane = frustum.planes[i];
+        float4 plane = frustum.Planes[i];
         float3 normal = plane.xyz;
         float dist = dot(normal, center) + plane.w;
         float radius = dot(abs(normal), extents);

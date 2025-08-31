@@ -128,9 +128,9 @@ void ObjectCulling::LoadDataToCameraBuffer(CameraFrustum frustum, UINT instances
 	ccs.InstancesCount = instancesCount;
 	if (m_bIsCanDoHiZOcclusion && m_pHiZResource) {
 		auto desc = m_pHiZResource->GetResource()->GetDesc();
-		ccs.HiZWidth = desc.Width;
-		ccs.HiZHeight = desc.Height;
-		ccs.MipLevels = desc.MipLevels;
+		ccs.HiZWidth = (INT)desc.Width;
+		ccs.HiZHeight = (INT)desc.Height;
+		ccs.MipLevels = (INT)desc.MipLevels;
 	}
 	else
 	{

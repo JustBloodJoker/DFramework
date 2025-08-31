@@ -70,6 +70,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::None,
                 L"DefferedFirstPass",
+                {},
                 [rasterizerDesc, dsvFirstDefPassDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
@@ -89,6 +90,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::DefferedFirstPassDefaultConfig,
                 L"DefferedFirstPass",
+                {},
                 [rasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = UINT(s_sGBuffersData.GBuffersFormats.size());
@@ -113,6 +115,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::None,
                 L"PreDepth",
+                {},
                 [rasterizerDesc, dsvFirstDefPassDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 0;
@@ -129,6 +132,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::None,
                 L"DefferedSecondPass",
+                {},
                 [rasterizerDesc, secondPassDSVDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
@@ -146,6 +150,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::None,
                 L"SimpleSkybox",
+                {},
                 [skyboxRasterizerDesc, skyboxDepthDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
@@ -163,6 +168,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
             {
                 PSOType::None,
                 L"PostProcess",
+                {},
                 [dsvPostProcessDesc, skyboxRasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
@@ -187,6 +193,7 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
             {
                 PSOType::None,
                 L"RTSoftShadow",
+                {},
                 [] {
                     FD3DW::RayTracingPipelineConfig config;
                     config.MaxPayloadSize = sizeof(dx::XMFLOAT4);
@@ -215,14 +222,32 @@ const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptor
             PSOType::ObjectsCullingDefaultConfig,
             {
                 PSOType::None,
-                L"ObjectsCulling"
+                L"ObjectsCulling",
+                {},
             }
         },
         {
             PSOType::CopyDepthToHIZ,
             {
                 PSOType::None,
-                L"CopyDepthToHIZ"
+                L"CopyDepthToHIZ",
+                {},
+            }
+        },
+        {
+            PSOType::ClusteredShading_LightsToClusteresPass,
+            {
+                PSOType::None,
+                L"ClusteredShading_LightsToClusteresPass",
+                { }
+            }
+        },
+        {
+            PSOType::ClusteredShading_BuildGridPass,
+            {
+                PSOType::None,
+                L"ClusteredShading_BuildGridPass",
+                { }
             }
         }
     };
