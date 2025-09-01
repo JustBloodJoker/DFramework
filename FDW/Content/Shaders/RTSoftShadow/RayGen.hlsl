@@ -2,6 +2,7 @@
 #include "Utilits.hlsli"
 #include "SameShadersStructs.hlsli"
 #include "LTCFunctions.hlsli"
+#include "ClusteredLightsUtils.hlsli"
 
 RaytracingAccelerationStructure Scene : register(t0);
 RWTexture2D<float4> Output : register(u0);
@@ -17,6 +18,10 @@ Texture2D PrevWorldPosAndShadowFactorBuffer : register(t4);
 RWTexture2D<float4> CurrentWorldPosAndShadowFactor : register(u1);
 
 SamplerState LinearClampSampler : register(s0);
+
+
+StructuredBuffer<Cluster> Clusters : register(t5);
+ConstantBuffer<ClusterParamsPS> ClustersData : register(b3);
 
 float RadicalInverse_VdC(uint bits)
 {
@@ -121,12 +126,21 @@ void RayGen()
     float3 worldPos = WorldPosGBuffer.Load(int3(dispatchIndex, 0)).xyz;
     float3 normal   = NormalGBuffer.Load(int3(dispatchIndex, 0)).xyz;
 
+    float3 posVS = mul(float4(worldPos, 1.0), ClustersData.ViewMatrix).xyz;
+    float  viewZAbs = abs(posVS.z);
+
+    float2 fragCoord = float2(dispatchIndex) + 0.5f;
+
+    uint tileIndex = ComputeClusterIndex(fragCoord, viewZAbs, ClustersData);
+    uint lightCount = Clusters[tileIndex].Count;
+
     float totalShadow = 0.0f;
     int   totalLights = 0;
 
-    for (int i = 0; i < LightsHelperBuffer.LightCount; ++i)
-    {
-        LightStruct light = Lights[i];
+    for (int i = 0; i < lightCount; ++i)
+    { 
+        uint lightIndex = Clusters[tileIndex].LightIndices[i];
+        LightStruct light = Lights[lightIndex];
         uint pixelSeed = dispatchIndex.x * 1973 + dispatchIndex.y * 9277 + i * 26699 + SoftShadowFrameData.FrameIndex * 17;
 
         float shadow = 1.0f;

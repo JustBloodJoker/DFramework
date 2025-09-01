@@ -100,6 +100,8 @@ void MainRenderer_LightsManager::BindLightConstantBuffer(UINT cbSlot, UINT rootS
 	if (IsCompute) {
 		list->SetComputeRootConstantBufferView(cbSlot, m_pLightsHelperConstantBuffer->GetGPULocation(0));
 		list->SetComputeRootShaderResourceView(rootSRVSlot, m_pLightsStructuredBuffer->GetResource()->GetGPUVirtualAddress());
+		list->SetComputeRootShaderResourceView(rootSRVClustersSlot, m_pClustersStructuredBuffer->GetResource()->GetGPUVirtualAddress());
+		list->SetComputeRootConstantBufferView(cbClusterDataSlot, m_pClusterParamsPSBuffer->GetGPULocation(0));
 	}
 	else {
 		list->SetGraphicsRootConstantBufferView(cbSlot, m_pLightsHelperConstantBuffer->GetGPULocation(0));
