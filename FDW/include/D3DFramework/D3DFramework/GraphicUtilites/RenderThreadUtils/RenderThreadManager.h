@@ -13,8 +13,11 @@ namespace FD3DW {
         virtual ~RenderThreadManager() = default;
 
         std::shared_ptr<ExecutionHandle> CreateWaitHandle(D3D12_COMMAND_LIST_TYPE type);
+
+        void WaitForCurrentCommandGPU();
+        void WaitForCurrentCommandGPU(D3D12_COMMAND_LIST_TYPE type);
+
         void WaitIdle();
-        void WaitIdle(D3D12_COMMAND_LIST_TYPE type);
 
         void Init(ID3D12Device* device);
         void Shutdown();

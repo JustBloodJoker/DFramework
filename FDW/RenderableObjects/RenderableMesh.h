@@ -7,7 +7,7 @@
 #include <RenderableObjects/RenderableMeshElement.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
-class RenderableMesh : virtual public BaseRenderableObject, virtual public IndirectExecutionMeshObject {
+class RenderableMesh : public BaseRenderableObject, public IndirectExecutionMeshObject {
 public:
 	RenderableMesh() = default;
 	RenderableMesh(std::string path);
@@ -41,7 +41,7 @@ public:
 	virtual void AfterTLASUpdate() override;
 
 public:
-	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject)
+	BEGIN_FIELD_REGISTRATION(RenderableMesh, BaseRenderableObject, IndirectExecutionMeshObject)
 		REGISTER_FIELD(m_sPath);
 		REGISTER_FIELD(m_vRenderableElements);
 	END_FIELD_REGISTRATION();

@@ -10,7 +10,7 @@
 
 
 
-class RenderableSimpleObject : virtual public BaseRenderableObject, virtual  public IndirectExecutionMeshObject {
+class RenderableSimpleObject : public BaseRenderableObject,  public IndirectExecutionMeshObject {
 private:
 
 
@@ -63,7 +63,7 @@ public:
 
 public:
 
-	BEGIN_FIELD_REGISTRATION(RenderableSimpleObject, BaseRenderableObject)
+	BEGIN_FIELD_REGISTRATION(RenderableSimpleObject, BaseRenderableObject, IndirectExecutionMeshObject)
 		REGISTER_FIELD(m_xMaterialCBufferData)
 		REGISTER_FIELD(m_bIsInitedMaterialDesc)
 		REGISTER_FIELD(m_mPathToTextures)

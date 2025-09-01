@@ -17,6 +17,8 @@ namespace FDWWIN {
 		using WorkerTask = std::function<void()>;
 		void PostTask(WorkerTask task);
 
+		void WaitIdle();
+
 	private:
 		void ThreadLoop();
 
@@ -24,6 +26,7 @@ namespace FDWWIN {
 		std::thread m_xThread;
 		std::mutex m_xMutex;
 		std::condition_variable m_xCV;
+		std::condition_variable m_xIdleCV;
 
 		std::queue<WorkerTask> m_qTasks;
 

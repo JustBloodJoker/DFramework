@@ -20,7 +20,7 @@ struct RenderableMeshElementData {
 
 
 
-class RenderableMeshElement : virtual public BaseRenderableObject, virtual  public IndirectExecutionMeshObject {
+class RenderableMeshElement : public BaseRenderableObject,  public IndirectExecutionMeshObject {
 private:
 	static int __MeshElementsCreatedCount;
 
@@ -72,7 +72,7 @@ public:
 	//////////////////////////////////////
 
 public:
-	BEGIN_FIELD_REGISTRATION(RenderableMeshElement, BaseRenderableObject)
+	BEGIN_FIELD_REGISTRATION(RenderableMeshElement, BaseRenderableObject, IndirectExecutionMeshObject)
 		REGISTER_FIELD(m_xData)
 	END_FIELD_REGISTRATION()
 

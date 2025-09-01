@@ -286,11 +286,14 @@ void MainRenderer::UserLoop()
 
 	auto afterSwap = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		m_pRenderableObjectsManager->AfterRender();
-		CallAfterRenderLoop();
 		++m_uFrameIndex;
 	}, { presentH });
 
+
 	m_dInFlight.push_back(afterSwap);
+
+	CallAfterRenderLoop();
+
 	while (m_dInFlight.size() >= m_uMaxFramesInFlight) {
 		auto& front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
@@ -576,11 +579,18 @@ void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
 }
 
 void MainRenderer::CallAfterRenderLoop() {
+	if (m_vCallAfterRenderLoop.empty()) return;
+
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
 	auto vv = m_vCallAfterRenderLoop;
 	m_vCallAfterRenderLoop.clear();
 	for (auto han : vv) {
 		if (han) han();
 	}
+
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
 }
 
 

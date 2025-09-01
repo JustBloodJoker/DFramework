@@ -13,6 +13,9 @@ public:
 	IndirectExecutionMeshObject() = default;
 	virtual ~IndirectExecutionMeshObject() = default;
 
+	BEGIN_FIELD_REGISTRATION(IndirectExecutionMeshObject)
+	END_FIELD_REGISTRATION()
+
 	virtual bool IsCanBeIndirectExecuted();
 	virtual std::vector<std::pair<IndirectMeshRenderableData, InstanceData>> GetDataToExecute() = 0;
 };

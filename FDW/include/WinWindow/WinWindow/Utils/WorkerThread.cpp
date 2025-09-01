@@ -30,6 +30,12 @@ namespace FDWWIN {
 		m_xCV.notify_one();
 	}
 
+	void WorkerThread::WaitIdle()
+	{
+		std::unique_lock<std::mutex> lock(m_xMutex);
+		m_xIdleCV.wait(lock, [this]() { return m_qTasks.empty(); });
+	}
+
 	void WorkerThread::ThreadLoop()
 	{
 		while (true)
@@ -47,6 +53,13 @@ namespace FDWWIN {
 			}
 
 			if (task) task();
+
+			{
+				std::unique_lock<std::mutex> lock(m_xMutex);
+				if (m_qTasks.empty())
+					m_xIdleCV.notify_all();
+			}
 		}
+
 	}
 }

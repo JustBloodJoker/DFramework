@@ -43,12 +43,17 @@ namespace FD3DW {
         return h;
     }
 
-    void RenderThreadManager::WaitIdle() {
+    void RenderThreadManager::WaitForCurrentCommandGPU() {
         for (auto& [t, q] : m_mQueues) q->WaitIdle();
     }
 
-    void RenderThreadManager::WaitIdle(D3D12_COMMAND_LIST_TYPE type) {
+    void RenderThreadManager::WaitForCurrentCommandGPU(D3D12_COMMAND_LIST_TYPE type) {
         if (auto* q = GetQueue(type)) q->WaitIdle();
+    }
+
+
+    void RenderThreadManager::WaitIdle() {
+        m_xRenderThread.WaitIdle();
     }
 
     void RenderThreadManager::GarbageCollectAll() {
