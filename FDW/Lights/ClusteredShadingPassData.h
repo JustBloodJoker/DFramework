@@ -1,13 +1,14 @@
 #pragma once
 
 #include <pch.h>
+#include <MainRenderer/GlobalConfig.h>
 
 struct Cluster
 {
     dx::XMFLOAT4 MinPoint;
     dx::XMFLOAT4  MaxPoint;
     UINT Count;
-    UINT LightIndices[100];
+    UINT LightIndices[CLUSTERED_MAX_LIGHTS_PER_CLUSTER];
     UINT padd[3];
 };
 

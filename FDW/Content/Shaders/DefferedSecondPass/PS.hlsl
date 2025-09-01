@@ -121,6 +121,7 @@ float3 ApplyDirectionalLight(in LightStruct light, float3 WorldPos, float3 N, fl
     return CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
 }
 
+
 float3 ApplyRectLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
     float3 points[4];
     InitRectPoints(light, points);
