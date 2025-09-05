@@ -2,6 +2,7 @@
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <MainRenderer/PSOManager.h>
+#include <MainRenderer/GlobalConfig.h>
 #include <World/World.h>
 
 void RenderMeshesSystem::AfterConstruction() {
@@ -112,8 +113,18 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(st
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList* list) {
+		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		data.DSV->DepthWrite(list);
+		list->ClearDepthStencilView(data.DSV_CPU, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+		PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
+
+		list->RSSetScissorRects(1, &data.Rect);
+		list->RSSetViewports(1, &data.Viewport);
+		list->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(data.DSV_CPU));
+
 		for (auto& cmp : m_vActiveMeshComponents) {
 			cmp->OnRenderPreDepthPass(list);
 		}
@@ -122,8 +133,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemIndirectRenderData data) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList* list) {
 		if (m_xMeshCullingType == MeshCullingType::GPU) {
 			InputMeshesCullingProcessData data;
 			data.CommandList = list;
@@ -135,21 +146,58 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 			m_pMeshesCulling->ProcessGPUCulling(data);
 		}
 
-		PSOManager::GetInstance()->GetPSOObject(m_pOwner->IsEnabledPreDepth() ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
-		ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
-		list->SetDescriptorHeaps(_countof(heaps), heaps);
-		list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
-
-		auto dataSize = (UINT)m_vMeshRenderData.size();
-		auto instanceDataSize = (UINT)m_vMeshAABBInstanceData.size();
-		if (m_xMeshCullingType == MeshCullingType::GPU) {
-			auto cullingRes = m_pMeshesCulling->GetResultBuffer();
-			cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-			list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pMeshesCulling->CountBufferOffset((UINT)instanceDataSize));
+		if (!m_pOwner->IsEnabledPreDepth())
+		{
+			data.DSV->DepthWrite(list);
+			list->ClearDepthStencilView(data.DSV_CPU, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		}
-		else {
-			m_pIndirectExecuteCommandsBuffer->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-			list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, m_pIndirectExecuteCommandsBuffer->GetResource(), 0, nullptr, 0);
+		else
+		{
+			data.DSV->DepthRead(list);
+		}
+
+		///////////////////////
+		//	DEFERRED FIRST PASS
+		{
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			auto gBuffersCount = GetGBuffersNum();
+
+			for (auto& gbuffer : data.RTV) {
+				gbuffer->StartDraw(list);
+			}
+
+			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			list->RSSetScissorRects(1, &data.Rect);
+			list->RSSetViewports(1, &data.Viewport);
+
+			for (UINT i = 0; i < gBuffersCount; ++i) {
+				CD3DX12_CPU_DESCRIPTOR_HANDLE pdhHandle(data.RTV_CPU);
+				pdhHandle.Offset(i, GetRTVDescriptorSize(m_pOwner->GetDevice()));
+				list->ClearRenderTargetView(pdhHandle, nullptr, 0, nullptr);
+			}
+			list->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(data.RTV_CPU), true, &FD3DW::keep(data.DSV_CPU));
+
+			PSOManager::GetInstance()->GetPSOObject(m_pOwner->IsEnabledPreDepth() ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
+			ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
+			list->SetDescriptorHeaps(_countof(heaps), heaps);
+			list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
+
+			auto dataSize = (UINT)m_vMeshRenderData.size();
+			auto instanceDataSize = (UINT)m_vMeshAABBInstanceData.size();
+			if (m_xMeshCullingType == MeshCullingType::GPU) {
+				auto cullingRes = m_pMeshesCulling->GetResultBuffer();
+				cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+				list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pMeshesCulling->CountBufferOffset((UINT)instanceDataSize));
+			}
+			else {
+				m_pIndirectExecuteCommandsBuffer->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+				list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, m_pIndirectExecuteCommandsBuffer->GetResource(), 0, nullptr, 0);
+			}
+
+			for (auto& gbuffer : data.RTV) {
+				gbuffer->EndDraw(list);
+			}
 		}
 	});
 

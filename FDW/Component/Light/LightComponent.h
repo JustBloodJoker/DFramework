@@ -1,8 +1,8 @@
 #pragma once
 
 #include <pch.h>
-#include <Entity/Core/IComponent.h>
-#include <Entity/Light/LightComponentData.h>
+#include <Component/Core/IComponent.h>
+#include <Component/Light/LightComponentData.h>
 
 class LightComponent : public IComponent {
 public:

@@ -1,4 +1,4 @@
-#include <Entity/Light/ShadowComponent.h>
+#include <Component/Light/ShadowComponent.h>
 #include <World/World.h>
 
 ShadowComponentData ShadowComponent::GetShadowComponentData() {

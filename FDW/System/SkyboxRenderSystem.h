@@ -3,11 +3,12 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <D3DFramework/GraphicUtilites/RenderTarget.h>
-#include <Entity/RenderObject/SkyboxComponent.h>
+#include <Component/RenderObject/SkyboxComponent.h>
 
 
 
 struct SkyboxRenderPassInput {
+	FD3DW::RenderTarget* RTV;
 	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
 	D3D12_CPU_DESCRIPTOR_HANDLE RTV_CPU;
 	D3D12_RECT Rect;

@@ -25,8 +25,6 @@ public:
 
 public:
 	virtual void Init();
-	virtual void BeforeRenderTick(float dt);
-	virtual void AfterRenderTick(float dt);
 	virtual void Destroy() = 0;
 
 public:

@@ -3,7 +3,7 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
-#include <Entity/RenderObject/AnimationComponent.h>
+#include <Component/RenderObject/AnimationComponent.h>
 
 class SceneAnimationSystem : public MainRendererComponent {
 public:

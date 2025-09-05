@@ -52,6 +52,24 @@
     <Filter Include="Entity\Camera">
       <UniqueIdentifier>{a5015cd9-d726-490d-9edb-58d72a9bd0d0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Component">
+      <UniqueIdentifier>{4af567d9-ac6c-40a1-8669-060af1390839}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Audio">
+      <UniqueIdentifier>{efe2c8a5-82b4-4a8a-846b-a4ba9167c431}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Camera">
+      <UniqueIdentifier>{5f979a45-f25a-4cb2-938a-e798704b2372}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Core">
+      <UniqueIdentifier>{1791d810-4305-4c43-bd30-99512dc617b6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\Light">
+      <UniqueIdentifier>{c76413bb-beff-48ed-a7db-7051989be3fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Component\RenderObject">
+      <UniqueIdentifier>{5f846b1d-6606-4445-950d-7f54c8864ff9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -156,29 +174,8 @@
     <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp">
       <Filter>RenderableObjects\ObjectsCulling</Filter>
     </ClCompile>
-    <ClCompile Include="Entity\Audio\AudioComponent.cpp">
-      <Filter>Entity\Audio</Filter>
-    </ClCompile>
     <ClCompile Include="Entity\Core\ComponentHolder.cpp">
       <Filter>Entity\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\Core\IComponent.cpp">
-      <Filter>Entity\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\Light\LightComponent.cpp">
-      <Filter>Entity\Light</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\Light\ShadowComponent.cpp">
-      <Filter>Entity\Light</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\RenderObject\MeshComponent.cpp">
-      <Filter>Entity\RenderObject</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\RenderObject\RenderComponent.cpp">
-      <Filter>Entity\RenderObject</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\RenderObject\SkyboxComponent.cpp">
-      <Filter>Entity\RenderObject</Filter>
     </ClCompile>
     <ClCompile Include="System\AudioSystem.cpp">
       <Filter>System</Filter>
@@ -187,9 +184,6 @@
       <Filter>World</Filter>
     </ClCompile>
     <ClCompile Include="System\RenderMeshesSystem.cpp">
-      <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="System\ShadowSystem.cpp">
       <Filter>System</Filter>
     </ClCompile>
     <ClCompile Include="Entity\Light\TDirectionalLight.cpp">
@@ -215,9 +209,6 @@
     </ClCompile>
     <ClCompile Include="System\CameraSystem.cpp">
       <Filter>System</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity\Camera\CameraComponent.cpp">
-      <Filter>Entity\Camera</Filter>
     </ClCompile>
     <ClCompile Include="System\CameraFrustum.cpp">
       <Filter>System</Filter>
@@ -249,11 +240,47 @@
     <ClCompile Include="System\SkyboxRenderSystem.cpp">
       <Filter>System</Filter>
     </ClCompile>
-    <ClCompile Include="Entity\RenderObject\AnimationComponent.cpp">
-      <Filter>Entity\RenderObject</Filter>
-    </ClCompile>
     <ClCompile Include="System\SceneAnimationSystem.cpp">
       <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\RTShadowSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\MeshesCullingSubSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\TRender.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\SimpleMeshTemplatesGenerators.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Audio\AudioComponent.cpp">
+      <Filter>Component\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Camera\CameraComponent.cpp">
+      <Filter>Component\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Core\IComponent.cpp">
+      <Filter>Component\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Light\LightComponent.cpp">
+      <Filter>Component\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\Light\ShadowComponent.cpp">
+      <Filter>Component\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\RenderObject\AnimationComponent.cpp">
+      <Filter>Component\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\RenderObject\MeshComponent.cpp">
+      <Filter>Component\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\RenderObject\RenderComponent.cpp">
+      <Filter>Component\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Component\RenderObject\SkyboxComponent.cpp">
+      <Filter>Component\RenderObject</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -365,29 +392,8 @@
     <ClInclude Include="Lights\ClusteredShadingPassData.h">
       <Filter>Lights</Filter>
     </ClInclude>
-    <ClInclude Include="Entity\Audio\AudioComponent.h">
-      <Filter>Entity\Audio</Filter>
-    </ClInclude>
     <ClInclude Include="Entity\Core\ComponentHolder.h">
       <Filter>Entity\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\Core\IComponent.h">
-      <Filter>Entity\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\Light\LightComponent.h">
-      <Filter>Entity\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\Light\ShadowComponent.h">
-      <Filter>Entity\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\RenderObject\MeshComponent.h">
-      <Filter>Entity\RenderObject</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\RenderObject\RenderComponent.h">
-      <Filter>Entity\RenderObject</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\RenderObject\SkyboxComponent.h">
-      <Filter>Entity\RenderObject</Filter>
     </ClInclude>
     <ClInclude Include="System\AudioSystem.h">
       <Filter>System</Filter>
@@ -396,9 +402,6 @@
       <Filter>World</Filter>
     </ClInclude>
     <ClInclude Include="System\RenderMeshesSystem.h">
-      <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="System\ShadowSystem.h">
       <Filter>System</Filter>
     </ClInclude>
     <ClInclude Include="System\NRenderSystemNotifyType.h">
@@ -422,20 +425,11 @@
     <ClInclude Include="System\LightSystem.h">
       <Filter>System</Filter>
     </ClInclude>
-    <ClInclude Include="Entity\Light\LightComponentData.h">
-      <Filter>Entity\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\Light\ShadowComponentData.h">
-      <Filter>Entity\Light</Filter>
-    </ClInclude>
     <ClInclude Include="System\ClusteredLightningSystem.h">
       <Filter>System</Filter>
     </ClInclude>
     <ClInclude Include="System\CameraSystem.h">
       <Filter>System</Filter>
-    </ClInclude>
-    <ClInclude Include="Entity\Camera\CameraComponent.h">
-      <Filter>Entity\Camera</Filter>
     </ClInclude>
     <ClInclude Include="System\CameraFrustum.h">
       <Filter>System</Filter>
@@ -467,11 +461,71 @@
     <ClInclude Include="System\SkyboxRenderSystem.h">
       <Filter>System</Filter>
     </ClInclude>
-    <ClInclude Include="Entity\RenderObject\AnimationComponent.h">
-      <Filter>Entity\RenderObject</Filter>
-    </ClInclude>
     <ClInclude Include="System\SceneAnimationSystem.h">
       <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\RTShadowSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\MeshesCullingSubSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\MeshesIndirectRenderData.h">
+      <Filter>RenderableObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="System\RTShadowSystemConfig.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\TRender.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\SimpleMeshTemplates.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\SimpleMeshTemplatesGenerators.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Audio\AudioComponent.h">
+      <Filter>Component\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Camera\CameraComponent.h">
+      <Filter>Component\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Core\IComponent.h">
+      <Filter>Component\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Light\LightComponent.h">
+      <Filter>Component\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Light\LightComponentData.h">
+      <Filter>Component\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Light\ShadowComponent.h">
+      <Filter>Component\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\Light\ShadowComponentData.h">
+      <Filter>Component\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\AnimationComponent.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\MeshComponent.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\MeshComponentMaterialData.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\MeshComponentMatricesData.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\MeshesIndirectRenderData.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\RenderComponent.h">
+      <Filter>Component\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Component\RenderObject\SkyboxComponent.h">
+      <Filter>Component\RenderObject</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

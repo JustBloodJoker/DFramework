@@ -2,7 +2,7 @@
 
 #include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
-#include <Entity/Camera/CameraComponent.h>
+#include <Component/Camera/CameraComponent.h>
 
 class TBaseCamera : public ComponentHolder {
 public:

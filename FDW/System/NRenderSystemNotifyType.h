@@ -1,7 +1,7 @@
 #pragma once
 
 enum class NRenderSystemNotifyType {
-	Audio,
+	AudioActivationDeactivation,
 	Light,
 	Shadow,
 	CameraActivationDeactivation,

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Entity/Core/IComponent.h>
+#include <Component/Core/IComponent.h>
 #include <D3DFramework/GraphicUtilites/FResource.h>
 #include <D3DFramework/Objects/Scene.h>
 
@@ -18,7 +18,9 @@ public:
 
 public:
 	BEGIN_FIELD_REGISTRATION(AnimationComponent, IComponent)
-	
+		REGISTER_FIELD(m_fAnimationTime)
+		REGISTER_FIELD(m_sCurrentAnimation)
+		REGISTER_FIELD(m_bNeedFreezeBonesBuffer)
 	END_FIELD_REGISTRATION();
 
 
@@ -35,6 +37,7 @@ public:
 	virtual bool IsPlaying();
 	
 	virtual void SetScene(ID3D12Device* device, FD3DW::Scene* scene);
+	virtual FD3DW::FResource* GetResource();
 
 	virtual void OnAnimationUpdateTick(const AnimationComponentInputData& data);
 

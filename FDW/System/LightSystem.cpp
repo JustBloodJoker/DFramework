@@ -1,6 +1,6 @@
 #include <MainRenderer/MainRenderer.h>
 #include <System/LightSystem.h>
-#include <Entity/Light/LightComponent.h>
+#include <Component/Light/LightComponent.h>
 
 
 void LightSystem::AfterConstruction() {

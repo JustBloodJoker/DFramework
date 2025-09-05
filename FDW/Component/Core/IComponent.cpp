@@ -1,4 +1,4 @@
-#include <Entity/Core/IComponent.h>
+#include <Component/Core/IComponent.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <World/World.h>
 
@@ -16,10 +16,6 @@ World* IComponent::GetWorld() {
 
 
 void IComponent::Init() {}
-
-void IComponent::BeforeRenderTick(float dt) {}
-
-void IComponent::AfterRenderTick(float dt) { }
 
 bool IComponent::IsActive() {
 	return m_bIsActive;

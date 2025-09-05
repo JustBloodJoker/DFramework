@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <Entity/RenderObject/RenderComponent.h>
+#include <Component/RenderObject/RenderComponent.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
@@ -21,7 +21,7 @@ public:
 
 public:
 	virtual void OnStartRenderTick(const RenderComponentBeforeRenderInputData& data) override;
-	virtual std::shared_ptr<FD3DW::ExecutionHandle> RenderInit(ID3D12Device* device, std::shared_ptr<FD3DW::ExecutionHandle> sync) override;
+	virtual void RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void OnEndRenderTick(ID3D12GraphicsCommandList* list) override;
 
 public:

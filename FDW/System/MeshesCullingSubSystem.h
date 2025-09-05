@@ -4,7 +4,7 @@
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <D3DFramework/GraphicUtilites/DepthStencilView.h>
-#include <Entity/RenderObject/MeshesIndirectRenderData.h>
+#include <Component/RenderObject/MeshesIndirectRenderData.h>
 #include <System/CameraFrustum.h>
 
 

@@ -1,4 +1,4 @@
-#include <Entity/RenderObject/AnimationComponent.h>
+#include <Component/RenderObject/AnimationComponent.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <World/World.h>
 
@@ -55,6 +55,10 @@ void AnimationComponent::SetScene(ID3D12Device* device, FD3DW::Scene* scene) {
         m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), true);
     }
     Activate(false);
+}
+
+FD3DW::FResource* AnimationComponent::GetResource() {
+    return m_pStructureBufferBones.get();
 }
 
 void AnimationComponent::OnAnimationUpdateTick(const AnimationComponentInputData& data) {

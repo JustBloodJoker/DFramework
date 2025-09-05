@@ -44,6 +44,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::RenderSkyboxPass(std
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, input](ID3D12GraphicsCommandList* list) {
 		if (!m_pActiveComponent) return;
 
+		input.RTV->StartDraw(list);
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		list->RSSetScissorRects(1, &input.Rect);
 		list->RSSetViewports(1, &input.Viewport);

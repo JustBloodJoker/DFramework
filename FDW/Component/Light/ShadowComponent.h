@@ -1,8 +1,8 @@
 #pragma once
 
 #include <pch.h>
-#include <Entity/Core/IComponent.h>
-#include <Entity/Light/ShadowComponentData.h>
+#include <Component/Core/IComponent.h>
+#include <Component/Light/ShadowComponentData.h>
 
 class ShadowComponent : public IComponent {
 

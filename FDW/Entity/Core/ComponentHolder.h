@@ -2,7 +2,7 @@
 
 #include <pch.h>
 #include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
-#include <Entity/Core/IComponent.h>
+#include <Component/Core/IComponent.h>
 #include <System/NRenderSystemNotifyType.h>
 
 class World;
@@ -59,6 +59,17 @@ public:
         return nullptr;
     }
 
+    template<typename T>
+    std::vector<T*> GetComponents() {
+        std::vector<T*> result;
+        for (auto& comp : m_vComponents) {
+            if (auto casted = dynamic_cast<T*>(comp.get())) {
+                result.push_back(casted);
+            }
+        }
+        return result;
+    }
+
 public:
     void SetWorld(World* world);
     World* GetWorld();
@@ -68,8 +79,6 @@ public:
 public:
     virtual void AfterCreation();
     virtual void Init();
-    virtual void BeforeRenderTick(float dt);
-    virtual void AfterRenderTick(float dt);
     virtual void Destroy();
 
     void AddNotifyToPull(NRenderSystemNotifyType type);

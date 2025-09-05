@@ -5,7 +5,7 @@
 #include <D3DFramework/GraphicUtilites/BufferManager.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <D3DFramework/GraphicUtilites/RenderThreadUtils/ExecutionHandle.h>
-#include <Entity/Light/LightComponent.h>
+#include <Component/Light/LightComponent.h>
 
 
 struct LightSystemBuffer {

@@ -43,18 +43,6 @@ void ComponentHolder::Init() {
 	}
 }
 
-void ComponentHolder::BeforeRenderTick(float dt) {
-	for (auto& cmp : m_vComponents) {
-		cmp->BeforeRenderTick(dt);
-	}
-}
-
-void ComponentHolder::AfterRenderTick(float dt) {
-	for (auto& cmp : m_vComponents) {
-		cmp->AfterRenderTick(dt);
-	}
-}
-
 void ComponentHolder::Destroy() {
 	RemoveAllComponents();
 }

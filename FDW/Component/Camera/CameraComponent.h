@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <Entity/Core/IComponent.h>
+#include <Component/Core/IComponent.h>
 
 class CameraComponent : public IComponent {
 public:

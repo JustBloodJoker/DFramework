@@ -1,4 +1,4 @@
-#include <Entity/Light/LightComponent.h>
+#include <Component/Light/LightComponent.h>
 #include <World/World.h>
 
 

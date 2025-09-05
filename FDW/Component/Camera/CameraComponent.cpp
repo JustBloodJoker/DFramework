@@ -1,4 +1,4 @@
-#include <Entity/Camera/CameraComponent.h>
+#include <Component/Camera/CameraComponent.h>
 #include <World/World.h>
 
 

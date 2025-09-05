@@ -1,6 +1,5 @@
-#include <Entity/RenderObject/SkyboxComponent.h>
+#include <Component/RenderObject/SkyboxComponent.h>
 #include <World/World.h>
-#include "MeshComponent.h"
 
 SkyboxComponent::SkyboxComponent(std::string path) {
 	m_sPathToTexture = path;
@@ -18,19 +17,16 @@ void SkyboxComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputDa
 
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> SkyboxComponent::RenderInit(ID3D12Device* device, std::shared_ptr<FD3DW::ExecutionHandle> sync) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, device](ID3D12GraphicsCommandList* list) {
-		m_pCube = std::make_unique<FD3DW::Cube>(device, list);
-		
-		auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
+void SkyboxComponent::RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	m_pCube = std::make_unique<FD3DW::Cube>(device, list);
 
-		m_pMaterial = std::make_unique<FD3DW::Material>();
-		m_pMaterial->SetTexture(m_sPathToTexture, FD3DW::TextureType::BASE, device, list);
+	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
 
-		m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
-		m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURECUBE, 0, device);
-	});
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {sync});
+	m_pMaterial = std::make_unique<FD3DW::Material>();
+	m_pMaterial->SetTexture(m_sPathToTexture, FD3DW::TextureType::BASE, device, list);
+
+	m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavsize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURECUBE, 0, device);
 }
 
 void SkyboxComponent::OnEndRenderTick(ID3D12GraphicsCommandList* list) {}
@@ -46,7 +42,7 @@ void SkyboxComponent::Destroy() {
 }
 
 void SkyboxComponent::Activate(bool a) {
-	SkyboxComponent::Activate(a);
+	RenderComponent::Activate(a);
 	GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::SkyboxActivationDeactivation);
 }
 

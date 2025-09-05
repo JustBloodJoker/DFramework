@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <Entity/Core/IComponent.h>
+#include <Component/Core/IComponent.h>
 #include <D3DFramework/Utilites/AudioManager.h>
 
 class AudioComponent : public IComponent {
@@ -24,7 +24,8 @@ public:
     bool IsLoop() const;
     void Loop(bool loop);
 
-    virtual void BeforeRenderTick(float dt) override;
+    virtual void AudioTick();
+    virtual void Activate(bool a) override;
     virtual void Destroy() override;
 
 public:

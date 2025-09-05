@@ -1,4 +1,4 @@
-#include <Entity/Audio/AudioComponent.h>
+#include <Component/Audio/AudioComponent.h>
 #include <World/World.h>
 #include <MainRenderer/MainRenderer.h>
 
@@ -10,25 +10,27 @@ AudioComponent::AudioComponent(const std::string& path) : m_sPath(path) {
 void AudioComponent::Init() {
     auto manager = GetWorld()->GetMainRenderer()->GetAudioMananger();
     m_pAudio.reset(manager->CreateAudio(m_sPath));
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::AudioActivationDeactivation);
 }
 
 void AudioComponent::Play() { 
-    if (m_pAudio) m_pAudio->Play(); 
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
+    if (m_pAudio) {
+        m_pAudio->Play();
+        Activate(true);
+    }
 }
 void AudioComponent::Stop() { 
-    if (m_pAudio) m_pAudio->Stop();
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
+    if (m_pAudio) {
+        m_pAudio->Stop();
+        Activate(false);
+    }
 }
 void AudioComponent::Restart() { 
     if (m_pAudio) m_pAudio->Restart(); 
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
 }
 
 void AudioComponent::SetVolume(float volume) { 
     if (m_pAudio) m_pAudio->SetVolume(volume); 
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
 }
 
 float AudioComponent::GetVolume() const { return m_pAudio ? m_pAudio->GetVolume() : 0.0f; }
@@ -36,18 +38,21 @@ float AudioComponent::GetVolume() const { return m_pAudio ? m_pAudio->GetVolume(
 bool AudioComponent::IsLoop() const { return m_bIsLoop; }
 
 void AudioComponent::Loop(bool loop) { 
-    m_bIsLoop = loop; 
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
+    m_bIsLoop = loop;
 }
 
-void AudioComponent::BeforeRenderTick(float dt) {
+void AudioComponent::AudioTick() {
     if (m_pAudio && (m_bIsLoop != m_pAudio->IsLoop()) && m_pAudio->IsEnded()) {
         m_pAudio->Restart();
         if (!m_bIsLoop) m_pAudio->Stop();
     }
 }
 
+void AudioComponent::Activate(bool a) {
+    IComponent::Activate(a);
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::AudioActivationDeactivation);
+}
+
 void AudioComponent::Destroy() {
     Stop();
-    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Audio);
 }

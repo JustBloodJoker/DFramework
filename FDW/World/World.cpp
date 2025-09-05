@@ -1,6 +1,5 @@
 #include <World/World.h>
 #include <MainRenderer/MainRenderer.h>
-#include <Entity/Audio/AudioComponent.h>
 
 
 void World::SetMainRenderer(MainRenderer* mr) {

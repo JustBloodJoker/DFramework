@@ -1,15 +1,34 @@
 #pragma once
 
 #include <pch.h>
+#include <D3DFramework/GraphicUtilites/RenderTarget.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <System/MeshesCullingSubSystem.h>
-#include <Entity/RenderObject/MeshesIndirectRenderData.h>
-#include <Entity/RenderObject/MeshComponent.h>
+#include <Component/RenderObject/MeshesIndirectRenderData.h>
+#include <Component/RenderObject/MeshComponent.h>
 
 enum class MeshCullingType {
 	None = 0,
 	GPU = 1,
 };
+
+
+struct RenderMeshesSystemPreDepthRenderData {
+	FD3DW::DepthStencilView* DSV;
+	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
+	D3D12_RECT Rect;
+	D3D12_VIEWPORT Viewport;
+};
+
+struct RenderMeshesSystemIndirectRenderData {
+	std::vector<FD3DW::RenderTarget*> RTV;
+	FD3DW::DepthStencilView* DSV;
+	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
+	D3D12_CPU_DESCRIPTOR_HANDLE RTV_CPU;
+	D3D12_RECT Rect;
+	D3D12_VIEWPORT Viewport;
+};
+
 
 class RenderMeshesSystem : public MainRendererComponent {
 public:
@@ -24,8 +43,8 @@ public:
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTLASCall(std::shared_ptr<FD3DW::ExecutionHandle> handle);
 	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemIndirectRenderData data);
 
 protected:
 	std::atomic<bool> m_bNeedUpdateTLAS{ true };

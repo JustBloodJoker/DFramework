@@ -1,5 +1,5 @@
 #include <Entity/Camera/DefaultCameraInputLayer.h>
-#include <Entity/Camera/CameraComponent.h>
+#include <Component/Camera/CameraComponent.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <World/World.h>
 #include <Entity/Camera/TDefaultCamera.h>

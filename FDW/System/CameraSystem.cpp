@@ -1,6 +1,6 @@
 #include <System/CameraSystem.h>
 #include <MainRenderer/MainRenderer.h>
-#include <Entity/Camera/CameraComponent.h>
+#include <Component/Camera/CameraComponent.h>
 
 dx::XMMATRIX GetDummyViewMatrix() {
 	dx::XMVECTOR eye = dx::XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f);

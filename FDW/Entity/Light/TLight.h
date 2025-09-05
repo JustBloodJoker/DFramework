@@ -2,8 +2,8 @@
 
 #include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
-#include <Entity/Light/LightComponent.h>
-#include <Entity/Light/ShadowComponent.h>
+#include <Component/Light/LightComponent.h>
+#include <Component/Light/ShadowComponent.h>
 
 #define IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(aaa, lors, type)    void SetLight##aaa##(type i) {										\
 			if(!m_p##lors##Component) return;																						\
