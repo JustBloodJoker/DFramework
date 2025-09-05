@@ -11,23 +11,23 @@ namespace FD3DW {
             desc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
             desc.Flags = geom.flags;
 
-            desc.Triangles.VertexBuffer.StartAddress = geom.vertexBuffer->GetGPUVirtualAddress() + geom.vertexOffset*geom.vertexStride;
+            desc.Triangles.VertexBuffer.StartAddress = geom.vertexBuffer->GetGPUVirtualAddress() + geom.vertexOffset * geom.vertexStride;
             desc.Triangles.VertexBuffer.StrideInBytes = geom.vertexStride;
             desc.Triangles.VertexCount = geom.vertexCount;
             desc.Triangles.VertexFormat = geom.vertexFormat;
 
-            desc.Triangles.IndexBuffer = geom.indexBuffer->GetGPUVirtualAddress() + geom.indexOffset*geom.indexStride;
+            desc.Triangles.IndexBuffer = geom.indexBuffer->GetGPUVirtualAddress() + geom.indexOffset * geom.indexStride;
             desc.Triangles.IndexCount = geom.indexCount;
             desc.Triangles.IndexFormat = geom.indexFormat;
 
-            
+
 
             geometryDescs.push_back(desc);
         }
 
         std::vector<D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS> inputs;
 
-        if (isStandaloneGeometries) 
+        if (isStandaloneGeometries)
         {
             for (const auto& geom : geometryDescs) {
                 D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS input;
@@ -41,7 +41,7 @@ namespace FD3DW {
             }
 
         }
-        else 
+        else
         {
             D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS input;
             input.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
@@ -52,16 +52,16 @@ namespace FD3DW {
             inputs.push_back(input);
         }
 
-        
+
         std::vector<D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO> prebuildInfos;
         for (int i = 0; i < inputs.size(); ++i) {
             D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO info;
             device->GetRaytracingAccelerationStructurePrebuildInfo(&inputs[i], &info);
             prebuildInfos.push_back(info);
         }
-        
+
         std::vector<AccelerationStructureBuffers> buffers;
-        
+
         for (int i = 0; i < inputs.size(); ++i) {
             AccelerationStructureBuffers buffer;
             CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
@@ -85,7 +85,7 @@ namespace FD3DW {
 
             buffers.push_back(buffer);
         }
-        
+
         return buffers;
     }
 
@@ -146,7 +146,7 @@ namespace FD3DW {
         return buffers;
     }
 
-    AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5* device,ID3D12GraphicsCommandList4* cmdList,std::vector<AccelerationStructureBuffers> blasList,dx::XMMATRIX defaultMatrix)
+    AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, std::vector<AccelerationStructureBuffers> blasList, dx::XMMATRIX defaultMatrix)
     {
         std::vector<std::pair<AccelerationStructureBuffers, dx::XMMATRIX>> instances;
         instances.reserve(blasList.size());
@@ -251,21 +251,39 @@ namespace FD3DW {
         ret.resize(count);
 
         for (auto i = 0; i < count; ++i) {
-            ret[i].indexBuffer = objIndexBuffer;
-            ret[i].vertexBuffer = objVectexBuffer;
-            auto params = obj->GetObjectParameters(i);
-            ret[i].indexCount = params.IndicesCount;
-            ret[i].indexFormat = DEFAULT_INDEX_BUFFER_FORMAT;
-            ret[i].indexOffset = params.IndicesOffset;
-            ret[i].indexStride = GetFormatSizeInBytes(DEFAULT_INDEX_BUFFER_FORMAT);
-            ret[i].vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
-            ret[i].vertexCount = params.VerticesCount;
-            ret[i].vertexOffset = params.VerticesOffset;
-            ret[i].vertexStride = (UINT)obj->GetVertexStructSize();
+            ret[i] = CreateGeometryForObject(obj, i);
         }
 
         return ret;
     }
+
+    AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx)
+    {
+        auto objVectexBuffer = obj->GetVertexBuffer();
+        auto objIndexBuffer = obj->GetIndexBuffer();
+
+        AccelerationStructureInput ret;
+        ret.indexBuffer = objIndexBuffer;
+        ret.vertexBuffer = objVectexBuffer;
+        auto params = obj->GetObjectParameters(objDataIdx);
+        ret.indexCount = params.IndicesCount;
+        ret.indexFormat = DEFAULT_INDEX_BUFFER_FORMAT;
+        ret.indexOffset = params.IndicesOffset;
+        ret.indexStride = GetFormatSizeInBytes(DEFAULT_INDEX_BUFFER_FORMAT);
+        ret.vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
+        ret.vertexCount = params.VerticesCount;
+        ret.vertexOffset = params.VerticesOffset;
+        ret.vertexStride = (UINT)obj->GetVertexStructSize();
+        return ret;
+    }
+
+    AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, UINT hitGroupIndex) {
+        auto geometry = CreateGeometryForObject(obj, objectParamsIndex);
+
+        return CreateBottomLevelAS(device, cmdList, { geometry }, hitGroupIndex, false).front();
+    }
+
+
 
     std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries)
     {

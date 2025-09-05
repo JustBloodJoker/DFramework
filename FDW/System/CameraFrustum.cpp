@@ -1,4 +1,4 @@
-#include <Camera/CameraFrustum.h>
+#include <System/CameraFrustum.h>
 
 void CameraFrustum::UpdatePlanes(const dx::XMMATRIX& vp, const float zNear, const float zFar) {
     m_xViewProjection = vp;

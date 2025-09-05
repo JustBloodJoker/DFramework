@@ -47,7 +47,17 @@ void MainRenderer::UserInit()
 	}
 
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
-		m_pLightsManager->InitLTC(list, m_pGBuffersSRVPack.get());
+		auto device = GetDevice();
+		auto size = GetCBV_SRV_UAVDescriptorSize(device);
+
+		auto LTCMat = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_MAT, device, list);
+		m_pGBuffersSRVPack->AddResource(LTCMat->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
+
+		auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
+		m_pGBuffersSRVPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
+
+		m_vLCTResources.push_back(LTCMat);
+		m_vLCTResources.push_back(LTCAmp);
 	});
 	GlobalRenderThreadManager::GetInstance()->Submit(ltcRecipe);
 	
@@ -340,6 +350,12 @@ void MainRenderer::EnablePreDepth(bool in) {
 	m_bIsEnabledPreDepth = in;
 }
 
+
+World* MainRenderer::GetWorld() {
+	return nullptr;
+	//reserved for future
+}
+
 dx::XMMATRIX MainRenderer::GetCurrentProjectionMatrix() const {
 	return m_pCameraComponent->GetProjectionMatrix();
 }
@@ -500,12 +516,6 @@ void MainRenderer::LoadSceneFromFile(std::string pathTo) {
 		m_pCameraComponent->SetAfterConstruction(this);
 		m_pLightsManager->SetAfterConstruction(this);
 		
-		auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
-			m_pLightsManager->InitLTC(list, m_pGBuffersSRVPack.get());
-		});
-		auto ltcH = GlobalRenderThreadManager::GetInstance()->Submit(ltcRecipe);
-		ltcH->WaitForExecute();
-
 		m_pRenderableObjectsManager->SetAfterConstruction(this);
 
 		if (!m_pShadowsComponent) 
@@ -530,6 +540,17 @@ void MainRenderer::DeleteLight(int idx) {
 	m_pLightsManager->DeleteLight(idx);
 }
 
+void MainRenderer::ProcessNotifyAfterRender() {
+	auto world = GetWorld();
+
+	for (auto& sys : m_vSystems) {
+
+
+	}
+
+
+}
+
 void MainRenderer::InitMainRendererComponents()
 {
 	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
@@ -541,7 +562,7 @@ void MainRenderer::InitMainRendererComponents()
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
-	BaseRenderableObject::CreateEmptyStructuredBuffer(device);
+	CreateEmptyStructuredBuffer(device);
 	GlobalTextureHeap::GetInstance()->Init(device, GLOBAL_TEXTURE_HEAP_PRECACHE_SIZE,GLOBAL_TEXTURE_HEAP_NODE_MASK);
 	
 }

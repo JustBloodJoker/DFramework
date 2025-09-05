@@ -15,12 +15,14 @@
 #include <Lights/MainRenderer_ShadowsComponent.h>
 #include <Lights/ShadowsStructures.h>
 #include <Lights/MainRenderer_RTSoftShadowsComponent.h>
+#include <World/World.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
 public:
 	MainRenderer();
 	virtual ~MainRenderer()=default;
+
 
 	void UserInit() override;
 	void UserLoop() override;
@@ -31,6 +33,9 @@ public:
 	FD3DW::DepthStencilView* GetDepthResource();
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
+
+public:
+	World* GetWorld();
 
 public:
 	///////////////////////////////////////////////////
@@ -79,6 +84,9 @@ public:
 	void SaveSceneToFile(std::string pathTo);
 	void LoadSceneFromFile(std::string pathTo);
 
+
+private:
+	void ProcessNotifyAfterRender();
 
 private:
 	void InitMainRendererComponents();
@@ -146,6 +154,8 @@ private:
 	size_t m_uMaxFramesInFlight = 5;
 	UINT m_uFrameIndex = 0;
 
+	std::vector< std::unique_ptr<MainRenderer_UIComponent>> m_vSystems;
+
 protected:
 
 	template <typename T, typename... Args>
@@ -168,6 +178,8 @@ protected:
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;
 	std::unique_ptr<FD3DW::RTVPacker> m_pGBuffersRTVPack;
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
+
+	std::vector< std::shared_ptr<FD3DW::FResource>> m_vLCTResources;
 
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;

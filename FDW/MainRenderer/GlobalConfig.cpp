@@ -1,4 +1,5 @@
 #include "GlobalConfig.h"
+#include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 
 static const GBuffersData s_sGBuffersData = { {
         DXGI_FORMAT_R32G32B32A32_FLOAT,
@@ -21,6 +22,16 @@ const DXGI_FORMAT GetForwardRenderPassFormat() {
 
 UINT GetGBuffersNum() {
     return (UINT)s_sGBuffersData.GBuffersFormats.size();
+}
+
+std::unique_ptr<FD3DW::StructuredBuffer> s_sEmptyStructuredBuffer;
+
+void CreateEmptyStructuredBuffer(ID3D12Device* device) {
+    s_sEmptyStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<uint8_t>(device, 1, false);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress() {
+    return s_sEmptyStructuredBuffer->GetResource()->GetGPUVirtualAddress();
 }
 
 const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {

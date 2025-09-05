@@ -5,6 +5,10 @@ MainRenderer* MainRendererComponent::Owner() {
 	return m_pOwner;
 }
 
+void MainRendererComponent::ProcessNotify(NRenderSystemNotifyType type) {
+}
+World* MainRendererComponent::GetWorld() { return m_pOwner->GetWorld(); }
+
 void MainRendererComponent::AfterConstruction() {}
 
 void MainRendererComponent::SetAfterConstruction(MainRenderer* owner) {

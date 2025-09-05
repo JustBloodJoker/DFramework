@@ -3,7 +3,7 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <Camera/CameraInputLayer.h>
-#include <Camera/CameraFrustum.h>
+#include <System/CameraFrustum.h>
 
 
 class MainRenderer;

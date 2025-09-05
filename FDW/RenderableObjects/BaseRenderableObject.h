@@ -29,8 +29,6 @@ struct BeforeRenderInputData {
 class BaseRenderableObject {
 
 public:
-    static void CreateEmptyStructuredBuffer(ID3D12Device* device);
-    D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
 
 public:
     BaseRenderableObject()=default;

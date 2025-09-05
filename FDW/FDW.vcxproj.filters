@@ -28,6 +28,30 @@
     <Filter Include="RenderableObjects\ObjectsCulling">
       <UniqueIdentifier>{298a9949-1529-4d78-ba3d-e983bf3ef135}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Entity">
+      <UniqueIdentifier>{27db136a-b523-457d-85a3-33111e8f5eff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\Audio">
+      <UniqueIdentifier>{0e82df93-8bf7-4291-82f3-006951303543}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\Core">
+      <UniqueIdentifier>{c51f4569-7ef3-441c-8615-7e540e953a65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\Light">
+      <UniqueIdentifier>{2c455d93-7dde-40aa-b729-b9dc65345526}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\RenderObject">
+      <UniqueIdentifier>{485c4f3c-38c5-4719-be7a-51a4c2e0b542}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="System">
+      <UniqueIdentifier>{6a6367fc-d04d-4205-bdc6-ce40e6af1be9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{1b75036b-600e-4144-9857-cc33bfd69a62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Entity\Camera">
+      <UniqueIdentifier>{a5015cd9-d726-490d-9edb-58d72a9bd0d0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -129,14 +153,107 @@
     <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
-    <ClCompile Include="RenderableObjects\ObjectsCulling\BVHBuilder.cpp">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
-    </ClCompile>
     <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp">
       <Filter>RenderableObjects\ObjectsCulling</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraFrustum.cpp">
-      <Filter>Camera</Filter>
+    <ClCompile Include="Entity\Audio\AudioComponent.cpp">
+      <Filter>Entity\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Core\ComponentHolder.cpp">
+      <Filter>Entity\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Core\IComponent.cpp">
+      <Filter>Entity\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\LightComponent.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\ShadowComponent.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\MeshComponent.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\RenderComponent.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\SkyboxComponent.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="System\AudioSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="World\World.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="System\RenderMeshesSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\ShadowSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\TDirectionalLight.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\TLight.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\TPointLight.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\TRectLight.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Light\TSpotLight.cpp">
+      <Filter>Entity\Light</Filter>
+    </ClCompile>
+    <ClCompile Include="System\LightSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\ClusteredLightningSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\CameraSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Camera\CameraComponent.cpp">
+      <Filter>Entity\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="System\CameraFrustum.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Camera\TBaseCamera.cpp">
+      <Filter>Entity\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Camera\TDefaultCamera.cpp">
+      <Filter>Entity\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\Camera\DefaultCameraInputLayer.cpp">
+      <Filter>Entity\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="System\CameraSystemInputLayer.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\TMesh.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\TScene.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\TSimpleMesh.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\TSkybox.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="System\SkyboxRenderSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity\RenderObject\AnimationComponent.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
+    <ClCompile Include="System\SceneAnimationSystem.cpp">
+      <Filter>System</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -233,9 +350,6 @@
     <ClInclude Include="MainRenderer\GlobalTextureHeap.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
-    <ClInclude Include="RenderableObjects\ObjectsCulling\BVHBuilder.h">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
-    </ClInclude>
     <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h">
       <Filter>RenderableObjects\ObjectsCulling</Filter>
     </ClInclude>
@@ -245,14 +359,119 @@
     <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h">
       <Filter>RenderableObjects\ObjectsCulling</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraFrustum.h">
-      <Filter>Camera</Filter>
-    </ClInclude>
     <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
     <ClInclude Include="Lights\ClusteredShadingPassData.h">
       <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Audio\AudioComponent.h">
+      <Filter>Entity\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Core\ComponentHolder.h">
+      <Filter>Entity\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Core\IComponent.h">
+      <Filter>Entity\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\LightComponent.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\ShadowComponent.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\MeshComponent.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\RenderComponent.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\SkyboxComponent.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="System\AudioSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="World\World.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="System\RenderMeshesSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\ShadowSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\NRenderSystemNotifyType.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\TDirectionalLight.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\TLight.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\TPointLight.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\TRectLight.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\TSpotLight.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="System\LightSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\LightComponentData.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Light\ShadowComponentData.h">
+      <Filter>Entity\Light</Filter>
+    </ClInclude>
+    <ClInclude Include="System\ClusteredLightningSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\CameraSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Camera\CameraComponent.h">
+      <Filter>Entity\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="System\CameraFrustum.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Camera\TBaseCamera.h">
+      <Filter>Entity\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Camera\TDefaultCamera.h">
+      <Filter>Entity\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\Camera\DefaultCameraInputLayer.h">
+      <Filter>Entity\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="System\CameraSystemInputLayer.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\TMesh.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\TScene.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\TSimpleMesh.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\TSkybox.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="System\SkyboxRenderSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\AnimationComponent.h">
+      <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="System\SceneAnimationSystem.h">
+      <Filter>System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -17,19 +17,6 @@ void MainRenderer_LightsManager::AfterConstruction() {
 	if (!m_vLights.empty()) m_bIsNeedUpdateLightsStructuredBuffer = true;
 }
 
-void MainRenderer_LightsManager::InitLTC(ID3D12GraphicsCommandList* list, FD3DW::SRV_UAVPacker* srvPack) {
-	auto device = m_pOwner->GetDevice();
-	auto size = GetCBV_SRV_UAVDescriptorSize(device);
-
-	auto LTCMat = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_MAT, device, list);
-	srvPack->AddResource(LTCMat->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
-
-	auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
-	srvPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
-
-	m_vLCTResources.push_back(LTCMat);
-	m_vLCTResources.push_back(LTCAmp);
-}
 
 void MainRenderer_LightsManager::AddLight(LightStruct light) {
 	m_vLights.push_back(light);

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -19,9 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera\CameraFrustum.cpp" />
     <ClCompile Include="Camera\CameraInputLayer.cpp" />
     <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp" />
+    <ClCompile Include="Entity\Audio\AudioComponent.cpp" />
+    <ClCompile Include="Entity\Camera\CameraComponent.cpp" />
+    <ClCompile Include="Entity\Camera\DefaultCameraInputLayer.cpp" />
+    <ClCompile Include="Entity\Camera\TBaseCamera.cpp" />
+    <ClCompile Include="Entity\Camera\TDefaultCamera.cpp" />
+    <ClCompile Include="Entity\Core\ComponentHolder.cpp" />
+    <ClCompile Include="Entity\Core\IComponent.cpp" />
+    <ClCompile Include="Entity\Light\LightComponent.cpp" />
+    <ClCompile Include="Entity\Light\ShadowComponent.cpp" />
+    <ClCompile Include="Entity\Light\TDirectionalLight.cpp" />
+    <ClCompile Include="Entity\Light\TLight.cpp" />
+    <ClCompile Include="Entity\Light\TPointLight.cpp" />
+    <ClCompile Include="Entity\Light\TRectLight.cpp" />
+    <ClCompile Include="Entity\Light\TSpotLight.cpp" />
+    <ClCompile Include="Entity\RenderObject\AnimationComponent.cpp" />
+    <ClCompile Include="Entity\RenderObject\MeshComponent.cpp" />
+    <ClCompile Include="Entity\RenderObject\RenderComponent.cpp" />
+    <ClCompile Include="Entity\RenderObject\SkyboxComponent.cpp" />
+    <ClCompile Include="Entity\RenderObject\TMesh.cpp" />
+    <ClCompile Include="Entity\RenderObject\TScene.cpp" />
+    <ClCompile Include="Entity\RenderObject\TSimpleMesh.cpp" />
+    <ClCompile Include="Entity\RenderObject\TSkybox.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -42,7 +63,6 @@
     <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp" />
     <ClCompile Include="RenderableObjects\IndirectExecutionMeshObject.cpp" />
     <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
-    <ClCompile Include="RenderableObjects\ObjectsCulling\BVHBuilder.cpp" />
     <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
     <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
@@ -53,13 +73,49 @@
     <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSimplePlane.cpp" />
     <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp" />
+    <ClCompile Include="System\AudioSystem.cpp" />
+    <ClCompile Include="System\CameraFrustum.cpp" />
+    <ClCompile Include="System\CameraSystem.cpp" />
+    <ClCompile Include="System\CameraSystemInputLayer.cpp" />
+    <ClCompile Include="System\ClusteredLightningSystem.cpp" />
+    <ClCompile Include="System\LightSystem.cpp" />
+    <ClCompile Include="System\MeshesCullingSubSystem.cpp" />
+    <ClCompile Include="System\RenderMeshesSystem.cpp" />
+    <ClCompile Include="System\SceneAnimationSystem.cpp" />
+    <ClCompile Include="System\ShadowSystem.cpp" />
+    <ClCompile Include="System\SkyboxRenderSystem.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
+    <ClCompile Include="World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera\CameraFrustum.h" />
     <ClInclude Include="Camera\CameraInputLayer.h" />
     <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
+    <ClInclude Include="Entity\Audio\AudioComponent.h" />
+    <ClInclude Include="Entity\Camera\CameraComponent.h" />
+    <ClInclude Include="Entity\Camera\DefaultCameraInputLayer.h" />
+    <ClInclude Include="Entity\Camera\TBaseCamera.h" />
+    <ClInclude Include="Entity\Camera\TDefaultCamera.h" />
+    <ClInclude Include="Entity\Core\ComponentHolder.h" />
+    <ClInclude Include="Entity\Core\IComponent.h" />
+    <ClInclude Include="Entity\Light\LightComponent.h" />
+    <ClInclude Include="Entity\Light\LightComponentData.h" />
+    <ClInclude Include="Entity\Light\ShadowComponent.h" />
+    <ClInclude Include="Entity\Light\ShadowComponentData.h" />
+    <ClInclude Include="Entity\Light\TDirectionalLight.h" />
+    <ClInclude Include="Entity\Light\TLight.h" />
+    <ClInclude Include="Entity\Light\TPointLight.h" />
+    <ClInclude Include="Entity\Light\TRectLight.h" />
+    <ClInclude Include="Entity\Light\TSpotLight.h" />
+    <ClInclude Include="Entity\RenderObject\AnimationComponent.h" />
+    <ClInclude Include="Entity\RenderObject\MeshComponent.h" />
+    <ClInclude Include="Entity\RenderObject\MeshesIndirectRenderData.h" />
+    <ClInclude Include="Entity\RenderObject\RenderComponent.h" />
+    <ClInclude Include="Entity\RenderObject\SkyboxComponent.h" />
+    <ClInclude Include="Entity\RenderObject\TMesh.h" />
+    <ClInclude Include="Entity\RenderObject\TScene.h" />
+    <ClInclude Include="Entity\RenderObject\TSimpleMesh.h" />
+    <ClInclude Include="Entity\RenderObject\TSkybox.h" />
     <ClInclude Include="Lights\ClusteredShadingPassData.h" />
     <ClInclude Include="Lights\LightStruct.h" />
     <ClInclude Include="Lights\MainRenderer_LightsManager.h" />
@@ -80,7 +136,6 @@
     <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
     <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
     <ClInclude Include="RenderableObjects\MeshMatricesStructure.h" />
-    <ClInclude Include="RenderableObjects\ObjectsCulling\BVHBuilder.h" />
     <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h" />
     <ClInclude Include="RenderableObjects\ObjectsCulling\InstanceData.h" />
     <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h" />
@@ -93,8 +148,21 @@
     <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
     <ClInclude Include="RenderableObjects\RenderableSimplePlane.h" />
     <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h" />
+    <ClInclude Include="System\AudioSystem.h" />
+    <ClInclude Include="System\CameraFrustum.h" />
+    <ClInclude Include="System\CameraSystem.h" />
+    <ClInclude Include="System\CameraSystemInputLayer.h" />
+    <ClInclude Include="System\ClusteredLightningSystem.h" />
+    <ClInclude Include="System\LightSystem.h" />
+    <ClInclude Include="System\MeshesCullingSubSystem.h" />
+    <ClInclude Include="System\NRenderSystemNotifyType.h" />
+    <ClInclude Include="System\RenderMeshesSystem.h" />
+    <ClInclude Include="System\SceneAnimationSystem.h" />
+    <ClInclude Include="System\ShadowSystem.h" />
+    <ClInclude Include="System\SkyboxRenderSystem.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
+    <ClInclude Include="World\World.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

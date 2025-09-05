@@ -1,8 +1,10 @@
 #pragma once 
 #include <pch.h>
 #include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <System/NRenderSystemNotifyType.h>
 
 class MainRenderer;
+class World;
 
 class MainRendererComponent {
 public:
@@ -10,6 +12,10 @@ public:
 	virtual ~MainRendererComponent() = default;
 
 	MainRenderer* Owner();
+
+public:
+	virtual void ProcessNotify(NRenderSystemNotifyType type);
+	World* GetWorld();
 
 public:
 	BEGIN_FIELD_REGISTRATION(MainRendererComponent)

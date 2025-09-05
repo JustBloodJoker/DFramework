@@ -6,8 +6,7 @@
 #include <D3DFramework/GraphicUtilites/DepthStencilView.h>
 #include <RenderableObjects/ObjectsCulling/InstanceData.h>
 #include <RenderableObjects/ObjectsCulling/CullingCameraStructure.h>
-#include <RenderableObjects/ObjectsCulling/BVHBuilder.h>
-#include <Camera/CameraFrustum.h>
+#include <System/CameraFrustum.h>
 
 struct InputObjectCullingProcessData {
 	FD3DW::StructuredBuffer* InputCommandsBuffer;

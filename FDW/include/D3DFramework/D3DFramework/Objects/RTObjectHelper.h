@@ -47,7 +47,9 @@ namespace FD3DW {
 	void UpdateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, AccelerationStructureBuffers& tlasBuffers, const std::vector<std::pair<AccelerationStructureBuffers, dx::XMMATRIX>>& instances);
 	
 	std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj);
+	AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx);
 	std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries);
+	AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, UINT hitGroupIndex);
 
 	RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UINT hitGroupIndex, Object* obj);
 }

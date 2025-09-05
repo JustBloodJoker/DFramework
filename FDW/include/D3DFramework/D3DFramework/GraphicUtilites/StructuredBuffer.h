@@ -13,7 +13,7 @@ public:
 		return std::make_unique<StructuredBuffer>(pDevice, count, isDynamicScaled, UINT( sizeof(T) ), flags, heapType);
 	}
 
-	static std::unique_ptr<StructuredBuffer> CreateStructuredBuffer(ID3D12Device* pDevice, const UINT sizeInBytes, const UINT elemSize, bool isDynamicScaled, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT) {
+	static std::unique_ptr<StructuredBuffer> CreateStructuredBuffer(ID3D12Device* pDevice, const UINT sizeInBytes, const UINT elemSize, bool isDynamicScaled, D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE, D3D12_HEAP_TYPE heapType = D3D12_HEAP_TYPE_DEFAULT)  {
 		auto elemCounts = CalculateElementsCount(sizeInBytes, elemSize);
 		return std::make_unique<StructuredBuffer>(pDevice, elemCounts, isDynamicScaled, elemSize, flags, heapType);
 	}
