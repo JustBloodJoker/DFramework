@@ -11,7 +11,7 @@ ComponentHolder* IComponent::GetOwner() {
 	return m_pOwner;
 }
 World* IComponent::GetWorld() {
-	return m_pOwner->GetWorld();
+	return m_pOwner ? m_pOwner->GetWorld() : nullptr;
 }
 
 

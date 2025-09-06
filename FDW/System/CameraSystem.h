@@ -24,16 +24,13 @@ public:
 
 	dx::XMMATRIX GetProjectionMatrix();
 	dx::XMMATRIX GetViewMatrix();
+	dx::XMFLOAT3 GetCameraPosition();
 
 	void UpdateProjectionMatrix();
 	CameraFrustum GetCameraFrustum();
 	void UpdateCameraFrustum();
 
 	CameraComponent* GetActiveComponent();
-
-	void SetCameraSpeed(float speed);
-	float GetCameraSpeed();
-
 protected:
 
 	dx::XMMATRIX m_xProjectionMatrix;

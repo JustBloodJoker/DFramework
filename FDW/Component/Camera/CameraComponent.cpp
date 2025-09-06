@@ -7,6 +7,7 @@ CameraComponent::CameraComponent() {
 
 	m_xEye = dx::XMVectorSet(0.0f, 2.0f, -1.0f, 1.0f);
 	m_xAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	m_xUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	
 	InitDefault();
 }
@@ -78,4 +79,5 @@ dx::XMFLOAT3 CameraComponent::GetCameraPosition() const
 
 void CameraComponent::UpdateViewMatrix() {
 	m_xView = dx::XMMatrixLookAtLH(m_xEye, m_xAt, m_xUp);
+	if(auto world = GetWorld())world->AddNotifyToPull(NRenderSystemNotifyType::CameraInfoChanged);
 }

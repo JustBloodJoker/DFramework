@@ -18,6 +18,9 @@ public:
 		REGISTER_FIELD(m_fCamYaw);
 		REGISTER_FIELD(m_fCamPitch);
 		REGISTER_FIELD(m_fCamRoll);
+		REGISTER_FIELD(m_xEye);
+		REGISTER_FIELD(m_xUp);
+		REGISTER_FIELD(m_xAt);
 	END_FIELD_REGISTRATION();
 
 
@@ -42,6 +45,10 @@ protected:
 	float m_fCamPitch;
 	float m_fCamRoll;
 	POINT m_xLastMousePos;
+
+	dx::XMVECTOR m_xEye;
+	dx::XMVECTOR m_xUp;
+	dx::XMVECTOR m_xAt;
 
 private:
 	std::unique_ptr<DefaultCameraInputLayer> m_pCameraLayer = nullptr;

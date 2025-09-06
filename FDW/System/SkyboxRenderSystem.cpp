@@ -66,6 +66,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::RenderSkyboxPass(std
 
 		auto objectInfo = cube->GetObjectParameters(0);
 		list->DrawIndexedInstanced(objectInfo.IndicesCount, 1, objectInfo.IndicesOffset, objectInfo.VerticesOffset, 0);
+
+		input.RTV->EndDraw(list);
 	});
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
 }

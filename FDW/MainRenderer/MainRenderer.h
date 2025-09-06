@@ -5,17 +5,20 @@
 
 #include <UI/MainRenderer_UIComponent.h>
 #include <D3DFramework/D3DFW.h>
-#include <Camera/MainRenderer_CameraComponent.h>
-#include <RenderableObjects/MainRenderer_RenderableObjectsManager.h>
-#include <Lights/MainRenderer_LightsManager.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
 
-#include <RenderableObjects/RenderableMesh.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
-#include <Lights/MainRenderer_ShadowsComponent.h>
-#include <Lights/ShadowsStructures.h>
-#include <Lights/MainRenderer_RTSoftShadowsComponent.h>
+
 #include <World/World.h>
+#include <System/AudioSystem.h>
+#include <System/CameraSystem.h>
+#include <System/LightSystem.h>
+#include <System/ClusteredLightningSystem.h>
+#include <System/SceneAnimationSystem.h>
+#include <System/RenderMeshesSystem.h>
+#include <System/RTShadowSystem.h>
+#include <System/SkyboxRenderSystem.h>
+
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -30,9 +33,10 @@ public:
 	FD3DW::BaseCommandQueue* UserSwapchainCommandQueue(ID3D12Device* device) override;
 
 	UINT GetFrameIndex();
-	FD3DW::DepthStencilView* GetDepthResource();
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
+	FLOAT* GetClearColor();
+
 
 public:
 	World* GetWorld();
@@ -41,120 +45,68 @@ public:
 	///////////////////////////////////////////////////
 	//BRIDGE METHODS
 
-	//CAMERA COMPONENT
+	//CAMERA
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
-	float GetCameraSpeed();
-	void SetCameraSpeed(float speed);
-	void SetDefaultPosition();
 	CameraFrustum GetCameraFrustum();
 
-	//RENDERABLE OBJECTS MANAGER
-	std::vector<BaseRenderableObject*> GetRenderableObjects() const;
-	void AddScene(std::string path);
-	void AddSkybox(std::string path);
-	void AddAudio(std::string path);
-	void AddSimplePlane();
-	void AddSimpleCone();
-	void AddSimpleCube();
-	void AddSimpleSphere();
-	void RemoveObject(BaseRenderableObject* obj);
-	void RemoveAllObjects();
-	void SetMeshCullingType(CullingType in);
-	CullingType GetMeshCullingType();
-	FD3DW::AccelerationStructureBuffers GetTLAS(ID3D12GraphicsCommandList4* list);
+	//MESHES
+	void SetMeshCullingType(MeshCullingType in);
+	MeshCullingType GetMeshCullingType();
+	FD3DW::AccelerationStructureBuffers GetTLAS();
 
 
-	//LIGHTS MANAGER
-	void CreateLight();
-	void DeleteLight(int idx);
-	const LightStruct& GetLight(int idx);
-	void SetLightData(LightStruct newData, int idx);
+	//LIGHTS
 	int GetLightsCount();
-	void BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, UINT rootSRVClustersSlot, UINT cbClusterDataSlot, ID3D12GraphicsCommandList* list, bool IsCompute);
-	
 
-	//SHADOWS COMPONENT
-	ShadowType CurrentShadowType();
-	void SetRTShadowConfig(RTSoftShadowConfig config);
-	RTSoftShadowConfig GetRTShadowConfig();
+	//SHADOWS
+	bool IsShadowEnabled();
+	void SetRTShadowConfig(RTShadowSystemConfig config);
+	RTShadowSystemConfig GetRTShadowConfig();
 
-public:
-	void SaveSceneToFile(std::string pathTo);
-	void LoadSceneFromFile(std::string pathTo);
+	//WORLD
+	void LoadWorld(std::string pathTo);
+	void SaveActiveWorld(std::string pathTo);
 
+protected: //TEST METHODS
+	void CreateTestWorld();
+
+protected:
+	std::shared_ptr<World> CreateEmptyWorld();
 
 private:
-	void ProcessNotifyAfterRender();
+	void ProcessNotifiesInWorld();
+	void ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies);
 
 private:
-	void InitMainRendererComponents();
 	void InitMainRendererParts(ID3D12Device* device);
 	void InitMainRendererDXRParts(ID3D12Device5* device);
-	void TryInitShadowComponent();
-	void CustomAfterInitShadowComponent(MainRenderer_ShadowsComponent* shadow);
 
-private:
-
-	void AddToCallAfterRenderLoop(std::function<void(void)> foo);
-	void CallAfterRenderLoop();
-	std::vector<std::function<void(void)>> m_vCallAfterRenderLoop;
-
-	template<typename Func>
-	void ScheduleCreation(Func&& func, bool deferToRenderLoop = true) {
-		if (deferToRenderLoop) {
-			AddToCallAfterRenderLoop([this, func = std::move(func)]() mutable {
-				std::shared_ptr<FD3DW::ICommandRecipe> recipe;
-
-				if (IsRTSupported())
-				{
-					recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList4* list) {
-						func(list, list);
-					});
-				}
-				else
-				{
-					recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList* list) {
-						func(list, nullptr);
-					});
-				}
-
-				auto h = GlobalRenderThreadManager::GetInstance()->Submit(recipe);
-			});
-		}
-		else {
-			std::shared_ptr<FD3DW::ICommandRecipe> recipe;
-
-			if (IsRTSupported())
-			{
-				recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList4* list) {
-					func(list, list);
-				});
-			}
-			else
-			{
-				recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, func](ID3D12GraphicsCommandList* list) {
-					func(list, nullptr);
-				});
-			}
-
-			auto h = GlobalRenderThreadManager::GetInstance()->Submit(recipe);
-		}
-	}
+	void InitMainRendererSystems(ID3D12Device* device);
+	void InitMainRendererDXRSystems(ID3D12Device5* device);
 
 private:
 
 	std::unique_ptr<MainRenderer_UIComponent> m_pUIComponent = nullptr;
-	std::unique_ptr<MainRenderer_CameraComponent> m_pCameraComponent = nullptr;
-	std::unique_ptr<MainRenderer_RenderableObjectsManager> m_pRenderableObjectsManager = nullptr;
-	std::unique_ptr<MainRenderer_LightsManager> m_pLightsManager = nullptr;
-	std::unique_ptr<MainRenderer_ShadowsComponent> m_pShadowsComponent = nullptr;
-	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
-	size_t m_uMaxFramesInFlight = 5;
 	UINT m_uFrameIndex = 0;
 
-	std::vector< std::unique_ptr<MainRenderer_UIComponent>> m_vSystems;
+	std::shared_ptr<World> m_pWorld;
+
+	///////////////////////////////////////////
+	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
+	size_t m_uMaxFramesInFlight = 1;
+
+	AudioSystem* m_pAudioSystem = nullptr;
+	CameraSystem* m_pCameraSystem = nullptr;
+	LightSystem* m_pLightSystem = nullptr;
+	ClusteredLightningSystem* m_pClusteredLightningSystem = nullptr;
+	SceneAnimationSystem* m_pSceneAnimationSystem = nullptr;
+	RenderMeshesSystem* m_pRenderMeshesSystem = nullptr;
+	RTShadowSystem* m_pRTShadowSystem = nullptr;
+	SkyboxRenderSystem* m_pSkyboxRenderSystem = nullptr;
+
+	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 
 protected:
 
@@ -163,6 +115,15 @@ protected:
 		auto cmp = std::make_unique<T>(std::forward<Args>(args)...);
 		cmp->SetAfterConstruction(this);
 		return std::move(cmp);
+	}
+
+	template <typename T, typename... Args>
+	T* CreateSystem(Args&&... args) {
+		auto cmp = std::make_unique<T>(std::forward<Args>(args)...);
+		cmp->SetAfterConstruction(this);
+		auto ptr = cmp.get();
+		m_vSystems.push_back(std::move(cmp));
+		return ptr;
 	}
 
 	template <typename T>

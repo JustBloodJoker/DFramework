@@ -16,7 +16,7 @@ void ClusteredLightningSystem::AfterConstruction() {
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COPY, [this](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
 		ClusterSystemClusterParams par_1;
 		par_1.GridSize0 = CLUSTERED_NUM_X_CLUSTERS;
 		par_1.GridSize1 = CLUSTERED_NUM_Y_CLUSTERS;
@@ -65,7 +65,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsToClusters(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs, FD3DW::StructuredBuffer* lightsBuffer) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COPY, [this, lightsBuffer](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this, lightsBuffer](ID3D12GraphicsCommandList* list) {
 		PSOManager::GetInstance()->GetPSOObject(PSOType::ClusteredShading_LightsToClusteresPass)->Bind(list);
 
 		list->SetComputeRootConstantBufferView(CLUSTERED_SECOND_PASS_CBV_VIEWP_POS_IN_ROOT_SIG, m_pClusterViewParamsBuffer->GetGPULocation(0));
@@ -78,6 +78,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsTo
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, syncs);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS ClusteredLightningSystem::GetClusteredStructuredBufferGPULocation() {
+	return m_pClustersStructuredBuffer->GetResource()->GetGPUVirtualAddress();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS ClusteredLightningSystem::GetClusteredConstantBufferGPULocation() {
+	return m_pClusterParamsPSBuffer->GetGPULocation(0);
 }
 
 

@@ -15,6 +15,7 @@ struct LightSystemBuffer {
 	dx::XMFLOAT3 margin;
 };
 
+
 class LightSystem : public MainRendererComponent {
 public:
 	LightSystem() = default;
@@ -28,6 +29,10 @@ public:
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 
 	int GetLightsCount();
+	FD3DW::StructuredBuffer* GetLightsBuffer();
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetLightsStructuredBufferGPULocation();
+	D3D12_GPU_VIRTUAL_ADDRESS GetLightsConstantBufferGPULocation();
 
 protected:
 	std::vector<LightComponentData> GetDataFromLightComponents(std::vector<LightComponent*> cmps);

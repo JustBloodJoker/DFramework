@@ -74,9 +74,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnStartRenderTick(std::s
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(std::shared_ptr<FD3DW::ExecutionHandle> handle, RTShadowSystemOnRenderFactorsData data) {
+std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RTShadowSystemOnRenderFactorsData data) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList4* list) {
-		auto tlas = m_pOwner->GetTLAS(list).pResult;
+		auto tlas = m_pOwner->GetTLAS().pResult;
 
 		if (!tlas) return;
 
@@ -117,7 +117,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(st
 		m_pBilateralFilter->Apply(list);
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
 }
 
 

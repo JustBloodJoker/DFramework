@@ -21,6 +21,54 @@ std::vector<NRenderSystemNotifyType> World::GetRenderSystemNotifies() const {
 	return m_vRenderSystemNotifies;
 }
 
+void World::ClearNotifies() {
+	m_vRenderSystemNotifies.clear();
+}
+
+TDefaultCamera* World::CreateDefaultCamera() {
+	return CreateEntity<TDefaultCamera>();
+}
+
+TDirectionalLight* World::CreateDirectionalLight() {
+	return CreateEntity<TDirectionalLight>();
+}
+
+TPointLight* World::CreatePointLight() {
+	return CreateEntity<TPointLight>();
+}
+
+TSpotLight* World::CreateSpotLight() {
+	return CreateEntity<TSpotLight>();
+}
+
+TRectLight* World::CreateRectLight() {
+	return CreateEntity<TRectLight>();
+}
+
+TSimplePlane* World::CreateSimplePlane() {
+	return CreateEntity<TSimplePlane>();
+}
+
+TSimpleCube* World::CreateSimpleCube() {
+	return CreateEntity<TSimpleCube>();
+}
+
+TSimpleCone* World::CreateSimpleCone() {
+	return CreateEntity<TSimpleCone>();
+}
+
+TSimpleSphere* World::CreateSimpleSphere() {
+	return CreateEntity<TSimpleSphere>();
+}
+
+TSkybox* World::CreateSkybox(std::string path) {
+	return CreateEntity<TSkybox>(path);
+}
+
+TScene* World::CreateScene(std::string path) {
+	return CreateEntity<TScene>(path);
+}
+
 void World::DestroyEntity(ComponentHolder* holder) {
 	std::erase_if(m_vEntities, [&](const std::shared_ptr<ComponentHolder>& ent) {
 		if (ent.get() == holder) {
@@ -32,9 +80,18 @@ void World::DestroyEntity(ComponentHolder* holder) {
 	});
 }
 
+void World::InitRenderEntity(TRender* render) {
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+	auto renderInitDefaultH = render->RenderInit(m_pRender->GetDevice(), nullptr);
+	if (m_pRender->IsRTSupported()) render->RenderInitDXR(m_pRender->GetDXRDevice(), renderInitDefaultH);
+}
+
 void World::AfterSetMainRenderer() {
 	for (auto entity : m_vEntities) {
 		entity->Init();
+		if (auto* renderEntity = dynamic_cast<TRender*>(entity.get())) {
+			InitRenderEntity(renderEntity);
+		}
 	}
 }
 

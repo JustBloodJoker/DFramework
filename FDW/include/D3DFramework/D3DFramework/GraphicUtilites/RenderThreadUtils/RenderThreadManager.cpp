@@ -80,7 +80,7 @@ namespace FD3DW {
                 pool->Recycle(std::move(l)); 
             };
 
-            for (auto& d : dependencies) if (d) q->WaitFence(d);
+            for (auto& d : dependencies) if (d && d->GetFence()) q->WaitFence(d);
 
             q->Submit(batch);      
         });

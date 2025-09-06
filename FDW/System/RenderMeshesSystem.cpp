@@ -21,12 +21,12 @@ void RenderMeshesSystem::AfterConstruction() {
 	D3D12_COMMAND_SIGNATURE_DESC commandSignatureDesc = {};
 	commandSignatureDesc.pArgumentDescs = argumentDescs;
 	commandSignatureDesc.NumArgumentDescs = _countof(argumentDescs);
-	commandSignatureDesc.ByteStride = sizeof(IndirectMeshRenderableData);
+	commandSignatureDesc.ByteStride = sizeof(IndirectMeshRenderData);
 
 	auto rootSignature = PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedFirstPassDefaultConfig)->GetRootSignature();
 	HRESULT_ASSERT(m_pOwner->GetDevice()->CreateCommandSignature(&commandSignatureDesc, rootSignature, IID_PPV_ARGS(m_pIndirectCommandSignature.ReleaseAndGetAddressOf())), "Incorrect creation of Indirect Command Signature");
 
-	m_pIndirectExecuteCommandsBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<IndirectMeshRenderableData>(m_pOwner->GetDevice(), 1u, true);
+	m_pIndirectExecuteCommandsBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<IndirectMeshRenderData>(m_pOwner->GetDevice(), 1u, true);
 
 
 	m_pMeshesCulling = std::make_unique<MeshesCullingSubSystem>(m_pOwner->GetDevice());
@@ -105,12 +105,12 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
-		m_pMeshesCulling->UpdateHiZResource(m_pOwner->GetDepthResource(), m_pOwner->GetDevice(), list);
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this, data](ID3D12GraphicsCommandList* list) {
+		m_pMeshesCulling->UpdateHiZResource(data.DSV, m_pOwner->GetDevice(), list);
 	});
 	
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data) {
@@ -133,19 +133,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemIndirectRenderData data) {
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList* list) {
-		if (m_xMeshCullingType == MeshCullingType::GPU) {
-			InputMeshesCullingProcessData data;
-			data.CommandList = list;
-			data.Device = m_pOwner->GetDevice();
-			data.DepthResource = m_pOwner->GetDepthResource();
-			data.InputCommandsBuffer = m_pIndirectExecuteCommandsBuffer.get();
-			data.Instances = m_vMeshAABBInstanceData;
-			data.CameraFrustum = m_pOwner->GetCameraFrustum();
-			m_pMeshesCulling->ProcessGPUCulling(data);
-		}
-
+		
 		if (!m_pOwner->IsEnabledPreDepth())
 		{
 			data.DSV->DepthWrite(list);
@@ -174,32 +164,57 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 			for (UINT i = 0; i < gBuffersCount; ++i) {
 				CD3DX12_CPU_DESCRIPTOR_HANDLE pdhHandle(data.RTV_CPU);
 				pdhHandle.Offset(i, GetRTVDescriptorSize(m_pOwner->GetDevice()));
-				list->ClearRenderTargetView(pdhHandle, nullptr, 0, nullptr);
+				list->ClearRenderTargetView(pdhHandle, m_pOwner->GetClearColor(), 0, nullptr);
 			}
 			list->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(data.RTV_CPU), true, &FD3DW::keep(data.DSV_CPU));
 
-			PSOManager::GetInstance()->GetPSOObject(m_pOwner->IsEnabledPreDepth() ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
-			ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
-			list->SetDescriptorHeaps(_countof(heaps), heaps);
-			list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
+			if (!m_vMeshAABBInstanceData.empty()) {
+				if (m_xMeshCullingType == MeshCullingType::GPU) {
+					InputMeshesCullingProcessData cullData;
+					cullData.CommandList = list;
+					cullData.Device = m_pOwner->GetDevice();
+					cullData.DepthResource = data.DSV;
+					cullData.InputCommandsBuffer = m_pIndirectExecuteCommandsBuffer.get();
+					cullData.Instances = m_vMeshAABBInstanceData;
+					cullData.CameraFrustum = m_pOwner->GetCameraFrustum();
+					m_pMeshesCulling->ProcessGPUCulling(cullData);
+				}
 
-			auto dataSize = (UINT)m_vMeshRenderData.size();
-			auto instanceDataSize = (UINT)m_vMeshAABBInstanceData.size();
-			if (m_xMeshCullingType == MeshCullingType::GPU) {
-				auto cullingRes = m_pMeshesCulling->GetResultBuffer();
-				cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-				list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pMeshesCulling->CountBufferOffset((UINT)instanceDataSize));
-			}
-			else {
-				m_pIndirectExecuteCommandsBuffer->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
-				list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, m_pIndirectExecuteCommandsBuffer->GetResource(), 0, nullptr, 0);
-			}
+				PSOManager::GetInstance()->GetPSOObject(m_pOwner->IsEnabledPreDepth() ? PSOType::DefferedFirstPassWithPreDepth : PSOType::DefferedFirstPassDefaultConfig)->Bind(list);
+				ID3D12DescriptorHeap* heaps[] = { GlobalTextureHeap::GetInstance()->GetResult()->GetDescriptorPtr() };
+				list->SetDescriptorHeaps(_countof(heaps), heaps);
+				list->SetGraphicsRootDescriptorTable(TEXTURE_START_POSITION_IN_ROOT_SIG, GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle(0));
 
+				auto dataSize = (UINT)m_vMeshRenderData.size();
+				auto instanceDataSize = (UINT)m_vMeshAABBInstanceData.size();
+				if (m_xMeshCullingType == MeshCullingType::GPU) {
+					auto cullingRes = m_pMeshesCulling->GetResultBuffer();
+					cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+					list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pMeshesCulling->CountBufferOffset((UINT)instanceDataSize));
+				}
+				else {
+					m_pIndirectExecuteCommandsBuffer->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
+					list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, m_pIndirectExecuteCommandsBuffer->GetResource(), 0, nullptr, 0);
+				}
+			}
+			
 			for (auto& gbuffer : data.RTV) {
 				gbuffer->EndDraw(list);
 			}
 		}
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+}
+
+FD3DW::AccelerationStructureBuffers RenderMeshesSystem::GetTLAS() const {
+	return m_xTLASBufferData;
+}
+
+MeshCullingType RenderMeshesSystem::GetCullingType() const {
+	return m_xMeshCullingType;
+}
+
+void RenderMeshesSystem::SetCullingType(MeshCullingType type) {
+	m_xMeshCullingType = type;
 }

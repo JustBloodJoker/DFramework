@@ -24,7 +24,7 @@ public:
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 
 	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnRenderShadowFactors(std::shared_ptr<FD3DW::ExecutionHandle> handle, RTShadowSystemOnRenderFactorsData data);
+	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RTShadowSystemOnRenderFactorsData data);
 
 	void SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device);
 

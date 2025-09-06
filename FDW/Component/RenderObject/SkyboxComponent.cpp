@@ -14,7 +14,6 @@ void SkyboxComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputDa
 	m_xMatricesData.View = dx::XMMatrixTranspose(viewNoTranslation);
 
 	m_xMatricesData.World = dx::XMMatrixTranspose(dx::XMMatrixIdentity());
-
 }
 
 void SkyboxComponent::RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) {

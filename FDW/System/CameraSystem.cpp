@@ -10,9 +10,18 @@ dx::XMMATRIX GetDummyViewMatrix() {
 	return XMMatrixLookAtLH(eye, target, up);
 }
 
+dx::XMFLOAT3 GetDummyViewPosition() {
+	dx::XMFLOAT3 pos;
+	auto invView = dx::XMMatrixInverse(nullptr, GetDummyViewMatrix());
+	auto cameraPosition = invView.r[3];
+	XMStoreFloat3(&pos, cameraPosition);
+	return pos;
+}
+
 void CameraSystem::AfterConstruction() {
 	m_pCameraLayer = std::make_unique<CameraSystemInputLayer>(this);
 	m_pCameraLayer->AddToRouter(m_pOwner->GetInputRouter());
+	UpdateProjectionMatrix();
 }
 
 void CameraSystem::BeforeDestruction() {
@@ -25,6 +34,10 @@ dx::XMMATRIX CameraSystem::GetProjectionMatrix() {
 
 dx::XMMATRIX CameraSystem::GetViewMatrix() {
 	return  m_pCurrentActiveCamera ? m_pCurrentActiveCamera->GetViewMatrix() : GetDummyViewMatrix();
+}
+
+dx::XMFLOAT3 CameraSystem::GetCameraPosition() {
+	return m_pCurrentActiveCamera ? m_pCurrentActiveCamera->GetCameraPosition() : GetDummyViewPosition();
 }
 
 void CameraSystem::UpdateProjectionMatrix() {

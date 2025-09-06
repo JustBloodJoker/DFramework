@@ -19,8 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera\CameraInputLayer.cpp" />
-    <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp" />
     <ClCompile Include="Component\Audio\AudioComponent.cpp" />
     <ClCompile Include="Component\Camera\CameraComponent.cpp" />
     <ClCompile Include="Component\Core\IComponent.cpp" />
@@ -52,29 +50,12 @@
     <ClCompile Include="include\imgui\imgui_draw.cpp" />
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="Lights\MainRenderer_LightsManager.cpp" />
-    <ClCompile Include="Lights\MainRenderer_RTSoftShadowsComponent.cpp" />
-    <ClCompile Include="Lights\MainRenderer_ShadowsComponent.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainRenderer\GlobalConfig.cpp" />
     <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp" />
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="MainRenderer\PSOManager.cpp" />
-    <ClCompile Include="RenderableObjects\BaseRenderableObject.cpp" />
-    <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp" />
-    <ClCompile Include="RenderableObjects\IndirectExecutionMeshObject.cpp" />
-    <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp" />
-    <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableMesh.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSimpleCone.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSimpleCube.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSimpleSphere.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSimplePlane.cpp" />
-    <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp" />
     <ClCompile Include="System\AudioSystem.cpp" />
     <ClCompile Include="System\CameraFrustum.cpp" />
     <ClCompile Include="System\CameraSystem.cpp" />
@@ -91,8 +72,6 @@
     <ClCompile Include="World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera\CameraInputLayer.h" />
-    <ClInclude Include="Camera\MainRenderer_CameraComponent.h" />
     <ClInclude Include="Component\Audio\AudioComponent.h" />
     <ClInclude Include="Component\Camera\CameraComponent.h" />
     <ClInclude Include="Component\Core\IComponent.h" />
@@ -116,7 +95,6 @@
     <ClInclude Include="Entity\Light\TPointLight.h" />
     <ClInclude Include="Entity\Light\TRectLight.h" />
     <ClInclude Include="Entity\Light\TSpotLight.h" />
-    <ClInclude Include="Entity\RenderObject\MeshesIndirectRenderData.h" />
     <ClInclude Include="Entity\RenderObject\SimpleMeshTemplates.h" />
     <ClInclude Include="Entity\RenderObject\SimpleMeshTemplatesGenerators.h" />
     <ClInclude Include="Entity\RenderObject\TMesh.h" />
@@ -124,12 +102,6 @@
     <ClInclude Include="Entity\RenderObject\TScene.h" />
     <ClInclude Include="Entity\RenderObject\TSimpleMesh.h" />
     <ClInclude Include="Entity\RenderObject\TSkybox.h" />
-    <ClInclude Include="Lights\ClusteredShadingPassData.h" />
-    <ClInclude Include="Lights\LightStruct.h" />
-    <ClInclude Include="Lights\MainRenderer_LightsManager.h" />
-    <ClInclude Include="Lights\MainRenderer_RTSoftShadowsComponent.h" />
-    <ClInclude Include="Lights\MainRenderer_ShadowsComponent.h" />
-    <ClInclude Include="Lights\ShadowsStructures.h" />
     <ClInclude Include="MainRenderer\GlobalConfig.h" />
     <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h" />
     <ClInclude Include="MainRenderer\GlobalTextureHeap.h" />
@@ -137,25 +109,6 @@
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="MainRenderer\PSOManager.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="RenderableObjects\BaseRenderableObject.h" />
-    <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h" />
-    <ClInclude Include="RenderableObjects\IndirectExecutionMeshObject.h" />
-    <ClInclude Include="RenderableObjects\IndirectMeshRenderableData.h" />
-    <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h" />
-    <ClInclude Include="RenderableObjects\MeshMaterialStructure.h" />
-    <ClInclude Include="RenderableObjects\MeshMatricesStructure.h" />
-    <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h" />
-    <ClInclude Include="RenderableObjects\ObjectsCulling\InstanceData.h" />
-    <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h" />
-    <ClInclude Include="RenderableObjects\RenderableMesh.h" />
-    <ClInclude Include="RenderableObjects\RenderableMeshElement.h" />
-    <ClInclude Include="RenderableObjects\RenderableAudioObject.h" />
-    <ClInclude Include="RenderableObjects\RenderableSimpleCone.h" />
-    <ClInclude Include="RenderableObjects\RenderableSimpleCube.h" />
-    <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h" />
-    <ClInclude Include="RenderableObjects\RenderableSimpleObject.h" />
-    <ClInclude Include="RenderableObjects\RenderableSimplePlane.h" />
-    <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h" />
     <ClInclude Include="System\AudioSystem.h" />
     <ClInclude Include="System\CameraFrustum.h" />
     <ClInclude Include="System\CameraSystem.h" />

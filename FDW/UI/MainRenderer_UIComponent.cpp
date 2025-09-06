@@ -7,11 +7,7 @@
 #include <MainRenderer/MainRenderer.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
-#include <RenderableObjects/RenderableMesh.h>
-#include <RenderableObjects/RenderableMeshElement.h>
-#include <RenderableObjects/RenderableSimpleObject.h>
-#include <RenderableObjects/RenderableSkyboxObject.h>
-#include <RenderableObjects/RenderableAudioObject.h>
+#include <World/World.h>
 
 /////////////////////////////////////////
 ///         ---ENGINE_UI---
@@ -23,14 +19,6 @@ static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
 static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg", L".png" };
 
 static const std::vector<std::wstring> s_vSupportedEngineFileExts = { L".fdw" };
-
-constexpr std::array<std::pair<LightTypes, const char*>, LightTypes::Size> LightTypeInfo = { {
-    { PointLight, "PointLight" },
-    { SpotLight, "SpotLight" },
-    { DirectionalLight, "DirectionalLight" },
-    { RectLight, "RectLight" }
-} };
-
 
 //TODO: Implement UI parsing from external format (e.g., JSON or XML) to define layout/widgets
 void MainRenderer_UIComponent::DrawUI() {
@@ -80,7 +68,7 @@ void MainRenderer_UIComponent::MainWindow() {
 }
 
 void MainRenderer_UIComponent::DrawRenderableObjectsTab() {
-    if (ImGui::Button("Load Scene")) {
+    /*if (ImGui::Button("Load Scene")) {
         m_bShowSceneBrowser = true;
     }
     if (ImGui::Button("Load Audio")) {
@@ -88,54 +76,22 @@ void MainRenderer_UIComponent::DrawRenderableObjectsTab() {
     }
     if (ImGui::Button("Load Skybox")) {
         m_bShowSkyboxBrowser = true;
-    }
-    if (ImGui::Button("Create Simple Plane")) {
-        m_pOwner->AddSimplePlane();
-    }
-    if (ImGui::Button("Create Simple Cone")) {
-        m_pOwner->AddSimpleCone();
-    }
-    if (ImGui::Button("Create Simple Cube")) {
-        m_pOwner->AddSimpleCube();
-    }
-    if (ImGui::Button("Create Simple Sphere")) {
-        m_pOwner->AddSimpleSphere();
-    }
-    if (m_iSelectedObjectIndex >= 0 && m_iSelectedObjectIndex < (int)m_vCachedObjects.size()) {
-        ImGui::SameLine();
-        if (ImGui::Button("Delete Selected")) {
-            auto* selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
-            m_pOwner->RemoveObject(selectedObj);
-            m_iSelectedObjectIndex = -1;
-        }
-    }
-    ElementParamSetter();
+    }*/
 }
 
 void MainRenderer_UIComponent::DrawCameraTab() {
-    ImGui::SeparatorText("Camera Controls");
-
-    float moveSpeed = m_pOwner->GetCameraSpeed();
-    if (ImGui::SliderFloat("Move Speed", &moveSpeed, 0.1f, 2000.0f, "%.2f")) {
-        m_pOwner->SetCameraSpeed(moveSpeed);
-    }
-
-    ImGui::Spacing();
-    ImGui::Spacing();
-
-    ImGui::SeparatorText("Actions");
-    if (ImGui::Button("Reset Position")) {
-        m_pOwner->SetDefaultPosition();
-    }
+    ImGui::SeparatorText("Cameras");
+    //TODO CAMERA TAB
+    //Creation
+    //TBaseCamera
 }
 
 void MainRenderer_UIComponent::DrawShadowsTab() {
     ImGui::SeparatorText("Shadow Settings");
-
-    auto shadowType = m_pOwner->CurrentShadowType();
+    
     bool changed = false;
-    if (shadowType == ShadowType::RTSoftShadow) {
-        RTSoftShadowConfig config = m_pOwner->GetRTShadowConfig();
+    if (m_pOwner->IsShadowEnabled()) {
+        RTShadowSystemConfig config = m_pOwner->GetRTShadowConfig();
 
         changed |= ImGui::SliderFloat("Temporal Feedback Min", &config.TemporalFeedbackMin, 0.0f, 1.0f);
         changed |= ImGui::SliderFloat("Temporal Feedback Max", &config.TemporalFeedbackMax, 0.0f, 1.0f);
@@ -158,70 +114,20 @@ void MainRenderer_UIComponent::DrawShadowsTab() {
 
 void MainRenderer_UIComponent::DrawLightsTab() {
     ImGui::SeparatorText("Lights");
+    //TODO lights tab
+    //creation
 
-    if (ImGui::Button("Add Light")) {
-        m_pOwner->CreateLight();
-    }
 
-    int lightCount = m_pOwner->GetLightsCount();
-
-    if (lightCount <= 0) {
-        ImGui::Text("No lights available.");
-        return;
-    }
-
-    std::vector<std::string> lightNames(lightCount);
-    for (int i = 0; i < lightCount; ++i)
-        lightNames[i] = "Light " + std::to_string(i);
-
-    std::vector<const char*> cstrNames;
-    for (const auto& name : lightNames)
-        cstrNames.push_back(name.c_str());
-
-    ImGui::Combo("Select Light", &m_iSelectedLightIndex, cstrNames.data(), (int)cstrNames.size());
-
-    if (m_iSelectedLightIndex < 0 || m_iSelectedLightIndex >= lightCount) return;
-
-    LightStruct light = m_pOwner->GetLight(m_iSelectedLightIndex);
-    int currentType = light.LightType;
-    bool changed = false;
-
-    static const std::array<const char*, LightTypes::Size> lightTypeNamesCStr = []() {
-        std::array<const char*, LightTypes::Size> result{};
-        for (size_t i = 0; i < LightTypeInfo.size(); ++i)
-            result[i] = LightTypeInfo[i].second;
-        return result;
-        }();
-
-    if (ImGui::Combo("Light Type", &currentType, lightTypeNamesCStr.data(), (int)lightTypeNamesCStr.size())) {
-        light.LightType = currentType;
-        changed = true;
-    }
-
-    ImGui::SeparatorText("Transform & Properties");
-    changed |= DrawCommonLightProperties(light);
-    changed |= DrawSpecificLightUI(light);
-
-    if (changed) {
-        m_pOwner->SetLightData(light, m_iSelectedLightIndex);
-    }
-
-    ImGui::Spacing();
-
-    if (ImGui::Button("Delete Light")) {
-        m_pOwner->DeleteLight(m_iSelectedLightIndex);
-        m_iSelectedLightIndex = std::max(0, m_iSelectedLightIndex - 1);
-    }
 }
 
 void MainRenderer_UIComponent::DrawEditorUtilitiesTab() {
     ImGui::SeparatorText("Scene culling");
 
-    CullingType current = m_pOwner->GetMeshCullingType();
-    const char* cullingNames[] = { "None", "CPU Frustum", "GPU Culling" };
+    auto current = m_pOwner->GetMeshCullingType();
+    const char* cullingNames[] = { "None", "GPU Culling" };
     int currentIndex = static_cast<int>(current);
     if (ImGui::Combo("Culling Type", &currentIndex, cullingNames, IM_ARRAYSIZE(cullingNames))) {
-        m_pOwner->SetMeshCullingType(static_cast<CullingType>(currentIndex));
+        m_pOwner->SetMeshCullingType(static_cast<MeshCullingType>(currentIndex));
     }
 
     auto bb = m_pOwner->IsEnabledPreDepth();
@@ -248,7 +154,7 @@ void MainRenderer_UIComponent::SceneBrowser() {
         m_xCurrentPath,
         s_vSupportedSceneExts,
         [this](const std::filesystem::path& path) {
-            m_pOwner->AddScene(path.string());
+            //todo add scene
         },
         [](const std::filesystem::path& path) {
             return "Scene ";
@@ -263,7 +169,7 @@ void MainRenderer_UIComponent::AudioBrowser() {
         m_xCurrentPath,
         s_vSupportedAudioExts,
         [this](const std::filesystem::path& path) {
-            m_pOwner->AddAudio(path.string());
+           //todo add audio
         },
         [](const std::filesystem::path& path) {
             return "Audio ";
@@ -278,7 +184,7 @@ void MainRenderer_UIComponent::SkyboxBrowser() {
         m_xCurrentPath,
         s_vSupportedSkyboxExts,
         [this](const std::filesystem::path& path) {
-            m_pOwner->AddSkybox(path.string());
+            //todo add skybox
         },
         [](const std::filesystem::path& path) {
             return "Skybox ";
@@ -293,9 +199,7 @@ void MainRenderer_UIComponent::TextureBrowser() {
         m_xCurrentPath,
         s_vSupportedTextureExts,
         [this](const std::filesystem::path& path) {
-            if (m_pTextureTargetObject && m_iTextureBeingSet >= 0 && m_iTextureBeingSet < std::size(m_vTextureOps)) {
-                m_vTextureOps[m_iTextureBeingSet].SetFunc(m_pTextureTargetObject, path.string());
-            }
+           //todo set texture for simple objects
         },
         [](const std::filesystem::path& path) {
             return "Texture ";
@@ -306,370 +210,16 @@ void MainRenderer_UIComponent::TextureBrowser() {
 void MainRenderer_UIComponent::SaveSceneBrowser() {
     SceneFileBrowser(m_bShowSaveSceneBrowser, "Save Scene", true,
         [this](const std::filesystem::path& path) {
-            m_pOwner->SaveSceneToFile(path.string());
+            AddCallToPull([this, path]() {m_pOwner->SaveActiveWorld(path.string()); });
     });
 }
 
 void MainRenderer_UIComponent::LoadSceneBrowser() {
     SceneFileBrowser(m_bShowLoadSceneBrowser, "Load Scene", false,
         [this](const std::filesystem::path& path) {
-            m_pOwner->LoadSceneFromFile(path.string());
+            AddCallToPull([this, path]() {m_pOwner->LoadWorld(path.string()); });
     });
 }
-
-bool MainRenderer_UIComponent::DrawCommonLightProperties(LightStruct& light) {
-    bool changed = false;
-    changed |= ImGui::DragFloat3("Position", (float*)&light.Position, 0.1f);
-    changed |= ImGui::DragFloat("Intensity", &light.Intensity, 0.1f, 0.0f, 10000.0f);
-    changed |= ImGui::ColorEdit3("Color", (float*)&light.Color);
-    return changed;
-}
-
-bool MainRenderer_UIComponent::DrawSpecificLightUI(LightStruct& light) {
-    switch (light.LightType) {
-    case LightTypes::PointLight:
-        return DrawPointLightUI(light);
-    case LightTypes::DirectionalLight:
-        return DrawDirectionalLightUI(light);
-    case LightTypes::SpotLight:
-        return DrawSpotLightUI(light);
-    case LightTypes::RectLight:
-        return DrawRectLightUI(light);
-    default:
-        ImGui::Text("Unknown Light Type");
-        return false;
-    }
-}
-
-bool MainRenderer_UIComponent::DrawPointLightUI(LightStruct& light) {
-    bool changed = false;
-    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.0f, 1000.0f);
-    changed |= ImGui::DragFloat("Source Radius", &light.SourceRadius, 0.1f, 0.0f, 1000.0f);
-    return changed;
-}
-
-bool MainRenderer_UIComponent::DrawDirectionalLightUI(LightStruct& light) {
-    bool changed = false;
-
-    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.1f, -1.0f, 1.0f);
-
-    return changed;
-}
-
-bool MainRenderer_UIComponent::DrawSpotLightUI(LightStruct& light) {
-    bool changed = false;
-
-    changed |= ImGui::DragFloat3("Direction", (float*)&light.Direction, 0.1f, -1.0f, 1.0f);
-
-    changed |= ImGui::DragFloat("Attenuation Radius", &light.AttenuationRadius, 0.1f, 0.1f, 100.0f);
-
-    float innerDeg = dx::XMConvertToDegrees(light.InnerConeAngle);
-    float outerDeg = dx::XMConvertToDegrees(light.OuterConeAngle);
-
-    changed |= ImGui::DragFloat("Inner Cone Angle", &innerDeg, 0.1f, 0.0f, 90.0f);
-    changed |= ImGui::DragFloat("Outer Cone Angle", &outerDeg, 0.1f, 0.0f, 90.0f);
-
-    light.InnerConeAngle = dx::XMConvertToRadians(innerDeg);
-    light.OuterConeAngle = dx::XMConvertToRadians(outerDeg);
-
-    return changed;
-}
-
-bool MainRenderer_UIComponent::DrawRectLightUI(LightStruct& light) {
-    bool changed = false;
-
-    changed |= ImGui::DragFloat2("Size (W x H)", (float*)&light.RectSize, 0.1f, 0.1f, 20.0f);
-
-    changed |= ImGui::SliderAngle("Pitch", &light.Rotation.x, -180.0f, 180.0f);
-    changed |= ImGui::SliderAngle("Yaw", &light.Rotation.y, -180.0f, 180.0f);
-    changed |= ImGui::SliderAngle("Roll", &light.Rotation.z, -180.0f, 180.0f);
-    
-    return changed;
-}
-
-void MainRenderer_UIComponent::ElementParamSetter() {
-    m_vCachedObjects = m_pOwner->GetRenderableObjects();
-    if (m_vCachedObjects.empty()) return;
-
-    ImGui::Separator();
-    ImGui::Text("Scene Objects");
-
-    std::vector<const char*> names;
-    names.reserve(m_vCachedObjects.size());
-    for (const auto* obj : m_vCachedObjects) {
-        names.push_back(obj->GetName().c_str());
-    }
-
-    if (m_iSelectedObjectIndex >= (int)m_vCachedObjects.size())
-        m_iSelectedObjectIndex = -1;
-
-    ImGui::Combo("Select Object", &m_iSelectedObjectIndex, names.data(), (int)names.size());
-
-    if (m_iSelectedObjectIndex < 0) return;
-
-    BaseRenderableObject* selectedObj = m_vCachedObjects[m_iSelectedObjectIndex];
-
-    if (auto* mesh = dynamic_cast<RenderableMesh*>(selectedObj)) {
-        DrawMeshUI(mesh);
-    }
-    else if (auto* simple = dynamic_cast<RenderableSimpleObject*>(selectedObj)) {
-        DrawSimpleRenderableUI(simple);
-    }
-    else if (auto* skybox = dynamic_cast<RenderableSkyboxObject*>(selectedObj)) {
-        DrawSkyboxUI(skybox);
-    }
-    else if (auto* audio = dynamic_cast<RenderableAudioObject*>(selectedObj)) {
-        DrawAudioUI(audio);
-    }
-}
-
-void MainRenderer_UIComponent::DrawMeshUI(RenderableMesh* mesh) {
-    ImGui::Separator();
-    ImGui::Text("Transform");
-
-    dx::XMFLOAT3 pos = mesh->GetPosition();
-    dx::XMFLOAT3 rot = mesh->GetRotation();
-    dx::XMFLOAT3 scale = mesh->GetScale();
-
-    if (ImGui::DragFloat3("Position", (float*)&pos, 0.1f)) {
-        mesh->SetPosition(pos);
-    }
-
-    if (ImGui::DragFloat3("Rotation", (float*)&rot, 1.0f)) {
-        mesh->SetRotation(rot);
-    }
-
-    if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
-        mesh->SetScale(scale);
-    }
-
-    const auto& anims = mesh->GetAnimations();
-    if (!anims.empty()) {
-        auto& animState = m_mAnimationStates[mesh];
-
-        ImGui::Separator();
-        ImGui::Text("Animations");
-
-        std::vector<const char*> animNames;
-        animNames.reserve(anims.size());
-        for (const auto& anim : anims)
-            animNames.push_back(anim.c_str());
-
-        if (animState.SelectedAnimIndex >= (int)anims.size())
-            animState.SelectedAnimIndex = 0;
-
-        ImGui::Combo("Animation", &animState.SelectedAnimIndex, animNames.data(), (int)animNames.size());
-
-        if (ImGui::Button("Play")) {
-            mesh->PlayAnimation(anims[animState.SelectedAnimIndex]);
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button("Stop")) {
-            mesh->StopAnimation();
-        }
-
-        if (ImGui::Checkbox("Freeze", &animState.IsFreeze)) {
-            mesh->FreezeAnimation(animState.IsFreeze);
-        }
-    }
-
-    if (ImGui::CollapsingHeader("Mesh Elements", ImGuiTreeNodeFlags_DefaultOpen)) {
-        auto elements = mesh->GetRenderableElements();
-        for (size_t i = 0; i < elements.size(); ++i) {
-            auto* element = elements[i];
-            std::string label = "Element " + std::to_string(i);
-
-            if (ImGui::TreeNode(label.c_str())) {
-                dx::XMFLOAT3 ePos = element->GetPosition();
-                dx::XMFLOAT3 eRot = element->GetRotation();
-                dx::XMFLOAT3 eScale = element->GetScale();
-
-                ImGui::SeparatorText("Transformation");
-                if (ImGui::DragFloat3("Pos", (float*)&ePos, 0.1f)) {
-                    element->SetPosition(ePos);
-                }
-                if (ImGui::DragFloat3("Rot", (float*)&eRot, 1.0f)) {
-                    element->SetRotation(eRot);
-                }
-                if (ImGui::DragFloat3("Scale", (float*)&eScale, 0.05f)) {
-                    element->SetScale(eScale);
-                }
-                ImGui::SeparatorText("Material");
-                
-                dx::XMFLOAT4 diffuse = element->GetDiffuse();
-                if (ImGui::ColorEdit4("Diffuse", (float*)&diffuse)) {
-                    element->SetDiffuse(diffuse);
-                }
-
-                dx::XMFLOAT4 specular = element->GetSpecular();
-                if (ImGui::ColorEdit4("Specular", (float*)&specular)) {
-                    element->SetSpecular(specular);
-                }
-
-                dx::XMFLOAT4 ambient = element->GetAmbient();
-                if (ImGui::ColorEdit3("Ambient", (float*)&ambient)) {
-                    element->SetAmbient(dx::XMFLOAT4(ambient.x, ambient.y, ambient.z, 1.0f));
-                }
-
-                dx::XMFLOAT4 emissive = element->GetEmissive();
-                if (ImGui::ColorEdit3("Emissive", (float*)&emissive)) {
-                    element->SetEmissive(dx::XMFLOAT4(emissive.x, emissive.y, emissive.z, 1.0f));
-                }
-
-                float roughness = element->GetRoughness();
-                if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
-                    element->SetRoughness(roughness);
-                }
-
-                float metalness = element->GetMetalness();
-                if (ImGui::SliderFloat("Metalness", &metalness, 0.0f, 1.0f)) {
-                    element->SetMetalness(metalness);
-                }
-
-                float specPower = element->GetSpecularPower();
-                if (ImGui::SliderFloat("SpecularPower", &specPower, 1.0f, 128.0f)) {
-                    element->SetSpecularPower(specPower);
-                }
-
-                float height = element->GetHeightScale();
-                if (ImGui::SliderFloat("Height Scale", &height, 0.0f, 0.1f)) {
-                    element->SetHeightScale(height);
-                }
-
-                ImGui::TreePop();
-            }
-        }
-    }
-}
-
-void MainRenderer_UIComponent::DrawSimpleRenderableUI(RenderableSimpleObject* obj) {
-    ImGui::Separator();
-    ImGui::Text("Renderable Simple Object");
-
-    dx::XMFLOAT3 pos = obj->GetPosition();
-    dx::XMFLOAT3 rot = obj->GetRotation();
-    dx::XMFLOAT3 scale = obj->GetScale();
-
-    if (ImGui::DragFloat3("Position", (float*)&pos, 0.1f)) {
-        obj->SetPosition(pos);
-    }
-
-    if (ImGui::DragFloat3("Rotation", (float*)&rot, 1.0f)) {
-        obj->SetRotation(rot);
-    }
-
-    if (ImGui::DragFloat3("Scale", (float*)&scale, 0.05f)) {
-        obj->SetScale(scale);
-    }
-
-    ImGui::SeparatorText("Material");
-
-    dx::XMFLOAT4 diffuse = obj->GetDiffuse();
-    if (ImGui::ColorEdit4("Diffuse", (float*)&diffuse)) {
-        obj->SetDiffuse(diffuse);
-    }
-
-    dx::XMFLOAT4 specular = obj->GetSpecular();
-    if (ImGui::ColorEdit4("Specular", (float*)&specular)) {
-        obj->SetSpecular(specular);
-    }
-
-    dx::XMFLOAT4 ambient = obj->GetAmbient();
-    if (ImGui::ColorEdit3("Ambient", (float*)&ambient)) {
-        obj->SetAmbient(dx::XMFLOAT4(ambient.x, ambient.y, ambient.z, 1.0f));
-    }
-
-    dx::XMFLOAT4 emissive = obj->GetEmissive();
-    if (ImGui::ColorEdit3("Emissive", (float*)&emissive)) {
-        obj->SetEmissive(dx::XMFLOAT4(emissive.x, emissive.y, emissive.z, 1.0f));
-    }
-
-    float roughness = obj->GetRoughness();
-    if (ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f)) {
-        obj->SetRoughness(roughness);
-    }
-
-    float metalness = obj->GetMetalness();
-    if (ImGui::SliderFloat("Metalness", &metalness, 0.0f, 1.0f)) {
-        obj->SetMetalness(metalness);
-    }
-
-    float specPower = obj->GetSpecularPower();
-    if (ImGui::SliderFloat("Specular Power", &specPower, 1.0f, 128.0f)) {
-        obj->SetSpecularPower(specPower);
-    }
-
-    float heightScale = obj->GetHeightScale();
-    if (ImGui::SliderFloat("Height Scale", &heightScale, 0.0f, 0.1f)) {
-        obj->SetHeightScale(heightScale);
-    }
-
-    if (ImGui::CollapsingHeader("Textures", ImGuiTreeNodeFlags_DefaultOpen)) {
-        for (int i = 0; i < std::size(m_vTextureOps); ++i) {
-            ImGui::SeparatorText(m_vTextureOps[i].Name);
-
-            ImGui::PushID(i);
-
-            if (m_pTextureTargetObject) {
-                auto tex = m_pTextureTargetObject->GetTexture(static_cast<FD3DW::TextureType>(i));
-                if (tex) {
-                    D3D12_GPU_DESCRIPTOR_HANDLE srv = m_pTextureTargetObject->GetTextureSRV(static_cast<FD3DW::TextureType>(i));
-                    ImGui::Image((ImTextureID)srv.ptr, ImVec2(48, 48));
-                }
-            }
-
-            if (ImGui::Button("Set")) {
-                m_bShowTextureBrowser = true;
-                m_iTextureBeingSet = i;
-                m_pTextureTargetObject = obj;
-            }
-
-            if (m_pTextureTargetObject) {
-                auto tex = m_pTextureTargetObject->GetTexture(static_cast<FD3DW::TextureType>(i));
-                if (tex && ImGui::Button("Erase")) {
-                    m_vTextureOps[i].EraseFunc(obj);
-                }
-            }
-
-            ImGui::PopID();
-        }
-    }
-}
-
-
-void MainRenderer_UIComponent::DrawSkyboxUI(RenderableSkyboxObject* skybox) {
-    ImGui::Separator();
-    ImGui::Text("Skybox: no editable parameters");
-}
-
-void MainRenderer_UIComponent::DrawAudioUI(RenderableAudioObject* audio) {
-    ImGui::Separator();
-    ImGui::Text("Audio Controls");
-
-    if (ImGui::Button("Play")) {
-        audio->Play();
-    }
-    
-    if (ImGui::Button("Stop")) {
-        audio->Stop();
-    }
-    
-    if (ImGui::Button("Restart")) {
-        audio->Restart();
-    }
-
-    float volume = audio->GetVolume();
-    if (ImGui::SliderFloat("Volume", &volume, 0.0f, 1.0f)) {
-        audio->SetVolume(volume);
-    }
-
-    bool loop = audio->IsLoop();
-    if (ImGui::Checkbox("Loop", &loop)) {
-        audio->Loop(loop);
-    }
-}
-
 
 /////////////////////////////////////////
 
@@ -730,6 +280,19 @@ bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wPa
     return false;
 }
 
+
+void MainRenderer_UIComponent::AddCallToPull(std::function<void(void)> foo) {
+    if (foo)m_vCallsAfterRender.push_back(foo);
+}
+
+void MainRenderer_UIComponent::ProcessAfterRenderUICalls() {
+    auto vv = m_vCallsAfterRender;
+    m_vCallsAfterRender.clear();
+    for (auto foo : vv) {
+        if (foo) foo();
+    }
+}
+
 void MainRenderer_UIComponent::AfterConstruction() {
     static const std::pair<const char*, FD3DW::TextureType> kTextureNames[] = {
         { "BASE",     FD3DW::TextureType::BASE },
@@ -747,14 +310,14 @@ void MainRenderer_UIComponent::AfterConstruction() {
     {
         m_vTextureOps.push_back({
             name,
-            [this, type](RenderableSimpleObject* obj, const std::string& path) {
+            [this, type](TSimpleMesh* obj, const std::string& path) {
                 auto hh = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
                 auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COPY, [this, obj, type, path](ID3D12GraphicsCommandList* list) {
                     obj->SetupTexture(type, path, m_pOwner->GetDevice(), list);
                 });
                 GlobalRenderThreadManager::GetInstance()->Submit(recipe, { hh });
             },
-            [this, type](RenderableSimpleObject* obj) {
+            [this, type](TSimpleMesh* obj) {
                 obj->EraseTexture(type, m_pOwner->GetDevice());
             }
             });

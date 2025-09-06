@@ -39,6 +39,7 @@ void TSimpleMesh::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12Grap
 	data.VertexBufferView = m_pObject->GetVertexBufferView();
 	data.VertexStructSize = (UINT)m_pObject->GetVertexStructSize();
 	data.MaterialCBufferData = MaterialCBufferData;
+	data.ObjectDescriptor = m_pObject->GetObjectParameters(0);
 	
 	auto meshCmp = AddComponent<MeshComponent>();
 	meshCmp->SetCreationData(data);
@@ -52,12 +53,30 @@ void TSimpleMesh::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12Graphics
 	if (!meshCmp) return;
 
 	auto data = meshCmp->GetCreationData();
+
+
+	for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i)
+	{
+		auto type = FD3DW::TextureType(i);
+		if (m_mPathToTextures.contains(type))
+		{
+			m_pMaterial->SetTexture(m_mPathToTextures.at(type), type, device, list);
+			data.MaterialCBufferData.LoadedTexture[type] = (int)GlobalTextureHeap::GetInstance()->AddTexture(m_pMaterial->GetTexture(type), device);
+			data.MaterialCBufferData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = m_pMaterial->IsORMTextureType();
+		}
+		else
+		{
+			data.MaterialCBufferData.LoadedTexture[i] = -1;
+		}
+	}
+
 	data.BoneBuffer = nullptr;
 	data.IndexBuffer = m_pObject->GetIndexBuffer();
 	data.IndexBufferView = m_pObject->GetIndexBufferView();
 	data.VertexBuffer = m_pObject->GetVertexBuffer();
 	data.VertexBufferView = m_pObject->GetVertexBufferView();
 	data.VertexStructSize = (UINT)m_pObject->GetVertexStructSize();
+	data.ObjectDescriptor = m_pObject->GetObjectParameters(0);
 
 
 	meshCmp->SetCreationData(data);

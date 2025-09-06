@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="main">
-      <UniqueIdentifier>{42e43ee5-fa45-4ffb-9306-6156fbe83e87}</UniqueIdentifier>
-    </Filter>
     <Filter Include="mainRenderer">
       <UniqueIdentifier>{7ac35956-5737-4f41-b4ca-1a91472497d0}</UniqueIdentifier>
     </Filter>
@@ -15,18 +12,6 @@
     </Filter>
     <Filter Include="__IMGUI">
       <UniqueIdentifier>{29d2e9d5-4696-41b4-bc1c-07e4c797160d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Camera">
-      <UniqueIdentifier>{66d738e4-34be-4b10-8d16-c8009daf7b39}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RenderableObjects">
-      <UniqueIdentifier>{052d535b-317d-454c-8523-bfc760f8dd1f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Lights">
-      <UniqueIdentifier>{640379cf-94af-44b2-a5b7-8aa0711dc627}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RenderableObjects\ObjectsCulling">
-      <UniqueIdentifier>{298a9949-1529-4d78-ba3d-e983bf3ef135}</UniqueIdentifier>
     </Filter>
     <Filter Include="Entity">
       <UniqueIdentifier>{27db136a-b523-457d-85a3-33111e8f5eff}</UniqueIdentifier>
@@ -72,9 +57,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>main</Filter>
-    </ClCompile>
     <ClCompile Include="MainRenderer\MainRenderer.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
@@ -108,71 +90,14 @@
     <ClCompile Include="UI\UIInputLayer.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="Camera\CameraInputLayer.cpp">
-      <Filter>Camera</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera\MainRenderer_CameraComponent.cpp">
-      <Filter>Camera</Filter>
-    </ClCompile>
     <ClCompile Include="MainRenderer\PSOManager.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
     <ClCompile Include="MainRenderer\GlobalConfig.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
-    <ClCompile Include="RenderableObjects\BaseRenderableObject.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableMesh.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableMeshElement.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSimpleObject.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\MainRenderer_RenderableObjectsManager.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSkyboxObject.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableAudioObject.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\GeneratorsForSimpleObjects.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="Lights\MainRenderer_LightsManager.cpp">
-      <Filter>Lights</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSimplePlane.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSimpleCone.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSimpleCube.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\RenderableSimpleSphere.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
-    <ClCompile Include="Lights\MainRenderer_ShadowsComponent.cpp">
-      <Filter>Lights</Filter>
-    </ClCompile>
-    <ClCompile Include="Lights\MainRenderer_RTSoftShadowsComponent.cpp">
-      <Filter>Lights</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\IndirectExecutionMeshObject.cpp">
-      <Filter>RenderableObjects</Filter>
-    </ClCompile>
     <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp">
       <Filter>mainRenderer</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderableObjects\ObjectsCulling\ObjectCulling.cpp">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
     </ClCompile>
     <ClCompile Include="Entity\Core\ComponentHolder.cpp">
       <Filter>Entity\Core</Filter>
@@ -282,11 +207,9 @@
     <ClCompile Include="Component\RenderObject\SkyboxComponent.cpp">
       <Filter>Component\RenderObject</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>main</Filter>
-    </ClInclude>
     <ClInclude Include="MainRenderer\MainRenderer.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
@@ -299,98 +222,17 @@
     <ClInclude Include="UI\UIInputLayer.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="Camera\CameraInputLayer.h">
-      <Filter>Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera\MainRenderer_CameraComponent.h">
-      <Filter>Camera</Filter>
-    </ClInclude>
     <ClInclude Include="MainRenderer\PSOManager.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
     <ClInclude Include="MainRenderer\GlobalConfig.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
-    <ClInclude Include="RenderableObjects\BaseRenderableObject.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableMesh.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableMeshElement.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSimpleObject.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\MainRenderer_RenderableObjectsManager.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSkyboxObject.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableAudioObject.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\MeshMaterialStructure.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\MeshMatricesStructure.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\GeneratorsForSimpleObjects.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\MainRenderer_LightsManager.h">
-      <Filter>Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\LightStruct.h">
-      <Filter>Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSimplePlane.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSimpleCone.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSimpleCube.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\RenderableSimpleSphere.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\MainRenderer_ShadowsComponent.h">
-      <Filter>Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\MainRenderer_RTSoftShadowsComponent.h">
-      <Filter>Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\ShadowsStructures.h">
-      <Filter>Lights</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\IndirectMeshRenderableData.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\IndirectExecutionMeshObject.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
     <ClInclude Include="MainRenderer\GlobalTextureHeap.h">
       <Filter>mainRenderer</Filter>
     </ClInclude>
-    <ClInclude Include="RenderableObjects\ObjectsCulling\CullingCameraStructure.h">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\ObjectsCulling\InstanceData.h">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderableObjects\ObjectsCulling\ObjectCulling.h">
-      <Filter>RenderableObjects\ObjectsCulling</Filter>
-    </ClInclude>
     <ClInclude Include="MainRenderer\GlobalRenderThreadManager.h">
       <Filter>mainRenderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Lights\ClusteredShadingPassData.h">
-      <Filter>Lights</Filter>
     </ClInclude>
     <ClInclude Include="Entity\Core\ComponentHolder.h">
       <Filter>Entity\Core</Filter>
@@ -470,9 +312,6 @@
     <ClInclude Include="System\MeshesCullingSubSystem.h">
       <Filter>System</Filter>
     </ClInclude>
-    <ClInclude Include="Entity\RenderObject\MeshesIndirectRenderData.h">
-      <Filter>RenderableObjects</Filter>
-    </ClInclude>
     <ClInclude Include="System\RTShadowSystemConfig.h">
       <Filter>System</Filter>
     </ClInclude>
@@ -527,5 +366,6 @@
     <ClInclude Include="Component\RenderObject\SkyboxComponent.h">
       <Filter>Component\RenderObject</Filter>
     </ClInclude>
+    <ClInclude Include="pch.h" />
   </ItemGroup>
 </Project>

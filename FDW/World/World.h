@@ -2,6 +2,15 @@
 
 #include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
+#include <Entity/RenderObject/TRender.h>
+#include <Entity/Camera/TDefaultCamera.h>
+#include <Entity/Light/TDirectionalLight.h>
+#include <Entity/Light/TPointLight.h>
+#include <Entity/Light/TRectLight.h>
+#include <Entity/Light/TSpotLight.h>
+#include <Entity/RenderObject/SimpleMeshTemplates.h>
+#include <Entity/RenderObject/TScene.h>
+#include <Entity/RenderObject/TSkybox.h>
 
 class MainRenderer;
 
@@ -9,8 +18,7 @@ class World {
 public:
     World() = default;
     virtual ~World() = default;
-
-
+   
 public:
     void SetMainRenderer(MainRenderer* mr);
     MainRenderer* GetMainRenderer();
@@ -18,7 +26,20 @@ public:
 public:
     void AddNotifyToPull(NRenderSystemNotifyType type);
     std::vector<NRenderSystemNotifyType> GetRenderSystemNotifies() const;
+    void ClearNotifies();
 
+public:
+    TDefaultCamera* CreateDefaultCamera();
+    TDirectionalLight* CreateDirectionalLight();
+    TPointLight* CreatePointLight();
+    TSpotLight* CreateSpotLight();
+    TRectLight* CreateRectLight();
+    TSimplePlane* CreateSimplePlane();
+    TSimpleCube* CreateSimpleCube();
+    TSimpleCone* CreateSimpleCone();
+    TSimpleSphere* CreateSimpleSphere();
+    TSkybox* CreateSkybox(std::string path);
+    TScene* CreateScene(std::string path);
 
 public:
     template<typename T, typename... Args>
@@ -27,6 +48,10 @@ public:
         ent->SetWorld(this);
         ent->AfterCreation();
         ent->Init();
+        auto entPtr = ent.get();
+        if (auto* renderEntity = dynamic_cast<TRender*>(entPtr)){
+            InitRenderEntity(renderEntity);
+        }
         m_vEntities.push_back(ent);
         return ent.get();
     }
@@ -35,61 +60,57 @@ public:
 
     template<typename T>
     std::vector<T*> GetAllComponentsOfType() {
+        auto raw = CollectComponents([](IComponent* c) {
+            return dynamic_cast<T*>(c) != nullptr;
+            });
         std::vector<T*> result;
-        for (auto& e : m_vEntities) {
-            if (auto comp = e->GetComponent<T>()) {
-                result.push_back(comp);
-            }
-        }
+        result.reserve(raw.size());
+        for (auto* c : raw) result.push_back(static_cast<T*>(c));
         return result;
     }
 
     template<typename... Types>
     std::vector<IComponent*> GetAllComponentsOfTypes() {
-        std::vector<IComponent*> result;
-        for (auto& e : m_vEntities) {
-            (CollectComponent<Types>(e.get(), result), ...);
-        }
-        return result;
+        return CollectComponents([](IComponent* c) {
+            return ((dynamic_cast<Types*>(c) != nullptr) || ...);
+            });
     }
 
     template<typename... Types>
     std::vector<IComponent*> GetAllComponentsExcept() {
+        return CollectComponents([](IComponent* c) {
+            return !((dynamic_cast<Types*>(c) != nullptr) || ...);
+            });
+    }
+    template<typename... ExcludeTypes>
+    struct Exclude {};
+
+    template<typename... IncludeTypes, typename... ExcludeTypes>
+    std::vector<IComponent*> GetComponentsIncludeExclude(Exclude<ExcludeTypes...>) {
+        return CollectComponents([](IComponent* c) {
+            bool include = ((dynamic_cast<IncludeTypes*>(c) != nullptr) || ...);
+            bool exclude = ((dynamic_cast<ExcludeTypes*>(c) != nullptr) || ...);
+            return include && !exclude;
+            });
+    }
+
+
+
+private:
+    void InitRenderEntity(TRender* render);
+
+private:
+    template<typename Filter>
+    std::vector<IComponent*> CollectComponents(Filter&& filter) {
         std::vector<IComponent*> result;
         for (auto& e : m_vEntities) {
-            for (auto& comp : e->m_vComponents) {
-                if (!((dynamic_cast<Types*>(comp.get())) || ...)) {
-                    result.push_back(comp.get());
+            for (auto& comp : e->GetComponents<IComponent>()) {
+                if (filter(comp)) {
+                    result.push_back(comp);
                 }
             }
         }
         return result;
-    }
-
-    template<typename... IncludeTypes, typename... ExcludeTypes>
-    std::vector<IComponent*> GetComponentsIncludeExcludeHelper(std::tuple<ExcludeTypes...>) {
-        std::vector<IComponent*> result;
-        for (auto& e : m_vEntities) {
-            (CollectComponent<IncludeTypes>(e.get(), result), ...);
-
-            result.erase(
-                std::remove_if(result.begin(), result.end(),
-                    [](IComponent* comp) {
-                        return ((dynamic_cast<ExcludeTypes*>(comp)) || ...);
-                    }),
-                result.end()
-            );
-        }
-        return result;
-    }
-
-
-private:
-    template<typename T>
-    void CollectComponent(ComponentHolder* entity, std::vector<IComponent*>& out) {
-        if (auto comp = entity->GetComponent<T>()) {
-            out.push_back(comp);
-        }
     }
 
 public:

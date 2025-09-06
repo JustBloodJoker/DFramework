@@ -4,11 +4,8 @@
 #include <D3DFramework/Utilites/Serializer/BinarySerializer.h>
 #include <D3DFramework/GraphicUtilites/CommandList.h>
 
-#include <D3DFramework/Objects/RTObjectHelper.h>
-#include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
-#include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
-
-#include <Lights/MainRenderer_RTSoftShadowsComponent.h>
+#include <Component/Camera/CameraComponent.h>
+#include <Entity/Camera/TBaseCamera.h>
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
 
@@ -21,8 +18,6 @@ void MainRenderer::UserInit()
 
 	InitMainRendererParts(device);
 	if(dxrDevice) InitMainRendererDXRParts(dxrDevice);
-
-	InitMainRendererComponents();
 
 	SetVSync(true);
 
@@ -37,6 +32,8 @@ void MainRenderer::UserInit()
 	auto gbuffersNum = (UINT)gBufferFormats.size();
 	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
+	
+	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 
 	for (const auto& format : gBufferFormats) {
 		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height));
@@ -84,170 +81,135 @@ void MainRenderer::UserInit()
 	m_xSceneRect.top = 0;
 	m_xSceneRect.bottom = wndSettings.Height;
 
-	TryInitShadowComponent();
+	m_pWorld = CreateEmptyWorld();
+	InitMainRendererSystems(device);
+	if (dxrDevice) InitMainRendererDXRSystems(dxrDevice);
 
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	FD3DW::FResource::ReleaseUploadBuffers();
+
+	//CreateTestWorld();
+
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+	ProcessNotifiesInWorld();
 }
 
 void MainRenderer::UserLoop()
-{
-	auto beforeRenderCopyRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
-		m_pLightsManager->BeforeRender(list);
-		m_pRenderableObjectsManager->BeforeRender(list);
-		if (m_pShadowsComponent) m_pShadowsComponent->BeforeRender(list);
-	});
-	auto beforeRenderH = GlobalRenderThreadManager::GetInstance()->Submit(beforeRenderCopyRecipe);
+{	
+	auto sync = m_dInFlight.empty() ? nullptr : m_dInFlight.back();
 
+	auto cameraH = m_pCameraSystem->OnStartTick(sync);
 
-	///////////////////////
-	//	Shadow PASS Before gbuffer pass
-	{
-		if (m_pShadowsComponent) {
-			m_pShadowsComponent->BeforeGBufferPass();
-		}
+	auto audioH = m_pAudioSystem->OnStartTick(nullptr);
+
+	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
+
+	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
+
+	auto meshH = m_pRenderMeshesSystem->OnStartRenderTick(cameraH);
+
+	auto skyboxH = m_pSkyboxRenderSystem->OnStartRenderTick(cameraH);
+
+	auto animationH = m_pSceneAnimationSystem->OnStartRenderTick(sync);
+
+	std::shared_ptr<FD3DW::ExecutionHandle> rtShadowsH = nullptr;
+	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
+
+	if (IsRTSupported()) {
+
+		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall(meshH);
+
+		rtShadowsH = m_pRTShadowSystem->OnStartRenderTick(cameraH);
 	}
-	///	
-	///////////////////////////
-	auto clusterGenerationsH = m_pLightsManager->ClusteredShadingPass(beforeRenderH);
 
+	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH}, m_pLightSystem->GetLightsBuffer());
 
-	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = beforeRenderH;
+	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = nullptr;
 	if (m_bIsEnabledPreDepth)
 	{
-		///////////////////////
-		//	PRE DEPTH PASS
-		auto preDepthPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
-			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			{
-				if (m_bIsEnabledPreDepth)
-				{
-					m_pDSV->DepthWrite(list);
-					list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		RenderMeshesSystemPreDepthRenderData inPredepthData;
+		inPredepthData.DSV = m_pDSV.get();
+		inPredepthData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+		inPredepthData.Rect = m_xSceneRect;
+		inPredepthData.Viewport = m_xSceneViewPort;
 
-					PSOManager::GetInstance()->GetPSOObject(PSOType::PreDepthDefaultConfig)->Bind(list);
-					list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-					list->RSSetScissorRects(1, &m_xSceneRect);
-					list->RSSetViewports(1, &m_xSceneViewPort);
-					list->OMSetRenderTargets(0, nullptr, false, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-					m_pRenderableObjectsManager->PreDepthRender(list);
-				}
-			}
-		});
-		///////////////////////
-		preDepthH = GlobalRenderThreadManager::GetInstance()->Submit(preDepthPassRecipe, { beforeRenderH });
+		preDepthH = m_pRenderMeshesSystem->PreDepthRender(meshH, inPredepthData);
 	}
 
-	auto HiZUpdateH = preDepthH;
-	if (m_pRenderableObjectsManager->GetMeshCullingType() == CullingType::GPUCulling) {
-		auto updateHiZ = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
-			m_pRenderableObjectsManager->UpdateHiZResource(list);
-		});
-		HiZUpdateH = GlobalRenderThreadManager::GetInstance()->Submit(updateHiZ, { preDepthH });
+	auto HiZUpdateH = nullptr;
+	if (m_pRenderMeshesSystem->GetCullingType() == MeshCullingType::GPU) {
+		RenderMeshesSystemHiZUpdateRenderData inHiZData;
+		inHiZData.DSV = m_pDSV.get();
+		m_pRenderMeshesSystem->UpdateHiZResource({preDepthH, sync}, inHiZData);
 	}
 
-	auto gBuffersPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {		
-		if (!m_bIsEnabledPreDepth) 
-		{
-			m_pDSV->DepthWrite(list);
-			list->ClearDepthStencilView(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		}
-		else
-		{
-			m_pDSV->DepthRead(list);
-		}
+	RenderMeshesSystemIndirectRenderData inIndirectData;
+	inIndirectData.DSV = m_pDSV.get();
+	inIndirectData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+	for (auto& gBufferPtr : m_pGBuffers) inIndirectData.RTV.push_back(gBufferPtr.get());
+	inIndirectData.RTV_CPU = m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0);
+	inIndirectData.Rect = m_xSceneRect;
+	inIndirectData.Viewport = m_xSceneViewPort;
+	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, preDepthH, cameraH}, inIndirectData);
 
-		///////////////////////
-		//	DEFERRED FIRST PASS
-		{
-			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			auto gBuffersCount = GetGBuffersNum();
 
-			for (auto& gbuffer : m_pGBuffers) {
-				gbuffer->StartDraw(list);
-			}
-
-			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-			list->RSSetScissorRects(1, &m_xSceneRect);
-			list->RSSetViewports(1, &m_xSceneViewPort);
-
-			for (UINT i = 0; i < gBuffersCount; ++i) {
-				list->ClearRenderTargetView(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(i), COLOR, 0, nullptr);
-			}
-			list->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
-
-			m_pRenderableObjectsManager->DeferredRender(list);
-
-			for (auto& gbuffer : m_pGBuffers) {
-				gbuffer->EndDraw(list);
-			}
-
-		}
-
-		///
-		///////////////////////////
-	});
-	auto gBufferH = GlobalRenderThreadManager::GetInstance()->Submit(gBuffersPassRecipe,{ HiZUpdateH });
-	
-	///////////////////////
-	//	Shadow PASS After GBuffer pass
-	{
-		if (m_pShadowsComponent) {
-			m_pShadowsComponent->AfterGBufferPass();
-		}
+	std::shared_ptr<FD3DW::ExecutionHandle> renderRTShadows = nullptr;
+	if (IsRTSupported()) {
+		RTShadowSystemOnRenderFactorsData inShadowRenderData;
+		inShadowRenderData.LightBufferConstantBufferAddress = m_pLightSystem->GetLightsConstantBufferGPULocation();
+		inShadowRenderData.LightsStructuredBufferAddress = m_pLightSystem->GetLightsStructuredBufferGPULocation();
+		inShadowRenderData.ClusterConstantBufferAddress = m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation();
+		inShadowRenderData.ClusterStructuredBufferAddress = m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation();
+		renderRTShadows = m_pRTShadowSystem->OnRenderShadowFactors({ tlasCallH , rtShadowsH, lightsH, clusterAssignH, indirectRenderH }, inShadowRenderData);
 	}
-	///
-	///////////////////////////
-	
-	auto shadowsH = GlobalRenderThreadManager::GetInstance()->CreateWaitHandle(D3D12_COMMAND_LIST_TYPE_DIRECT);
 
+	//////////////////////////
+	// SHADING PASS
 	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		m_pForwardRenderPassRTV->StartDraw(list);
 
-		//////////////////////////
-		// DEFERRED SECOND PASS
+		list->RSSetScissorRects(1, &m_xSceneRect);
+		list->RSSetViewports(1, &m_xSceneViewPort);
 
-		{
-			list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			m_pForwardRenderPassRTV->StartDraw(list);
+		list->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
+		list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
 
-			if(m_pShadowsComponent) m_pShadowsComponent->OnDrawResource(list);
+		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
-			list->RSSetScissorRects(1, &m_xSceneRect);
-			list->RSSetViewports(1, &m_xSceneViewPort);
+		list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
+		list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
 
-			list->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-			list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+		ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
+		list->SetDescriptorHeaps(_countof(heaps), heaps);
 
-			PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
+		list->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
 
-			list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-			list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+		list->SetGraphicsRootConstantBufferView(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, m_pLightSystem->GetLightsConstantBufferGPULocation());
+		list->SetGraphicsRootShaderResourceView(LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pLightSystem->GetLightsStructuredBufferGPULocation());
+		list->SetGraphicsRootShaderResourceView(LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation());
+		list->SetGraphicsRootConstantBufferView(LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation());
 
-			ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
-			list->SetDescriptorHeaps(_countof(heaps), heaps);
+		list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
-			list->SetGraphicsRootDescriptorTable(DEFFERED_GBUFFERS_POS_IN_ROOT_SIG, m_pGBuffersSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+		m_pForwardRenderPassRTV->EndDraw(list);
+	});
 
-			m_pLightsManager->BindLightConstantBuffer(LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, LIGHTS_BUFFER_POS_IN_ROOT_SIG, LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, list, false);
+	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { rtShadowsH, lightsH, clusterAssignH, indirectRenderH });
 
-			list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
+	SkyboxRenderPassInput inSkyboxRenderData;
+	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
+	inSkyboxRenderData.RTV_CPU = m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0);
+	inSkyboxRenderData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+	inSkyboxRenderData.Rect = m_xSceneRect;
+	inSkyboxRenderData.Viewport = m_xSceneViewPort;
+	auto skyboxRenderH = m_pSkyboxRenderSystem->RenderSkyboxPass(shadingPassH, inSkyboxRenderData);
 
 
-			m_pRenderableObjectsManager->ForwardRender(list);
-
-
-			m_pForwardRenderPassRTV->EndDraw(list);
-		}
-
-		//
-		///////////////////////////
-
+	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		//////////////////////////
 		// POSTPROCESS PASS
-
+		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		BindMainViewPort(list);
 		BindMainRect(list);
 		BeginDraw(list);
@@ -290,20 +252,19 @@ void MainRenderer::UserLoop()
 			EndDraw(list);
 		}
 	});
-	auto iii = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { gBufferH,shadowsH,clusterGenerationsH });
 
-	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { PresentSwapchain(); }, { iii });
+	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH });
 
-	auto afterSwap = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
-		m_pRenderableObjectsManager->AfterRender();
-		++m_uFrameIndex;
-	}, { presentH });
+	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
+		PresentSwapchain(); 
+		++m_uFrameIndex; 	
+	}, { postProcessPass });
 
+	m_dInFlight.push_back(presentH);
 
-	m_dInFlight.push_back(afterSwap);
-
-	CallAfterRenderLoop();
-
+	m_pUIComponent->ProcessAfterRenderUICalls();
+	ProcessNotifiesInWorld();
+	
 	while (m_dInFlight.size() >= m_uMaxFramesInFlight) {
 		auto& front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
@@ -313,15 +274,16 @@ void MainRenderer::UserLoop()
 	}
 
 	GlobalRenderThreadManager::GetInstance()->GarbageCollectAll();
+
 }
 
 void MainRenderer::UserClose()
 {
 	GlobalRenderThreadManager::GetInstance()->Shutdown();
-
-	DestroyComponent(m_pLightsManager);
-	DestroyComponent(m_pRenderableObjectsManager);
-	DestroyComponent(m_pCameraComponent);
+	
+	for (auto& system : m_vSystems) {
+		DestroyComponent(system);
+	}
 	DestroyComponent(m_pUIComponent);
 
 	PSOManager::FreeInstance();
@@ -338,10 +300,6 @@ UINT MainRenderer::GetFrameIndex()
 	return m_uFrameIndex;
 }
 
-FD3DW::DepthStencilView* MainRenderer::GetDepthResource() {
-	return m_pDSV.get();
-}
-
 bool MainRenderer::IsEnabledPreDepth() {
 	return m_bIsEnabledPreDepth;
 }
@@ -350,213 +308,134 @@ void MainRenderer::EnablePreDepth(bool in) {
 	m_bIsEnabledPreDepth = in;
 }
 
+FLOAT* MainRenderer::GetClearColor(){
+	return COLOR;
+}
 
 World* MainRenderer::GetWorld() {
-	return nullptr;
-	//reserved for future
+	return m_pWorld.get();
 }
 
 dx::XMMATRIX MainRenderer::GetCurrentProjectionMatrix() const {
-	return m_pCameraComponent->GetProjectionMatrix();
+	return m_pCameraSystem->GetProjectionMatrix();
 }
 
 dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
-	return m_pCameraComponent->GetViewMatrix();
+	return m_pCameraSystem->GetViewMatrix();
 }
 
 dx::XMFLOAT3 MainRenderer::GetCurrentCameraPosition() const {
-	return m_pCameraComponent->GetCameraPosition();
-}
-
-float MainRenderer::GetCameraSpeed() {
-	return m_pCameraComponent->GetCameraSpeed();
-}
-
-void MainRenderer::SetCameraSpeed(float speed) {
-	m_pCameraComponent->SetCameraSpeed(speed);
-}
-
-void MainRenderer::SetDefaultPosition() {
-	m_pCameraComponent->ResetPosition();
+	return m_pCameraSystem->GetCameraPosition();
 }
 
 CameraFrustum MainRenderer::GetCameraFrustum() {
-	return m_pCameraComponent->GetCameraFrustum();
+	return m_pCameraSystem->GetCameraFrustum();
 }
 
-std::vector<BaseRenderableObject*> MainRenderer::GetRenderableObjects() const {
-	return m_pRenderableObjectsManager->GetRenderableObjects();
+void MainRenderer::SetMeshCullingType(MeshCullingType in) {
+	m_pRenderMeshesSystem->SetCullingType(in);
 }
 
-void MainRenderer::AddScene(std::string path) {
-	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreateObject<RenderableMesh>(list, dxrList, path);
-	});
+MeshCullingType MainRenderer::GetMeshCullingType() {
+	return m_pRenderMeshesSystem->GetCullingType();
 }
 
-void MainRenderer::AddSkybox(std::string path) {
-	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreateObject<RenderableSkyboxObject>(list, dxrList, path);
-	});
-}
-
-void MainRenderer::AddAudio(std::string path) {
-	ScheduleCreation([this, path](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreateObject<RenderableAudioObject>(list, dxrList, path);
-	});
-}
-
-void MainRenderer::AddSimplePlane() {
-	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreatePlane(list, dxrList);
-	});
-}
-
-void MainRenderer::AddSimpleCone() {
-	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreateCone(list, dxrList);
-	});
-}
-
-void MainRenderer::AddSimpleCube() {
-	ScheduleCreation([this](ID3D12GraphicsCommandList* list, ID3D12GraphicsCommandList4* dxrList) {
-		m_pRenderableObjectsManager->CreateCube(list, dxrList);
-	});
-}
-
-void MainRenderer::AddSimpleSphere() {
-	ScheduleCreation([this](ID3D12GraphicsCommandList*list, ID3D12GraphicsCommandList4*dxrList) {
-		m_pRenderableObjectsManager->CreateSphere(list, dxrList);
-	});
-}
-
-void MainRenderer::RemoveObject(BaseRenderableObject* obj) {
-	m_pRenderableObjectsManager->RemoveObject(obj);
-}
-
-void MainRenderer::RemoveAllObjects() {
-	const auto& objs = GetRenderableObjects();
-	for (const auto obj : objs) {
-		RemoveObject(obj);
-	}
-}
-
-void MainRenderer::SetMeshCullingType(CullingType in) {
-	m_pRenderableObjectsManager->SetMeshCullingType(in);
-}
-
-CullingType MainRenderer::GetMeshCullingType() {
-	return m_pRenderableObjectsManager->GetMeshCullingType();
-}
-
-FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS(ID3D12GraphicsCommandList4* list)
+FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS()
 {
-	return m_pRenderableObjectsManager->GetTLASData(GetDXRDevice(), list);
-}
-
-void MainRenderer::CreateLight() {
-	LightStruct light;
-	m_pLightsManager->AddLight(light);
-}
-
-const LightStruct& MainRenderer::GetLight(int idx) {
-	return m_pLightsManager->GetLight(idx);
-}
-
-void MainRenderer::SetLightData(LightStruct newData, int idx) {
-	m_pLightsManager->SetLightData(newData,idx);
+	return m_pRenderMeshesSystem->GetTLAS();
 }
 
 int MainRenderer::GetLightsCount() {
-	return m_pLightsManager->GetLightsCount();
+	return m_pLightSystem->GetLightsCount();
 }
 
-void MainRenderer::BindLightConstantBuffer(UINT cbSlot, UINT rootSRVSlot, UINT rootSRVClustersSlot, UINT cbClusterDataSlot, ID3D12GraphicsCommandList* list, bool IsCompute) {
-	m_pLightsManager->BindLightConstantBuffer(cbSlot, rootSRVSlot, rootSRVClustersSlot, cbClusterDataSlot, list, IsCompute);
+bool MainRenderer::IsShadowEnabled() {
+	return IsRTSupported();
 }
 
-
-ShadowType MainRenderer::CurrentShadowType() {
-	return m_pShadowsComponent ? m_pShadowsComponent->Type() : ShadowType::None;
+void MainRenderer::SetRTShadowConfig(RTShadowSystemConfig config) {
+	if(m_pRTShadowSystem) m_pRTShadowSystem->SetConfig(config);
 }
 
-void MainRenderer::SetRTShadowConfig(RTSoftShadowConfig config) {
-	if (auto rtSoftShadows = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(m_pShadowsComponent.get())) {
-		rtSoftShadows->SetConfig(config);
+RTShadowSystemConfig MainRenderer::GetRTShadowConfig() {
+	return m_pRTShadowSystem ? m_pRTShadowSystem->GetConfig() : RTShadowSystemConfig();
+}
+
+std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
+	auto world = std::make_shared<World>();
+	world->SetMainRenderer(this);
+	return world;
+}
+
+void MainRenderer::LoadWorld(std::string pathTo) {
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
+	BinarySerializer ser;
+	ser.LoadFromFile(pathTo);
+
+	ser.DeserializeToObjects(m_pWorld);
+	m_pWorld->SetMainRenderer(this);
+}
+
+void MainRenderer::SaveActiveWorld(std::string pathTo) {
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
+	BinarySerializer ser;
+	ser.LoadFromObjects(m_pWorld);
+	ser.SaveToFile(pathTo);
+}
+
+void MainRenderer::CreateTestWorld() {
+	m_pWorld->CreateDefaultCamera();
+	
+	auto light = m_pWorld->CreatePointLight();
+	auto pos = light->GetLightPosition();
+	pos.y = 444.0f;
+	light->SetLightPosition(pos);
+	light->SetLightAttenuationRadius(1111.0f);
+	light->SetLightSourceRadius(13.0f);
+
+	m_pWorld->CreateScene("Content/SampleModels/sponza/scene.gltf");
+	m_pWorld->CreateSimplePlane();
+	m_pWorld->CreateSkybox("Content/Skybox/Moon.dds");
+}
+
+void MainRenderer::ProcessNotifiesInWorld() {
+	static std::vector<NRenderSystemNotifyType> s_sNotifiesToWaitRenderTick = {
+		NRenderSystemNotifyType::Light,
+		NRenderSystemNotifyType::Shadow,
+		NRenderSystemNotifyType::CameraActivationDeactivation,
+		NRenderSystemNotifyType::SkyboxActivationDeactivation,
+		NRenderSystemNotifyType::UpdateTLAS,
+		NRenderSystemNotifyType::MeshActivationDeactivation,
+	};
+
+	auto checkNotifies = m_pWorld->GetRenderSystemNotifies();
+	m_pWorld->ClearNotifies();
+	bool hasMatch = std::any_of(checkNotifies.begin(), checkNotifies.end(),
+		[](NRenderSystemNotifyType n) {
+			return std::find(s_sNotifiesToWaitRenderTick.begin(), s_sNotifiesToWaitRenderTick.end(), n) != s_sNotifiesToWaitRenderTick.end();
+		}
+	);
+
+	if (hasMatch) {
+		GlobalRenderThreadManager::GetInstance()->WaitIdle();
+	}
+
+	ProcessNotifies(checkNotifies);
+	
+
+	if (hasMatch) {
+		GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	}
 }
 
-RTSoftShadowConfig MainRenderer::GetRTShadowConfig() {
-	if (auto rtSoftShadows = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(m_pShadowsComponent.get())) {
-		return rtSoftShadows->GetConfig();
-	}
-	return {};
-}
-
-void MainRenderer::SaveSceneToFile(std::string pathTo) {
-	AddToCallAfterRenderLoop([this, pathTo]() {
-		BinarySerializer ser;
-		ser.LoadFromObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
-
-		ser.SaveToFile(pathTo);
-	});
-}
-
-void MainRenderer::LoadSceneFromFile(std::string pathTo) {
-	AddToCallAfterRenderLoop([this, pathTo]() {
-		BinarySerializer ser;
-		ser.LoadFromFile(pathTo);
-
-		this->DestroyComponent(m_pCameraComponent);
-		this->DestroyComponent(m_pLightsManager);
-		this->DestroyComponent(m_pRenderableObjectsManager);
-		if(m_pShadowsComponent) this->DestroyComponent(m_pShadowsComponent);
-
-		ser.DeserializeToObjects(m_pCameraComponent, m_pLightsManager, m_pRenderableObjectsManager, m_pShadowsComponent);
-		m_pCameraComponent->SetAfterConstruction(this);
-		m_pLightsManager->SetAfterConstruction(this);
-		
-		m_pRenderableObjectsManager->SetAfterConstruction(this);
-
-		if (!m_pShadowsComponent) 
-		{
-			this->TryInitShadowComponent();
-
-		} 
-		else if (!m_pShadowsComponent->IsCanBeEnabled(this))
-		{
-			this->DestroyComponent(m_pShadowsComponent);
-			this->TryInitShadowComponent();
-		}
-		else 
-		{
-			m_pShadowsComponent->SetAfterConstruction(this);
-			CustomAfterInitShadowComponent(m_pShadowsComponent.get());
-		}
-	});
-}
-
-void MainRenderer::DeleteLight(int idx) {
-	m_pLightsManager->DeleteLight(idx);
-}
-
-void MainRenderer::ProcessNotifyAfterRender() {
-	auto world = GetWorld();
-
+void MainRenderer::ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies) {
 	for (auto& sys : m_vSystems) {
-
-
+		for (auto notify : notifies) {
+			sys->ProcessNotify(notify);
+		}
 	}
-
-
-}
-
-void MainRenderer::InitMainRendererComponents()
-{
-	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
-	m_pCameraComponent = CreateUniqueComponent<MainRenderer_CameraComponent>();
-	m_pRenderableObjectsManager = CreateUniqueComponent<MainRenderer_RenderableObjectsManager>();
-	m_pLightsManager = CreateUniqueComponent<MainRenderer_LightsManager>();
 }
 
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
@@ -564,7 +443,8 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	PSOManager::GetInstance()->InitPSOjects(device);
 	CreateEmptyStructuredBuffer(device);
 	GlobalTextureHeap::GetInstance()->Init(device, GLOBAL_TEXTURE_HEAP_PRECACHE_SIZE,GLOBAL_TEXTURE_HEAP_NODE_MASK);
-	
+
+	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
 }
 
 void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
@@ -572,46 +452,18 @@ void MainRenderer::InitMainRendererDXRParts(ID3D12Device5* device)
 	PSOManager::GetInstance()->InitPSOjectsDevice5(device);
 }
 
-void MainRenderer::TryInitShadowComponent() {
-	if (IsRTSupported()) {
-		auto rtSoftShadow = CreateUniqueComponent<MainRenderer_RTSoftShadowsComponent>();
-		CustomAfterInitShadowComponent(rtSoftShadow.get());
-		m_pShadowsComponent = std::move(rtSoftShadow);
-	}
+void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
+	m_pAudioSystem = CreateSystem<AudioSystem>();
+	m_pCameraSystem = CreateSystem<CameraSystem>();
+	m_pLightSystem = CreateSystem<LightSystem>();;
+	m_pClusteredLightningSystem = CreateSystem<ClusteredLightningSystem>();
+	m_pSceneAnimationSystem = CreateSystem<SceneAnimationSystem>();
+	m_pRenderMeshesSystem = CreateSystem<RenderMeshesSystem>();
+	m_pSkyboxRenderSystem = CreateSystem<SkyboxRenderSystem>();
 }
 
-void MainRenderer::CustomAfterInitShadowComponent(MainRenderer_ShadowsComponent* shadow) {
-	auto device = GetDevice();
-	if (shadow) {
-		shadow->BindResultResource(device, m_pGBuffersSRVPack.get(), SHADOW_FACTOR_LOCATION_IN_HEAP);
-
-	}
-	else {
-		m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
-	}
-
-	if (auto rtShadow = dynamic_cast<MainRenderer_RTSoftShadowsComponent*>(shadow)) {
-		rtShadow->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
-	}
+void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
+	m_pRTShadowSystem = CreateSystem<RTShadowSystem>();
+	m_pRTShadowSystem->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
+	m_pGBuffersSRVPack->AddResource(m_pRTShadowSystem->GetResultResource()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 }
-
-void MainRenderer::AddToCallAfterRenderLoop(std::function<void(void)> foo) {
-	m_vCallAfterRenderLoop.push_back(foo);
-}
-
-void MainRenderer::CallAfterRenderLoop() {
-	if (m_vCallAfterRenderLoop.empty()) return;
-
-	GlobalRenderThreadManager::GetInstance()->WaitIdle();
-
-	auto vv = m_vCallAfterRenderLoop;
-	m_vCallAfterRenderLoop.clear();
-	for (auto han : vv) {
-		if (han) han();
-	}
-
-	GlobalRenderThreadManager::GetInstance()->WaitIdle();
-
-}
-
-

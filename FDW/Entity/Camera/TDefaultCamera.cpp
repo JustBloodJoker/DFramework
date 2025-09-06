@@ -9,55 +9,34 @@ TDefaultCamera::TDefaultCamera() {
 	m_xStartUp = dx::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	m_xStartEye = dx::XMVectorSet(0.0f, 2.0f, -1.0f, 1.0f);
 	m_xStartAt = dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
+	m_xEye = m_xStartEye;
+	m_xAt = m_xStartAt;
 }
-
 void TDefaultCamera::MoveForward(float dt) {
-	if (!m_pCameraComponent) return;
-
-	auto at = m_pCameraComponent->GetAt();
-	auto eye = m_pCameraComponent->GetEye();
-	
-	dx::XMVECTOR dir = dx::XMVector3Normalize(at - eye);
-	eye = dx::XMVectorAdd(eye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
-	m_pCameraComponent->SetEye(eye);
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
+	UpdateCamera();
 }
 
 void TDefaultCamera::MoveBackward(float dt) {
-	if (!m_pCameraComponent) return;
-
-	auto at = m_pCameraComponent->GetAt();
-	auto eye = m_pCameraComponent->GetEye();
-
-
-	dx::XMVECTOR dir = dx::XMVector3Normalize(at - eye);
-	eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
-	m_pCameraComponent->SetEye(eye);
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(dir, m_fCameraSpeed * dt));
+	UpdateCamera();
 }
 
 void TDefaultCamera::StrafeRight(float dt) {
-	if (!m_pCameraComponent) return;
-
-	auto at = m_pCameraComponent->GetAt();
-	auto eye = m_pCameraComponent->GetEye();
-	auto up = m_pCameraComponent->GetUp();
-
-	dx::XMVECTOR dir = dx::XMVector3Normalize(at - eye);
-	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(up, dir));
-	eye = dx::XMVectorAdd(eye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
-	m_pCameraComponent->SetEye(eye);
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, dir));
+	m_xEye = dx::XMVectorAdd(m_xEye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
+	UpdateCamera();
 }
 
 void TDefaultCamera::StrafeLeft(float dt) {
-	if (!m_pCameraComponent) return;
-
-	auto at = m_pCameraComponent->GetAt();
-	auto eye = m_pCameraComponent->GetEye();
-	auto up = m_pCameraComponent->GetUp();
-
-	dx::XMVECTOR dir = dx::XMVector3Normalize(at - eye);
-	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(up, dir));
-	eye = dx::XMVectorSubtract(eye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
-	m_pCameraComponent->SetEye(eye);
+	dx::XMVECTOR dir = dx::XMVector3Normalize(m_xAt - m_xEye);
+	dx::XMVECTOR right = dx::XMVector3Normalize(dx::XMVector3Cross(m_xUp, dir));
+	m_xEye = dx::XMVectorSubtract(m_xEye, dx::XMVectorScale(right, m_fCameraSpeed * dt));
+	UpdateCamera();
 }
 
 void TDefaultCamera::ResetRoll() {
@@ -96,18 +75,17 @@ void TDefaultCamera::Destroy() {
 }
 
 void TDefaultCamera::UpdateCamera() {
-	if (!m_pCameraComponent) return;
-	
-	auto eye = m_pCameraComponent->GetEye();
-	auto at = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
-		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), eye);
 
-	auto up = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
+	m_xAt = dx::XMVectorAdd(dx::XMVector3Normalize(dx::XMVector3TransformCoord(dx::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f),
+		dx::XMMatrixRotationRollPitchYaw(m_fCamPitch, m_fCamYaw, 0))), m_xEye);
+
+	m_xUp = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
 	
-	m_pCameraComponent->SetEye(eye);
-	m_pCameraComponent->SetAt(at);
-	m_pCameraComponent->SetUp(up);
+	if (!m_pCameraComponent) return;
+
+	m_pCameraComponent->SetAllVectors(m_xEye, m_xUp, m_xAt);
 }
+
 
 void TDefaultCamera::ResetPosition() {
 	TBaseCamera::ResetPosition();
@@ -115,5 +93,7 @@ void TDefaultCamera::ResetPosition() {
 	m_fCamPitch = 0.0f;
 	m_fCamYaw = 0.0f;
 	m_fCamRoll = 0.0f;
+
+	m_xEye = m_xStartEye;
+	m_xAt = m_xStartAt;
 }
-//todo input layer for every camera 

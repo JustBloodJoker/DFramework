@@ -14,13 +14,25 @@ int LightSystem::GetLightsCount() {
     return m_xLightBuffer.LightCount;
 }
 
+FD3DW::StructuredBuffer* LightSystem::GetLightsBuffer() {
+    return m_pLightsStructuredBuffer.get();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS LightSystem::GetLightsStructuredBufferGPULocation() {
+    return m_pLightsStructuredBuffer->GetResource()->GetGPUVirtualAddress();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS LightSystem::GetLightsConstantBufferGPULocation() {
+    return m_pLightsHelperConstantBuffer->GetGPULocation(0);
+}
+
 std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle) {
     auto updateRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, 
         [this](ID3D12GraphicsCommandList* list) mutable {
             auto components = GetWorld()->GetAllComponentsOfType<LightComponent>();
 
             m_xLightBuffer.CameraPos = m_pOwner->GetCurrentCameraPosition();
-            m_xLightBuffer.IsShadowImpl = m_pOwner->CurrentShadowType() != ShadowType::None;
+            m_xLightBuffer.IsShadowImpl = (int)m_pOwner->IsShadowEnabled();
 
             m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
 

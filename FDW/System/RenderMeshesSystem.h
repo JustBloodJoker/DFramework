@@ -20,6 +20,10 @@ struct RenderMeshesSystemPreDepthRenderData {
 	D3D12_VIEWPORT Viewport;
 };
 
+struct RenderMeshesSystemHiZUpdateRenderData {
+	FD3DW::DepthStencilView* DSV;
+};
+
 struct RenderMeshesSystemIndirectRenderData {
 	std::vector<FD3DW::RenderTarget*> RTV;
 	FD3DW::DepthStencilView* DSV;
@@ -42,9 +46,14 @@ public:
 	
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTLASCall(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::shared_ptr<FD3DW::ExecutionHandle> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data);
 	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data);
-	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemIndirectRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data);
+
+
+	FD3DW::AccelerationStructureBuffers GetTLAS() const;
+	MeshCullingType GetCullingType() const;
+	void SetCullingType(MeshCullingType type);
 
 protected:
 	std::atomic<bool> m_bNeedUpdateTLAS{ true };

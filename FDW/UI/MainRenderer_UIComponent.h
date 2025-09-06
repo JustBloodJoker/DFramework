@@ -3,14 +3,9 @@
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <UI/UIInputLayer.h>
-#include <Lights/LightStruct.h>
 
 class MainRenderer;
-class BaseRenderableObject;
-class RenderableSimpleObject;
-class RenderableSkyboxObject;
-class RenderableAudioObject;
-class RenderableMesh;
+class TSimpleMesh;
 
 namespace FD3DW {
 	class SRV_UAVPacker;
@@ -26,6 +21,7 @@ public:
 	void RenderImGui(ID3D12GraphicsCommandList* list);
 	void ShutDownImGui();
 	bool ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 
 public:
 	virtual void AfterConstruction() override;
@@ -52,21 +48,6 @@ private:
 	void SaveSceneBrowser();
 	void LoadSceneBrowser();
 
-	bool DrawCommonLightProperties(LightStruct& light);
-	bool DrawSpecificLightUI(LightStruct& light);
-	bool DrawPointLightUI(LightStruct& light);
-	bool DrawDirectionalLightUI(LightStruct& light);
-	bool DrawSpotLightUI(LightStruct& light);
-	bool DrawRectLightUI(LightStruct& light);
-
-
-	void ElementParamSetter();
-	
-	void DrawMeshUI(RenderableMesh* mesh);
-	void DrawSimpleRenderableUI(RenderableSimpleObject* obj);
-	void DrawSkyboxUI(RenderableSkyboxObject* skybox);
-	void DrawAudioUI(RenderableAudioObject* audio);
-
 private:
 	void SceneFileBrowser(bool& isOpen, const std::string& title, bool isSave, const std::function<void(const std::filesystem::path&)>& onConfirm);
 	void FileBrowser(bool& isOpen, const std::string& windowTitle, std::filesystem::path& currentPath, const std::vector<std::wstring>& supportedExtensions, const std::function<void(const std::filesystem::path&)>& onFileSelected, const std::function<std::string(const std::filesystem::path&)>& getIcon = nullptr);
@@ -78,13 +59,21 @@ private:
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pUISRVPack;
 	bool m_bIsInited = false;
 
+public:
+
+	void ProcessAfterRenderUICalls();
+
+protected:
+
+	void AddCallToPull(std::function<void(void)> foo);
+	std::vector< std::function<void(void)>> m_vCallsAfterRender;
 
 private:
 	//UI HELP FIELDS
 	struct TextureOpEntry {
 		const char* Name;
-		std::function<void(RenderableSimpleObject* obj, const std::string& path)> SetFunc;
-		std::function<void(RenderableSimpleObject* obj)> EraseFunc;
+		std::function<void(TSimpleMesh* obj, const std::string& path)> SetFunc;
+		std::function<void(TSimpleMesh* obj)> EraseFunc;
 	};
 
 	struct AnimationUIState {
@@ -100,10 +89,7 @@ private:
 	int m_iSelectedLightIndex = 0;
 	std::vector<TextureOpEntry> m_vTextureOps;
 	int m_iTextureBeingSet = -1;
-	RenderableSimpleObject* m_pTextureTargetObject = nullptr;
-	std::unordered_map<BaseRenderableObject*, AnimationUIState> m_mAnimationStates;
 	int m_iSelectedObjectIndex = -1;
-	std::vector<BaseRenderableObject*> m_vCachedObjects;
 	bool m_bShowSaveSceneBrowser = false;
 	bool m_bShowLoadSceneBrowser = false;
 	std::vector<std::filesystem::directory_entry> m_vEntries;

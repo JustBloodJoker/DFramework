@@ -72,12 +72,36 @@ void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsComma
 		animCmp->SetScene(device, m_pScene.get());
 	}
 
+	std::vector<MeshComponentMaterialData> meshMaterialStructures;
+
+	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
+	{
+		MeshComponentMaterialData cbData;
+
+		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
+		cbData = mat->GetMaterialDesc();
+		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
+			if (mat->IsHaveTexture(FD3DW::TextureType(i)))
+			{
+				cbData.LoadedTexture[i] = (int)GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
+			}
+			else {
+				cbData.LoadedTexture[i] = -1;
+			}
+		}
+		cbData.LoadedTexture[IS_ORM_TEXTURE_FLAG_POS] = mat->IsORMTextureType();
+
+		meshMaterialStructures.push_back(cbData);
+	}
+
 	auto meshComponents = GetComponents<MeshComponent>();
 	for (auto& meshCmp : meshComponents) {
 		auto data = meshCmp->GetCreationData();
 
 		data.BoneBuffer = animCmp ? animCmp->GetResource() : nullptr;
 		data.ObjectDescriptor = m_pScene->GetObjectParameters(data.ID);
+		auto matIndex = (UINT)data.ObjectDescriptor.MaterialIndex;
+		data.MaterialCBufferData = meshMaterialStructures[matIndex];
 		data.IndexBuffer = m_pScene->GetIndexBuffer();
 		data.VertexBuffer = m_pScene->GetVertexBuffer();
 		data.VertexStructSize = (UINT)m_pScene->GetVertexStructSize();

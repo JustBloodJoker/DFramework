@@ -5,6 +5,7 @@
 #include <D3DFramework/Objects/SimpleObjects.h>
 
 class TSimpleMesh : public TMesh {
+public:
 	TSimpleMesh() = default;
 	virtual ~TSimpleMesh() = default;
 
