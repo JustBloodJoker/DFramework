@@ -17,6 +17,7 @@ public:
     T* AddComponent(Args&&... args) {
         auto comp = std::make_shared<T>(std::forward<Args>(args)...);
         comp->SetOwner(this);
+        comp->Init();
         m_vComponents.push_back(comp);
         return comp.get();
     }
@@ -24,6 +25,9 @@ public:
     void RemoveComponent(IComponent* ptr);
     void RemoveComponentAt(size_t index);
     void RemoveAllComponents();
+
+    bool IsActive();
+    void Activate(bool b);
 
     template<typename T>
     void RemoveComponentsByType() {
@@ -75,6 +79,7 @@ public:
     World* GetWorld();
 
     const std::string& GetName() const;
+    void SetName(std::string name);
 
 public:
     virtual void AfterCreation();

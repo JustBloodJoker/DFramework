@@ -1,6 +1,10 @@
 #include <Component/Light/ShadowComponent.h>
 #include <World/World.h>
 
+ShadowComponent::ShadowComponent() {
+	m_sName = "ShadowComponent";
+}
+
 ShadowComponentData ShadowComponent::GetShadowComponentData() {
 	return m_xData;
 }

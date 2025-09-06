@@ -25,6 +25,10 @@ void World::ClearNotifies() {
 	m_vRenderSystemNotifies.clear();
 }
 
+ComponentHolder* World::CreateEmptyEntity() {
+	return CreateEntity<ComponentHolder>();
+}
+
 TDefaultCamera* World::CreateDefaultCamera() {
 	return CreateEntity<TDefaultCamera>();
 }
@@ -69,7 +73,20 @@ TScene* World::CreateScene(std::string path) {
 	return CreateEntity<TScene>(path);
 }
 
+std::vector<ComponentHolder*> World::GetEntities() {
+	std::vector<ComponentHolder*> result;
+	result.reserve(m_vEntities.size());
+	for (auto& e : m_vEntities) {
+		result.push_back(e.get());
+	}
+	return result;
+}
+
 void World::DestroyEntity(ComponentHolder* holder) {
+	if (auto* renderEntity = dynamic_cast<TRender*>(holder)) {
+		GlobalRenderThreadManager::GetInstance()->WaitIdle();
+	}
+
 	std::erase_if(m_vEntities, [&](const std::shared_ptr<ComponentHolder>& ent) {
 		if (ent.get() == holder) {
 			ent->Destroy();

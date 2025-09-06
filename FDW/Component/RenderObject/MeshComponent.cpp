@@ -2,6 +2,10 @@
 #include <World/World.h>
 #include <D3DFramework/Objects/RTObjectHelper.h>
 
+MeshComponent::MeshComponent() {
+    m_sName = "MeshComponent";
+}
+
 void MeshComponent::SetCreationData(MeshComponentCreationData data) {
     m_xData = data;
     UpdateWorldMatrix();
@@ -82,6 +86,7 @@ void MeshComponent::Destroy() {
 }
 
 void MeshComponent::Activate(bool a) {
+    RenderComponent::Activate(a);
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::MeshActivationDeactivation);
 }
 

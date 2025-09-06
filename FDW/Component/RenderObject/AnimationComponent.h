@@ -13,7 +13,7 @@ struct AnimationComponentInputData {
 
 class AnimationComponent : public IComponent {
 public:
-	AnimationComponent() = default;
+	AnimationComponent();
 	virtual ~AnimationComponent() = default;
 
 public:

@@ -4,7 +4,11 @@
 
 void TLight::AfterCreation() {
 	ComponentHolder::AfterCreation();
+
 	m_pLightComponent = AddComponent<LightComponent>();
+	auto data = m_pLightComponent->GetLightComponentData();
+	data.LightType = int(LightType());
+	m_pLightComponent->SetLightComponentData(data);
 }
 
 void TLight::OnComponentRemoved(IComponent* comp) {

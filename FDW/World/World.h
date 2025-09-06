@@ -29,6 +29,7 @@ public:
     void ClearNotifies();
 
 public:
+    ComponentHolder* CreateEmptyEntity();
     TDefaultCamera* CreateDefaultCamera();
     TDirectionalLight* CreateDirectionalLight();
     TPointLight* CreatePointLight();
@@ -40,6 +41,20 @@ public:
     TSimpleSphere* CreateSimpleSphere();
     TSkybox* CreateSkybox(std::string path);
     TScene* CreateScene(std::string path);
+
+public:
+    std::vector<ComponentHolder*> GetEntities();
+
+    template<typename T>
+    std::vector<T*> GetEntitiesByType() {
+        std::vector<T*> result;
+        for (auto& e : m_vEntities) {
+            if (auto casted = dynamic_cast<T*>(e.get())) {
+                result.push_back(casted);
+            }
+        }
+        return result;
+    }
 
 public:
     template<typename T, typename... Args>

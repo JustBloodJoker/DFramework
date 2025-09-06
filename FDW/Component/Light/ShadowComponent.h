@@ -7,7 +7,7 @@
 class ShadowComponent : public IComponent {
 
 public:
-	ShadowComponent() = default;
+	ShadowComponent();
 	virtual ~ShadowComponent() = default;
 
 

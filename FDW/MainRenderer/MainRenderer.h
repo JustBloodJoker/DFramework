@@ -58,6 +58,10 @@ public:
 
 
 	//LIGHTS
+	D3D12_GPU_VIRTUAL_ADDRESS GetLightBufferConstantBufferAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetLightsStructuredBufferAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetClusterConstantBufferAddress();
+	D3D12_GPU_VIRTUAL_ADDRESS GetClusterStructuredBufferAddress();
 	int GetLightsCount();
 
 	//SHADOWS

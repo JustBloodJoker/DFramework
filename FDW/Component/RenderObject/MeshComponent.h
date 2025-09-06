@@ -30,7 +30,7 @@ struct MeshComponentCreationData {
 
 class MeshComponent : public RenderComponent {
 public:
-    MeshComponent() = default;
+    MeshComponent();
     virtual ~MeshComponent() = default;
 
 

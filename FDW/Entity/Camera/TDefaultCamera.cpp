@@ -97,3 +97,8 @@ void TDefaultCamera::ResetPosition() {
 	m_xEye = m_xStartEye;
 	m_xAt = m_xStartAt;
 }
+
+bool TDefaultCamera::IsActiveCameraComponent() {
+	auto cmp = GetComponent<CameraComponent>();
+	return cmp ? cmp->IsActive() : false;
+}

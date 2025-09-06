@@ -12,11 +12,11 @@ public:
 public:
 	BEGIN_FIELD_REGISTRATION(TMesh, TRender)
 		REGISTER_FIELD(m_bIsCreated);
+		REGISTER_FIELD(m_bIsCreatedDXR);
 	END_FIELD_REGISTRATION();
 
 
 public:
-
 	virtual void DoRenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 
 	virtual void BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsCommandList* list) = 0;
@@ -24,6 +24,7 @@ public:
 
 protected:
 	bool m_bIsCreated = false;
+	bool m_bIsCreatedDXR = false;
 
 
 

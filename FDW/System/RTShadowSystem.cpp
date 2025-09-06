@@ -74,8 +74,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnStartRenderTick(std::s
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RTShadowSystemOnRenderFactorsData data) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList4* list) {
+std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
 		auto tlas = m_pOwner->GetTLAS().pResult;
 
 		if (!tlas) return;
@@ -93,10 +93,10 @@ std::shared_ptr<FD3DW::ExecutionHandle> RTShadowSystem::OnRenderShadowFactors(st
 		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(0));
 		list->SetComputeRootDescriptorTable(RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG, m_pSoftShadowsUAVPacker->GetResult()->GetGPUDescriptorHandle(1));
 
-		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, data.LightBufferConstantBufferAddress);
-		list->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, data.LightsStructuredBufferAddress);
-		list->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, data.ClusterStructuredBufferAddress);
-		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, data.ClusterConstantBufferAddress);
+		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_LIGHTS_HELPER_BUFFER_POS_IN_ROOT_SIG, m_pOwner->GetLightBufferConstantBufferAddress());
+		list->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pOwner->GetLightsStructuredBufferAddress());
+		list->SetComputeRootShaderResourceView(RT_SOFT_SHADOW_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, m_pOwner->GetClusterStructuredBufferAddress());
+		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, m_pOwner->GetClusterConstantBufferAddress());
 		list->SetComputeRootConstantBufferView(RT_SOFT_SHADOW_FRAME_BUFFER_POS_IN_ROOT_SIG, m_pFrameBuffer->GetGPULocation(0));
 
 		if (m_iCurrentShadowBufferUsage == 1) {

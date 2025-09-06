@@ -155,12 +155,7 @@ void MainRenderer::UserLoop()
 
 	std::shared_ptr<FD3DW::ExecutionHandle> renderRTShadows = nullptr;
 	if (IsRTSupported()) {
-		RTShadowSystemOnRenderFactorsData inShadowRenderData;
-		inShadowRenderData.LightBufferConstantBufferAddress = m_pLightSystem->GetLightsConstantBufferGPULocation();
-		inShadowRenderData.LightsStructuredBufferAddress = m_pLightSystem->GetLightsStructuredBufferGPULocation();
-		inShadowRenderData.ClusterConstantBufferAddress = m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation();
-		inShadowRenderData.ClusterStructuredBufferAddress = m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation();
-		renderRTShadows = m_pRTShadowSystem->OnRenderShadowFactors({ tlasCallH , rtShadowsH, lightsH, clusterAssignH, indirectRenderH }, inShadowRenderData);
+		renderRTShadows = m_pRTShadowSystem->OnRenderShadowFactors({ tlasCallH , rtShadowsH, lightsH, clusterAssignH, indirectRenderH } );
 	}
 
 	//////////////////////////
@@ -345,6 +340,22 @@ FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS()
 	return m_pRenderMeshesSystem->GetTLAS();
 }
 
+D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetLightBufferConstantBufferAddress() {
+	return m_pLightSystem->GetLightsConstantBufferGPULocation();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetLightsStructuredBufferAddress() {
+	return m_pLightSystem->GetLightsStructuredBufferGPULocation();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterConstantBufferAddress() {
+	return m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation();
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterStructuredBufferAddress() {
+	return m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation();
+}
+
 int MainRenderer::GetLightsCount() {
 	return m_pLightSystem->GetLightsCount();
 }
@@ -402,11 +413,7 @@ void MainRenderer::CreateTestWorld() {
 
 void MainRenderer::ProcessNotifiesInWorld() {
 	static std::vector<NRenderSystemNotifyType> s_sNotifiesToWaitRenderTick = {
-		NRenderSystemNotifyType::Light,
-		NRenderSystemNotifyType::Shadow,
-		NRenderSystemNotifyType::CameraActivationDeactivation,
 		NRenderSystemNotifyType::SkyboxActivationDeactivation,
-		NRenderSystemNotifyType::UpdateTLAS,
 		NRenderSystemNotifyType::MeshActivationDeactivation,
 	};
 

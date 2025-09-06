@@ -14,6 +14,13 @@ World* IComponent::GetWorld() {
 	return m_pOwner ? m_pOwner->GetWorld() : nullptr;
 }
 
+std::string IComponent::GetName() const {
+	return m_sName;
+}
+
+void IComponent::SetName(std::string name) {
+	m_sName = name;
+}
 
 void IComponent::Init() {}
 

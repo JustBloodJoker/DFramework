@@ -23,6 +23,9 @@ public:
 	ComponentHolder* GetOwner();
 	World* GetWorld();
 
+	std::string GetName() const;
+	void SetName(std::string name);
+
 public:
 	virtual void Init();
 	virtual void Destroy() = 0;

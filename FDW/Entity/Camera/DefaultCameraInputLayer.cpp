@@ -9,6 +9,8 @@ DefaultCameraInputLayer::DefaultCameraInputLayer(TDefaultCamera* cameraOwner) {
 }
 
 bool DefaultCameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	if (!m_pCameraOwner->IsActiveCameraComponent()) return false;
+
 	auto isInput = false;
 	switch (msg)
 	{

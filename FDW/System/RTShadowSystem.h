@@ -6,13 +6,6 @@
 #include <System/RTShadowSystemConfig.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
 
-struct RTShadowSystemOnRenderFactorsData {
-	D3D12_GPU_VIRTUAL_ADDRESS LightBufferConstantBufferAddress;
-	D3D12_GPU_VIRTUAL_ADDRESS LightsStructuredBufferAddress;
-	D3D12_GPU_VIRTUAL_ADDRESS ClusterConstantBufferAddress;
-	D3D12_GPU_VIRTUAL_ADDRESS ClusterStructuredBufferAddress;
-};
-
 class RTShadowSystem : public MainRendererComponent {
 public:
 	RTShadowSystem() = default;
@@ -24,7 +17,7 @@ public:
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 
 	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RTShadowSystemOnRenderFactorsData data);
+	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnRenderShadowFactors(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle);
 
 	void SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device);
 

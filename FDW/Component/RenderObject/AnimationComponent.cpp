@@ -2,6 +2,10 @@
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <World/World.h>
 
+AnimationComponent::AnimationComponent() {
+    m_sName = "AnimationComponent";
+}
+
 void AnimationComponent::Init() {
     IComponent::Init();
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::SceneAnimationActivationDeactivation);
@@ -54,7 +58,6 @@ void AnimationComponent::SetScene(ID3D12Device* device, FD3DW::Scene* scene) {
     if (m_pScene && m_pScene->GetBonesCount()) {
         m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), true);
     }
-    Activate(false);
 }
 
 FD3DW::FResource* AnimationComponent::GetResource() {

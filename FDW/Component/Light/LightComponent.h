@@ -6,7 +6,7 @@
 
 class LightComponent : public IComponent {
 public:
-	LightComponent() = default;
+	LightComponent();
 	virtual ~LightComponent() = default;
 
 

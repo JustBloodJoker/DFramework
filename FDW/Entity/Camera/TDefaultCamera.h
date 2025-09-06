@@ -12,6 +12,7 @@ public:
 
 	virtual void ResetPosition() override;
 
+	bool IsActiveCameraComponent();
 
 public:
 	BEGIN_FIELD_REGISTRATION(TDefaultCamera, TBaseCamera)

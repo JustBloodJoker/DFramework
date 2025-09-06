@@ -2,6 +2,10 @@
 #include <World/World.h>
 
 
+LightComponent::LightComponent() {
+	m_sName = "LightComponent";
+}
+
 LightComponentData LightComponent::GetLightComponentData() {
 	return m_xData;
 }
