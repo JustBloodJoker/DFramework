@@ -12,7 +12,6 @@ struct ClusterSystemCluster
     dx::XMFLOAT4  MaxPoint;
     UINT Count;
     UINT LightIndices[CLUSTERED_MAX_LIGHTS_PER_CLUSTER];
-    UINT padd[3];
 };
 
 struct ClusterSystemClusterViewParams

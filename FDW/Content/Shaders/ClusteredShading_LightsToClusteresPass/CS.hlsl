@@ -18,7 +18,6 @@ bool TestRectLight(uint lightIndex, Cluster c);
 
 bool TestPointLight(uint lightIndex, Cluster c)
 {
-    return true;
     float3 center = mul(float4(Lights[lightIndex].Position, 1.0f), ViewMatrix).xyz;
     float radius = Lights[lightIndex].AttenuationRadius;
 

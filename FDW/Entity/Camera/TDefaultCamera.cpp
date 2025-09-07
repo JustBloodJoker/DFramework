@@ -46,19 +46,22 @@ void TDefaultCamera::ResetRoll() {
 
 
 void TDefaultCamera::OnMouseMove(WPARAM btnState, int x, int y) {
+	bool isChanged = false;
 	if ((btnState & MK_LBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
 	{
 		m_fCamYaw += (m_xLastMousePos.x - x) * 0.002f;
 		m_fCamPitch += (m_xLastMousePos.y - y) * 0.002f;
+		isChanged = true;
 	}
 	if ((btnState & MK_RBUTTON) != 0 && ((x != m_xLastMousePos.x) || (y != m_xLastMousePos.y)))
 	{
 		m_fCamRoll += (m_xLastMousePos.x - x) * 0.002f;
+		isChanged = true;
 	}
 	m_xLastMousePos.x = x;
 	m_xLastMousePos.y = y;
 
-	UpdateCamera();
+	if(isChanged) UpdateCamera();
 }
 
 void TDefaultCamera::Init() {

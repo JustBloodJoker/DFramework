@@ -104,7 +104,6 @@ void MainRenderer::UserLoop()
 
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
-	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
 
 	auto meshH = m_pRenderMeshesSystem->OnStartRenderTick(cameraH);
 
@@ -122,7 +121,8 @@ void MainRenderer::UserLoop()
 		rtShadowsH = m_pRTShadowSystem->OnStartRenderTick(cameraH);
 	}
 
-	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH}, m_pLightSystem->GetLightsBuffer());
+	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
+	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH, cameraH }, m_pLightSystem->GetLightsBuffer());
 
 	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = nullptr;
 	if (m_bIsEnabledPreDepth)
@@ -413,6 +413,7 @@ void MainRenderer::CreateTestWorld() {
 
 void MainRenderer::ProcessNotifiesInWorld() {
 	static std::vector<NRenderSystemNotifyType> s_sNotifiesToWaitRenderTick = {
+		NRenderSystemNotifyType::Light,
 		NRenderSystemNotifyType::SkyboxActivationDeactivation,
 		NRenderSystemNotifyType::MeshActivationDeactivation,
 	};
