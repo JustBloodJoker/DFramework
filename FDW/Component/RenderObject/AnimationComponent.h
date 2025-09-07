@@ -21,6 +21,7 @@ public:
 		REGISTER_FIELD(m_fAnimationTime)
 		REGISTER_FIELD(m_sCurrentAnimation)
 		REGISTER_FIELD(m_bNeedFreezeBonesBuffer)
+		REGISTER_FIELD(m_bIsBonesActive)
 	END_FIELD_REGISTRATION();
 
 
@@ -32,6 +33,7 @@ public:
 	virtual bool IsFreeze();
 	virtual void Freeze(bool b);
 
+	std::vector<std::string> GetAnimations();
 	virtual void Play(std::string animName);
 	virtual void Stop();
 	virtual bool IsPlaying();
@@ -41,10 +43,13 @@ public:
 
 	virtual void OnAnimationUpdateTick(const AnimationComponentInputData& data);
 
+	std::weak_ptr<bool> IsBonesActive();
+
 protected:
 	FD3DW::Scene* m_pScene;
 	std::unique_ptr<FD3DW::FResource> m_pStructureBufferBones;
 
+	std::shared_ptr<bool> m_bIsBonesActive;
 	float m_fAnimationTime = 0.0;
 	std::string m_sCurrentAnimation = "";
 	bool m_bNeedResetBonesBuffer = false;

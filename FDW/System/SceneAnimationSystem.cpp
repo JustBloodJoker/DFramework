@@ -3,7 +3,7 @@
 
 
 void SceneAnimationSystem::ProcessNotify(NRenderSystemNotifyType type) {
-	if (type == NRenderSystemNotifyType::SkyboxActivationDeactivation) {
+	if (type == NRenderSystemNotifyType::SceneAnimationActivationDeactivation) {
 		m_bIsNeedUpdateActiveAnimations.store(true, std::memory_order_relaxed);
 	}
 

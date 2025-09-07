@@ -73,6 +73,22 @@ public:
         }
         return result;
     }
+    
+    template<typename Func>
+    void ForEachComponent(Func&& func) {
+        for (auto& comp : m_vComponents) {
+            func(comp.get());
+        }
+    }
+
+    template<typename T, typename Func>
+    void ForEachComponentOfType(Func&& func) {
+        for (auto& comp : m_vComponents) {
+            if (auto casted = dynamic_cast<T*>(comp.get())) {
+                func(casted);
+            }
+        }
+    }
 
 public:
     void SetWorld(World* world);

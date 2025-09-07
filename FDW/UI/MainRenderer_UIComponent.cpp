@@ -22,6 +22,7 @@ void MainRenderer_UIComponent::DrawUI() {
     SaveWorldBrowser();
     SkyboxBrowser();
     SceneBrowser();
+    TextureBrowser();
 }
 
 void MainRenderer_UIComponent::MainWindow() {
@@ -188,7 +189,168 @@ void MainRenderer_UIComponent::DrawEntityInspector(ComponentHolder* entity) {
     if (auto light = dynamic_cast<TLight*>(entity)) {
         DrawLightInspector(light);
     }
+    else if (auto mesh = dynamic_cast<TMesh*>(entity)) {
+        DrawMeshInspector(mesh);
+    }
+    else if (auto baseCamera = dynamic_cast<TBaseCamera*>(entity)) {
+        DrawBaseCameraInspector(baseCamera);
+    }
+}
 
+void MainRenderer_UIComponent::DrawMeshInspector(TMesh* mesh) {
+    auto pos = mesh->GetPosition();
+    if (EditFloat3("Position", pos, 20.0f)) {
+        mesh->SetPosition(pos);
+    }
+    auto rot = mesh->GetRotation();
+    if (EditFloat3("Rotation", rot)) {
+        mesh->SetRotation(rot);
+    } 
+    auto scale = mesh->GetScale();
+    if (EditFloat3("Scaling", scale)) {
+        mesh->SetScale(scale);
+    }
+
+    if (auto scene = dynamic_cast<TScene*>(mesh)) {
+        DrawSceneInspector(scene);
+    }
+    else if (auto simpleMesh = dynamic_cast<TSimpleMesh*>(mesh)) {
+        DrawSimpleMeshInspector(simpleMesh);
+    }
+}
+
+void MainRenderer_UIComponent::DrawSceneInspector(TScene* mesh) {
+    if (mesh->IsHaveAnimation()) {
+        ImGui::SeparatorText("Animations");
+
+        auto animations = mesh->GetAnimations();
+        static int currentAnim = -1;
+
+        if (ImGui::BeginCombo("Animation", (currentAnim >= 0 && currentAnim < (int)animations.size()) ? animations[currentAnim].c_str() : "None"))
+        {
+            for (int i = 0; i < animations.size(); i++) {
+                bool isSelected = (currentAnim == i);
+                if (ImGui::Selectable(animations[i].c_str(), isSelected)) {
+                    currentAnim = i;
+                    mesh->Play(animations[i]);
+                }
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+
+        if (mesh->IsPlaying()) 
+        {
+            if (ImGui::Button("Stop")) {
+                mesh->Stop();
+            }
+        }
+        else 
+        {
+            if (currentAnim >= 0 && ImGui::Button("Play")) {
+                mesh->Play(animations[currentAnim]);
+            }
+        }
+
+        bool freeze = mesh->IsFreeze();
+        if (ImGui::Checkbox("Freeze", &freeze)) {
+            mesh->Freeze(freeze);
+        }
+    }
+}
+
+void MainRenderer_UIComponent::DrawSimpleMeshInspector(TSimpleMesh* mesh) {
+    ImGui::SeparatorText("Material Properties");
+
+    dx::XMFLOAT4 diffuse = mesh->GetDiffuse();
+    if (EditColor4("Diffuse", diffuse)) {
+        mesh->SetDiffuse(diffuse);
+    }
+    dx::XMFLOAT4 ambient = mesh->GetAmbient();
+    if (EditColor4("Ambient", ambient)) {
+        mesh->SetAmbient(ambient);
+    }
+    dx::XMFLOAT4 specular = mesh->GetSpecular();
+    if (EditColor4("Specular", specular)) {
+        mesh->SetSpecular(specular);
+    }
+    dx::XMFLOAT4 emissive = mesh->GetEmissive();
+    if (EditColor4("Emissive", emissive)) {
+        mesh->SetEmissive(emissive);
+    }
+
+    float roughness = mesh->GetRoughness();
+    float metalness = mesh->GetMetalness();
+    float specularPower = mesh->GetSpecularPower();
+    float heightScale = mesh->GetHeightScale();
+
+    if (EditFloat("Roughness", roughness, 0.01f)) mesh->SetRoughness(roughness);
+    if (EditFloat("Metalness", metalness, 0.01f)) mesh->SetMetalness(metalness);
+    if (EditFloat("SpecularPower", specularPower, 0.1f)) mesh->SetSpecularPower(specularPower);
+    if (EditFloat("HeightScale", heightScale, 0.01f)) mesh->SetHeightScale(heightScale);
+
+    ImGui::SeparatorText("Textures");
+
+    static const char* s_textureLabels[TEXTURE_TYPE_SIZE] = {
+        "Base Color", "Normal", "Roughness", "Metalness",
+        "Height", "Specular", "Opacity", "Ambient", "Emissive"
+    };
+
+    for (int i = 0; i < TEXTURE_TYPE_SIZE; i++) {
+        FD3DW::TextureType type = static_cast<FD3DW::TextureType>(i);
+        const char* label = s_textureLabels[i];
+
+        ImGui::Separator();
+        ImGui::Text("%s", label);
+
+        if (mesh->GetTexture(type)!=nullptr ) {
+            auto srvHandle = mesh->GetTextureSRV(type);
+
+            std::string imgId = std::string(label) + "##" + std::to_string(i);
+            if (ImGui::ImageButton(imgId.c_str(), (ImTextureID)srvHandle.ptr, ImVec2(64, 64))) {
+                m_bShowTextureBrowser = true;
+                m_onTextureSelected = [this, mesh, type](const std::filesystem::path& selectedPath) {
+                    mesh->SetupTexture(type, selectedPath.string(), m_pOwner->GetDevice(), m_pCurrentUIList);
+                };
+            }
+        }
+        else {
+            ImGui::Text("<empty>");
+            if (ImGui::Button(std::string("Set ").append(label).c_str())) {
+                m_bShowTextureBrowser = true;
+                m_onTextureSelected = [this, mesh, type](const std::filesystem::path& selectedPath) {
+                    mesh->SetupTexture(type, selectedPath.string(), m_pOwner->GetDevice(), m_pCurrentUIList);
+                };
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button(std::string("Clear ").append(label).c_str())) {
+            mesh->EraseTexture(type, m_pOwner->GetDevice());
+        }
+    }
+}
+
+void MainRenderer_UIComponent::DrawBaseCameraInspector(TBaseCamera* baseCamera) {
+    
+    float speed = baseCamera->GetCameraSpeed();
+    if (ImGui::DragFloat("Camera Speed", &speed, 1.f, 0.01f, 1000.0f)) {
+        baseCamera->SetCameraSpeed(speed);
+    }
+
+    if (ImGui::Button("Reset Position")) {
+        baseCamera->ResetPosition();
+    }
+
+    if (auto defaultCamera = dynamic_cast<TDefaultCamera*>(baseCamera)) {
+        DrawDefaultCameraInspector(defaultCamera);
+    }
+}
+
+void MainRenderer_UIComponent::DrawDefaultCameraInspector(TDefaultCamera* baseCamera) {
+    
 }
 
 void MainRenderer_UIComponent::DrawLightInspector(TLight* entity) {
@@ -226,7 +388,7 @@ void MainRenderer_UIComponent::DrawDirectionalLightInspector(TDirectionalLight* 
 
 void MainRenderer_UIComponent::DrawPointLightInspector(TPointLight* entity) {
     dx::XMFLOAT3 pos = entity->GetLightPosition();
-    if (EditFloat3("Position", pos)) {
+    if (EditFloat3("Position", pos, 20.0f)) {
         entity->SetLightPosition(pos);
     }
 
@@ -243,7 +405,7 @@ void MainRenderer_UIComponent::DrawPointLightInspector(TPointLight* entity) {
 
 void MainRenderer_UIComponent::DrawSpotLightInspector(TSpotLight* entity) {
     dx::XMFLOAT3 pos = entity->GetLightPosition();
-    if (EditFloat3("Position", pos)) {
+    if (EditFloat3("Position", pos, 20.0f)) {
         entity->SetLightPosition(pos);
     }
 
@@ -270,7 +432,7 @@ void MainRenderer_UIComponent::DrawSpotLightInspector(TSpotLight* entity) {
 
 void MainRenderer_UIComponent::DrawRectLightInspector(TRectLight* entity) {
     dx::XMFLOAT3 pos = entity->GetLightPosition();
-    if (EditFloat3("Position", pos)) {
+    if (EditFloat3("Position", pos, 20.0f)) {
         entity->SetLightPosition(pos);
     }
 
@@ -295,6 +457,12 @@ void MainRenderer_UIComponent::DrawComponentInspector(IComponent* comp) {
 
     if (auto light = dynamic_cast<LightComponent*>(comp)) {
         DrawLightComponentInspector(light);
+    }
+    else if (auto mesh = dynamic_cast<MeshComponent*>(comp)) {
+        DrawMeshComponentInspector(mesh);
+    }
+    else if (auto animation = dynamic_cast<AnimationComponent*>(comp)) {
+        DrawAnimationComponentInspector(animation);
     }
 }
 
@@ -344,6 +512,73 @@ void MainRenderer_UIComponent::DrawLightComponentInspector(LightComponent* entit
     }
 
     if(changed) entity->SetLightComponentData(data);
+}
+
+void MainRenderer_UIComponent::DrawMeshComponentInspector(MeshComponent* meshComponent) {
+    auto pos = meshComponent->GetPosition();
+    if (EditFloat3("Position", pos, 20.0f)) {
+        meshComponent->SetPosition(pos);
+    }
+    auto rot = meshComponent->GetRotation();
+    if (EditFloat3("Rotation", rot)) {
+        meshComponent->SetRotation(rot);
+    }
+    auto scale = meshComponent->GetScale();
+    if (EditFloat3("Scaling", scale)) {
+        meshComponent->SetScale(scale);
+    }
+
+    bool ignoreParentPos = meshComponent->IsIgnoreParentPosition();
+    bool ignoreParentRot = meshComponent->IsIgnoreParentRotation();
+    bool ignoreParentScl = meshComponent->IsIgnoreParentScaling();
+
+    if (ImGui::Checkbox("Ignore Parent Position", &ignoreParentPos)) {
+        meshComponent->IgnoreParentPosition(ignoreParentPos);
+    }
+    if (ImGui::Checkbox("Ignore Parent Rotation", &ignoreParentRot)) {
+        meshComponent->IgnoreParentRotation(ignoreParentRot);
+    }
+    if (ImGui::Checkbox("Ignore Parent Scaling", &ignoreParentScl)) {
+        meshComponent->IgnoreParentScaling(ignoreParentScl);
+    }
+}
+
+void MainRenderer_UIComponent::DrawAnimationComponentInspector(AnimationComponent* animComponent) {
+    auto animations = animComponent->GetAnimations();
+    static int currentAnim = -1;
+
+    if (ImGui::BeginCombo("Animation",
+        (currentAnim >= 0 && currentAnim < (int)animations.size())
+        ? animations[currentAnim].c_str() : "None"))
+    {
+        for (int i = 0; i < animations.size(); i++) {
+            bool isSelected = (currentAnim == i);
+            if (ImGui::Selectable(animations[i].c_str(), isSelected)) {
+                currentAnim = i;
+                animComponent->Play(animations[i]);
+            }
+            if (isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
+        }
+        ImGui::EndCombo();
+    }
+
+    if (animComponent->IsPlaying()) {
+        if (ImGui::Button("Stop")) {
+            animComponent->Stop();
+        }
+    }
+    else {
+        if (currentAnim >= 0 && ImGui::Button("Play")) {
+            animComponent->Play(animations[currentAnim]);
+        }
+    }
+
+    bool freeze = animComponent->IsFreeze();
+    if (ImGui::Checkbox("Freeze", &freeze)) {
+        animComponent->Freeze(freeze);
+    }
 }
 
 
@@ -433,9 +668,73 @@ void MainRenderer_UIComponent::DrawEditor_Packaging() {
 
 void MainRenderer_UIComponent::DrawEditor_Systems() {
     ImGui::SeparatorText("Systems");
-    ImGui::TextDisabled("TODO");
+    
+    if (ImGui::TreeNodeEx("Global Render System", ImGuiTreeNodeFlags_DefaultOpen)) {
+        DrawEditor_GlobalRenderSystem();
+        ImGui::TreePop();
+    }
+
+    if (ImGui::TreeNodeEx("Shadow System", ImGuiTreeNodeFlags_DefaultOpen)) {
+        DrawEditor_ShadowSystem();
+        ImGui::TreePop();
+    }
 }
 
+void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
+    bool preDepth = m_pOwner->IsEnabledPreDepth();
+    if (ImGui::Checkbox("Enable PreDepth", &preDepth)) {
+        m_pOwner->EnablePreDepth(preDepth);
+    }
+
+    MeshCullingType cullingType = m_pOwner->GetMeshCullingType();
+    int type = static_cast<int>(cullingType);
+
+    const char* items[] = { "None", "GPU" };
+    if (ImGui::Combo("Mesh Culling", &type, items, IM_ARRAYSIZE(items))) {
+        m_pOwner->SetMeshCullingType(static_cast<MeshCullingType>(type));
+    }
+}
+
+void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
+    auto enabled = m_pOwner->IsShadowEnabled();
+
+    if (!enabled) return;
+
+    RTShadowSystemConfig cfg = m_pOwner->GetRTShadowConfig();
+
+    bool changed = false;
+    ImGui::SeparatorText("Temporal Reprojection");
+    changed |= ImGui::DragFloat("Temporal Feedback Min", &cfg.TemporalFeedbackMin, 0.01f, 0.0f, 1.0f);
+    changed |= ImGui::DragFloat("Temporal Feedback Max", &cfg.TemporalFeedbackMax, 0.01f, 0.0f, 1.0f);
+    changed |= ImGui::DragFloat("Reproj Dist Threshold", &cfg.ReprojDistThreshold, 0.001f, 0.0f, 1.0f);
+    changed |= ImGui::DragFloat("Normal Threshold", &cfg.NormalThreshold, 0.01f, 0.0f, 1.0f);
+
+    ImGui::SeparatorText("Bilateral Filter");
+    changed |= ImGui::DragFloat("Sigma S", &cfg.SigmaS, 0.1f, 0.0f, 10.0f);
+    changed |= ImGui::DragFloat("Sigma R", &cfg.SigmaR, 0.01f, 0.0f, 1.0f);
+    changed |= ImGui::DragInt("Kernel Radius", &cfg.KernelRadius, 1, 1, 15);
+
+    if(changed) m_pOwner->SetRTShadowConfig(cfg);
+}
+
+
+void MainRenderer_UIComponent::TextureBrowser() {
+    FileBrowser(
+        m_bShowTextureBrowser,
+        "Texture Browser",
+        m_xCurrentPath,
+        s_vSupportedTextureExts,
+        [this](const std::filesystem::path& path) {
+            if (m_onTextureSelected) {
+                m_onTextureSelected(path);
+                m_onTextureSelected = nullptr;
+            }
+        },
+        [](const std::filesystem::path& path) {
+            return "Texture ";
+        }
+    );
+}
 
 void MainRenderer_UIComponent::SkyboxBrowser() {
     FileBrowser(
@@ -674,10 +973,12 @@ void MainRenderer_UIComponent::RenderImGui(ID3D12GraphicsCommandList* list) {
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
+    m_pCurrentUIList = list;
     DrawUI();
 
     ImGui::Render();
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), list);
+    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), m_pCurrentUIList);
+    m_pCurrentUIList = nullptr;
 }
 
 void MainRenderer_UIComponent::ShutDownImGui() {
@@ -756,6 +1057,15 @@ bool MainRenderer_UIComponent::EditFloat2(const char* label, dx::XMFLOAT2& vec, 
     float tmp[2] = { vec.x, vec.y };
     if (ImGui::DragFloat2(label, tmp, step)) {
         vec = { tmp[0], tmp[1] };
+        return true;
+    }
+    return false;
+}
+
+bool MainRenderer_UIComponent::EditColor4(const char* label, dx::XMFLOAT4& col) {
+    float tmp[4] = { col.x, col.y, col.z, col.w };
+    if (ImGui::ColorEdit4(label, tmp)) {
+        col = { tmp[0], tmp[1], tmp[2], tmp[3] };
         return true;
     }
     return false;

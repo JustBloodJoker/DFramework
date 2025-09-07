@@ -18,14 +18,23 @@ public:
 		REGISTER_FIELD(m_sPath);
 	END_FIELD_REGISTRATION();
 
+public:
+	bool IsHaveAnimation();
+	bool IsFreeze();
+	void Freeze(bool b);
+
+	std::vector<std::string> GetAnimations();
+	void Play(std::string animName);
+	void Stop();
+	bool IsPlaying();
 
 public:
-
 	virtual void BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 	virtual void BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 
 protected:
 	void CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* list);
+	AnimationComponent* GetAnimationComponent();
 
 protected:
 	std::string m_sPath;

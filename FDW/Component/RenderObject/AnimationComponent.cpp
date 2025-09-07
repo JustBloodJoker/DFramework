@@ -8,6 +8,8 @@ AnimationComponent::AnimationComponent() {
 
 void AnimationComponent::Init() {
     IComponent::Init();
+    m_bIsBonesActive = std::make_shared<bool>();
+    *m_bIsBonesActive = false;
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::SceneAnimationActivationDeactivation);
 }
 
@@ -18,6 +20,7 @@ void AnimationComponent::Destroy() {
 void AnimationComponent::Activate(bool b) {
     b &= ( m_pStructureBufferBones != nullptr );
     IComponent::Activate(b);
+    *m_bIsBonesActive = b;
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::SceneAnimationActivationDeactivation);
 }
 
@@ -27,7 +30,12 @@ bool AnimationComponent::IsFreeze() {
 
 void AnimationComponent::Freeze(bool b) {
 	m_bNeedFreezeBonesBuffer = b;
-    Activate(b);
+}
+
+
+std::vector<std::string> AnimationComponent::GetAnimations() {
+    static std::vector<std::string> s_sEmpty;
+    return m_pScene ? m_pScene->GetAnimations() : s_sEmpty;
 }
 
 void AnimationComponent::Play(std::string animName) {
@@ -45,7 +53,6 @@ void AnimationComponent::Stop() {
 
 	m_sCurrentAnimation.clear();
 	m_bNeedResetBonesBuffer = true;
-    Activate(false);
 }
 
 
@@ -56,7 +63,7 @@ bool AnimationComponent::IsPlaying() {
 void AnimationComponent::SetScene(ID3D12Device* device, FD3DW::Scene* scene) {
 	m_pScene = scene;
     if (m_pScene && m_pScene->GetBonesCount()) {
-        m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), true);
+        m_pStructureBufferBones = FD3DW::StructuredBuffer::CreateStructuredBuffer<dx::XMMATRIX>(device, UINT(m_pScene->GetBonesCount()), false);
     }
 }
 
@@ -75,6 +82,7 @@ void AnimationComponent::OnAnimationUpdateTick(const AnimationComponentInputData
     }
     else if (m_bNeedResetBonesBuffer) {
         dataVec.resize(m_pScene->GetBonesCount());
+        Activate(false);
         m_bNeedResetBonesBuffer = false;
     }
 
@@ -86,4 +94,8 @@ void AnimationComponent::OnAnimationUpdateTick(const AnimationComponentInputData
         );
     }
 
+}
+
+std::weak_ptr<bool> AnimationComponent::IsBonesActive() {
+    return m_bIsBonesActive;
 }

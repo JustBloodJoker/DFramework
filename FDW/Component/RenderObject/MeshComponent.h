@@ -15,6 +15,7 @@ struct MeshComponentCreationData {
 
     FD3DW::ObjectDesc ObjectDescriptor;
     FD3DW::FResource* BoneBuffer;
+    std::weak_ptr<bool> IsBoneActive;
     ID3D12Resource* IndexBuffer;
     ID3D12Resource* VertexBuffer;
     D3D12_INDEX_BUFFER_VIEW* IndexBufferView;
@@ -40,9 +41,26 @@ public:
         REGISTER_FIELD(m_xRotation);
         REGISTER_FIELD(m_xScaling);
         REGISTER_FIELD(m_xData);
+        REGISTER_FIELD(m_xParentPosition);
+        REGISTER_FIELD(m_xParentRotation);
+        REGISTER_FIELD(m_xParentScaling);
+        REGISTER_FIELD(m_bIgnoreParentScaling);
+        REGISTER_FIELD(m_bIgnoreParentRotation);
+        REGISTER_FIELD(m_bIgnoreParentPosition);
     END_FIELD_REGISTRATION();
 
 public:
+
+    void SetParentPosition(dx::XMFLOAT3 parentPosition);
+    void SetParentRotation(dx::XMFLOAT3 parentRotation);
+    void SetParentScale(dx::XMFLOAT3 parentScale);
+
+    bool IsIgnoreParentRotation();
+    void IgnoreParentRotation(bool b);
+    bool IsIgnoreParentPosition();
+    void IgnoreParentPosition(bool b);
+    bool IsIgnoreParentScaling();
+    void IgnoreParentScaling(bool b);
 
     void SetCreationData(MeshComponentCreationData data);
     MeshComponentCreationData GetCreationData();
@@ -89,6 +107,14 @@ protected:
     dx::XMFLOAT3 m_xPosition = { 0, 0, 0 };
     dx::XMFLOAT3 m_xRotation = { 0, 0, 0 };
     dx::XMFLOAT3 m_xScaling = { 1, 1, 1 };
+
+    bool m_bIgnoreParentScaling = false;
+    bool m_bIgnoreParentRotation = false;
+    bool m_bIgnoreParentPosition = false;
+
+    dx::XMFLOAT3 m_xParentPosition = { 0, 0, 0 };
+    dx::XMFLOAT3 m_xParentRotation = { 0, 0, 0 };
+    dx::XMFLOAT3 m_xParentScaling = { 1, 1, 1 };
 
     MeshComponentCreationData m_xData;
 

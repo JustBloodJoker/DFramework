@@ -22,7 +22,7 @@ float2 ParallaxOcclusionMapping(POMInputData inData)
     float3 viewDirWS = normalize(inData.CameraPosition - inData.WorldPosition);
     float3 viewDirTS = mul(viewDirWS, inData.TBN);
 
-    float ndotv = abs(dot(float3(0.0, 0.0, 1.0), normalize(viewDirTS)));
+    float ndotv = saturate(viewDirTS.z);
     float numLayers = lerp(maxLayers, minLayers, ndotv);
 
     float layerDepth = 1.0 / numLayers;
@@ -46,7 +46,7 @@ float2 ParallaxOcclusionMapping(POMInputData inData)
     float beforeDepth = inData.HeightTexture.Sample(inData.Sampler, prevTexCoords).r - currentLayerDepth + layerDepth;
  
     float weight = afterDepth / (afterDepth - beforeDepth);
-    float2 finalTexCoords = prevTexCoords * weight + currentTexCoord * (1.0 - weight);
+    float2 finalTexCoords = lerp(currentTexCoord, prevTexCoords, saturate(weight));
 
     return finalTexCoords;
 }

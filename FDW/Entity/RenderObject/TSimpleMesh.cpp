@@ -117,7 +117,7 @@ ID3D12Resource* TSimpleMesh::GetTexture(FD3DW::TextureType type) {
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE TSimpleMesh::GetTextureSRV(FD3DW::TextureType type) {
-	return GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle((UINT)GlobalTextureHeap::GetInstance()->GetIndex(m_pMaterial->GetTexture(type).get()));
+	return GlobalTextureHeap::GetInstance()->GetResult()->GetGPUDescriptorHandle((UINT)GlobalTextureHeap::GetInstance()->GetIndex(m_pMaterial->GetTexture(type).get()));;
 }
 
 

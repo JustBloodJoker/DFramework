@@ -18,6 +18,7 @@ bool TestRectLight(uint lightIndex, Cluster c);
 
 bool TestPointLight(uint lightIndex, Cluster c)
 {
+    return true;
     float3 center = mul(float4(Lights[lightIndex].Position, 1.0f), ViewMatrix).xyz;
     float radius = Lights[lightIndex].AttenuationRadius;
 
@@ -26,6 +27,7 @@ bool TestPointLight(uint lightIndex, Cluster c)
 
 bool TestSpotLight(uint lightIndex, Cluster c)
 {
+    return true;
     float3 center = mul(float4(Lights[lightIndex].Position, 1.0f), ViewMatrix).xyz;
     float radius = Lights[lightIndex].AttenuationRadius;
     return SphereAABBIntersection(center, radius, c.MinPoint.xyz, c.MaxPoint.xyz);
@@ -36,41 +38,9 @@ bool TestDirectionalLight(uint lightIndex, Cluster c)
     return true;
 }
 
-#define RECT_LIGHT_MIN_LIGHT_COEF  1e-7
-float ComputeRectInfluenceRadius(LightStruct light)
-{
-    float area = light.RectSize.x * light.RectSize.y;
-    float luminance = max(light.Color.r, max(light.Color.g, light.Color.b));
-    float radius = sqrt((light.Intensity * area * luminance) / (4.0 * PI * RECT_LIGHT_MIN_LIGHT_COEF));
-    return radius;
-}
-
 bool TestRectLight(uint lightIndex, Cluster c)
 {
-    LightStruct light = Lights[lightIndex];
-
-    float3 points[4];
-    InitRectPoints(light, points);
-    float3 lightNormal = normalize(cross(points[1] - points[0], points[3] - points[0]));
-    float3 clusterCenter = 0.5 * (c.MinPoint.xyz + c.MaxPoint.xyz);
-    float3 toCluster = points[0].xyz - clusterCenter;
-    if (dot(toCluster, lightNormal) < 0.0f)
-        return false;
-
-    float3 minPt = min(min(points[0], points[1]), min(points[2], points[3]));
-    float3 maxPt = max(max(points[0], points[1]), max(points[2], points[3]));
-
-    float influenceRadius = ComputeRectInfluenceRadius(light);
-
-    minPt -= influenceRadius;
-    maxPt += influenceRadius;
-
-    float3 cMin = c.MinPoint.xyz;
-    float3 cMax = c.MaxPoint.xyz;
-
-    return (minPt.x <= cMax.x && maxPt.x >= cMin.x) &&
-           (minPt.y <= cMax.y && maxPt.y >= cMin.y) &&
-           (minPt.z <= cMax.z && maxPt.z >= cMin.z);
+    return true;
 }
 
 

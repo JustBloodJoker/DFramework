@@ -6,6 +6,48 @@ MeshComponent::MeshComponent() {
     m_sName = "MeshComponent";
 }
 
+void MeshComponent::SetParentPosition(dx::XMFLOAT3 parentPosition) {
+    m_xParentPosition = parentPosition;
+    UpdateWorldMatrix();
+}
+
+void MeshComponent::SetParentRotation(dx::XMFLOAT3 parentRotation) {
+    m_xParentRotation = parentRotation;
+    UpdateWorldMatrix();
+}
+
+void MeshComponent::SetParentScale(dx::XMFLOAT3 parentScale) { 
+    m_xParentScaling = parentScale;
+    UpdateWorldMatrix();
+}
+
+bool MeshComponent::IsIgnoreParentRotation() {
+    return m_bIgnoreParentRotation;
+}
+
+void MeshComponent::IgnoreParentRotation(bool b) {
+    m_bIgnoreParentRotation = b;
+    UpdateWorldMatrix();
+}
+
+bool MeshComponent::IsIgnoreParentPosition() {
+    return m_bIgnoreParentPosition;
+}
+
+void MeshComponent::IgnoreParentPosition(bool b) {
+    m_bIgnoreParentPosition = b;
+    UpdateWorldMatrix();
+}
+
+bool MeshComponent::IsIgnoreParentScaling() {
+    return m_bIgnoreParentScaling;
+}
+
+void MeshComponent::IgnoreParentScaling(bool b) {
+    m_bIgnoreParentScaling = b;
+    UpdateWorldMatrix();
+}
+
 void MeshComponent::SetCreationData(MeshComponentCreationData data) {
     m_xData = data;
     UpdateWorldMatrix();
@@ -16,15 +58,37 @@ MeshComponentCreationData MeshComponent::GetCreationData() {
 }
 
 void MeshComponent::UpdateWorldMatrix() {
-
     dx::XMMATRIX scaleMat = dx::XMMatrixScaling(m_xScaling.x, m_xScaling.y, m_xScaling.z);
     dx::XMMATRIX rotXMat = dx::XMMatrixRotationX(m_xRotation.x);
     dx::XMMATRIX rotYMat = dx::XMMatrixRotationY(m_xRotation.y);
     dx::XMMATRIX rotZMat = dx::XMMatrixRotationZ(m_xRotation.z);
     dx::XMMATRIX transMat = dx::XMMatrixTranslation(m_xPosition.x, m_xPosition.y, m_xPosition.z);
 
-    m_xWorldMatrix = scaleMat * rotXMat * rotYMat * rotZMat * transMat;
+    auto localMatrix = scaleMat * rotXMat * rotYMat * rotZMat * transMat;
     
+    dx::XMMATRIX parentScaleMat = dx::XMMatrixIdentity();
+    dx::XMMATRIX parentRotMat = dx::XMMatrixIdentity();
+    dx::XMMATRIX parentTransMat = dx::XMMatrixIdentity();
+
+    if (!m_bIgnoreParentScaling) {
+        parentScaleMat = dx::XMMatrixScaling(m_xParentScaling.x, m_xParentScaling.y, m_xParentScaling.z);
+    }
+
+    if (!m_bIgnoreParentRotation) {
+        dx::XMMATRIX pRotX = dx::XMMatrixRotationX(m_xParentRotation.x);
+        dx::XMMATRIX pRotY = dx::XMMatrixRotationY(m_xParentRotation.y);
+        dx::XMMATRIX pRotZ = dx::XMMatrixRotationZ(m_xParentRotation.z);
+        parentRotMat = pRotX * pRotY * pRotZ;
+    }
+
+    if (!m_bIgnoreParentPosition) {
+        parentTransMat = dx::XMMatrixTranslation(m_xParentPosition.x, m_xParentPosition.y, m_xParentPosition.z);
+    }
+
+    auto parentMatrix = parentScaleMat * parentRotMat * parentTransMat;
+
+    m_xWorldMatrix = localMatrix * parentMatrix;
+
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::UpdateTLAS);
 }
 
@@ -79,15 +143,18 @@ dx::XMFLOAT3 MeshComponent::GetScale()    const { return m_xScaling; }
 
 void MeshComponent::Init() {
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::MeshActivationDeactivation);
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::UpdateTLAS);
 }
 
 void MeshComponent::Destroy() {
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::MeshActivationDeactivation);
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::UpdateTLAS);
 }
 
 void MeshComponent::Activate(bool a) {
     RenderComponent::Activate(a);
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::MeshActivationDeactivation);
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::UpdateTLAS);
 }
 
 FD3DW::AccelerationStructureBuffers MeshComponent::GetBLASBuffer() {
@@ -99,7 +166,8 @@ void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData
     cmb.Projection = dx::XMMatrixTranspose(data.Projection);
     cmb.View = dx::XMMatrixTranspose(data.View);
     cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
-    cmb.IsActiveAnimation = false;
+    auto isBoneActive = m_xData.IsBoneActive.lock();
+    cmb.IsActiveAnimation = isBoneActive ? *isBoneActive : false;
     cmb.CameraPosition = data.CameraPosition;
 
     m_pMatricesBuffer->CpyData(0, cmb);

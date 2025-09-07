@@ -10,6 +10,8 @@ namespace FD3DW { class SRV_UAVPacker; }
 
 class IComponent;
 class LightComponent;
+class MeshComponent;
+class AnimationComponent;
 
 class ComponentHolder;
 class TLight;
@@ -17,6 +19,11 @@ class TDirectionalLight;
 class TPointLight;
 class TSpotLight;
 class TRectLight;
+class TMesh;
+class TScene;
+class TSimpleMesh;
+class TBaseCamera;
+class TDefaultCamera;
 
 
 
@@ -44,6 +51,13 @@ private:
 
 
     void DrawEntityInspector(ComponentHolder* entity);
+    void DrawMeshInspector(TMesh* mesh);
+    void DrawSceneInspector(TScene* mesh);
+    void DrawSimpleMeshInspector(TSimpleMesh* mesh);
+
+    void DrawBaseCameraInspector(TBaseCamera* baseCamera);
+    void DrawDefaultCameraInspector(TDefaultCamera* baseCamera);
+
     void DrawLightInspector(TLight* entity);
     void DrawDirectionalLightInspector(TDirectionalLight* entity);
     void DrawPointLightInspector(TPointLight* entity);
@@ -53,14 +67,20 @@ private:
     void DrawComponentInspector(IComponent* comp);
     void DrawLightComponentInspector(LightComponent* entity);
 
+    void DrawMeshComponentInspector(MeshComponent* meshComponent);
+    void DrawAnimationComponentInspector(AnimationComponent* animComponent);
+
     void DrawWorld_AddEntity();
 
     void DrawEditorTab();
-    void DrawEditor_Packaging();  // сохранение/загрузка
-    void DrawEditor_Systems();    // базовый MainRendererComponent — пока пусто
+    void DrawEditor_Packaging();
+
+    void DrawEditor_Systems();
+    void DrawEditor_GlobalRenderSystem();
+    void DrawEditor_ShadowSystem();
 
 
-
+    void TextureBrowser();
     void SkyboxBrowser();
     void SceneBrowser();
     void SaveWorldBrowser();
@@ -77,6 +97,7 @@ private:
     std::string WStringToUTF8(const std::wstring& wstr);
 
 
+    bool EditColor4(const char* label, dx::XMFLOAT4& col);
     bool EditColor3(const char* label, dx::XMFLOAT3& col);
     bool EditFloat2(const char* label, dx::XMFLOAT2& vec, float step = 0.1f);
     bool EditFloat3(const char* label, dx::XMFLOAT3& vec, float step = 0.1f);
@@ -90,6 +111,7 @@ protected:
     std::vector<std::function<void(void)>> m_vCallsAfterRender;
 
 private:
+    ID3D12GraphicsCommandList* m_pCurrentUIList = nullptr;
     std::unique_ptr<UIInputLayer> m_pUILayer = nullptr;
     std::unique_ptr<FD3DW::SRV_UAVPacker> m_pUISRVPack;
     bool m_bIsInited = false;
@@ -102,6 +124,8 @@ private:
     bool m_bShowSkyboxBrowser = false;
     bool m_bShowSceneBrowser = false;
 
+    bool m_bShowTextureBrowser = false;
+    std::function<void(const std::filesystem::path&)> m_onTextureSelected;
 
     bool m_bShowSaveWorldBrowser = false;
     bool m_bShowLoadWorldBrowser = false;

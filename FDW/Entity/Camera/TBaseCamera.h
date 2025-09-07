@@ -34,7 +34,7 @@ protected:
 	virtual void OnComponentRemoved(IComponent* comp) override;
 
 protected:
-	float m_fCameraSpeed = 1000.0f;
+	float m_fCameraSpeed = 100.0f;
 
 	CameraComponent* m_pCameraComponent = nullptr;
 
