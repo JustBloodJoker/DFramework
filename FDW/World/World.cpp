@@ -73,6 +73,10 @@ TScene* World::CreateScene(std::string path) {
 	return CreateEntity<TScene>(path);
 }
 
+TAudio* World::CreateAudio(std::string path) {
+	return CreateEntity<TAudio>(path);
+}
+
 std::vector<ComponentHolder*> World::GetEntities() {
 	std::vector<ComponentHolder*> result;
 	result.reserve(m_vEntities.size());

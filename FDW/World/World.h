@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <Entity/RenderObject/TRender.h>
+#include <Entity/Audio/TAudio.h>
 #include <Entity/Camera/TDefaultCamera.h>
 #include <Entity/Light/TDirectionalLight.h>
 #include <Entity/Light/TPointLight.h>
@@ -41,6 +42,7 @@ public:
     TSimpleSphere* CreateSimpleSphere();
     TSkybox* CreateSkybox(std::string path);
     TScene* CreateScene(std::string path);
+    TAudio* CreateAudio(std::string path);
 
 public:
     std::vector<ComponentHolder*> GetEntities();

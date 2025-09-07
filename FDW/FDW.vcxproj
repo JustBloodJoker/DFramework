@@ -28,6 +28,7 @@
     <ClCompile Include="Component\RenderObject\MeshComponent.cpp" />
     <ClCompile Include="Component\RenderObject\RenderComponent.cpp" />
     <ClCompile Include="Component\RenderObject\SkyboxComponent.cpp" />
+    <ClCompile Include="Entity\Audio\TAudio.cpp" />
     <ClCompile Include="Entity\Camera\DefaultCameraInputLayer.cpp" />
     <ClCompile Include="Entity\Camera\TBaseCamera.cpp" />
     <ClCompile Include="Entity\Camera\TDefaultCamera.cpp" />
@@ -86,6 +87,7 @@
     <ClInclude Include="Component\RenderObject\MeshesIndirectRenderData.h" />
     <ClInclude Include="Component\RenderObject\RenderComponent.h" />
     <ClInclude Include="Component\RenderObject\SkyboxComponent.h" />
+    <ClInclude Include="Entity\Audio\TAudio.h" />
     <ClInclude Include="Entity\Camera\DefaultCameraInputLayer.h" />
     <ClInclude Include="Entity\Camera\TBaseCamera.h" />
     <ClInclude Include="Entity\Camera\TDefaultCamera.h" />

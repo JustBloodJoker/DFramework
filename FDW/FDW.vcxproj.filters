@@ -208,6 +208,9 @@
       <Filter>Component\RenderObject</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Entity\Audio\TAudio.cpp">
+      <Filter>Entity\Audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">
@@ -367,5 +370,8 @@
       <Filter>Component\RenderObject</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Entity\Audio\TAudio.h">
+      <Filter>Entity\Audio</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

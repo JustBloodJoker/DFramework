@@ -23,6 +23,7 @@ void MainRenderer_UIComponent::DrawUI() {
     SkyboxBrowser();
     SceneBrowser();
     TextureBrowser();
+    AudioBrowser();
 }
 
 void MainRenderer_UIComponent::MainWindow() {
@@ -194,6 +195,9 @@ void MainRenderer_UIComponent::DrawEntityInspector(ComponentHolder* entity) {
     }
     else if (auto baseCamera = dynamic_cast<TBaseCamera*>(entity)) {
         DrawBaseCameraInspector(baseCamera);
+    }
+    else if (auto audio = dynamic_cast<TAudio*>(entity)) {
+        DrawAudioInspector(audio);
     }
 }
 
@@ -447,6 +451,30 @@ void MainRenderer_UIComponent::DrawRectLightInspector(TRectLight* entity) {
     }
 }
 
+void MainRenderer_UIComponent::DrawAudioInspector(TAudio* audio) {
+    float volume = audio->GetVolume();
+    if (EditFloat("Volume", volume, 0.01f)) {
+        audio->SetVolume(volume);
+    }
+
+    if (ImGui::Button("Play")) {
+        audio->Play();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        audio->Stop();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Restart")) {
+        audio->Restart();
+    }
+
+    bool loop = audio->IsLoop();
+    if (ImGui::Checkbox("Loop", &loop)) {
+        audio->Loop(loop);
+    }
+}
+
 void MainRenderer_UIComponent::DrawComponentInspector(IComponent* comp) {
     bool active = comp->IsActive();
     if (ImGui::Checkbox("Active", &active)) {
@@ -581,6 +609,30 @@ void MainRenderer_UIComponent::DrawAnimationComponentInspector(AnimationComponen
     }
 }
 
+void MainRenderer_UIComponent::DrawAudioComponentInspector(AudioComponent* audio) {
+    float volume = audio->GetVolume();
+    if (EditFloat("Volume", volume, 0.01f)) {
+        audio->SetVolume(volume);
+    }
+
+    if (ImGui::Button("Play")) {
+        audio->Play();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        audio->Stop();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Restart")) {
+        audio->Restart();
+    }
+
+    bool loop = audio->IsLoop();
+    if (ImGui::Checkbox("Loop", &loop)) {
+        audio->Loop(loop);
+    }
+}
+
 
 
 void MainRenderer_UIComponent::DrawWorld_AddEntity() {
@@ -635,6 +687,10 @@ void MainRenderer_UIComponent::DrawWorld_AddEntity() {
 
     if (ImGui::Button("Scene...")) {
         m_bShowSceneBrowser = true;
+    }
+
+    if (ImGui::Button("Audio...")) {
+        m_bShowAudioBrowser = true;
     }
 }
 
@@ -766,6 +822,23 @@ void MainRenderer_UIComponent::SceneBrowser() {
         },
         [](const std::filesystem::path& path) {
             return "Scene ";
+        }
+    );
+}
+
+void MainRenderer_UIComponent::AudioBrowser() {
+    FileBrowser(
+        m_bShowAudioBrowser,
+        "Audio Browser",
+        m_xCurrentPath,
+        s_vSupportedAudioExts,
+        [this](const std::filesystem::path& path) {
+            AddCallToPull([this, path]() {
+                m_pOwner->GetWorld()->CreateAudio(path.string());
+                });
+        },
+        [](const std::filesystem::path& path) {
+            return "Audio ";
         }
     );
 }

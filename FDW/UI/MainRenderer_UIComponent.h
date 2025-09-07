@@ -12,6 +12,7 @@ class IComponent;
 class LightComponent;
 class MeshComponent;
 class AnimationComponent;
+class AudioComponent;
 
 class ComponentHolder;
 class TLight;
@@ -24,6 +25,7 @@ class TScene;
 class TSimpleMesh;
 class TBaseCamera;
 class TDefaultCamera;
+class TAudio;
 
 
 
@@ -64,11 +66,15 @@ private:
     void DrawSpotLightInspector(TSpotLight* entity);
     void DrawRectLightInspector(TRectLight* entity);
     
+    void DrawAudioInspector(TAudio* audio);
+
     void DrawComponentInspector(IComponent* comp);
     void DrawLightComponentInspector(LightComponent* entity);
 
     void DrawMeshComponentInspector(MeshComponent* meshComponent);
     void DrawAnimationComponentInspector(AnimationComponent* animComponent);
+
+    void DrawAudioComponentInspector(AudioComponent* audio);
 
     void DrawWorld_AddEntity();
 
@@ -83,6 +89,7 @@ private:
     void TextureBrowser();
     void SkyboxBrowser();
     void SceneBrowser();
+    void AudioBrowser();
     void SaveWorldBrowser();
     void LoadWorldBrowser();
 
@@ -123,6 +130,7 @@ private:
 
     bool m_bShowSkyboxBrowser = false;
     bool m_bShowSceneBrowser = false;
+    bool m_bShowAudioBrowser = false;
 
     bool m_bShowTextureBrowser = false;
     std::function<void(const std::filesystem::path&)> m_onTextureSelected;

@@ -26,7 +26,10 @@ void AudioComponent::Stop() {
     }
 }
 void AudioComponent::Restart() { 
-    if (m_pAudio) m_pAudio->Restart(); 
+    if (m_pAudio) {
+        m_pAudio->Restart();
+        Activate(true);
+    }
 }
 
 void AudioComponent::SetVolume(float volume) { 
@@ -49,10 +52,21 @@ void AudioComponent::AudioTick() {
 }
 
 void AudioComponent::Activate(bool a) {
+    auto prevAct = IsActive();
     IComponent::Activate(a);
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::AudioActivationDeactivation);
+
+    if (prevAct == IsActive()) return;
+
+    if (IsActive()) {
+        Play();
+    }
+    else {
+        Stop();
+    }
 }
 
 void AudioComponent::Destroy() {
     Stop();
+    GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::AudioActivationDeactivation);
 }
