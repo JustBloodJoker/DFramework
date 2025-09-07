@@ -83,6 +83,7 @@ private:
 
     void DrawEditor_Systems();
     void DrawEditor_GlobalRenderSystem();
+    void DrawEditor_BloomSystem();
     void DrawEditor_ShadowSystem();
 
 

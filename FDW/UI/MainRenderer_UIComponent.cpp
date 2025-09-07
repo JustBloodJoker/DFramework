@@ -734,6 +734,10 @@ void MainRenderer_UIComponent::DrawEditor_Systems() {
         DrawEditor_ShadowSystem();
         ImGui::TreePop();
     }
+    if (ImGui::TreeNodeEx("Bloom System", ImGuiTreeNodeFlags_DefaultOpen)) {
+        DrawEditor_BloomSystem();
+        ImGui::TreePop();
+    }
 }
 
 void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
@@ -749,6 +753,41 @@ void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
     if (ImGui::Combo("Mesh Culling", &type, items, IM_ARRAYSIZE(items))) {
         m_pOwner->SetMeshCullingType(static_cast<MeshCullingType>(type));
     }
+}
+
+void MainRenderer_UIComponent::DrawEditor_BloomSystem() {
+    bool bloom = m_pOwner->IsEnabledBloom();
+    if (ImGui::Checkbox("Enable Bloom", &bloom)) {
+        m_pOwner->EnableBloom(bloom);
+    }
+
+    if (bloom) {
+        BloomBlurType blurType = m_pOwner->GetBloomBlurType();
+        int blurTypeInt = static_cast<int>(blurType);
+
+        ImGui::Text("Blur Type:");
+        if (ImGui::RadioButton("Horizontal", blurTypeInt == BloomBlurType::Horizontal)) {
+            m_pOwner->SetBloomBlurType(BloomBlurType::Horizontal);
+        }
+        if (ImGui::RadioButton("Vertical", blurTypeInt == BloomBlurType::Vertical)) {
+            m_pOwner->SetBloomBlurType(BloomBlurType::Vertical);
+        }
+        if (ImGui::RadioButton("Both", blurTypeInt == BloomBlurType::Both)) {
+            m_pOwner->SetBloomBlurType(BloomBlurType::Both);
+        }
+
+        ImGui::SeparatorText("Bloom Settings");
+        auto brightPass = m_pOwner->GetBrightPassData();
+        if (ImGui::DragFloat("Threshold", &brightPass.Threshold, 0.01f, 0.0f, 10.0f)) {
+            m_pOwner->SetBrightPassData(brightPass);
+        }
+
+        auto comp = m_pOwner->GetCompositeData();
+        if (ImGui::SliderFloat("Bloom Intensity", &comp.BloomIntensity, 0.0f, 5.0f)) {
+            m_pOwner->SetCompositeData(comp);
+        }
+    }
+
 }
 
 void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {

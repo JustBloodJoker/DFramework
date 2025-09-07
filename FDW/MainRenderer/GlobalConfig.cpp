@@ -191,6 +191,60 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     return desc;
                 }()
             }
+        },
+        {
+            PSOType::BloomEffect_BrightPass,
+            {
+                PSOType::None,
+                L"BrightPass",
+                {},
+                [dsvPostProcessDesc, rasterizerDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.DepthStencilState = dsvPostProcessDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::BloomEffect_GaussianBlurPass,
+            {
+                PSOType::None,
+                L"GaussianBlur",
+                {},
+                [dsvPostProcessDesc, rasterizerDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.DepthStencilState = dsvPostProcessDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::BloomEffect_CompositePass,
+            {
+                PSOType::None,
+                L"CompositeBloom",
+                {},
+                [dsvPostProcessDesc, rasterizerDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.DepthStencilState = dsvPostProcessDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
         }
     };
 

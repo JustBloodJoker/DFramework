@@ -49,7 +49,9 @@ enum class PSOType {
 	CopyDepthToHIZ,
 	ClusteredShading_BuildGridPass,
 	ClusteredShading_LightsToClusteresPass,
-
+	BloomEffect_BrightPass,
+	BloomEffect_GaussianBlurPass,
+	BloomEffect_CompositePass,
 };
 
 struct BasePSODescriptor {
@@ -145,6 +147,21 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define OBJECT_GPU_CULLING_HIZ_RESOURCE_POS_IN_ROOT_SIG						3
 #define OBJECT_GPU_CULLING_UAV_BUFFER_OUTPUT_COMMANDS_POS_IN_ROOT_SIG		4
 /////////////////////////////////////////////
+
+
+////////////////////////////////////////////
+///////		BLOOM EFFECT PASS
+
+#define BLOOM_EFFECT_BRIGHT_PASS_SRV_INPUT_POS_IN_ROOT_SIG			0
+#define BLOOM_EFFECT_BRIGHT_PASS_BRIGHT_CBV_INPUT_POS_IN_ROOT_SIG	1
+
+#define BLOOM_EFFECT_GAUSSIAN_BLUR_BLOOM_SRV_POS_IN_ROOT_SIG		0
+#define BLOOM_EFFECT_GAUSSIAN_BLUR_PARAMS_CBV_POS_IN_ROOT_SIG		1
+
+#define BLOOM_EFFECT_COMPOSITE_PASS_SRV_POS_IN_ROOT_SIG				0
+#define BLOOM_EFFECT_COMPOSITE_PASS_BLUR_SRV_POS_IN_ROOT_SIG		1
+#define BLOOM_EFFECT_COMPOSITE_PASS_CBV_PARAMS_POS_IN_ROOT_SIG		2
+////////////////////////////////////////////
 
 
 ////////////////////////////////////////////

@@ -60,7 +60,7 @@ void MainRenderer::UserInit()
 	
 	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height);
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
-	m_pForwardRenderPassSRVPack = CreateSRVPack(1u);
+	m_pForwardRenderPassSRVPack = CreateSRVPack(2u);
 	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
 	m_pForwardRenderPassSRVPack->PushResource(device, m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 
@@ -200,6 +200,7 @@ void MainRenderer::UserLoop()
 	inSkyboxRenderData.Viewport = m_xSceneViewPort;
 	auto skyboxRenderH = m_pSkyboxRenderSystem->RenderSkyboxPass(shadingPassH, inSkyboxRenderData);
 
+	auto bloomPassH = m_pBloomEffectSystem->ProcessBloomPass(skyboxRenderH);
 
 	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		//////////////////////////
@@ -221,8 +222,8 @@ void MainRenderer::UserLoop()
 
 			ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
 			list->SetDescriptorHeaps(_countof(heaps), heaps);
-
-			list->SetGraphicsRootDescriptorTable(0, m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(0));
+			auto id = m_pBloomEffectSystem->IsEnabledBloom() ? 1 : 0;
+			list->SetGraphicsRootDescriptorTable(0,  m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(id));
 
 
 			list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
@@ -248,7 +249,7 @@ void MainRenderer::UserLoop()
 		}
 	});
 
-	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH });
+	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH, bloomPassH });
 
 	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		PresentSwapchain(); 
@@ -301,6 +302,14 @@ bool MainRenderer::IsEnabledPreDepth() {
 
 void MainRenderer::EnablePreDepth(bool in) {
 	m_bIsEnabledPreDepth = in;
+}
+
+bool MainRenderer::IsEnabledBloom() {
+	return m_pBloomEffectSystem->IsEnabledBloom();
+}
+
+void MainRenderer::EnableBloom(bool b) {
+	m_pBloomEffectSystem->EnableBloom(b);
 }
 
 FLOAT* MainRenderer::GetClearColor(){
@@ -396,6 +405,21 @@ void MainRenderer::SaveActiveWorld(std::string pathTo) {
 	ser.SaveToFile(pathTo);
 }
 
+BloomSystemCompositeData MainRenderer::GetCompositeData() { return m_pBloomEffectSystem->GetCompositeData(); }
+void MainRenderer::SetCompositeData(BloomSystemCompositeData data) { m_pBloomEffectSystem->SetCompositeData(data); }
+
+BloomSystemBrightPassData MainRenderer::GetBrightPassData() { return m_pBloomEffectSystem->GetBrightPassData(); }
+void MainRenderer::SetBrightPassData(BloomSystemBrightPassData data) { m_pBloomEffectSystem->SetBrightPassData(data); }
+
+
+BloomBlurType MainRenderer::GetBloomBlurType() {
+	return m_pBloomEffectSystem->GetBloomBlurType();
+}
+
+void MainRenderer::SetBloomBlurType(BloomBlurType blurType) {
+	m_pBloomEffectSystem->SetBloomBlurType(blurType);
+}
+
 void MainRenderer::CreateTestWorld() {
 	m_pWorld->CreateDefaultCamera();
 	
@@ -468,6 +492,10 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 	m_pSceneAnimationSystem = CreateSystem<SceneAnimationSystem>();
 	m_pRenderMeshesSystem = CreateSystem<RenderMeshesSystem>();
 	m_pSkyboxRenderSystem = CreateSystem<SkyboxRenderSystem>();
+
+	m_pBloomEffectSystem = CreateSystem<BloomEffectSystem>();
+	m_pBloomEffectSystem->SetShadingOutputResourceResultAndRect(m_pForwardRenderPassRTV->GetTexture());
+	m_pForwardRenderPassSRVPack->AddResource(m_pBloomEffectSystem->GetResultResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1, device);
 }
 
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {

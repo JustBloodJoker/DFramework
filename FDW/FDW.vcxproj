@@ -58,6 +58,7 @@
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="MainRenderer\PSOManager.cpp" />
     <ClCompile Include="System\AudioSystem.cpp" />
+    <ClCompile Include="System\BloomEffectSystem.cpp" />
     <ClCompile Include="System\CameraFrustum.cpp" />
     <ClCompile Include="System\CameraSystem.cpp" />
     <ClCompile Include="System\CameraSystemInputLayer.cpp" />
@@ -112,6 +113,8 @@
     <ClInclude Include="MainRenderer\PSOManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="System\AudioSystem.h" />
+    <ClInclude Include="System\BloomEffectSystem.h" />
+    <ClInclude Include="System\BloomSystemConfigs.h" />
     <ClInclude Include="System\CameraFrustum.h" />
     <ClInclude Include="System\CameraSystem.h" />
     <ClInclude Include="System\CameraSystemInputLayer.h" />

@@ -26,7 +26,6 @@ bool TestPointLight(uint lightIndex, Cluster c)
 
 bool TestSpotLight(uint lightIndex, Cluster c)
 {
-    return true;
     float3 center = mul(float4(Lights[lightIndex].Position, 1.0f), ViewMatrix).xyz;
     float radius = Lights[lightIndex].AttenuationRadius;
     return SphereAABBIntersection(center, radius, c.MinPoint.xyz, c.MaxPoint.xyz);

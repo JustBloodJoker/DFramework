@@ -211,6 +211,9 @@
     <ClCompile Include="Entity\Audio\TAudio.cpp">
       <Filter>Entity\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="System\BloomEffectSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">
@@ -372,6 +375,12 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Entity\Audio\TAudio.h">
       <Filter>Entity\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="System\BloomEffectSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\BloomSystemConfigs.h">
+      <Filter>System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

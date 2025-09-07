@@ -49,7 +49,7 @@ float3 HemisphereSample(float2 u)
 float TraceShadowRay(float3 origin, float3 direction, float maxDist)
 {
     RayDesc ray;
-    ray.Origin = origin + direction * 0.01f;
+    ray.Origin = origin + direction * 0.5f;
     ray.Direction = direction;
     ray.TMin = 0.0f;
     ray.TMax = maxDist - 0.01f;

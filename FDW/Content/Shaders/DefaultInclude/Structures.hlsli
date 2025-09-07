@@ -210,4 +210,20 @@ struct ClusterParamsPS {
     float4x4 ViewMatrix;
 };
 
+struct BrightPassData {
+    float Threshold;
+    float3 padd;
+};
+
+struct BlurParams {
+    float2 TexelSize;
+    int Horizontal;   // 1 = horizontal pass, 0 = vertical pass
+    int padd;
+};
+
+struct BloomCompositeData{
+    float BloomIntensity;
+    float3 padd;
+};
+
 #endif

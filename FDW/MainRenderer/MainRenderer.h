@@ -18,6 +18,7 @@
 #include <System/RenderMeshesSystem.h>
 #include <System/RTShadowSystem.h>
 #include <System/SkyboxRenderSystem.h>
+#include <System/BloomEffectSystem.h>
 
 
 class MainRenderer : virtual public FD3DW::D3DFW {
@@ -35,8 +36,9 @@ public:
 	UINT GetFrameIndex();
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
+	bool IsEnabledBloom();
+	void EnableBloom(bool b);
 	FLOAT* GetClearColor();
-
 
 public:
 	World* GetWorld();
@@ -72,6 +74,14 @@ public:
 	//WORLD
 	void LoadWorld(std::string pathTo);
 	void SaveActiveWorld(std::string pathTo);
+
+	//BLOOM
+	BloomSystemCompositeData GetCompositeData();
+	void SetCompositeData(BloomSystemCompositeData data);
+	BloomSystemBrightPassData GetBrightPassData();
+	void SetBrightPassData(BloomSystemBrightPassData data);
+	BloomBlurType GetBloomBlurType();
+	void SetBloomBlurType(BloomBlurType blurType);
 
 protected: //TEST METHODS
 	void CreateTestWorld();
@@ -109,6 +119,7 @@ private:
 	RenderMeshesSystem* m_pRenderMeshesSystem = nullptr;
 	RTShadowSystem* m_pRTShadowSystem = nullptr;
 	SkyboxRenderSystem* m_pSkyboxRenderSystem = nullptr;
+	BloomEffectSystem* m_pBloomEffectSystem = nullptr;
 
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 

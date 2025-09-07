@@ -189,8 +189,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float3 color = Lo * ao + emissive;
 
-    color = color / (color + float3(1.0, 1.0, 1.0));
-
     float shadowFactorRes = LHelper.IsShadowImpl==1 ? shadowFactor : 1.0;
     color *= shadowFactorRes;
 
