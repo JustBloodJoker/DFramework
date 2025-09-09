@@ -20,7 +20,7 @@ Texture2D GBuffer_Position : register(t1);      //x         , y         , z     
 Texture2D GBuffer_Normal : register(t2);        //x         , y         , z                 , empty
 Texture2D GBuffer_Albedo : register(t3);        //r         , g         , b                 , a
 Texture2D GBuffer_Specular : register(t4);      //r         , g         , b                 , specularFactor
-Texture2D GBuffer_Emissive : register(t5);      //r         , g         , b                 , empty
+Texture2D GBuffer_Emissive : register(t5);      //r         , g         , b                 , emissiveFactor
 Texture2D GBuffer_MaterialData : register(t6);  //roughness , metalness , specular power    , AO
 
 Texture2D<float4> LTC_Mat : register(t7);
@@ -185,13 +185,16 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         }
     }
     
-    float3 emissive = GBuffer_Emissive.Sample(ss, uv).rgb;
+    float4 emissiveTexture = GBuffer_Emissive.Sample(ss, uv);
+    float3 emissive = emissiveTexture.rgb;
+    float emissiveFactor = emissiveTexture.w;
 
-    float3 color = Lo * ao + emissive;
+    float3 color = Lo * ao;
 
     float shadowFactorRes = LHelper.IsShadowImpl==1 ? shadowFactor : 1.0;
     color *= shadowFactorRes;
-
+    color += emissive * emissiveFactor;
+    
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);
     return psOut;

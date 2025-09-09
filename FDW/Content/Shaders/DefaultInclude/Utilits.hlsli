@@ -2,7 +2,7 @@
 #define _UTILITS_HLSLI_
 
 #define PI 3.14159265359
-#define NUM_BONES_PER_VEREX 13
+#define NUM_BONES_PER_VEREX 4
 
 void AlphaClipping(float alpha)
 {

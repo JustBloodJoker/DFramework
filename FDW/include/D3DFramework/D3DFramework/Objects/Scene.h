@@ -11,6 +11,8 @@ namespace FD3DW
 		unsigned Index = 0;
 		dx::XMMATRIX Offset = dx::XMMatrixIdentity();
 		std::vector<Bone> Children = {};
+
+		
 	};
 
 	struct BoneTransformations {

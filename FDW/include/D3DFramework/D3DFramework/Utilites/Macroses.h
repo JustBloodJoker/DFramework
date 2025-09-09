@@ -23,7 +23,7 @@
 #endif
 
 #ifndef NUM_BONES_PER_VEREX
-#define NUM_BONES_PER_VEREX 13
+#define NUM_BONES_PER_VEREX 4
 #endif
 
 #define M_PI_2_F 1.5707963f

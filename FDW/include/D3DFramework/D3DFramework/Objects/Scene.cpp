@@ -79,7 +79,6 @@ namespace FD3DW
 		{
 			m_pIndexUploadBuffer.release();
 			m_pVertexUploadBuffer.release();
-			CONSOLE_MESSAGE(std::string("SCENE WITH PATH: " + path + " CLEARING UPLOAD BUFFERS!"));
 		}
 
 		vertices.clear();
@@ -247,7 +246,9 @@ namespace FD3DW
 			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_BUMPSCALING, matDesc.HeightScale)) {
 				matDesc.HeightScale = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
 			}
-
+			if (AI_SUCCESS != scene->mMaterials[i]->Get(AI_MATKEY_EMISSIVE_INTENSITY, matDesc.Emissive.w)) {
+				matDesc.Emissive.w = _DEFAULT_MATERIAL_NOT_LOADED_DATA;
+			}
 
 			m_pMaterialManager->SetMaterialDesc(matDesc);
 			//////////////////////////////////////////////////////////////////////////////////////
@@ -306,9 +307,7 @@ namespace FD3DW
 		/////////////////////////////////////////////////////////////////////////////////////
 
 		if (scene->HasAnimations())
-		{
-			CONSOLE_MESSAGE(std::string("SCENE WITH PATH: " + file + " HAS ANIMATIONS!!!"));
-			
+		{	
 			for (unsigned ind = 0; ind < scene->mNumAnimations; ind++)
 			{
 				auto anim = scene->mAnimations[ind];
@@ -372,7 +371,7 @@ namespace FD3DW
 		m_uBonesCount = bonesMap.size();
 		m_vResultBones.assign(m_uBonesCount, dx::XMMatrixIdentity());
 		ReadSkeleton(m_xMainBone, scene->mRootNode, bonesMap);
-		
+
 		m_xGlobalInverseTransform = ConvertFromAIMatrix4x4(scene->mRootNode->mTransformation);
 
 		importer.FreeScene();

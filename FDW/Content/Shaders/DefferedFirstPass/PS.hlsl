@@ -96,7 +96,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float4 emissive = objMaterials.emissive;
     if (LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION]!=-1)
     {
-        emissive.rgb = GlobalTextures[LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).rgb;
+        emissive.rgb = GlobalTextures[LoadedTexture[TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).rgb * emissive.rgb;
     }
     
     float ao = 1.0f;

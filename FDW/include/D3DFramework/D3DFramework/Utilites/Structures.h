@@ -31,10 +31,4 @@ namespace FD3DW
 		dx::XMMATRIX Projection;
 	};
 
-	struct AnimationParams
-	{
-		std::vector<std::unique_ptr<aiNodeAnim>> Channels;
-		float Duration;
-	};
-
 }

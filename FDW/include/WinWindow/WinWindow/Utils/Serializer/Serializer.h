@@ -23,22 +23,26 @@ IArchive& operator<<(IArchive& ar, T& val) {
     return ar;
 }
 
+namespace registers_Serializer {
 
-using String = std::string;
-static StaticSerializerRegister<String> _reg_serializer_String([](IArchive& ar, void* ptr) {
-    std::string& str = *static_cast<std::string*>(ptr);
-    if (ar.IsOutput()) {
-        uint32_t size = static_cast<uint32_t>(str.size());
-        ar << size;
-        ar.Serialize(str.data(), size);
-    }
-    else {
-        uint32_t size;
-        ar << size;
-        str.resize(size);
-        ar.Serialize(str.data(), size);
-    }
+    using String = std::string;
+    static StaticSerializerRegister<String> _reg_serializer_String([](IArchive& ar, void* ptr) {
+        std::string& str = *static_cast<std::string*>(ptr);
+        if (ar.IsOutput()) {
+            uint32_t size = static_cast<uint32_t>(str.size());
+            ar << size;
+            ar.Serialize(str.data(), size);
+        }
+        else {
+            uint32_t size;
+            ar << size;
+            str.resize(size);
+            ar.Serialize(str.data(), size);
+        }
     });
+
+}
+
 
 template<typename T>
 inline void SerializeAny(IArchive& ar, T& val) {
