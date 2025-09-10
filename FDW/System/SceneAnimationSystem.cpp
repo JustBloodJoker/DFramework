@@ -34,3 +34,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> SceneAnimationSystem::OnStartRenderTick(
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
 }
 
+std::shared_ptr<FD3DW::ExecutionHandle> SceneAnimationSystem::ProcessGPUSkinning(std::shared_ptr<FD3DW::ExecutionHandle> sync)
+{
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
+		for (auto* cmp : m_vActiveAnimations) {
+			cmp->ProcessGPUSkinning(list);
+		}
+	});
+
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
+}
+

@@ -24,25 +24,9 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
     matrix skinMatrix = matrix(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
     if (objMatrices.IsActiveAnimations==1) 
     {
-
-        float totalWeight = 0.0f;
-        for (int i = 0; i < NUM_BONES_PER_VEREX; i++)
-        {
-            uint boneIndex = vsIn.IDs[i];
-            float w = vsIn.Weight[i];
-            if (w > 0.0f)
-            {
-                skinMatrix += boneMatrices[boneIndex] * w;
-                totalWeight += w;
-            }
-        }
-        if (totalWeight == 0.0f)
-        {
-            skinMatrix = matrix(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
-        }
     }
 
-    matrix ResultWorldMatrix = mul(skinMatrix, objMatrices.WorldMatrix);
+    matrix ResultWorldMatrix = objMatrices.WorldMatrix;
 
 
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);

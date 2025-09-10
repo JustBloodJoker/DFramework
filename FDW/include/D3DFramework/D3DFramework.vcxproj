@@ -219,6 +219,7 @@
     <ClInclude Include="D3DFramework\include\d3dx12.h" />
     <ClInclude Include="D3DFramework\Objects\MaterialsManager.h" />
     <ClInclude Include="D3DFramework\Objects\Object.h" />
+    <ClInclude Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.h" />
     <ClInclude Include="D3DFramework\Objects\RTObjectHelper.h" />
     <ClInclude Include="D3DFramework\Objects\Scene.h" />
     <ClInclude Include="D3DFramework\Objects\SimpleObjects.h" />
@@ -259,6 +260,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp" />
     <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp" />
     <ClCompile Include="D3DFramework\Objects\Object.cpp" />
+    <ClCompile Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.cpp" />
     <ClCompile Include="D3DFramework\Objects\RTObjectHelper.cpp" />
     <ClCompile Include="D3DFramework\Objects\Scene.cpp" />
     <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp" />

@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <Entity/RenderObject/TMesh.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 
 
 class TSimpleMesh : public TMesh {
@@ -80,6 +81,8 @@ protected:
 protected:
 	std::map<FD3DW::TextureType, std::string> m_mPathToTextures;
 
+
+    std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>> m_pObjectVBV_IBV;
 	std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> m_pObject = nullptr;
 
 	std::unique_ptr<FD3DW::Material> m_pMaterial = nullptr;

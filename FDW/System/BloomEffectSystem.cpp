@@ -37,6 +37,8 @@ void BloomEffectSystem::AfterConstruction() {
 
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		m_pScreen = std::make_unique<FD3DW::Rectangle>(m_pOwner->GetDevice(), list);
+		m_pSceneVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+		m_pSceneVBV_IBV->Create(m_pOwner->GetDevice(), list, m_pScreen->GetVertices(), m_pScreen->GetIndices());
 	});
 
 	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
@@ -60,8 +62,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std:
 		list->RSSetScissorRects(1, &FD3DW::keep(m_pOwner->GetMainRect()));
 		list->RSSetViewports(1, &FD3DW::keep(m_pOwner->GetMainViewPort()));
 
-		list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-		list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
+		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 		
 		ID3D12DescriptorHeap* heaps[] = { m_pBloomSRVPack->GetResult()->GetDescriptorPtr() };
 		list->SetDescriptorHeaps(_countof(heaps), heaps);

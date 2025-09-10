@@ -36,6 +36,9 @@ void RenderMeshesSystem::ProcessNotify(NRenderSystemNotifyType type) {
 	if (type == NRenderSystemNotifyType::UpdateTLAS) {
 		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
 	}
+	else if (type == NRenderSystemNotifyType::UpdateBLAS) {
+		m_bNeedUpdateBLAS.store(true, std::memory_order_relaxed);
+	}
 	else if (type == NRenderSystemNotifyType::MeshActivationDeactivation) {
 		m_bNeedUpdateMeshesActivationDeactivation.store(true, std::memory_order_relaxed);
 	}
@@ -83,7 +86,20 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {handle});
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartBLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList5>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
+		if (!m_bNeedUpdateBLAS.exchange(false, std::memory_order_acq_rel)) return;
+
+		for (const auto& cmp : m_vActiveMeshComponents) {
+			cmp->UpdateBLASDXR(m_pOwner->GetDXRDevice(), list);
+		}
+		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
+	});
+
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+}
+
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList5>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
 		if (!m_bNeedUpdateTLAS.exchange(false, std::memory_order_acq_rel)) return;
 
@@ -102,7 +118,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 		}
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data) {

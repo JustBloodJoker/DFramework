@@ -52,6 +52,7 @@ enum class PSOType {
 	BloomEffect_BrightPass,
 	BloomEffect_GaussianBlurPass,
 	BloomEffect_CompositePass,
+	GPUSceneSkinning,
 };
 
 struct BasePSODescriptor {
@@ -106,6 +107,17 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define CLUSTERED_SECOND_PASS_SRV_LIGHTS_POS_IN_ROOT_SIG				0
 #define CLUSTERED_SECOND_PASS_UAV_CLUSTERS_POS_IN_ROOT_SIG				1
 #define CLUSTERED_SECOND_PASS_CBV_VIEWP_POS_IN_ROOT_SIG					2
+
+////////////////////////////////////////////
+
+////////////////////////////////////////////
+//   GPU SKINNING PASS
+#define GPU_SKINNING_PASS_BONES_TRANSFORM_INPUT_POS_IN_ROOT_SIG		0
+#define GPU_SKINNING_PASS_VERTICES_SRV_INPUT_POS_IN_ROOT_SIG		1
+#define GPU_SKINNING_PASS_VERTICES_UAV_OUTPUT_POS_IN_ROOT_SIG		2
+#define GPU_SKINNING_PASS_SCENE_CBV_INPUT_POS_IN_ROOT_SIG			3
+
+#define GPU_SKINNING_DISPATCH_X_COUNT					128
 
 ////////////////////////////////////////////
 

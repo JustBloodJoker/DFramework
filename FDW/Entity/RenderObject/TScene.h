@@ -4,6 +4,7 @@
 #include <D3DFramework/Objects/Scene.h>
 #include <Entity/RenderObject/TMesh.h>
 #include <Component/RenderObject/AnimationComponent.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 
 
 class TScene : public TMesh {
@@ -38,6 +39,7 @@ protected:
 
 protected:
 	std::string m_sPath;
+	std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>> m_pObjectVBV_IBV;
 	std::unique_ptr<FD3DW::Scene> m_pScene;
 	
 

@@ -6,6 +6,7 @@
 #include <D3DFramework/GraphicUtilites/RenderTarget.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 #include <System/BloomSystemConfigs.h>
 
 
@@ -48,7 +49,7 @@ protected:
 	std::atomic<bool> m_bIsNeedUpdateCompositeData{ true };
 	std::atomic<bool> m_bIsNeedUpdateBrightPassData{ true };
 
-
+	std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>> m_pSceneVBV_IBV;
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen = nullptr;
 	FD3DW::FResource* InputScreen = nullptr;
 

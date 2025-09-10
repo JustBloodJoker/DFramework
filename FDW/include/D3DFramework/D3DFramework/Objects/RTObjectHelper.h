@@ -46,10 +46,12 @@ namespace FD3DW {
 	AccelerationStructureBuffers CreateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, std::vector<AccelerationStructureBuffers> buffers, dx::XMMATRIX defaultMatrix = dx::XMMatrixIdentity());
 	void UpdateTopLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, AccelerationStructureBuffers& tlasBuffers, const std::vector<std::pair<AccelerationStructureBuffers, dx::XMMATRIX>>& instances);
 	
-	std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj);
-	AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx);
-	std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries);
-	AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, UINT hitGroupIndex);
+	std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize);
+	AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize);
+	std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex, bool isStandaloneGeometries);
+	AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex);
 
-	RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UINT hitGroupIndex, Object* obj);
+	RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex, Object* obj);
+
+	void UpdateBottomLevelAS(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, AccelerationStructureBuffers& blasBuffers, const std::vector<AccelerationStructureInput>& geometries);
 }

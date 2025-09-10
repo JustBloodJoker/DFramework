@@ -448,7 +448,7 @@ namespace FD3DW
             {
                 pCommandList->ResourceBarrier(numBarriers, barriers.data());
             }
-            UINT dstWidth = std::max<UINT>(desc.Width >> (topMip + 1), 1u);
+            UINT dstWidth = std::max<UINT>((UINT)desc.Width >> (topMip + 1), 1u);
             UINT dstHeight = std::max<UINT>(desc.Height >> (topMip + 1), 1u);
             float texelSize[2] = { 1.0f / dstWidth, 1.0f / dstHeight };
 

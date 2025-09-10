@@ -156,6 +156,9 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h">
       <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -256,6 +259,9 @@
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.cpp">
       <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.cpp">
+      <Filter>D3DFramework\Objects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

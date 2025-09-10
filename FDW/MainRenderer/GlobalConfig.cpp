@@ -314,6 +314,14 @@ const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptor
                 L"ClusteredShading_BuildGridPass",
                 { }
             }
+        },
+        {
+            PSOType::GPUSceneSkinning,
+            {
+                PSOType::None,
+                L"GPUSceneSkinning",
+                { }
+            }
         }
     };
     return descriptors;

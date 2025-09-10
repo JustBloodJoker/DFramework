@@ -1,10 +1,13 @@
 #include <Entity/RenderObject/TSimpleMesh.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <World/World.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 
 void TSimpleMesh::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	CallCreationObject(device, list);
 	
+
+
 	MeshComponentMaterialData MaterialCBufferData;
 	MaterialCBufferData.Diffuse = { 0.8f, 0.8f, 0.8f, 1.0f };
 	MaterialCBufferData.Ambient = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -33,11 +36,11 @@ void TSimpleMesh::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12Grap
 	MeshComponentCreationData data;
 	data.BoneBuffer = nullptr;
 	data.ID = 0;
-	data.IndexBuffer = m_pObject->GetIndexBuffer();
-	data.IndexBufferView = m_pObject->GetIndexBufferView();
-	data.VertexBuffer = m_pObject->GetVertexBuffer();
-	data.VertexBufferView = m_pObject->GetVertexBufferView();
-	data.VertexStructSize = (UINT)m_pObject->GetVertexStructSize();
+	data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+	data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+	data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+	data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
+	data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
 	data.MaterialCBufferData = MaterialCBufferData;
 	data.ObjectDescriptor = m_pObject->GetObjectParameters(0);
 	
@@ -71,11 +74,11 @@ void TSimpleMesh::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12Graphics
 	}
 
 	data.BoneBuffer = nullptr;
-	data.IndexBuffer = m_pObject->GetIndexBuffer();
-	data.IndexBufferView = m_pObject->GetIndexBufferView();
-	data.VertexBuffer = m_pObject->GetVertexBuffer();
-	data.VertexBufferView = m_pObject->GetVertexBufferView();
-	data.VertexStructSize = (UINT)m_pObject->GetVertexStructSize();
+	data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+	data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+	data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+	data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
+	data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
 	data.ObjectDescriptor = m_pObject->GetObjectParameters(0);
 
 
@@ -123,6 +126,9 @@ D3D12_GPU_DESCRIPTOR_HANDLE TSimpleMesh::GetTextureSRV(FD3DW::TextureType type) 
 
 void TSimpleMesh::CallCreationObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pObject = CreateSimpleObject(device, list);
+
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>>();
+	m_pObjectVBV_IBV->Create(device, list, m_pObject->GetVertices(), m_pObject->GetIndices());
 
 	m_pMaterial = std::make_unique<FD3DW::Material>();
 }

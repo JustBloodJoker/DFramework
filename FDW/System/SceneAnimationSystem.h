@@ -14,6 +14,7 @@ public:
 
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync);
+	virtual std::shared_ptr<FD3DW::ExecutionHandle> ProcessGPUSkinning(std::shared_ptr<FD3DW::ExecutionHandle> sync);
 
 protected:
 	std::atomic<bool> m_bIsNeedUpdateActiveAnimations{ true };

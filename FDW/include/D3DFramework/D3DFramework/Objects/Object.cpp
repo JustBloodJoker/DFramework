@@ -9,32 +9,10 @@ namespace FD3DW
 
 	Object::Object() : m_pMaterialManager(std::make_unique<MaterialsManager>())
 	{
-		ZeroMemory(&m_pVertexBufferView, sizeof(m_pVertexBufferView));
-		ZeroMemory(&m_pIndexBufferView, sizeof(m_pIndexBufferView));
 	}
 
 	Object::~Object()
 	{
-	}
-
-	ID3D12Resource* Object::GetVertexBuffer() const
-	{
-		return m_pVertexBuffer.Get();
-	}
-
-	ID3D12Resource* Object::GetIndexBuffer() const
-	{
-		return m_pIndexBuffer.Get();
-	}
-
-	D3D12_VERTEX_BUFFER_VIEW* Object::GetVertexBufferView() const
-	{
-		return m_pVertexBufferView.get();
-	}
-
-	D3D12_INDEX_BUFFER_VIEW* Object::GetIndexBufferView() const
-	{
-		return m_pIndexBufferView.get();
 	}
 
 	size_t Object::GetObjectBuffersCount() const

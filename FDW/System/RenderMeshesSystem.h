@@ -45,7 +45,8 @@ public:
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 	
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
-	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTLASCall(std::shared_ptr<FD3DW::ExecutionHandle> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnStartBLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTLASCall(std::vector < std::shared_ptr<FD3DW::ExecutionHandle>> handle);
 	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data);
 	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data);
 	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data);
@@ -57,6 +58,7 @@ public:
 
 protected:
 	std::atomic<bool> m_bNeedUpdateTLAS{ true };
+	std::atomic<bool> m_bNeedUpdateBLAS{ true };
 	std::atomic<bool> m_bNeedUpdateMeshesActivationDeactivation{ true };
 
 	MeshCullingType m_xMeshCullingType = MeshCullingType::None;

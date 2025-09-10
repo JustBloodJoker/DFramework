@@ -53,10 +53,11 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::RenderSkyboxPass(std
 		PSOManager::GetInstance()->GetPSOObject(PSOType::SimpleSkyboxDefaultConfig)->Bind(list);
 
 		auto cube = m_pActiveComponent->Cube();
+		auto cubeRenderData = m_pActiveComponent->CubeVBV_IBV();
 		auto srvPack = m_pActiveComponent->SRVPack();
 
-		list->IASetVertexBuffers(0, 1, cube->GetVertexBufferView());
-		list->IASetIndexBuffer(cube->GetIndexBufferView());
+		list->IASetVertexBuffers(0, 1, cubeRenderData->GetVertexBufferView());
+		list->IASetIndexBuffer(cubeRenderData->GetIndexBufferView());
 
 		list->SetGraphicsRootConstantBufferView(0, m_pMatricesBuffer->GetGPULocation(0));
 

@@ -191,23 +191,13 @@ void MeshComponent::RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* 
 }
 
 void MeshComponent::RenderInitDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
-    auto objVectexBuffer = m_xData.VertexBuffer;
-    auto objIndexBuffer = m_xData.IndexBuffer;
-
-    FD3DW::AccelerationStructureInput geometry;
-    geometry.indexBuffer = objIndexBuffer;
-    geometry.vertexBuffer = objVectexBuffer;
-    geometry.indexCount = m_xData.ObjectDescriptor.IndicesCount;
-    geometry.indexFormat = DEFAULT_INDEX_BUFFER_FORMAT;
-    geometry.indexOffset = m_xData.ObjectDescriptor.IndicesOffset;
-    geometry.indexStride = FD3DW::GetFormatSizeInBytes(DEFAULT_INDEX_BUFFER_FORMAT);
-    geometry.vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
-    geometry.vertexCount = m_xData.ObjectDescriptor.VerticesCount;
-    geometry.vertexOffset = m_xData.ObjectDescriptor.VerticesOffset;
-    geometry.vertexStride = (UINT)m_xData.VertexStructSize;
-
+    auto geometry = GenerateGeometry();
     m_xBLASBuffer = FD3DW::CreateBottomLevelAS(device, list, { geometry }, BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX, false).front();
+}
 
+void MeshComponent::UpdateBLASDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
+    auto geometry = GenerateGeometry();
+    FD3DW::UpdateBottomLevelAS(device, list, m_xBLASBuffer, { geometry });
 }
 
 void MeshComponent::OnEndRenderTick(ID3D12GraphicsCommandList* list) {}
@@ -275,4 +265,19 @@ std::pair<dx::XMFLOAT3, dx::XMFLOAT3> MeshComponent::GetBoundingBoxFromObjectDes
     ret.first = worldMin;
     ret.second = worldMax;
     return ret;
+}
+
+FD3DW::AccelerationStructureInput MeshComponent::GenerateGeometry() {
+    FD3DW::AccelerationStructureInput geometry;
+    geometry.indexBuffer = m_xData.IndexBuffer;
+    geometry.vertexBuffer = m_xData.VertexBuffer;
+    geometry.indexCount = m_xData.ObjectDescriptor.IndicesCount;
+    geometry.indexFormat = DEFAULT_INDEX_BUFFER_FORMAT;
+    geometry.indexOffset = m_xData.ObjectDescriptor.IndicesOffset;
+    geometry.indexStride = FD3DW::GetFormatSizeInBytes(DEFAULT_INDEX_BUFFER_FORMAT);
+    geometry.vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
+    geometry.vertexCount = m_xData.ObjectDescriptor.VerticesCount;
+    geometry.vertexOffset = m_xData.ObjectDescriptor.VerticesOffset;
+    geometry.vertexStride = (UINT)m_xData.VertexStructSize;
+    return geometry;
 }

@@ -59,7 +59,7 @@ void TScene::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsC
 	AnimationComponent* animCmp = nullptr;
 	if ( !m_pScene->GetAnimations().empty() ) {
 		animCmp = AddComponent<AnimationComponent>();
-		animCmp->SetScene(device, m_pScene.get());
+		animCmp->SetScene(device, list, m_pScene.get(), m_pObjectVBV_IBV.get());
 	}
 
 	std::vector<MeshComponentMaterialData> meshMaterialStructures;
@@ -95,11 +95,11 @@ void TScene::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsC
 		data.ID = ind;
 		data.BoneBuffer = animCmp ? animCmp->GetResource() : nullptr;
 		if(animCmp) data.IsBoneActive = animCmp->IsBonesActive();
-		data.IndexBuffer = m_pScene->GetIndexBuffer();
-		data.VertexBuffer = m_pScene->GetVertexBuffer();
-		data.VertexStructSize = (UINT)m_pScene->GetVertexStructSize();
-		data.IndexBufferView = m_pScene->GetIndexBufferView();
-		data.VertexBufferView = m_pScene->GetVertexBufferView();
+		data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+		data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+		data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
+		data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+		data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
 		
 		auto cmp = AddComponent<MeshComponent>();
 		cmp->SetCreationData(data);
@@ -113,7 +113,7 @@ void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsComma
 
 	AnimationComponent* animCmp = GetComponent<AnimationComponent>();
 	if (!m_pScene->GetAnimations().empty() && animCmp) {
-		animCmp->SetScene(device, m_pScene.get());
+		animCmp->SetScene(device, list, m_pScene.get(), m_pObjectVBV_IBV.get());
 	}
 
 	std::vector<MeshComponentMaterialData> meshMaterialStructures;
@@ -146,11 +146,11 @@ void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsComma
 		data.ObjectDescriptor = m_pScene->GetObjectParameters(data.ID);
 		auto matIndex = (UINT)data.ObjectDescriptor.MaterialIndex;
 		data.MaterialCBufferData = meshMaterialStructures[matIndex];
-		data.IndexBuffer = m_pScene->GetIndexBuffer();
-		data.VertexBuffer = m_pScene->GetVertexBuffer();
-		data.VertexStructSize = (UINT)m_pScene->GetVertexStructSize();
-		data.IndexBufferView = m_pScene->GetIndexBufferView();
-		data.VertexBufferView = m_pScene->GetVertexBufferView();
+		data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+		data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+		data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
+		data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+		data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
 
 		meshCmp->SetCreationData(data);
 	}
@@ -158,6 +158,9 @@ void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsComma
 
 void TScene::CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
+
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>>();
+	m_pObjectVBV_IBV->Create(device, list, m_pScene->GetVertices(), m_pScene->GetIndices());
 }
 
 AnimationComponent* TScene::GetAnimationComponent() {

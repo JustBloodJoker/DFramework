@@ -66,6 +66,9 @@ void MainRenderer::UserInit()
 
 	auto rtvRectangleCreation = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		m_pScreen = CreateRectangle(list);
+		m_pSceneVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+		m_pSceneVBV_IBV->Create(GetDevice(), list, m_pScreen->GetVertices(), m_pScreen->GetIndices());
+		
 	});
 	GlobalRenderThreadManager::GetInstance()->Submit(rtvRectangleCreation);
 
@@ -111,12 +114,14 @@ void MainRenderer::UserLoop()
 
 	auto animationH = m_pSceneAnimationSystem->OnStartRenderTick(sync);
 
+	auto animationGpuSkinningH = m_pSceneAnimationSystem->ProcessGPUSkinning(animationH);
+
 	std::shared_ptr<FD3DW::ExecutionHandle> rtShadowsH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
 
 	if (IsRTSupported()) {
-
-		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall(meshH);
+		auto blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
+		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ meshH });
 
 		rtShadowsH = m_pRTShadowSystem->OnStartRenderTick(cameraH);
 	}
@@ -150,7 +155,7 @@ void MainRenderer::UserLoop()
 	inIndirectData.RTV_CPU = m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0);
 	inIndirectData.Rect = m_xSceneRect;
 	inIndirectData.Viewport = m_xSceneViewPort;
-	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, preDepthH, cameraH}, inIndirectData);
+	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, preDepthH, cameraH, animationGpuSkinningH }, inIndirectData);
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> renderRTShadows = nullptr;
@@ -172,8 +177,8 @@ void MainRenderer::UserLoop()
 
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
-		list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-		list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
+		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
 		ID3D12DescriptorHeap* heaps[] = { m_pGBuffersSRVPack->GetResult()->GetDescriptorPtr() };
 		list->SetDescriptorHeaps(_countof(heaps), heaps);
@@ -217,8 +222,8 @@ void MainRenderer::UserLoop()
 
 			PSOManager::GetInstance()->GetPSOObject(PSOType::PostProcessDefaultConfig)->Bind(list);
 
-			list->IASetVertexBuffers(0, 1, m_pScreen->GetVertexBufferView());
-			list->IASetIndexBuffer(m_pScreen->GetIndexBufferView());
+			list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
+			list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
 			ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
 			list->SetDescriptorHeaps(_countof(heaps), heaps);

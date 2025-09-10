@@ -35,7 +35,7 @@ namespace FD3DW {
                 input.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
                 input.NumDescs = 1;
                 input.pGeometryDescs = &geom;
-                input.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+                input.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
                 inputs.push_back(input);
 
             }
@@ -48,7 +48,7 @@ namespace FD3DW {
             input.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
             input.NumDescs = static_cast<UINT>(geometryDescs.size());
             input.pGeometryDescs = geometryDescs.data();
-            input.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE;
+            input.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
             inputs.push_back(input);
         }
 
@@ -240,27 +240,27 @@ namespace FD3DW {
     }
 
 
-    std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj)
+    std::vector<AccelerationStructureInput> CreateGeometriesForObject(Object* obj, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize)
     {
         std::vector<AccelerationStructureInput> ret;
 
-        auto objVectexBuffer = obj->GetVertexBuffer();
-        auto objIndexBuffer = obj->GetIndexBuffer();
+        auto objVectexBuffer = vb;
+        auto objIndexBuffer = ib;
 
         auto count = obj->GetObjectBuffersCount();
         ret.resize(count);
 
         for (auto i = 0; i < count; ++i) {
-            ret[i] = CreateGeometryForObject(obj, i);
+            ret[i] = CreateGeometryForObject(obj, i, vb, ib, strideSize);
         }
 
         return ret;
     }
 
-    AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx)
+    AccelerationStructureInput CreateGeometryForObject(Object* obj, UINT objDataIdx, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize)
     {
-        auto objVectexBuffer = obj->GetVertexBuffer();
-        auto objIndexBuffer = obj->GetIndexBuffer();
+        auto objVectexBuffer = vb;
+        auto objIndexBuffer = ib;
 
         AccelerationStructureInput ret;
         ret.indexBuffer = objIndexBuffer;
@@ -273,29 +273,29 @@ namespace FD3DW {
         ret.vertexFormat = DEFAULT_RT_VERTEX_BUFFER_FORMAT;
         ret.vertexCount = params.VerticesCount;
         ret.vertexOffset = params.VerticesOffset;
-        ret.vertexStride = (UINT)obj->GetVertexStructSize();
+        ret.vertexStride = strideSize;
         return ret;
     }
 
-    AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, UINT hitGroupIndex) {
-        auto geometry = CreateGeometryForObject(obj, objectParamsIndex);
+    AccelerationStructureBuffers CreateBLASForObjectInIndex(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT objectParamsIndex, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex) {
+        auto geometry = CreateGeometryForObject(obj, objectParamsIndex, vb, ib, strideSize);
 
         return CreateBottomLevelAS(device, cmdList, { geometry }, hitGroupIndex, false).front();
     }
 
 
 
-    std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, UINT hitGroupIndex, bool isStandaloneGeometries)
+    std::vector<AccelerationStructureBuffers> CreateBLASForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, Object* obj, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex, bool isStandaloneGeometries)
     {
-        auto geometries = CreateGeometriesForObject(obj);
+        auto geometries = CreateGeometriesForObject(obj, vb, ib, strideSize);
 
         return CreateBottomLevelAS(device, cmdList, geometries, hitGroupIndex, isStandaloneGeometries);
     }
 
-    RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, UINT hitGroupIndex, Object* obj)
+    RTObjectData CreateRTDataForObject(ID3D12Device5* device, ID3D12GraphicsCommandList4* cmdList, ID3D12Resource* vb, ID3D12Resource* ib, UINT strideSize, UINT hitGroupIndex, Object* obj)
     {
         RTObjectData data;
-        auto blas = CreateBLASForObject(device, cmdList, obj, hitGroupIndex,true);
+        auto blas = CreateBLASForObject(device, cmdList, obj, vb, ib, strideSize, hitGroupIndex,true);
         data.BLASBuffers = blas;
         data.Transforms.resize(blas.size(), dx::XMMatrixIdentity());
 
@@ -320,4 +320,56 @@ namespace FD3DW {
     {
         UpdateTopLevelAS(device, list, TLASBuffers, GetInstances());
     }
+
+
+    void UpdateBottomLevelAS(
+        ID3D12Device5* device,
+        ID3D12GraphicsCommandList4* cmdList,
+        AccelerationStructureBuffers& blasBuffers,
+        const std::vector<AccelerationStructureInput>& geometries)
+    {
+        std::vector<D3D12_RAYTRACING_GEOMETRY_DESC> geometryDescs;
+        geometryDescs.reserve(geometries.size());
+        for (const auto& geom : geometries) {
+            D3D12_RAYTRACING_GEOMETRY_DESC desc = {};
+            desc.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES;
+            desc.Flags = geom.flags;
+
+            desc.Triangles.VertexBuffer.StartAddress =
+                geom.vertexBuffer->GetGPUVirtualAddress() + geom.vertexOffset * geom.vertexStride;
+            desc.Triangles.VertexBuffer.StrideInBytes = geom.vertexStride;
+            desc.Triangles.VertexCount = geom.vertexCount;
+            desc.Triangles.VertexFormat = geom.vertexFormat;
+
+            desc.Triangles.IndexBuffer =
+                geom.indexBuffer->GetGPUVirtualAddress() + geom.indexOffset * geom.indexStride;
+            desc.Triangles.IndexCount = geom.indexCount;
+            desc.Triangles.IndexFormat = geom.indexFormat;
+
+            geometryDescs.push_back(desc);
+        }
+
+        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS inputs = {};
+        inputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL;
+        inputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
+        inputs.NumDescs = static_cast<UINT>(geometryDescs.size());
+        inputs.pGeometryDescs = geometryDescs.data();
+        inputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE |
+            D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
+
+        D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC buildDesc = {};
+        buildDesc.Inputs = inputs;
+        buildDesc.DestAccelerationStructureData = blasBuffers.pResult->GetGPUVirtualAddress();
+        buildDesc.SourceAccelerationStructureData = blasBuffers.pResult->GetGPUVirtualAddress(); 
+        buildDesc.ScratchAccelerationStructureData = blasBuffers.pScratch->GetGPUVirtualAddress();
+
+        cmdList->BuildRaytracingAccelerationStructure(&buildDesc, 0, nullptr);
+
+        D3D12_RESOURCE_BARRIER uavBarrier = {};
+        uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+        uavBarrier.UAV.pResource = blasBuffers.pResult.Get();
+        cmdList->ResourceBarrier(1, &uavBarrier);
+    }
+
+
 }

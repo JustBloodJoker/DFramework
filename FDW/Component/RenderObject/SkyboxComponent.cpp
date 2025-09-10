@@ -18,6 +18,8 @@ void SkyboxComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputDa
 
 void SkyboxComponent::RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pCube = std::make_unique<FD3DW::Cube>(device, list);
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+	m_pObjectVBV_IBV->Create(device, list, m_pCube->GetVertices(), m_pCube->GetIndices());
 
 	auto cbvsrvuavsize = GetCBV_SRV_UAVDescriptorSize(device);
 
@@ -52,5 +54,7 @@ FD3DW::SRV_UAVPacker* SkyboxComponent::SRVPack() const { return m_pSRVPack.get()
 FD3DW::Material* SkyboxComponent::Material() const { return m_pMaterial.get(); }
 
 FD3DW::Cube* SkyboxComponent::Cube() const { return m_pCube.get(); }
+
+FD3DW::IObjectVertexIndexDataCreator* SkyboxComponent::CubeVBV_IBV() const { return m_pObjectVBV_IBV.get(); }
 
 FD3DW::MatricesConstantBufferStructureFrameWork SkyboxComponent::MatricesData() { return m_xMatricesData; }

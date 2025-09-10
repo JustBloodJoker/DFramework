@@ -4,8 +4,6 @@
 
 namespace FD3DW
 {
-	static std::vector<SceneVertexFrameWork> vertices;
-	static std::vector<std::uint32_t> indices;
 
 	Scene::Scene(std::string path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
@@ -52,39 +50,20 @@ namespace FD3DW
 		return m_sPath;
 	}
 
-	size_t Scene::GetVertexStructSize() const
+	const std::vector<SceneVertexFrameWork>& Scene::GetVertices()
 	{
-		return sizeof(SceneVertexFrameWork);
+		auto data = m_vVertices.data();
+		return m_vVertices;
+	}
+
+	const std::vector<uint32_t>& Scene::GetIndices()
+	{
+		return m_vIndices;
 	}
 
 	void Scene::InitScene(std::string& path, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, bool neverUpdate)
 	{
 		ParseScene(path, pDevice, pCommandList);
-
-		BufferManager::CreateDefaultBuffer(pDevice, pCommandList, vertices.data(), (UINT)vertices.size(), m_pVertexBuffer, m_pVertexUploadBuffer);
-
-		m_pVertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
-		m_pVertexBufferView->BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
-		m_pVertexBufferView->SizeInBytes =(UINT)(vertices.size() * sizeof(SceneVertexFrameWork));
-		m_pVertexBufferView->StrideInBytes = sizeof(SceneVertexFrameWork);
-
-		BufferManager::CreateDefaultBuffer(pDevice, pCommandList, indices.data(), (UINT)indices.size(), m_pIndexBuffer, m_pIndexUploadBuffer);
-
-		m_pIndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
-		m_pIndexBufferView->BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
-		m_pIndexBufferView->Format =  DEFAULT_INDEX_BUFFER_FORMAT;
-		m_pIndexBufferView->SizeInBytes = (UINT)(indices.size() * sizeof(decltype(indices[0])));
-
-		if (neverUpdate)
-		{
-			m_pIndexUploadBuffer.release();
-			m_pVertexUploadBuffer.release();
-		}
-
-		vertices.clear();
-		vertices.shrink_to_fit();
-		indices.clear();
-		indices.shrink_to_fit();
 	}
 
 	void Scene::ParseScene(std::string& file, ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
@@ -111,7 +90,7 @@ namespace FD3DW
 			const aiMesh* mesh = scene->mMeshes[i];
 			
 			offsetVertices += verticesSize;
-			vertices.insert(vertices.end(), mesh->mNumVertices, SceneVertexFrameWork());
+			m_vVertices.insert(m_vVertices.end(), mesh->mNumVertices, SceneVertexFrameWork());
 
 			dx::XMFLOAT3 objectMin(FLT_MAX, FLT_MAX, FLT_MAX);
 			dx::XMFLOAT3 objectMax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
@@ -119,7 +98,7 @@ namespace FD3DW
 			for (size_t j = 0; j < mesh->mNumVertices; j++)
 			{
 
-				auto& v = vertices[j + offsetVertices];
+				auto& v = m_vVertices[j + offsetVertices];
 				v.Pos.x = mesh->mVertices[j].x;
 				v.Pos.y = mesh->mVertices[j].y;
 				v.Pos.z = mesh->mVertices[j].z;
@@ -157,13 +136,13 @@ namespace FD3DW
 				}
 
 			}
-			verticesSize = vertices.size() - offsetVertices;
+			verticesSize = m_vVertices.size() - offsetVertices;
 			indicesSize = mesh->mNumFaces * 3;
 			for (size_t j = 0; j < mesh->mNumFaces; j++)
 			{
-				indices.push_back(mesh->mFaces[j].mIndices[0]);
-				indices.push_back(mesh->mFaces[j].mIndices[1]);
-				indices.push_back(mesh->mFaces[j].mIndices[2]);
+				m_vIndices.push_back(mesh->mFaces[j].mIndices[0]);
+				m_vIndices.push_back(mesh->mFaces[j].mIndices[1]);
+				m_vIndices.push_back(mesh->mFaces[j].mIndices[2]);
 			}
 			
 			if (mesh->HasBones())
@@ -182,13 +161,13 @@ namespace FD3DW
 					{
 						auto& currvertexWeightIndex = weightsCurrIndex[bone->mWeights[j].mVertexId];
 						if (bone->mWeights[j].mWeight == 0.0f || currvertexWeightIndex >= NUM_BONES_PER_VEREX) continue;
-						vertices[bone->mWeights[j].mVertexId + offsetVertices].IDs[currvertexWeightIndex] = ind;
-						vertices[bone->mWeights[j].mVertexId + offsetVertices].Weights[currvertexWeightIndex++] = bone->mWeights[j].mWeight;
+						m_vVertices[bone->mWeights[j].mVertexId + offsetVertices].IDs[currvertexWeightIndex] = ind;
+						m_vVertices[bone->mWeights[j].mVertexId + offsetVertices].Weights[currvertexWeightIndex++] = bone->mWeights[j].mWeight;
 					}
 				}
 			}
 
-			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(indices.size() - indicesSize), UINT(mesh->mMaterialIndex),objectMin,objectMax });
+			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(m_vIndices.size() - indicesSize), UINT(mesh->mMaterialIndex),objectMin,objectMax });
 		}
 
 		for (size_t i = 0; i < scene->mNumMaterials; i++)
@@ -351,7 +330,7 @@ namespace FD3DW
 			}
 		}
 
-		for (auto& el : vertices)
+		for (auto& el : m_vVertices)
 		{
 			float totalWeight = 0;
 			for (unsigned ind = 0; ind < NUM_BONES_PER_VEREX; ind++)

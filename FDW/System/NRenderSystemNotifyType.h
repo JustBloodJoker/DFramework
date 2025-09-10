@@ -9,6 +9,7 @@ enum class NRenderSystemNotifyType {
 	SkyboxActivationDeactivation,
 	SceneAnimationActivationDeactivation,
 	UpdateTLAS,
+	UpdateBLAS,
 	MeshActivationDeactivation,
 
 

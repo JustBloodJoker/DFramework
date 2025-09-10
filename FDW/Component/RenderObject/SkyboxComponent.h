@@ -3,6 +3,7 @@
 #include <pch.h>
 #include <Component/RenderObject/RenderComponent.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 
 class SkyboxComponent : public RenderComponent {
@@ -34,6 +35,7 @@ public:
 	FD3DW::SRV_UAVPacker* SRVPack() const;
 	FD3DW::Material* Material() const;
 	FD3DW::Cube* Cube() const;
+	FD3DW::IObjectVertexIndexDataCreator* CubeVBV_IBV() const;
 	FD3DW::MatricesConstantBufferStructureFrameWork MatricesData();
 
 protected:
@@ -42,5 +44,6 @@ protected:
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pSRVPack;
 	std::unique_ptr<FD3DW::Material> m_pMaterial;
 	std::unique_ptr<FD3DW::Cube> m_pCube;
+	std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>> m_pObjectVBV_IBV;
 
 };

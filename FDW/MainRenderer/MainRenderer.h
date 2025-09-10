@@ -8,6 +8,7 @@
 #include <MainRenderer/GlobalRenderThreadManager.h>
 
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
+#include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 
 #include <World/World.h>
 #include <System/AudioSystem.h>
@@ -166,6 +167,7 @@ protected:
 
 	D3D12_VIEWPORT m_xSceneViewPort;
 	D3D12_RECT m_xSceneRect;
+	std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>> m_pSceneVBV_IBV;
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
 	
 };

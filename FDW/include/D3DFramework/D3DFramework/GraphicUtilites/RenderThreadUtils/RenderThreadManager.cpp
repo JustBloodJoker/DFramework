@@ -73,6 +73,7 @@ namespace FD3DW {
         m_xRenderThread.PostTask([recipe, batch, this, dependencies]() {
             auto* q = PickCommandQueue(recipe->GetType());
             auto* pool = m_mPools[recipe->GetType()].get();
+            
 
             auto list = pool->BuildFromRecipe(recipe);
             batch->Lists.push_back(std::move(list));
