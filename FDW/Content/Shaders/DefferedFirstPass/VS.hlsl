@@ -10,8 +10,6 @@ struct ANIMVERTEX_INPUT
     float2 texCoord : TEXCOORD;
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
-    uint IDs[NUM_BONES_PER_VEREX] : IDS_BONES;
-    float Weight[NUM_BONES_PER_VEREX] : WEIGHT_BONES;
 };
 
 ConstantBuffer<MeshMatrices> objMatrices : register(b0);
@@ -21,14 +19,7 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 {
     VERTEX_OUTPUT vsOut;
     
-    matrix skinMatrix = matrix(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
-    if (objMatrices.IsActiveAnimations==1) 
-    {
-    }
-
     matrix ResultWorldMatrix = objMatrices.WorldMatrix;
-
-
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
     vsOut.worldPos = vsOut.pos.xyz;
     vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);

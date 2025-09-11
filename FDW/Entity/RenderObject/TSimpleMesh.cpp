@@ -127,7 +127,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE TSimpleMesh::GetTextureSRV(FD3DW::TextureType type) 
 void TSimpleMesh::CallCreationObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pObject = CreateSimpleObject(device, list);
 
-	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>>();
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
 	m_pObjectVBV_IBV->Create(device, list, m_pObject->GetVertices(), m_pObject->GetIndices());
 
 	m_pMaterial = std::make_unique<FD3DW::Material>();

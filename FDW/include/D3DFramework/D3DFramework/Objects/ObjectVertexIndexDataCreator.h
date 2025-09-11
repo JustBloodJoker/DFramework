@@ -45,6 +45,18 @@ public:
         }
     }
 
+    template<typename TInVertex, typename Converter>
+    void CreateWithConverter(ID3D12Device* pDevice,ID3D12GraphicsCommandList* pCommandList,const std::vector<TInVertex>& inVertices,const std::vector<TIndex>& indices,Converter&& converter, bool neverUpdate = false)
+    {
+        std::vector<TVertex> converted;
+        converted.reserve(inVertices.size());
+        for (auto& v : inVertices) {
+            converted.push_back(converter(v));
+        }
+
+        Create(pDevice, pCommandList, converted, indices, neverUpdate);
+    }
+
     UINT GetVertexStructSize() override { return sizeof(TVertex); }
     ID3D12Resource* GetVertexBufferResource() override { return VertexBufferResource.Get(); }
     ID3D12Resource* GetIndexBufferResource() override { return IndexBufferResource.Get(); }
@@ -55,8 +67,8 @@ protected:
     wrl::ComPtr<ID3D12Resource> VertexBufferResource;
     wrl::ComPtr<ID3D12Resource> IndexBufferResource;
 
-    std::unique_ptr<FD3DW::UploadBuffer<FD3DW::SceneVertexFrameWork>> VertexUploadBuffer;
-    std::unique_ptr<FD3DW::UploadBuffer<std::uint32_t>> IndexUploadBuffer;
+    std::unique_ptr<FD3DW::UploadBuffer<TVertex>> VertexUploadBuffer;
+    std::unique_ptr<FD3DW::UploadBuffer<TIndex>> IndexUploadBuffer;
 
     std::unique_ptr<D3D12_VERTEX_BUFFER_VIEW> VertexBufferView;
     std::unique_ptr<D3D12_INDEX_BUFFER_VIEW> IndexBufferView;

@@ -1,50 +1,44 @@
 #include <Entity/RenderObject/SimpleMeshTemplatesGenerators.h>
 
-void GenerateSimplePlaneScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices, std::vector<std::uint32_t>& indices)
+void GenerateSimplePlaneScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices)
 {
 	const dx::XMFLOAT3 normal = { 0.0f, 0.0f, 1.0f };
 	const dx::XMFLOAT3 tangent = { 1.0f, 0.0f, 0.0f };
 	const dx::XMFLOAT3 bitangent = { 0.0f, 1.0f, 0.0f };
 
-	FD3DW::SceneVertexFrameWork v0;
+	FD3DW::VertexFrameWork v0;
 	v0.Pos = { -1.0f, -1.0f, 0.0f };
 	v0.Normal = normal;
 	v0.TexCoord = { 0.0f, 1.0f };
 	v0.Tangent = tangent;
 	v0.Bitangent = bitangent;
 
-	FD3DW::SceneVertexFrameWork v1;
+	FD3DW::VertexFrameWork v1;
 	v1.Pos = { 1.0f, -1.0f, 0.0f };
 	v1.Normal = normal;
 	v1.TexCoord = { 1.0f, 1.0f };
 	v1.Tangent = tangent;
 	v1.Bitangent = bitangent;
 
-	FD3DW::SceneVertexFrameWork v2;
+	FD3DW::VertexFrameWork v2;
 	v2.Pos = { -1.0f,  1.0f, 0.0f };
 	v2.Normal = normal;
 	v2.TexCoord = { 0.0f, 0.0f };
 	v2.Tangent = tangent;
 	v2.Bitangent = bitangent;
 
-	FD3DW::SceneVertexFrameWork v3;
+	FD3DW::VertexFrameWork v3;
 	v3.Pos = { 1.0f,  1.0f, 0.0f };
 	v3.Normal = normal;
 	v3.TexCoord = { 1.0f, 0.0f };
 	v3.Tangent = tangent;
 	v3.Bitangent = bitangent;
 
-	for (int i = 0; i < NUM_BONES_PER_VEREX; ++i)
-	{
-		v0.IDs[i] = v1.IDs[i] = v2.IDs[i] = v3.IDs[i] = 0;
-		v0.Weights[i] = v1.Weights[i] = v2.Weights[i] = v3.Weights[i] = 0.0f;
-	}
-
 	vertices = { v0, v1, v2, v3 };
 	indices = { 2, 1, 0, 3, 1, 2 };
 }
 
-void GenerateSimpleConeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+void GenerateSimpleConeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
 	const int segments = 32;
 	const float radius = 1.0f;
 	const float height = 2.0f;
@@ -54,15 +48,12 @@ void GenerateSimpleConeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 	vertices.clear();
 	indices.clear();
 
-	FD3DW::SceneVertexFrameWork tipVertex;
+	FD3DW::VertexFrameWork tipVertex;
 	tipVertex.Pos = { 0.0f, height, 0.0f };
 	tipVertex.Normal = { 0.0f, 1.0f, 0.0f };
 	tipVertex.TexCoord = { 0.5f, 0.0f };
 	tipVertex.Tangent = tangent;
 	tipVertex.Bitangent = bitangent;
-
-	for (int i = 0; i < NUM_BONES_PER_VEREX; ++i)
-		tipVertex.IDs[i] = 0, tipVertex.Weights[i] = 0.0f;
 
 	vertices.push_back(tipVertex);
 
@@ -71,15 +62,12 @@ void GenerateSimpleConeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 		float x = radius * std::cos(theta);
 		float z = radius * std::sin(theta);
 
-		FD3DW::SceneVertexFrameWork baseVertex;
+		FD3DW::VertexFrameWork baseVertex;
 		baseVertex.Pos = { x, 0.0f, z };
 		baseVertex.Normal = { x, radius / height, z };
 		baseVertex.TexCoord = { (x / (2.0f * radius)) + 0.5f, (z / (2.0f * radius)) + 0.5f };
 		baseVertex.Tangent = tangent;
 		baseVertex.Bitangent = bitangent;
-
-		for (int j = 0; j < NUM_BONES_PER_VEREX; ++j)
-			baseVertex.IDs[j] = 0, baseVertex.Weights[j] = 0.0f;
 
 		vertices.push_back(baseVertex);
 	}
@@ -90,15 +78,12 @@ void GenerateSimpleConeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 		indices.push_back(i % segments + 1);
 	}
 
-	FD3DW::SceneVertexFrameWork centerVertex;
+	FD3DW::VertexFrameWork centerVertex;
 	centerVertex.Pos = { 0.0f, 0.0f, 0.0f };
 	centerVertex.Normal = { 0.0f, -1.0f, 0.0f };
 	centerVertex.TexCoord = { 0.5f, 0.5f };
 	centerVertex.Tangent = tangent;
 	centerVertex.Bitangent = bitangent;
-
-	for (int j = 0; j < NUM_BONES_PER_VEREX; ++j)
-		centerVertex.IDs[j] = 0, centerVertex.Weights[j] = 0.0f;
 
 	int centerIndex = static_cast<int>(vertices.size());
 	vertices.push_back(centerVertex);
@@ -110,7 +95,7 @@ void GenerateSimpleConeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 	}
 }
 
-void GenerateSimpleCubeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+void GenerateSimpleCubeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
 	vertices.clear();
 	indices.clear();
 
@@ -161,17 +146,12 @@ void GenerateSimpleCubeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 		int baseIndex = static_cast<int>(vertices.size());
 
 		for (int i = 0; i < 4; ++i) {
-			FD3DW::SceneVertexFrameWork v;
+			FD3DW::VertexFrameWork v;
 			v.Pos = faceVertices[face][i];
 			v.Normal = normals[face];
 			v.Tangent = tangents[face];
 			v.Bitangent = bitangents[face];
 			v.TexCoord = texCoords[i];
-
-			for (int j = 0; j < NUM_BONES_PER_VEREX; ++j) {
-				v.IDs[j] = 0;
-				v.Weights[j] = 0.0f;
-			}
 
 			vertices.push_back(v);
 		}
@@ -186,7 +166,7 @@ void GenerateSimpleCubeScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices,
 	}
 }
 
-void GenerateSimpleSphereScene(std::vector<FD3DW::SceneVertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+void GenerateSimpleSphereScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
 	const int latitudeBands = 32;
 	const int longitudeBands = 32;
 	const float radius = 1.0f;
@@ -219,17 +199,12 @@ void GenerateSimpleSphereScene(std::vector<FD3DW::SceneVertexFrameWork>& vertice
 				cosTheta * sinPhi
 			};
 
-			FD3DW::SceneVertexFrameWork v;
+			FD3DW::VertexFrameWork v;
 			v.Pos = position;
 			v.Normal = normal;
 			v.TexCoord = texCoord;
 			v.Tangent = tangent;
 			v.Bitangent = bitangent;
-
-			for (int j = 0; j < NUM_BONES_PER_VEREX; ++j) {
-				v.IDs[j] = 0;
-				v.Weights[j] = 0.0f;
-			}
 
 			vertices.push_back(v);
 		}

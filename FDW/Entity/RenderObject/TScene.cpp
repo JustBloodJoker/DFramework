@@ -1,7 +1,9 @@
 #include <Entity/RenderObject/TScene.h>
+#include <Entity/RenderObject/VerticesConverter.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <World/World.h>
+
 
 
 
@@ -159,8 +161,8 @@ void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsComma
 void TScene::CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
 	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
 
-	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::SceneVertexFrameWork>>();
-	m_pObjectVBV_IBV->Create(device, list, m_pScene->GetVertices(), m_pScene->GetIndices());
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+	m_pObjectVBV_IBV->CreateWithConverter(device, list, m_pScene->GetVertices(), m_pScene->GetIndices(), SceneVertexToVertex);
 }
 
 AnimationComponent* TScene::GetAnimationComponent() {

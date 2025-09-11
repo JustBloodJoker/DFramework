@@ -44,6 +44,7 @@
     <ClCompile Include="Entity\RenderObject\TScene.cpp" />
     <ClCompile Include="Entity\RenderObject\TSimpleMesh.cpp" />
     <ClCompile Include="Entity\RenderObject\TSkybox.cpp" />
+    <ClCompile Include="Entity\RenderObject\VerticesConverter.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="include\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="include\imgui\imgui.cpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="Entity\Light\TPointLight.h" />
     <ClInclude Include="Entity\Light\TRectLight.h" />
     <ClInclude Include="Entity\Light\TSpotLight.h" />
+    <ClInclude Include="Entity\RenderObject\VerticesConverter.h" />
     <ClInclude Include="Entity\RenderObject\SimpleMeshTemplates.h" />
     <ClInclude Include="Entity\RenderObject\SimpleMeshTemplatesGenerators.h" />
     <ClInclude Include="Entity\RenderObject\TMesh.h" />

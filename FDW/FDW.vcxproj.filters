@@ -214,6 +214,9 @@
     <ClCompile Include="System\BloomEffectSystem.cpp">
       <Filter>System</Filter>
     </ClCompile>
+    <ClCompile Include="Entity\RenderObject\VerticesConverter.cpp">
+      <Filter>Entity\RenderObject</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">
@@ -381,6 +384,9 @@
     </ClInclude>
     <ClInclude Include="System\BloomSystemConfigs.h">
       <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity\RenderObject\VerticesConverter.h">
+      <Filter>Entity\RenderObject</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

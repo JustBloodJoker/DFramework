@@ -11,8 +11,8 @@ public:																																									\
 	virtual void AfterCreation() override { m_sName = std::string("Simple") + std::string(#name); };																	\
 	BEGIN_FIELD_REGISTRATION(TSimple##name, TSimpleMesh)																												\
 		END_FIELD_REGISTRATION();																																		\
-	virtual std::unique_ptr<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>> CreateSimpleObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) override {		\
-		return std::make_unique<FD3DW::SimpleObject<FD3DW::SceneVertexFrameWork>>(device, list, GenerateSimple##name##Scene);											\
+	virtual std::unique_ptr<FD3DW::SimpleObject<FD3DW::VertexFrameWork>> CreateSimpleObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) override {		\
+		return std::make_unique<FD3DW::SimpleObject<FD3DW::VertexFrameWork>>(device, list, GenerateSimple##name##Scene);											\
 	}																																									\
 };
 

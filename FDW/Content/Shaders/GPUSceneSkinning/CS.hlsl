@@ -21,8 +21,6 @@ struct ANIMVERTEX_OUTPUT
     float2 texCoord : TEXCOORD;
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
-    uint IDs[NUM_BONES_PER_VEREX];
-    float Weight[NUM_BONES_PER_VEREX];
 };
 
 StructuredBuffer<ANIMVERTEX_INPUT> g_InputVertices : register(t0);
@@ -87,13 +85,6 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
     outv.texCoord = vin.texCoord;
     outv.tangent = skinnedTangent;
     outv.bitangent = skinnedBitangent;
-
-    [unroll]
-    for (int i = 0; i < NUM_BONES_PER_VEREX; ++i)
-    {
-        outv.Weight[i] = vin.Weight[i];
-        outv.IDs[i] = vin.IDs[i];
-    }
-
+    
     g_OutputVertices[idx] = outv;
 }
