@@ -23,7 +23,12 @@ UINT GetGBuffersNum();
 void CreateEmptyStructuredBuffer(ID3D12Device* device);
 D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
 
+//////////////////////////////////////////////
+////	GLOBAL RENDER THREAD
 
+#define GLOBAL_RENDER_THREAD_MANAGER_WORKER_POOL_MAX_COUNT 8
+
+/////////////////////////////////////////////
 
 //////////////////////////////////////////////
 ////	GLOBAL HEAP MESHES TEXTURES

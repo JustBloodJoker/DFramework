@@ -17,7 +17,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AudioSystem::OnStartTick(std::shared_ptr
 		for (auto& activeCmp : m_vActiveAudio) {
 			activeCmp->AudioTick();
 		}
-	});
+		}, { h }, true);
 }
 
 void AudioSystem::ProcessNotify(NRenderSystemNotifyType type) {

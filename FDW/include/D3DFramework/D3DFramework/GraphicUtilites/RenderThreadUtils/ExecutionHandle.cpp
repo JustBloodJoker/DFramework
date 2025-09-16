@@ -1,6 +1,15 @@
 #include "ExecutionHandle.h"
 
 namespace FD3DW {
+	void ExecutionHandle::MustFullExecuteWait(bool b)
+	{
+		m_bMustFullExecuteWait = b;
+	}
+
+	bool ExecutionHandle::IsMustFullExecuteWait()
+	{
+		return m_bMustFullExecuteWait;
+	}
 
 	void ExecutionHandle::Bind(ID3D12Fence* fence, UINT64 val) {
 		m_pFence = fence;
@@ -31,11 +40,18 @@ namespace FD3DW {
 
 	bool ExecutionHandle::IsDone()
 	{
-		if (m_xBoundFuture.wait_for(std::chrono::seconds(0))!=std::future_status::ready)
-			return false;
+		if (!DoIsFutureDone()) return false;
 
 		if (!m_pFence) return true;
 		return m_pFence->GetCompletedValue() >= m_uValue;
+	}
+
+	bool ExecutionHandle::IsFutureDone()
+	{
+		if (m_bMustFullExecuteWait) {
+			return IsDone();
+		}
+		return DoIsFutureDone();
 	}
 
 	ID3D12Fence* ExecutionHandle::GetFence()
@@ -46,6 +62,11 @@ namespace FD3DW {
 	UINT64 ExecutionHandle::GetFenceValue()
 	{
 		return m_uValue;
+	}
+
+	bool ExecutionHandle::DoIsFutureDone()
+	{
+		return m_xBoundFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
 	}
 
 

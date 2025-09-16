@@ -2,26 +2,6 @@
 
 namespace FDWWIN {
 
-	WorkerThread::WorkerThread() : m_bRunning(false) {}
-
-	WorkerThread::~WorkerThread() 
-	{
-		Stop();
-	}
-	void WorkerThread::Start() {
-		m_bRunning = true;
-		m_xThread = std::thread([this]() { ThreadLoop(); });
-	}
-
-	void WorkerThread::Stop() {
-		{
-			std::unique_lock<std::mutex> lock(m_xMutex);
-			m_bRunning = false;
-			m_xCV.notify_all();
-		}
-		if ( m_xThread.joinable() ) m_xThread.join();
-	}
-
 	void WorkerThread::PostTask(WorkerTask task) {
 		{
 			std::unique_lock<std::mutex> lock(m_xMutex);
@@ -34,6 +14,28 @@ namespace FDWWIN {
 	{
 		std::unique_lock<std::mutex> lock(m_xMutex);
 		m_xIdleCV.wait(lock, [this]() { return m_qTasks.empty(); });
+	}
+
+	void WorkerThread::Stop() { 
+		{ 
+			std::unique_lock<std::mutex> lock(m_xMutex); 
+			m_bRunning = false; 
+			m_xCV.notify_all(); 
+		} 
+		
+		Thread::Stop();
+	}
+
+	WorkerThread::WorkerThread() {}
+
+	WorkerThread::~WorkerThread()
+	{
+		Stop();
+	}
+
+	size_t WorkerThread::GetQueueSize()
+	{
+		return m_qTasks.size();
 	}
 
 	void WorkerThread::ThreadLoop()

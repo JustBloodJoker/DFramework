@@ -64,13 +64,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsToClusters(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs, FD3DW::StructuredBuffer* lightsBuffer) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this, lightsBuffer](ID3D12GraphicsCommandList* list) {
+std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsToClusters(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
 		PSOManager::GetInstance()->GetPSOObject(PSOType::ClusteredShading_LightsToClusteresPass)->Bind(list);
 
 		list->SetComputeRootConstantBufferView(CLUSTERED_SECOND_PASS_CBV_VIEWP_POS_IN_ROOT_SIG, m_pClusterViewParamsBuffer->GetGPULocation(0));
 		list->SetComputeRootUnorderedAccessView(CLUSTERED_SECOND_PASS_UAV_CLUSTERS_POS_IN_ROOT_SIG, m_pClustersStructuredBuffer->GetResource()->GetGPUVirtualAddress());
-		list->SetComputeRootShaderResourceView(CLUSTERED_SECOND_PASS_SRV_LIGHTS_POS_IN_ROOT_SIG, lightsBuffer->GetResource()->GetGPUVirtualAddress());
+		
+		list->SetComputeRootShaderResourceView(CLUSTERED_SECOND_PASS_SRV_LIGHTS_POS_IN_ROOT_SIG, m_pOwner->GetLightsBuffer()->GetResource()->GetGPUVirtualAddress());
 
 		int numClusters = CLUSTERED_NUM_X_CLUSTERS * CLUSTERED_NUM_Y_CLUSTERS * CLUSTERED_NUM_Z_CLUSTERS;
 		int numGroups = (numClusters + CLUSTERED_THREADS_PER_GROUP_X_2 - 1) / CLUSTERED_THREADS_PER_GROUP_X_2;

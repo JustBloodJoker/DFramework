@@ -103,7 +103,7 @@ void MainRenderer::UserLoop()
 
 	auto cameraH = m_pCameraSystem->OnStartTick(sync);
 
-	auto audioH = m_pAudioSystem->OnStartTick(nullptr);
+	auto audioH = m_pAudioSystem->OnStartTick(sync);
 
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
@@ -118,16 +118,19 @@ void MainRenderer::UserLoop()
 
 	std::shared_ptr<FD3DW::ExecutionHandle> rtShadowsH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
+	std::shared_ptr<FD3DW::ExecutionHandle> blasCallH = nullptr;
 
 	if (IsRTSupported()) {
-		auto blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
-		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ meshH });
+
+		blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
+		
+		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ blasCallH, meshH });
 
 		rtShadowsH = m_pRTShadowSystem->OnStartRenderTick(cameraH);
 	}
 
 	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
-	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH, cameraH }, m_pLightSystem->GetLightsBuffer());
+	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH, cameraH });
 
 	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = nullptr;
 	if (m_bIsEnabledPreDepth)
@@ -138,14 +141,14 @@ void MainRenderer::UserLoop()
 		inPredepthData.Rect = m_xSceneRect;
 		inPredepthData.Viewport = m_xSceneViewPort;
 
-		preDepthH = m_pRenderMeshesSystem->PreDepthRender(meshH, inPredepthData);
+		preDepthH = m_pRenderMeshesSystem->PreDepthRender({meshH, animationGpuSkinningH}, inPredepthData);
 	}
 
-	auto HiZUpdateH = nullptr;
+	std::shared_ptr<FD3DW::ExecutionHandle> HiZUpdateH = nullptr;
 	if (m_pRenderMeshesSystem->GetCullingType() == MeshCullingType::GPU) {
 		RenderMeshesSystemHiZUpdateRenderData inHiZData;
 		inHiZData.DSV = m_pDSV.get();
-		m_pRenderMeshesSystem->UpdateHiZResource({preDepthH, sync}, inHiZData);
+		HiZUpdateH = m_pRenderMeshesSystem->UpdateHiZResource({preDepthH, sync}, inHiZData);
 	}
 
 	RenderMeshesSystemIndirectRenderData inIndirectData;
@@ -155,7 +158,7 @@ void MainRenderer::UserLoop()
 	inIndirectData.RTV_CPU = m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0);
 	inIndirectData.Rect = m_xSceneRect;
 	inIndirectData.Viewport = m_xSceneViewPort;
-	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, preDepthH, cameraH, animationGpuSkinningH }, inIndirectData);
+	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, HiZUpdateH, preDepthH, cameraH, animationGpuSkinningH }, inIndirectData);
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> renderRTShadows = nullptr;
@@ -195,7 +198,7 @@ void MainRenderer::UserLoop()
 		m_pForwardRenderPassRTV->EndDraw(list);
 	});
 
-	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { rtShadowsH, lightsH, clusterAssignH, indirectRenderH });
+	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { renderRTShadows, lightsH, clusterAssignH, indirectRenderH });
 
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
@@ -259,7 +262,7 @@ void MainRenderer::UserLoop()
 	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		PresentSwapchain(); 
 		++m_uFrameIndex; 	
-	}, { postProcessPass });
+	}, { postProcessPass }, true);
 
 	m_dInFlight.push_back(presentH);
 
@@ -369,6 +372,9 @@ D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterConstantBufferAddress() {
 D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterStructuredBufferAddress() {
 	return m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation();
 }
+FD3DW::StructuredBuffer* MainRenderer::GetLightsBuffer() {
+	return m_pLightSystem->GetLightsBuffer();
+}
 
 int MainRenderer::GetLightsCount() {
 	return m_pLightSystem->GetLightsCount();
@@ -455,16 +461,14 @@ void MainRenderer::ProcessNotifiesInWorld() {
 		}
 	);
 
-	if (hasMatch) {
-		GlobalRenderThreadManager::GetInstance()->WaitIdle();
-	}
+	if (checkNotifies.empty()) return;
+
+	if (hasMatch) GlobalRenderThreadManager::GetInstance()->WaitIdle();
 
 	ProcessNotifies(checkNotifies);
 	
 
-	if (hasMatch) {
-		GlobalRenderThreadManager::GetInstance()->WaitIdle();
-	}
+	if (hasMatch) GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
 
 void MainRenderer::ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies) {

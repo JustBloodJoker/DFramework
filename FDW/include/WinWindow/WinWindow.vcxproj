@@ -46,8 +46,10 @@
     <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h" />
+    <ClInclude Include="WinWindow\Utils\Thread.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
     <ClInclude Include="WinWindow\Utils\WindowSettings.h" />
+    <ClInclude Include="WinWindow\Utils\WorkerPool.h" />
     <ClInclude Include="WinWindow\Utils\WorkerThread.h" />
     <ClInclude Include="WinWindow\WinWindow.h" />
   </ItemGroup>
@@ -63,7 +65,9 @@
     </ClCompile>
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp" />
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp" />
+    <ClCompile Include="WinWindow\Utils\Thread.cpp" />
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
+    <ClCompile Include="WinWindow\Utils\WorkerPool.cpp" />
     <ClCompile Include="WinWindow\Utils\WorkerThread.cpp" />
     <ClCompile Include="WinWindow\WinWindow.cpp" />
   </ItemGroup>

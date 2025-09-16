@@ -13,6 +13,7 @@ namespace FD3DW {
         m_mPools[D3D12_COMMAND_LIST_TYPE_COMPUTE] = std::make_unique<CommandListPool>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COMPUTE);
         m_mPools[D3D12_COMMAND_LIST_TYPE_COPY] = std::make_unique<CommandListPool>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
 
+        m_xCommandsBuilder.Init(m_iMaxThreadsCount);
         m_xRenderThread.Start();
     }
 
@@ -43,24 +44,26 @@ namespace FD3DW {
         return h;
     }
 
-    void RenderThreadManager::WaitForCurrentCommandGPU() {
+    void RenderThreadManager::WaitForLastCommandGPU() {
         for (auto& [t, q] : m_mQueues) q->WaitIdle();
     }
 
-    void RenderThreadManager::WaitForCurrentCommandGPU(D3D12_COMMAND_LIST_TYPE type) {
+    void RenderThreadManager::WaitForLastCommandGPU(D3D12_COMMAND_LIST_TYPE type) {
         if (auto* q = GetQueue(type)) q->WaitIdle();
     }
 
 
     void RenderThreadManager::WaitIdle() {
+        m_xCommandsBuilder.WaitIdle();
         m_xRenderThread.WaitIdle();
+        WaitForLastCommandGPU();
     }
 
     void RenderThreadManager::GarbageCollectAll() {
         for (auto& [t, q] : m_mQueues) q->GarbageCollect();
     }
 
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::Submit(const std::shared_ptr<ICommandRecipe>& recipe, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::Submit(const std::shared_ptr<ICommandRecipe>& recipe, std::vector<std::shared_ptr<ExecutionHandle>> dependencies, bool IsNeedFullExecute)
     {
         if (!recipe) {
             auto h = std::make_shared<ExecutionHandle>();
@@ -69,79 +72,58 @@ namespace FD3DW {
         }
         auto batch = std::make_shared<ClosedBatch>();
         batch->Handle = std::make_shared<ExecutionHandle>();
+        batch->Handle->MustFullExecuteWait(IsNeedFullExecute);
 
-        m_xRenderThread.PostTask([recipe, batch, this, dependencies]() {
-            auto* q = PickCommandQueue(recipe->GetType());
+        m_xCommandsBuilder.PostTask([recipe, batch, deps = std::move(dependencies), this]() {
             auto* pool = m_mPools[recipe->GetType()].get();
+            auto* q = PickCommandQueue(recipe->GetType());
             
+            for (auto& d : deps) {
+                if (d && d->IsMustFullExecuteWait()) d->FutureWait();
+            }
 
             auto list = pool->BuildFromRecipe(recipe);
             batch->Lists.push_back(std::move(list));
-            batch->Recycle = [pool](std::unique_ptr<ICommandList> l) { 
-                pool->Recycle(std::move(l)); 
+
+            batch->Recycle = [pool](std::unique_ptr<ICommandList> l) {
+                pool->Recycle(std::move(l));
             };
 
-            for (auto& d : dependencies) if (d && d->GetFence()) q->WaitFence(d);
-
-            q->Submit(batch);      
+            m_xRenderThread.PostTask(
+                {
+                    [q, batch, deps]() {
+                        for (auto& d : deps) {
+                            if (d && d->GetFence()) q->WaitFence(d);
+                        }
+                        q->Submit(batch);
+                    },
+                    deps
+                }
+            );
         });
 
         
         return batch->Handle;
     }
 
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies, bool IsNeedFullExecute)
     {
         auto handle = std::make_shared<ExecutionHandle>();
+        handle->MustFullExecuteWait(IsNeedFullExecute);
 
-        m_xRenderThread.PostTask([this,func = std::move(func), deps = std::move(dependencies), handle]() mutable {
+        m_xCommandsBuilder.PostTask([func, handle, deps = std::move(dependencies), this]() {
             for (auto& d : deps) {
                 if (d) d->WaitForExecute();
             }
 
-            if (func) func();
-
-            handle->Bind(nullptr, 0); 
-        });
-
-        return handle;
-    }
-
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitChain( const std::vector<std::shared_ptr<ICommandRecipe>>& recipes, std::vector<std::shared_ptr<ExecutionHandle>> dependencies)
-    {
-        auto handle = std::make_shared<ExecutionHandle>();
-        if (recipes.empty()) {
-            handle->Bind(nullptr, 0);
-            return handle;
-        }
-        m_xRenderThread.PostTask([handle, recipes, this, dependencies]() {
-
-            AsyncCommandQueue* prevQ = nullptr;
-            UINT64 prevFence = 0;
-
-            for (auto& r : recipes) {
-                auto* q = PickCommandQueue(r->GetType());
-                auto* pool = m_mPools[r->GetType()].get();
-
-                auto list = pool->BuildFromRecipe(r);
-
-                auto batch = std::make_shared<ClosedBatch>();
-                batch->Handle = handle;
-                batch->Lists.push_back(std::move(list));
-                batch->Recycle = [pool](std::unique_ptr<ICommandList> l) { pool->Recycle(std::move(l)); };
-
-                if (prevQ && prevQ != q) {
-                    if (prevFence == 0) prevFence = prevQ->ReserveFenceTicket();
-                    q->WaitFence(prevFence, prevQ);
-                    prevFence = 0;
+            m_xRenderThread.PostTask(
+                {
+                    [func = std::move(func), handle]() mutable {
+                        if (func) func();
+                        handle->Bind(nullptr, 0);
+                    }
                 }
-                else if (!prevQ) {
-                    for (auto& d : dependencies) if (d) q->WaitFence(d);
-                }
-
-                q->Submit(batch);
-                prevQ = q;
-            }
+            );
         });
 
         return handle;

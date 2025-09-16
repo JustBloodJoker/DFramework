@@ -1111,8 +1111,11 @@ void MainRenderer_UIComponent::AddCallToPull(std::function<void(void)> foo) {
 }
 
 void MainRenderer_UIComponent::ProcessAfterRenderUICalls() {
+    if (m_vCallsAfterRender.empty()) return;
+
     auto vv = std::move(m_vCallsAfterRender);
     m_vCallsAfterRender.clear();
+
     for (auto& foo : vv) if (foo) foo();
 }
 

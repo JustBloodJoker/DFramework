@@ -10,6 +10,7 @@ namespace FD3DW {
 	void AsyncCommandQueue::Submit(std::shared_ptr<ClosedBatch> batch)
     {
         const UINT64 ticket = ReserveFenceTicket();
+
         batch->FenceValue = ticket;
 
         if (batch->Handle) {
@@ -41,7 +42,7 @@ namespace FD3DW {
 
     UINT64 AsyncCommandQueue::ReserveFenceTicket()
     {
-        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed) + 1;
+        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed)+1;
     }
 
     void AsyncCommandQueue::WaitFence(std::shared_ptr<ExecutionHandle> dependency)

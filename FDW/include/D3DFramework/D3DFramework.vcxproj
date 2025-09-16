@@ -204,6 +204,7 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h" />
@@ -247,6 +248,7 @@
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp" />

@@ -54,6 +54,7 @@
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainRenderer\GlobalConfig.cpp" />
+    <ClCompile Include="MainRenderer\GlobalRenderThreadManager.cpp" />
     <ClCompile Include="MainRenderer\GlobalTextureHeap.cpp" />
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />

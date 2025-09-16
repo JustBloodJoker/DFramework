@@ -41,6 +41,7 @@ void RenderMeshesSystem::ProcessNotify(NRenderSystemNotifyType type) {
 	}
 	else if (type == NRenderSystemNotifyType::MeshActivationDeactivation) {
 		m_bNeedUpdateMeshesActivationDeactivation.store(true, std::memory_order_relaxed);
+		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
 	}
 }
 
@@ -83,7 +84,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 		}
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {handle});
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {handle}, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartBLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
@@ -129,7 +130,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(st
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::shared_ptr<FD3DW::ExecutionHandle> handle, RenderMeshesSystemPreDepthRenderData data) {
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemPreDepthRenderData data) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList* list) {
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		data.DSV->DepthWrite(list);
@@ -146,7 +147,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::
 		}
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data) {

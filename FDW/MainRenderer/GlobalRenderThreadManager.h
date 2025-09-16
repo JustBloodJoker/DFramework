@@ -7,7 +7,7 @@
 class GlobalRenderThreadManager : virtual public FD3DW::RenderThreadManager, virtual public FDWWIN::CreativeSingleton<GlobalRenderThreadManager> {
 public:
 
-	GlobalRenderThreadManager() = default;
+	GlobalRenderThreadManager();
 	virtual ~GlobalRenderThreadManager() = default;
 
 };

@@ -25,6 +25,12 @@
     <ClCompile Include="WinWindow\Utils\WorkerThread.cpp">
       <Filter>WinWindow\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="WinWindow\Utils\WorkerPool.cpp">
+      <Filter>WinWindow\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Thread.cpp">
+      <Filter>WinWindow\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinWindow\Utils\Macroses.h">
@@ -82,6 +88,12 @@
       <Filter>WinWindow\Utils\Serializer</Filter>
     </ClInclude>
     <ClInclude Include="WinWindow\Utils\WorkerThread.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\WorkerPool.h">
+      <Filter>WinWindow\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Thread.h">
       <Filter>WinWindow\Utils</Filter>
     </ClInclude>
   </ItemGroup>

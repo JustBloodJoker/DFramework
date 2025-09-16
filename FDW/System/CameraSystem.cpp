@@ -85,7 +85,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 			UpdateCameraFrustum();
 		}
 
-	}, { });
+	}, { handle }, true);
 }
 
 void CameraSystem::ProcessNotify(NRenderSystemNotifyType type) {

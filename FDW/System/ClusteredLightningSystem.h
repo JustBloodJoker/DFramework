@@ -56,7 +56,7 @@ public:
 
     virtual void AfterConstruction() override;
     std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync);
-    std::shared_ptr<FD3DW::ExecutionHandle> AssignLightsToClusters(std::vector< std::shared_ptr<FD3DW::ExecutionHandle> > syncs, FD3DW::StructuredBuffer* lightsBuffer);
+    std::shared_ptr<FD3DW::ExecutionHandle> AssignLightsToClusters(std::vector< std::shared_ptr<FD3DW::ExecutionHandle> > syncs);
 
     D3D12_GPU_VIRTUAL_ADDRESS GetClusteredStructuredBufferGPULocation();
     D3D12_GPU_VIRTUAL_ADDRESS GetClusteredConstantBufferGPULocation();

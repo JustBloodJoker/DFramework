@@ -31,7 +31,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> SceneAnimationSystem::OnStartRenderTick(
 		}
 	});
 	
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync }, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> SceneAnimationSystem::ProcessGPUSkinning(std::shared_ptr<FD3DW::ExecutionHandle> sync)

@@ -217,6 +217,9 @@
     <ClCompile Include="Entity\RenderObject\VerticesConverter.cpp">
       <Filter>Entity\RenderObject</Filter>
     </ClCompile>
+    <ClCompile Include="MainRenderer\GlobalRenderThreadManager.cpp">
+      <Filter>mainRenderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">

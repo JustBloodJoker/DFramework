@@ -44,7 +44,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
             }
     });
     
-    return GlobalRenderThreadManager::GetInstance()->Submit(updateRecipe, { syncHandle });
+    return GlobalRenderThreadManager::GetInstance()->Submit(updateRecipe, { syncHandle }, true);
 }
 
 void LightSystem::ProcessNotify(NRenderSystemNotifyType type) {
