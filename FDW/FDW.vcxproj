@@ -59,6 +59,7 @@
     <ClCompile Include="MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="MainRenderer\PSOManager.cpp" />
+    <ClCompile Include="System\AtlasRTShadowSystem.cpp" />
     <ClCompile Include="System\AudioSystem.cpp" />
     <ClCompile Include="System\BloomEffectSystem.cpp" />
     <ClCompile Include="System\CameraFrustum.cpp" />
@@ -67,6 +68,7 @@
     <ClCompile Include="System\ClusteredLightningSystem.cpp" />
     <ClCompile Include="System\LightSystem.cpp" />
     <ClCompile Include="System\MeshesCullingSubSystem.cpp" />
+    <ClCompile Include="System\RectsPacker.cpp" />
     <ClCompile Include="System\RenderMeshesSystem.cpp" />
     <ClCompile Include="System\RTShadowSystem.cpp" />
     <ClCompile Include="System\SceneAnimationSystem.cpp" />
@@ -115,6 +117,8 @@
     <ClInclude Include="MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="MainRenderer\PSOManager.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="System\AtlasRTShadowLightParams.h" />
+    <ClInclude Include="System\AtlasRTShadowSystem.h" />
     <ClInclude Include="System\AudioSystem.h" />
     <ClInclude Include="System\BloomEffectSystem.h" />
     <ClInclude Include="System\BloomSystemConfigs.h" />
@@ -125,6 +129,7 @@
     <ClInclude Include="System\LightSystem.h" />
     <ClInclude Include="System\MeshesCullingSubSystem.h" />
     <ClInclude Include="System\NRenderSystemNotifyType.h" />
+    <ClInclude Include="System\RectsPacker.h" />
     <ClInclude Include="System\RenderMeshesSystem.h" />
     <ClInclude Include="System\RTShadowSystem.h" />
     <ClInclude Include="System\RTShadowSystemConfig.h" />

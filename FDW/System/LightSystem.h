@@ -11,8 +11,10 @@
 struct LightSystemBuffer {
 	int LightCount;
 	dx::XMFLOAT3 CameraPos;
-	int IsShadowImpl;
-	dx::XMFLOAT3 margin;
+	int IsShadowImpl;    
+	float ZNear;
+	float ZFar;
+	float margin;
 };
 
 
@@ -34,11 +36,14 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetLightsStructuredBufferGPULocation();
 	D3D12_GPU_VIRTUAL_ADDRESS GetLightsConstantBufferGPULocation();
 
+	const std::vector<LightComponentData>& GetLightComponentsData() const;
+
 protected:
 	std::vector<LightComponentData> GetDataFromLightComponents(std::vector<LightComponent*> cmps);
 
 protected:
 	LightSystemBuffer m_xLightBuffer;
+	std::vector<LightComponentData> m_vLightComponentsData;
 
 	std::atomic<bool> m_bIsNeedUpdateDataInBuffer{ true };
 

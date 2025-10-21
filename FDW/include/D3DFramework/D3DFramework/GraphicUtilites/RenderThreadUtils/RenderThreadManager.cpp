@@ -106,24 +106,30 @@ namespace FD3DW {
         return batch->Handle;
     }
 
-    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies, bool IsNeedFullExecute)
+    std::shared_ptr<ExecutionHandle> RenderThreadManager::SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies, bool IsNeedFullExecute, bool ExecuteOnBuilderThread)
     {
         auto handle = std::make_shared<ExecutionHandle>();
         handle->MustFullExecuteWait(IsNeedFullExecute);
 
-        m_xCommandsBuilder.PostTask([func, handle, deps = std::move(dependencies), this]() {
+        m_xCommandsBuilder.PostTask([func, ExecuteOnBuilderThread, handle, deps = std::move(dependencies), this]() {
             for (auto& d : deps) {
                 if (d) d->WaitForExecute();
             }
 
-            m_xRenderThread.PostTask(
-                {
-                    [func = std::move(func), handle]() mutable {
-                        if (func) func();
-                        handle->Bind(nullptr, 0);
+            if (ExecuteOnBuilderThread) {
+                if (func) func();
+                handle->Bind(nullptr, 0);
+            }
+            else {
+                m_xRenderThread.PostTask(
+                    {
+                        [func = std::move(func), handle]() mutable {
+                            if (func) func();
+                            handle->Bind(nullptr, 0);
+                        }
                     }
-                }
-            );
+                );
+            }
         });
 
         return handle;

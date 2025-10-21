@@ -83,6 +83,6 @@ size_t GlobalTextureHeap::WeakPtrHash::operator()(const std::weak_ptr<FD3DW::FRe
 
 bool GlobalTextureHeap::WeakPtrEqual::operator()(const std::weak_ptr<FD3DW::FResource>& a, const std::weak_ptr<FD3DW::FResource>& b) const noexcept
 {
-    return a.lock().get() == b.lock().get();
+    return !a.expired() && !b.expired() && a.lock().get() == b.lock().get();
 }
  ;

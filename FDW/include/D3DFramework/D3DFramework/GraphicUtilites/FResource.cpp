@@ -1,4 +1,4 @@
-#include "../pch.h"
+﻿ #include "../pch.h"
 #include "FResource.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -221,74 +221,21 @@ namespace FD3DW
 
     void FResource::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state,bool bCopyAllMips)
     {
-        auto uresource = m_pResource.Get();
-        auto desc = uresource->GetDesc();
-
-        auto arrSize = desc.DepthOrArraySize;
-        UINT mipLevels = bCopyAllMips ? desc.MipLevels : 1u;
-
-        size_t expectedSubresources = static_cast<size_t>(mipLevels) * arrSize;
-
-        UINT64 requiredSize = 0;
-        UINT64 requiredSizeFull = 0;
-        UINT numSubresources = mipLevels * arrSize;
-
-        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(numSubresources);
-        std::vector<UINT> numRows(numSubresources);
-        std::vector<UINT64> rowSizes(numSubresources);
-
-        pDevice->GetCopyableFootprints(&desc,0,numSubresources,0,layouts.data(),numRows.data(),rowSizes.data(),&requiredSize);
-
-        std::vector<D3D12_SUBRESOURCE_DATA> subResData;
-        subResData.reserve(expectedSubresources);
-        subResData.resize(expectedSubresources);
-
-        auto ptrData = reinterpret_cast<const uint8_t*>(pData);
-        for (UINT arrayIdx = 0; arrayIdx < arrSize; ++arrayIdx)
-        {
-            UINT w = UINT(desc.Width);
-            UINT h = UINT(desc.Height);
-
-            for (UINT mipIdx = 0; mipIdx < mipLevels; ++mipIdx)
-            {
-                UINT subresourceIndex = mipIdx + arrayIdx * mipLevels;
-
-                const auto& footprint = layouts[subresourceIndex];
-
-
-                D3D12_SUBRESOURCE_DATA textureData = {};
-                textureData.pData = ptrData;
-                textureData.RowPitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch);
-                textureData.SlicePitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch) * numRows[subresourceIndex];
-                requiredSizeFull += textureData.SlicePitch;
-
-                subResData[subresourceIndex] = textureData;
-
-                ptrData += rowSizes[subresourceIndex] * numRows[subresourceIndex];
-               
-                w = std::max(1u, w >> 1);
-                h = std::max(1u, h >> 1);
-            }
-        }
-         
-        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize()<=requiredSize)
-        {
-            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(requiredSize), false);
-        }
-
         ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
 
-        UpdateSubresources(pCommandList,
-            m_pResource.Get(),
-            m_pUploadBuffer->GetResource(),
-            0, 0, (UINT)subResData.size(),
-            subResData.data());
+		UploadDataNoBarrier(pDevice, pCommandList, pData, bCopyAllMips);
 
         ResourceBarrierChange(pCommandList, 1, state);
     }
 
     void FResource::UploadDataRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT offsetInBytes, UINT sizeInBytes, D3D12_RESOURCE_STATES finalState)
-    {
+    { 
+        auto desc = m_pResource->GetDesc();
+        if (desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) {
+			CONSOLE_ERROR_MESSAGE("UploadDataRegion only for buffer resources");
+            return;
+        }
+
         if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize() != sizeInBytes)
         {
             m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(sizeInBytes), false);
@@ -307,9 +254,100 @@ namespace FD3DW
         ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, finalState);
     }
 
+    void FResource::UploadTextureRegion(
+        ID3D12Device* pDevice,
+        ID3D12GraphicsCommandList* pCommandList,
+        const void* pData,
+        UINT mipLevel,
+        const D3D12_BOX& region,
+        D3D12_RESOURCE_STATES finalState)
+    {
+        if (!m_pResource) return;
+
+        D3D12_RESOURCE_DESC desc = m_pResource->GetDesc();
+
+        UINT64 uploadBufferSize = 0;
+        pDevice->GetCopyableFootprints(
+            &desc,
+            mipLevel,
+            1,
+            0,
+            nullptr,
+            nullptr,
+            nullptr,
+            &uploadBufferSize);
+
+        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize() < uploadBufferSize) {
+            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(uploadBufferSize), 1);
+        }
+
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint{};
+        UINT numRows = 0;
+        UINT64 rowSizeInBytes = 0;
+        UINT64 totalBytes = 0;
+        pDevice->GetCopyableFootprints(
+            &desc,
+            mipLevel,
+            1,
+            0,
+            &footprint,
+            &numRows,
+            &rowSizeInBytes,
+            &totalBytes);
+
+        BYTE* mappedData = m_pUploadBuffer->Map();
+        const BYTE* src = reinterpret_cast<const BYTE*>(pData);
+        BYTE* dst = mappedData + footprint.Offset;
+
+        UINT rowPitch = footprint.Footprint.RowPitch;
+        UINT slicePitch = rowPitch * numRows;
+
+        for (UINT z = region.front; z < region.back; ++z)
+        {
+            BYTE* dstSlice = dst + (z - region.front) * slicePitch;
+            const BYTE* srcSlice = src + (z - region.front) * slicePitch;
+
+            for (UINT y = region.top; y < region.bottom; ++y)
+            {
+                memcpy(dstSlice + (y) * rowPitch,
+                    srcSlice + (y) * rowSizeInBytes,
+                    rowSizeInBytes);
+            }
+        }
+        m_pUploadBuffer->Unmap();
+
+        D3D12_TEXTURE_COPY_LOCATION dstLoc = {};
+        dstLoc.pResource = m_pResource.Get();
+        dstLoc.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        dstLoc.SubresourceIndex = D3D12CalcSubresource(mipLevel, 0, 0, desc.MipLevels, desc.DepthOrArraySize);
+
+        D3D12_TEXTURE_COPY_LOCATION srcLoc = {};
+        srcLoc.pResource = m_pUploadBuffer->GetResource();
+        srcLoc.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        srcLoc.PlacedFootprint = footprint;
+
+        D3D12_BOX dstBox = region;
+
+        D3D12_RESOURCE_BARRIER barrier{};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource = m_pResource.Get();
+        barrier.Transition.StateBefore = finalState;
+        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrier.Transition.Subresource = dstLoc.SubresourceIndex;
+
+        pCommandList->ResourceBarrier(1, &barrier);
+
+        pCommandList->CopyTextureRegion(&dstLoc, region.left, region.top, region.front, &srcLoc, &dstBox);
+
+        std::swap(barrier.Transition.StateBefore, barrier.Transition.StateAfter);
+        pCommandList->ResourceBarrier(1, &barrier);
+    }
+
+
 
     std::vector<uint8_t> FResource::GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList) {
-        std::vector<uint8_t> fullData;
+        std::vector<uint8_t> fullData; 
 
         //NOT IMPL
 
@@ -499,6 +537,70 @@ namespace FD3DW
 
             m_xCurrState = resourceStateAfter;
         }
+    }
+
+    void FResource::UploadDataNoBarrier(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool bCopyAllMips)
+    {
+        auto uresource = m_pResource.Get();
+        auto desc = uresource->GetDesc();
+
+        auto arrSize = desc.DepthOrArraySize;
+        UINT mipLevels = bCopyAllMips ? desc.MipLevels : 1u;
+
+        size_t expectedSubresources = static_cast<size_t>(mipLevels) * arrSize;
+
+        UINT64 requiredSize = 0;
+        UINT64 requiredSizeFull = 0;
+        UINT numSubresources = mipLevels * arrSize;
+
+        std::vector<D3D12_PLACED_SUBRESOURCE_FOOTPRINT> layouts(numSubresources);
+        std::vector<UINT> numRows(numSubresources);
+        std::vector<UINT64> rowSizes(numSubresources);
+
+        pDevice->GetCopyableFootprints(&desc, 0, numSubresources, 0, layouts.data(), numRows.data(), rowSizes.data(), &requiredSize);
+
+        std::vector<D3D12_SUBRESOURCE_DATA> subResData;
+        subResData.reserve(expectedSubresources);
+        subResData.resize(expectedSubresources);
+
+        auto ptrData = reinterpret_cast<const uint8_t*>(pData);
+        for (UINT arrayIdx = 0; arrayIdx < arrSize; ++arrayIdx)
+        {
+            UINT w = UINT(desc.Width);
+            UINT h = UINT(desc.Height);
+
+            for (UINT mipIdx = 0; mipIdx < mipLevels; ++mipIdx)
+            {
+                UINT subresourceIndex = mipIdx + arrayIdx * mipLevels;
+
+                const auto& footprint = layouts[subresourceIndex];
+
+
+                D3D12_SUBRESOURCE_DATA textureData = {};
+                textureData.pData = ptrData;
+                textureData.RowPitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch);
+                textureData.SlicePitch = static_cast<LONG_PTR>(footprint.Footprint.RowPitch) * numRows[subresourceIndex];
+                requiredSizeFull += textureData.SlicePitch;
+
+                subResData[subresourceIndex] = textureData;
+
+                ptrData += rowSizes[subresourceIndex] * numRows[subresourceIndex];
+
+                w = std::max(1u, w >> 1);
+                h = std::max(1u, h >> 1);
+            }
+        }
+
+        if (!m_pUploadBuffer || m_pUploadBuffer->GetBufferSize() <= requiredSize)
+        {
+            m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(requiredSize), false);
+        }
+
+        UpdateSubresources(pCommandList,
+            m_pResource.Get(),
+            m_pUploadBuffer->GetResource(),
+            0, 0, (UINT)subResData.size(),
+            subResData.data());
     }
 
     ID3D12Resource* FResource::GetResource() const

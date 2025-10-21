@@ -16,7 +16,7 @@ void ClusteredLightningSystem::AfterConstruction() {
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		ClusterSystemClusterParams par_1;
 		par_1.GridSize0 = CLUSTERED_NUM_X_CLUSTERS;
 		par_1.GridSize1 = CLUSTERED_NUM_Y_CLUSTERS;
@@ -65,7 +65,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsToClusters(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		PSOManager::GetInstance()->GetPSOObject(PSOType::ClusteredShading_LightsToClusteresPass)->Bind(list);
 
 		list->SetComputeRootConstantBufferView(CLUSTERED_SECOND_PASS_CBV_VIEWP_POS_IN_ROOT_SIG, m_pClusterViewParamsBuffer->GetGPULocation(0));

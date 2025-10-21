@@ -61,8 +61,11 @@ namespace FD3DW
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter);
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		
+		void UploadDataNoBarrier(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool bCopyAllMips = false);
+
 		void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,bool bCopyAllMips=false);
 		void UploadDataRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT offsetInBytes, UINT sizeInBytes, D3D12_RESOURCE_STATES finalState);
+		void UploadTextureRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT mipLevel, const D3D12_BOX& region, D3D12_RESOURCE_STATES finalState);
 
 		std::vector<uint8_t> GetData(ID3D12Device* device, ID3D12GraphicsCommandList* pCommandList);
 

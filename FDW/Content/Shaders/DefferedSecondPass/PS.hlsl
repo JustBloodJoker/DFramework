@@ -15,7 +15,6 @@ StructuredBuffer<LightStruct> Lights : register(t0);
 StructuredBuffer<Cluster> Clusters : register(t10);
 ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
 
-
 Texture2D GBuffer_Position : register(t1);      //x         , y         , z                 , empty
 Texture2D GBuffer_Normal : register(t2);        //x         , y         , z                 , empty
 Texture2D GBuffer_Albedo : register(t3);        //r         , g         , b                 , a
@@ -27,6 +26,9 @@ Texture2D<float4> LTC_Mat : register(t7);
 Texture2D<float2> LTC_Amp : register(t8);
 
 Texture2D ShadowFactorTexture : register(t9);
+StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t11);
+ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
+
 
 SamplerState ss : register(s0);
 
@@ -54,14 +56,80 @@ float3 CalculatePBRLighting(
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
+LightAtlasMeta GetLightMeta(int id){
+    if(ShadowLightsMeta[id].LightIndex==id) return ShadowLightsMeta[id];
 
-float3 ApplyPointLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
+    for(int i=0;i<LHelper.LightCount;++i) {
+        if(ShadowLightsMeta[i].LightIndex==id) {
+            return ShadowLightsMeta[i];
+        }
+    }
+
+    LightAtlasMeta empty;
+    return empty;
+}
+
+float GetShadowFactor(in LightStruct light, int id, float2 UV)
 {
+    if (LHelper.IsShadowImpl == 0) 
+        return 1.0f;
+
+    LightAtlasMeta meta = GetLightMeta(id);
+
+    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
+        return 0.0f;
+
+    float2 relUV;
+    relUV.x = (UV.x - meta.ScreenMinU) / (meta.ScreenMaxU - meta.ScreenMinU);
+    relUV.y = (UV.y - meta.ScreenMinV) / (meta.ScreenMaxV - meta.ScreenMinV);
+
+    float2 atlasUV;
+    atlasUV.x = (meta.AtlasOffsetX + relUV.x * meta.AtlasWidth) / ShadowAtlasData.AtlasWidth;
+    atlasUV.y = (meta.AtlasOffsetY + relUV.y * meta.AtlasHeight) / ShadowAtlasData.AtlasHeight;
+    
+    float2 tileMin = float2(meta.AtlasOffsetX, meta.AtlasOffsetY) / float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
+    float2 tileMax = float2(meta.AtlasOffsetX + meta.AtlasWidth, meta.AtlasOffsetY + meta.AtlasHeight) / float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
+
+    float2 texelSize = 1.0 / float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
+
+    float sigmaNormal = 0.3;
+    float totalWeight = 0.0;
+    float result = 0.0;
+    float3 centerNormal = normalize(GBuffer_Normal.SampleLevel(ss, UV, 0).xyz);
+    [unroll]
+    for (int y = -2; y <= 2; y++)
+    {
+        [unroll]
+        for (int x = -2; x <= 2; x++)
+        {
+            float2 offset = float2(x, y) * texelSize;
+            float2 sampleUV = atlasUV + offset;
+            sampleUV = clamp(sampleUV, tileMin + texelSize * 0.5, tileMax - texelSize * 0.5);
+            
+            float shadow = ShadowFactorTexture.SampleLevel(ss, sampleUV, 0).r;
+
+            float3 sampleNormal = normalize(GBuffer_Normal.SampleLevel(ss, UV + offset, 0).xyz);
+            float normalDiff = 1.0 - dot(sampleNormal, centerNormal);
+            float wNormal = exp(-normalDiff * normalDiff / (sigmaNormal * sigmaNormal));
+
+            float weight = wNormal;
+            result += shadow * weight;
+            totalWeight += weight;
+        }
+    }
+
+
+    return (totalWeight > 0.0) ? result / totalWeight : result;
+}
+
+float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
+{
+    float shadowFactor = GetShadowFactor(light, id, UV);
+    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+
     float3 L = light.Position - WorldPos;
     float distance = length(L);
     L /= distance;
-
-
 
     float angularRadius = light.SourceRadius / distance;
     roughness = sqrt(roughness * roughness + angularRadius * angularRadius);   
@@ -72,11 +140,16 @@ float3 ApplyPointLight(in LightStruct light, float3 WorldPos, float3 N, float3 V
 
     float3 radiance = light.Color * light.Intensity * attenuation;
 
-    return CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+    float3 resultLight = CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+
+    return resultLight * shadowFactor;
 }
 
-float3 ApplySpotLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
+float3 ApplySpotLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
+    float shadowFactor = GetShadowFactor(light, id, UV);
+    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+
     float3 L = light.Position - WorldPos;
     float distance = length(L);
     L = L / distance;
@@ -94,18 +167,29 @@ float3 ApplySpotLight(in LightStruct light, float3 WorldPos, float3 N, float3 V,
 
     float3 radiance = light.Color * light.Intensity * attenuation * spotFalloff;
 
-    return CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+    float3 resultLight = CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+    
+    return resultLight * shadowFactor;
 }
 
-float3 ApplyDirectionalLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
+float3 ApplyDirectionalLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
+    float shadowFactor = GetShadowFactor(light, id, UV);
+    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+
     float3 L = normalize(-light.Direction);
     float3 radiance = light.Color * light.Intensity;
-    return CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+
+    float3 resultLight = CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
+
+    return resultLight * shadowFactor;
 }
 
 
-float3 ApplyRectLight(in LightStruct light, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
+float3 ApplyRectLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
+    float shadowFactor = GetShadowFactor(light, id, UV);
+    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+
     float3 points[4];
     InitRectPoints(light, points);
     
@@ -131,7 +215,7 @@ float3 ApplyRectLight(in LightStruct light, float3 WorldPos, float3 N, float3 V,
 
     float3 diffuse = LTCEvaluate(N, V, WorldPos, float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), points);
 
-    float3 color = light.Intensity * light.Color * (spec + diffuse*albedo);
+    float3 color = light.Intensity * light.Color * (spec + diffuse*albedo) * shadowFactor;
     return color;
 }
 
@@ -147,8 +231,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float4 albedoOut = GBuffer_Albedo.Sample(ss, uv);
     float3 albedo = albedoOut.rgb;
     float alpha = albedoOut.a;
-
-    float shadowFactor = ShadowFactorTexture.Sample(ss, uv).r;
 
     float4 matData = GBuffer_MaterialData.Sample(ss, uv);
     float roughness = matData.r;
@@ -171,16 +253,16 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
         switch (light.LightType) {
             case LIGHT_POINT_LIGHT_ENUM_VALUE:
-                Lo += ApplyPointLight(light, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyPointLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_SPOT_LIGHT_ENUM_VALUE:
-                Lo += ApplySpotLight(light, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplySpotLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE:
-                Lo += ApplyDirectionalLight(light, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyDirectionalLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_RECT_LIGHT_ENUM_VALUE:
-                Lo += ApplyRectLight(light, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyRectLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
         }
     }
@@ -190,9 +272,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float emissiveFactor = emissiveTexture.w;
 
     float3 color = Lo * ao;
-
-    float shadowFactorRes = LHelper.IsShadowImpl==1 ? shadowFactor : 1.0;
-    color *= shadowFactorRes;
     color += emissive * emissiveFactor;
     
     AlphaClipping(alpha);

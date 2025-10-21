@@ -20,7 +20,7 @@
 #include <System/RTShadowSystem.h>
 #include <System/SkyboxRenderSystem.h>
 #include <System/BloomEffectSystem.h>
-
+#include <System/AtlasRTShadowSystem.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -51,8 +51,10 @@ public:
 	//CAMERA
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
+	dx::XMMATRIX GetViewProjectionMatrix() const;
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
 	CameraFrustum GetCameraFrustum();
+	float GetFoVY() const;
 
 	//MESHES
 	void SetMeshCullingType(MeshCullingType in);
@@ -66,12 +68,11 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetClusterConstantBufferAddress();
 	D3D12_GPU_VIRTUAL_ADDRESS GetClusterStructuredBufferAddress();
 	FD3DW::StructuredBuffer* GetLightsBuffer();
+	const std::vector<LightComponentData>& GetLightComponentsData() const;
 	int GetLightsCount();
 
 	//SHADOWS
 	bool IsShadowEnabled();
-	void SetRTShadowConfig(RTShadowSystemConfig config);
-	RTShadowSystemConfig GetRTShadowConfig();
 
 	//WORLD
 	void LoadWorld(std::string pathTo);
@@ -119,9 +120,9 @@ private:
 	ClusteredLightningSystem* m_pClusteredLightningSystem = nullptr;
 	SceneAnimationSystem* m_pSceneAnimationSystem = nullptr;
 	RenderMeshesSystem* m_pRenderMeshesSystem = nullptr;
-	RTShadowSystem* m_pRTShadowSystem = nullptr;
 	SkyboxRenderSystem* m_pSkyboxRenderSystem = nullptr;
 	BloomEffectSystem* m_pBloomEffectSystem = nullptr;
+	AtlasRTShadowSystem* m_pAtlasRTShadowSystem = nullptr;
 
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 

@@ -77,7 +77,9 @@ struct LightsHelper{
     int LightCount;
     float3 CameraPos;
     int IsShadowImpl;
-    float3 margin;
+    float ZNear;
+    float ZFar;
+    float margin;
 };
 
 
@@ -225,5 +227,28 @@ struct BloomCompositeData{
     float BloomIntensity;
     float3 padd;
 };
+
+struct LightAtlasMeta {
+    uint LightIndex;
+    uint AtlasOffsetX;
+    uint AtlasOffsetY;
+    uint AtlasWidth;
+    uint AtlasHeight;
+    uint padd1;
+    uint padd2;
+    uint padd3;
+    float ScreenMinU;
+    float ScreenMinV;
+    float ScreenMaxU;
+    float ScreenMaxV;
+};
+
+struct ShadowAtlasParams {
+    uint ScreenWidth;
+    uint ScreenHeight;
+    uint AtlasWidth;
+    uint AtlasHeight;
+};
+
 
 #endif

@@ -4,4 +4,6 @@
            "SRV(t0),"                                           \
            "SRV(t10),"                                          \
            "CBV(b1),"                                           \
+           "SRV(t11),"                                          \
+           "CBV(b2),"                                           \
            "StaticSampler(s0)"

@@ -25,6 +25,7 @@ public:
 
 
 public:
+	void UploadDataNoBarrier(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT num);
 	void UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT num, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	void UploadRegion(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT elementIndex, UINT numElements, D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	void ReserveSize(ID3D12Device* pDevice, UINT newCapacity);
@@ -40,7 +41,7 @@ private:
 	using FResource::UploadData;
 
 private:
-
+	void ProcessResizing(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT num);
 	void RecreateBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT newCapacity, bool preserveData);
 
 private:

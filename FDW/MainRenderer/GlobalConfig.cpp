@@ -275,9 +275,31 @@ const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
                     return config;
                 }()
             }
+        },
+        {
+            PSOType::AtlasRTShadowDefaultConfig,
+            {
+                PSOType::None,
+                L"AtlasRTShadow",
+                {},
+                [] {
+                    FD3DW::RayTracingPipelineConfig config;
+                    config.MaxPayloadSize = sizeof(dx::XMFLOAT4);
+                    config.MaxAttributeSize = sizeof(dx::XMFLOAT2);
+                    config.MaxRecursionDepth = 1;
+
+                    config.HitGroups.push_back({
+                        L"MyHitGroup",
+                        L"ClosestHit",
+                        L"",
+                        L"",
+                        D3D12_HIT_GROUP_TYPE_TRIANGLES
+                    });
+                    return config;
+                }()
+            }
         }
     };
-
     return descriptors;
 }
 

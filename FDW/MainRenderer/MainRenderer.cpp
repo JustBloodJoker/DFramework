@@ -91,7 +91,7 @@ void MainRenderer::UserInit()
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	FD3DW::FResource::ReleaseUploadBuffers();
 
-	//CreateTestWorld();
+	m_pWorld->CreateDefaultCamera();
 
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	ProcessNotifiesInWorld();
@@ -107,6 +107,11 @@ void MainRenderer::UserLoop()
 
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
+	std::shared_ptr<FD3DW::ExecutionHandle> uploadMetaH = nullptr;
+	if (IsRTSupported()) {
+		auto createMetaH = m_pAtlasRTShadowSystem->OnCreateLightsMeta({ lightsH, cameraH });
+		uploadMetaH = m_pAtlasRTShadowSystem->OnUploadLightsMeta(createMetaH);
+	}
 
 	auto meshH = m_pRenderMeshesSystem->OnStartRenderTick(cameraH);
 
@@ -116,17 +121,12 @@ void MainRenderer::UserLoop()
 
 	auto animationGpuSkinningH = m_pSceneAnimationSystem->ProcessGPUSkinning(animationH);
 
-	std::shared_ptr<FD3DW::ExecutionHandle> rtShadowsH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> blasCallH = nullptr;
 
 	if (IsRTSupported()) {
-
 		blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
-		
 		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ blasCallH, meshH });
-
-		rtShadowsH = m_pRTShadowSystem->OnStartRenderTick(cameraH);
 	}
 
 	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
@@ -161,9 +161,11 @@ void MainRenderer::UserLoop()
 	auto indirectRenderH = m_pRenderMeshesSystem->IndirectRender({meshH, HiZUpdateH, preDepthH, cameraH, animationGpuSkinningH }, inIndirectData);
 
 
-	std::shared_ptr<FD3DW::ExecutionHandle> renderRTShadows = nullptr;
+	std::shared_ptr<FD3DW::ExecutionHandle> atlasRtShadowsH = nullptr;
 	if (IsRTSupported()) {
-		renderRTShadows = m_pRTShadowSystem->OnRenderShadowFactors({ tlasCallH , rtShadowsH, lightsH, clusterAssignH, indirectRenderH } );
+
+		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ blasCallH,clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH, sync });
+	
 	}
 
 	//////////////////////////
@@ -192,13 +194,15 @@ void MainRenderer::UserLoop()
 		list->SetGraphicsRootShaderResourceView(LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pLightSystem->GetLightsStructuredBufferGPULocation());
 		list->SetGraphicsRootShaderResourceView(LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation());
 		list->SetGraphicsRootConstantBufferView(LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation());
+		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, m_pAtlasRTShadowSystem->GetLightsMetasBufferGPULocation());
+		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, m_pAtlasRTShadowSystem->GetAtlasConstantBufferGPULocation());
 
 		list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
 		m_pForwardRenderPassRTV->EndDraw(list);
 	});
 
-	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { renderRTShadows, lightsH, clusterAssignH, indirectRenderH });
+	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { lightsH, clusterAssignH, indirectRenderH, atlasRtShadowsH });
 
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
@@ -336,12 +340,20 @@ dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
 	return m_pCameraSystem->GetViewMatrix();
 }
 
+dx::XMMATRIX MainRenderer::GetViewProjectionMatrix() const {
+	return m_pCameraSystem->GetViewProjectionMatrix();
+}
+
 dx::XMFLOAT3 MainRenderer::GetCurrentCameraPosition() const {
 	return m_pCameraSystem->GetCameraPosition();
 }
 
 CameraFrustum MainRenderer::GetCameraFrustum() {
 	return m_pCameraSystem->GetCameraFrustum();
+}
+
+float MainRenderer::GetFoVY() const {
+	return m_pCameraSystem->GetFoVY();
 }
 
 void MainRenderer::SetMeshCullingType(MeshCullingType in) {
@@ -376,20 +388,16 @@ FD3DW::StructuredBuffer* MainRenderer::GetLightsBuffer() {
 	return m_pLightSystem->GetLightsBuffer();
 }
 
+const std::vector<LightComponentData>& MainRenderer::GetLightComponentsData() const {
+	return m_pLightSystem->GetLightComponentsData();
+}
+
 int MainRenderer::GetLightsCount() {
 	return m_pLightSystem->GetLightsCount();
 }
 
 bool MainRenderer::IsShadowEnabled() {
 	return IsRTSupported();
-}
-
-void MainRenderer::SetRTShadowConfig(RTShadowSystemConfig config) {
-	if(m_pRTShadowSystem) m_pRTShadowSystem->SetConfig(config);
-}
-
-RTShadowSystemConfig MainRenderer::GetRTShadowConfig() {
-	return m_pRTShadowSystem ? m_pRTShadowSystem->GetConfig() : RTShadowSystemConfig();
 }
 
 std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
@@ -508,7 +516,7 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 }
 
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
-	m_pRTShadowSystem = CreateSystem<RTShadowSystem>();
-	m_pRTShadowSystem->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
-	m_pGBuffersSRVPack->AddResource(m_pRTShadowSystem->GetResultResource()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	m_pAtlasRTShadowSystem = CreateSystem<AtlasRTShadowSystem>();
+	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
+	m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 }

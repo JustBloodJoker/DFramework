@@ -39,6 +39,20 @@ D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
 /////////////////////////////////////////////
 
 //////////////////////////////////////////////
+////	RT SHADOW ATLAS
+
+#define RT_SHADOW_ATLAS_FORMAT							DXGI_FORMAT_R32_FLOAT
+#define RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT				DXGI_FORMAT_R32_UINT
+#define RT_SHADOW_ATLAS_MAX_HEIGHT						8192 
+#define RT_SHADOW_ATLAS_MAX_WIDTH						8192						
+#define RT_SHADOW_ATLAS_MAX_TILE_RESOLUTION_WIDTH		256
+#define RT_SHADOW_ATLAS_MAX_TILE_RESOLUTION_HEIGHT		256			
+#define RT_SHADOW_ATLAS_MIN_TILE_RESOLUTION_WIDTH		64			
+#define RT_SHADOW_ATLAS_MIN_TILE_RESOLUTION_HEIGHT		64			
+
+/////////////////////////////////////////////
+
+//////////////////////////////////////////////
 //////		PSO MANAGER GLOBALS
 
 enum class PSOType {
@@ -58,6 +72,7 @@ enum class PSOType {
 	BloomEffect_GaussianBlurPass,
 	BloomEffect_CompositePass,
 	GPUSceneSkinning,
+	AtlasRTShadowDefaultConfig,
 };
 
 struct BasePSODescriptor {
@@ -116,6 +131,18 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 ////////////////////////////////////////////
 
 ////////////////////////////////////////////
+//   SHADOW ATLAS PASS BINDS
+
+#define ATLAS_RT_SHADOW_ACC_DXR_BUFFER_POS_IN_ROOT_SIG			0
+#define ATLAS_RT_SHADOW_LIGHTS_SRV_POS_IN_ROOT_SIG				1
+#define ATLAS_RT_SHADOW_LIGHTS_METAS_SRV_POS_IN_ROOT_SIG		2
+#define ATLAS_RT_SHADOW_SRV_DESCRIPTION_TABLE_POS_IN_ROOT_SIG	3
+#define ATLAS_RT_SHADOW_OUTPUT_UAV_TABLE_POS_IN_ROOT_SIG		4
+#define ATLAS_RT_SHADOW_ATLAS_CBV_POS_IN_ROOT_SIG				5
+
+////////////////////////////////////////////
+
+////////////////////////////////////////////
 //   GPU SKINNING PASS
 #define GPU_SKINNING_PASS_BONES_TRANSFORM_INPUT_POS_IN_ROOT_SIG		0
 #define GPU_SKINNING_PASS_VERTICES_SRV_INPUT_POS_IN_ROOT_SIG		1
@@ -141,6 +168,8 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define LIGHTS_BUFFER_POS_IN_ROOT_SIG							2
 #define LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG					3
 #define LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG				4
+#define LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG		5
+#define LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG		    6
 /////////////////////////////////////////////
 
 /////////////////////////////////////////////

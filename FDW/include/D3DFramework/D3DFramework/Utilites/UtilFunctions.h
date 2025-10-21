@@ -59,6 +59,44 @@ namespace FD3DW
 		return aiMat;
 	}
 
+	namespace hlsl {
+		inline float saturate(float x) {
+			return std::max(0.0f, std::min(1.0f, x));
+		}
+
+		inline float lerp(float a, float b, float t) {
+			return a + t * (b - a);
+		}
+
+		inline float length(const dx::XMFLOAT3& v) {
+			dx::XMVECTOR vec = dx::XMLoadFloat3(&v);
+			return dx::XMVectorGetX(XMVector3Length(vec));
+		}
+
+		inline dx::XMFLOAT2 clamp(const dx::XMFLOAT2& v, float minVal, float maxVal) {
+			return dx::XMFLOAT2(
+				std::max(minVal, std::min(maxVal, v.x)),
+				std::max(minVal, std::min(maxVal, v.y))
+			);
+		}
+
+		inline dx::XMFLOAT4 mul(const dx::XMMATRIX& m, const dx::XMFLOAT4& v) {
+			dx::XMVECTOR vec = dx::XMLoadFloat4(&v);
+			dx::XMVECTOR res = dx::XMVector4Transform(vec, m);
+			dx::XMFLOAT4 out;
+			dx::XMStoreFloat4(&out, res);
+			return out;
+		}
+
+		inline dx::XMFLOAT3 mul(const dx::XMMATRIX& m, const dx::XMFLOAT3& v, float w = 1.0f) {
+			dx::XMVECTOR vec = dx::XMVectorSet(v.x, v.y, v.z, w);
+			dx::XMVECTOR res = dx::XMVector4Transform(vec, m);
+			dx::XMFLOAT4 out;
+			dx::XMStoreFloat4(&out, res);
+			return dx::XMFLOAT3(out.x, out.y, out.z);
+		}
+
+	}
 
 	inline UINT AlignForUavCounter(UINT bufferSize)
 	{

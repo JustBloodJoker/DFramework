@@ -28,6 +28,10 @@ void CameraSystem::BeforeDestruction() {
 	m_pCameraLayer->AddToRouter(nullptr);
 }
 
+dx::XMMATRIX CameraSystem::GetViewProjectionMatrix() {
+	return GetViewMatrix() * m_xProjectionMatrix;
+}
+
 dx::XMMATRIX CameraSystem::GetProjectionMatrix() {
 	return m_xProjectionMatrix;
 }
@@ -47,6 +51,10 @@ void CameraSystem::UpdateProjectionMatrix() {
 	UpdateCameraFrustum();
 }
 
+float CameraSystem::GetFoVY() const {
+	return M_PI_2_F;
+}
+
 void CameraSystem::OnResizeWindow() {
 	UpdateProjectionMatrix();
 }
@@ -58,7 +66,7 @@ CameraFrustum CameraSystem::GetCameraFrustum() {
 void CameraSystem::UpdateCameraFrustum() {
 	if (!m_pCurrentActiveCamera) return;
 
-	m_xFrustum.UpdatePlanes(GetViewMatrix() * m_xProjectionMatrix, m_fZNear, m_fZFar);
+	m_xFrustum.UpdatePlanes(GetViewProjectionMatrix(), m_fZNear, m_fZFar);
 }
 
 CameraComponent* CameraSystem::GetActiveComponent() {

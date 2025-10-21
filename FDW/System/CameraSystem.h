@@ -22,11 +22,13 @@ public:
 
 	void OnResizeWindow();
 
+	dx::XMMATRIX GetViewProjectionMatrix();
 	dx::XMMATRIX GetProjectionMatrix();
 	dx::XMMATRIX GetViewMatrix();
 	dx::XMFLOAT3 GetCameraPosition();
 
 	void UpdateProjectionMatrix();
+	float GetFoVY() const;
 	CameraFrustum GetCameraFrustum();
 	void UpdateCameraFrustum();
 

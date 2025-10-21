@@ -26,22 +26,18 @@ StructuredBuffer::StructuredBuffer(ID3D12Device* pDevice, const UINT count, bool
 	m_xHeapType = heapType;
 }
 
+void StructuredBuffer::UploadDataNoBarrier(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT num) {
+
+	ProcessResizing(pDevice, pCommandList, num);
+
+	if (m_uSize < 1) return;
+	FResource::UploadDataNoBarrier(pDevice, pCommandList, pData, false);
+}
+
 void StructuredBuffer::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, UINT num, D3D12_RESOURCE_STATES state) {
 
-	if (num > m_uCapacity) {
-		
-		if (m_bIsDynamicScaled) {
-			UINT newCapacity = std::max(static_cast<UINT>(m_uCapacity * 1.5f), num);
-			RecreateBuffer(pDevice, pCommandList, newCapacity, false);
+	ProcessResizing(pDevice, pCommandList, num);
 
-		}
-		else {
-			SAFE_ASSERT(false, "StructuredBuffer overflow. Enable dynamic scaling or check input size.");
-		}
-
-	}
-
-	m_uSize = num;
 	if (m_uSize < 1) return;
 
 	FResource::UploadData(pDevice, pCommandList, pData, state, false);
@@ -137,6 +133,24 @@ void StructuredBuffer::Clear(ID3D12Device* pDevice, ID3D12GraphicsCommandList* p
 
 UINT StructuredBuffer::CalculateElementsCount(UINT sizeInBytes, UINT elemSize) {
 	return (UINT)std::ceil((double)sizeInBytes / (double)elemSize);
+}
+
+void StructuredBuffer::ProcessResizing(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT num)
+{
+	if (num > m_uCapacity) {
+
+		if (m_bIsDynamicScaled) {
+			UINT newCapacity = std::max(static_cast<UINT>(m_uCapacity * 1.5f), num);
+			RecreateBuffer(pDevice, pCommandList, newCapacity, false);
+
+		}
+		else {
+			SAFE_ASSERT(false, "StructuredBuffer overflow. Enable dynamic scaling or check input size.");
+		}
+
+	}
+
+	m_uSize = num;
 }
 
 void StructuredBuffer::RecreateBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, UINT newCapacity, bool preserveData) {

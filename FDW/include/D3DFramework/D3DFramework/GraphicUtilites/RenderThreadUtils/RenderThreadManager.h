@@ -27,7 +27,7 @@ namespace FD3DW {
         AsyncCommandQueue* GetQueue(D3D12_COMMAND_LIST_TYPE type);
 
         std::shared_ptr<ExecutionHandle> Submit(const std::shared_ptr<ICommandRecipe>& recipe, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {}, bool IsNeedFullExecute=false);
-        std::shared_ptr<ExecutionHandle> SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {}, bool IsNeedFullExecute = false);
+        std::shared_ptr<ExecutionHandle> SubmitLambda(std::function<void()> func, std::vector<std::shared_ptr<ExecutionHandle>> dependencies = {}, bool IsNeedFullExecute = false, bool ExecuteOnBuilderThread=false);
        
         void GarbageCollectAll();
 

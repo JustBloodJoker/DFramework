@@ -795,21 +795,7 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
 
     if (!enabled) return;
 
-    RTShadowSystemConfig cfg = m_pOwner->GetRTShadowConfig();
-
-    bool changed = false;
-    ImGui::SeparatorText("Temporal Reprojection");
-    changed |= ImGui::DragFloat("Temporal Feedback Min", &cfg.TemporalFeedbackMin, 0.01f, 0.0f, 1.0f);
-    changed |= ImGui::DragFloat("Temporal Feedback Max", &cfg.TemporalFeedbackMax, 0.01f, 0.0f, 1.0f);
-    changed |= ImGui::DragFloat("Reproj Dist Threshold", &cfg.ReprojDistThreshold, 0.001f, 0.0f, 1.0f);
-    changed |= ImGui::DragFloat("Normal Threshold", &cfg.NormalThreshold, 0.01f, 0.0f, 1.0f);
-
-    ImGui::SeparatorText("Bilateral Filter");
-    changed |= ImGui::DragFloat("Sigma S", &cfg.SigmaS, 0.1f, 0.0f, 10.0f);
-    changed |= ImGui::DragFloat("Sigma R", &cfg.SigmaR, 0.01f, 0.0f, 1.0f);
-    changed |= ImGui::DragInt("Kernel Radius", &cfg.KernelRadius, 1, 1, 15);
-
-    if(changed) m_pOwner->SetRTShadowConfig(cfg);
+	//TODO: Shadow settings
 }
 
 

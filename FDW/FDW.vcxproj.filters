@@ -220,6 +220,12 @@
     <ClCompile Include="MainRenderer\GlobalRenderThreadManager.cpp">
       <Filter>mainRenderer</Filter>
     </ClCompile>
+    <ClCompile Include="System\AtlasRTShadowSystem.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
+    <ClCompile Include="System\RectsPacker.cpp">
+      <Filter>System</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">
@@ -390,6 +396,15 @@
     </ClInclude>
     <ClInclude Include="Entity\RenderObject\VerticesConverter.h">
       <Filter>Entity\RenderObject</Filter>
+    </ClInclude>
+    <ClInclude Include="System\AtlasRTShadowSystem.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\AtlasRTShadowLightParams.h">
+      <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="System\RectsPacker.h">
+      <Filter>System</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

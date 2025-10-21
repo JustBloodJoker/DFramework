@@ -26,6 +26,10 @@ D3D12_GPU_VIRTUAL_ADDRESS LightSystem::GetLightsConstantBufferGPULocation() {
     return m_pLightsHelperConstantBuffer->GetGPULocation(0);
 }
 
+const std::vector<LightComponentData>& LightSystem::GetLightComponentsData() const { 
+    return m_vLightComponentsData; 
+}
+
 std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle) {
     auto updateRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, 
         [this](ID3D12GraphicsCommandList* list) mutable {
@@ -33,14 +37,16 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
 
             m_xLightBuffer.CameraPos = m_pOwner->GetCurrentCameraPosition();
             m_xLightBuffer.IsShadowImpl = (int)m_pOwner->IsShadowEnabled();
+            m_xLightBuffer.ZNear = m_pOwner->GetCameraFrustum().GetZNear();
+            m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
 
             m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
 
             if (m_bIsNeedUpdateDataInBuffer.exchange(false, std::memory_order_acq_rel)) {
                 auto device = m_pOwner->GetDevice();
-                auto data = GetDataFromLightComponents(components);
-                m_xLightBuffer.LightCount = int(data.size());
-                m_pLightsStructuredBuffer->UploadData(device, list, data.data(), UINT(data.size()), D3D12_RESOURCE_STATE_COPY_DEST);
+                m_vLightComponentsData = GetDataFromLightComponents(components);
+                m_xLightBuffer.LightCount = int(m_vLightComponentsData.size());
+                m_pLightsStructuredBuffer->UploadData(device, list, m_vLightComponentsData.data(), m_xLightBuffer.LightCount, D3D12_RESOURCE_STATE_COPY_DEST);
             }
     });
     

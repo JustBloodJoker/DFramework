@@ -36,6 +36,9 @@ namespace FD3DW
 		UINT GetDataSize() const;
 		UINT GetBufferSize() const;
 
+		BYTE* Map();
+		void Unmap();
+
 	private:
 
 		BYTE* m_pData;
@@ -130,6 +133,25 @@ namespace FD3DW
 	inline UINT UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::GetBufferSize() const
 	{
 		return m_uDataSize * m_uElementCount;
+	}
+
+	template<typename BUFFER_STRUCTURE_DESC_TYPE>
+	inline BYTE* UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::Map()
+	{
+		if (!m_pUploadBuffer) return nullptr;
+		if (!m_pData) {
+			HRESULT_ASSERT( m_pUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_pData)), "Map upload buffer error");
+		}
+		return m_pData;
+	}
+
+	template<typename BUFFER_STRUCTURE_DESC_TYPE>
+	inline void UploadBuffer<BUFFER_STRUCTURE_DESC_TYPE>::Unmap()
+	{
+		if (m_pUploadBuffer && m_pData) {
+			m_pUploadBuffer->Unmap(0, nullptr);
+			m_pData = nullptr;
+		}
 	}
 
 
