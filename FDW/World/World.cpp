@@ -101,16 +101,16 @@ void World::DestroyEntity(ComponentHolder* holder) {
 	});
 }
 
-void World::InitRenderEntity(TRender* render) {
+void World::InitRenderEntity(std::shared_ptr<TRender> render) {
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
-	auto renderInitDefaultH = render->RenderInit(m_pRender->GetDevice(), nullptr);
-	if (m_pRender->IsRTSupported()) render->RenderInitDXR(m_pRender->GetDXRDevice(), renderInitDefaultH);
+	render->RenderInit(m_pRender->GetDevice(), nullptr)->WaitForExecute();
+	if (m_pRender->IsRTSupported()) render->RenderInitDXR(m_pRender->GetDXRDevice(), {})->WaitForExecute();
 }
 
 void World::AfterSetMainRenderer() {
 	for (auto entity : m_vEntities) {
 		entity->Init();
-		if (auto* renderEntity = dynamic_cast<TRender*>(entity.get())) {
+		if (auto renderEntity = std::dynamic_pointer_cast<TRender>(entity)) {
 			InitRenderEntity(renderEntity);
 		}
 	}

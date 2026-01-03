@@ -1092,6 +1092,10 @@ bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wPa
     return false;
 }
 
+size_t MainRenderer_UIComponent::GetPendingAfterRenderCallsCount() const {
+    return m_vCallsAfterRender.size();
+}
+
 void MainRenderer_UIComponent::AddCallToPull(std::function<void(void)> foo) {
     if (foo) m_vCallsAfterRender.push_back(std::move(foo));
 }

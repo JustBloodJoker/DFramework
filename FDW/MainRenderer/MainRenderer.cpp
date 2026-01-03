@@ -91,8 +91,6 @@ void MainRenderer::UserInit()
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	FD3DW::FResource::ReleaseUploadBuffers();
 
-	m_pWorld->CreateDefaultCamera();
-
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	ProcessNotifiesInWorld();
 }
@@ -270,16 +268,18 @@ void MainRenderer::UserLoop()
 
 	m_dInFlight.push_back(presentH);
 
-	m_pUIComponent->ProcessAfterRenderUICalls();
-	ProcessNotifiesInWorld();
-	
-	while (m_dInFlight.size() >= m_uMaxFramesInFlight) {
+	auto uiCalls = m_pUIComponent->GetPendingAfterRenderCallsCount() && !m_dInFlight.empty();
+
+	while (uiCalls || m_dInFlight.size() >= m_uMaxFramesInFlight) {
 		auto& front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
 			front->WaitForExecute();
 		}
 		m_dInFlight.pop_front();
 	}
+
+	m_pUIComponent->ProcessAfterRenderUICalls();
+	ProcessNotifiesInWorld();
 
 	GlobalRenderThreadManager::GetInstance()->GarbageCollectAll();
 

@@ -175,7 +175,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnUploadLightsMeta(
         }
     });
 
-    return GlobalRenderThreadManager::GetInstance()->Submit(uploadRecipe, { sync });
+    return GlobalRenderThreadManager::GetInstance()->Submit(uploadRecipe, { sync }, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtlas(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync) {

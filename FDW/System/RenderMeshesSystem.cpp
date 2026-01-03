@@ -117,6 +117,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 		{
 			FD3DW::UpdateTopLevelAS(m_pOwner->GetDXRDevice(), list, m_xTLASBufferData, instances);
 		}
+
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);

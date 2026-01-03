@@ -65,8 +65,7 @@ public:
         ent->SetWorld(this);
         ent->AfterCreation();
         ent->Init();
-        auto entPtr = ent.get();
-        if (auto* renderEntity = dynamic_cast<TRender*>(entPtr)){
+        if (auto renderEntity = std::dynamic_pointer_cast<TRender>(ent)) {
             InitRenderEntity(renderEntity);
         }
         m_vEntities.push_back(ent);
@@ -114,7 +113,7 @@ public:
 
 
 private:
-    void InitRenderEntity(TRender* render);
+    void InitRenderEntity(std::shared_ptr<TRender> render);
 
 private:
     template<typename Filter>

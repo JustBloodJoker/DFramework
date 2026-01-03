@@ -113,6 +113,7 @@ private:
 
 public:
     void ProcessAfterRenderUICalls();
+    size_t GetPendingAfterRenderCallsCount() const;
 
 protected:
     void AddCallToPull(std::function<void(void)> foo);
