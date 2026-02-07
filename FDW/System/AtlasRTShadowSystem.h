@@ -53,6 +53,7 @@ protected:
 	
 
 	std::atomic<bool> m_bIsNeedUpdateDataInBuffer{ true };
+	std::atomic<bool> m_bIsNeedCheckEmptyAtlas{ true };
 	std::atomic<bool> m_bIsNeedUploadDataInBuffer{ true };
 };
 

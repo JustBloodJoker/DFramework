@@ -51,13 +51,13 @@ namespace FDWWIN {
 					break;
 
 				task = std::move(m_qTasks.front());
-				m_qTasks.pop();
 			}
 
 			if (task) task();
 
 			{
 				std::unique_lock<std::mutex> lock(m_xMutex);
+				m_qTasks.pop();
 				if (m_qTasks.empty())
 					m_xIdleCV.notify_all();
 			}

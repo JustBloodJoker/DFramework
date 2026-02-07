@@ -162,7 +162,7 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> atlasRtShadowsH = nullptr;
 	if (IsRTSupported()) {
 
-		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ blasCallH,clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH, sync });
+		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
 	
 	}
 
@@ -268,17 +268,16 @@ void MainRenderer::UserLoop()
 
 	m_dInFlight.push_back(presentH);
 
-	auto uiCalls = m_pUIComponent->GetPendingAfterRenderCallsCount() && !m_dInFlight.empty();
-
-	while (uiCalls || m_dInFlight.size() >= m_uMaxFramesInFlight) {
-		auto& front = m_dInFlight.front();
+	auto needProcessUI = m_pUIComponent->GetPendingAfterRenderCallsCount()>0;
+	while ( ( needProcessUI && !m_dInFlight.empty() ) || m_dInFlight.size() >= m_uMaxFramesInFlight) {
+		auto front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
 			front->WaitForExecute();
 		}
 		m_dInFlight.pop_front();
 	}
 
-	m_pUIComponent->ProcessAfterRenderUICalls();
+	if(needProcessUI) m_pUIComponent->ProcessAfterRenderUICalls();
 	ProcessNotifiesInWorld();
 
 	GlobalRenderThreadManager::GetInstance()->GarbageCollectAll();
@@ -458,7 +457,7 @@ void MainRenderer::ProcessNotifiesInWorld() {
 	static std::vector<NRenderSystemNotifyType> s_sNotifiesToWaitRenderTick = {
 		NRenderSystemNotifyType::Light,
 		NRenderSystemNotifyType::SkyboxActivationDeactivation,
-		NRenderSystemNotifyType::MeshActivationDeactivation,
+		NRenderSystemNotifyType::MeshActivationDeactivation
 	};
 
 	auto checkNotifies = m_pWorld->GetRenderSystemNotifies();
@@ -475,7 +474,6 @@ void MainRenderer::ProcessNotifiesInWorld() {
 
 	ProcessNotifies(checkNotifies);
 	
-
 	if (hasMatch) GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
 

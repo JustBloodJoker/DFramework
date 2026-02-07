@@ -77,6 +77,8 @@ namespace FD3DW
 
 		std::unique_ptr<FResource> MakeCopy(ID3D12Device* device);
 
+		void ClearTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmd, const float clearValue[4]);
+
 	protected:
 		UINT CalculateMipCount(UINT width, UINT height);
 		bool IsSupportMipMapping(D3D12_RESOURCE_DESC desc);

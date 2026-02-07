@@ -646,4 +646,51 @@ namespace FD3DW
         );
     }
 
+    void FResource::ClearTexture(ID3D12Device* device, ID3D12GraphicsCommandList* cmd, const float clearValue[4]) {
+        if (!m_pResource) return;
+
+        float zero[4] = { 0.0,0.0,0.0,0.0 };
+        auto value = clearValue ? clearValue : zero;
+        auto desc = m_pResource->GetDesc();
+        if ( !(desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) )
+        {
+            CONSOLE_ERROR_MESSAGE("ClearTexture: resource has no UAV flag");
+            return;
+        }
+
+        auto mipCount = desc.MipLevels;
+        auto descriptorCount = mipCount * 2;
+
+        D3D12_DESCRIPTOR_HEAP_DESC heapDesc{};
+        heapDesc.NumDescriptors = descriptorCount;
+        heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+        heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+        wrl::ComPtr<ID3D12DescriptorHeap> heap;
+        HRESULT_ASSERT(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(heap.GetAddressOf())), "ClearTexture: heap create failed" );
+
+        auto inc = device->GetDescriptorHandleIncrementSize(heapDesc.Type);
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE cpu(heap->GetCPUDescriptorHandleForHeapStart());
+        CD3DX12_GPU_DESCRIPTOR_HANDLE gpu(heap->GetGPUDescriptorHandleForHeapStart());
+
+        ResourceBarrierChange(cmd, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+        for(auto mip = 0; mip < mipCount; ++mip) {
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uav{};
+            uav.Format = desc.Format;
+            uav.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+            uav.Texture2D.MipSlice = mip;
+
+            device->CreateUnorderedAccessView( m_pResource.Get(),nullptr, &uav, cpu);
+
+            D3D12_CPU_DESCRIPTOR_HANDLE cpuClear = cpu;
+            CD3DX12_GPU_DESCRIPTOR_HANDLE gpuClear = gpu;
+
+            cpu.Offset(1, inc);
+            gpu.Offset(1, inc);
+
+            cmd->ClearUnorderedAccessViewFloat(gpuClear,cpuClear,m_pResource.Get(),value,0,nullptr);
+        }
+    }
+
 }

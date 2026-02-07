@@ -48,8 +48,7 @@ namespace FD3DW {
                 if (!m_bRunning && m_qTasks.empty())
                     break;
 
-                task = std::move(m_qTasks.front());
-                m_qTasks.pop();
+                task = m_qTasks.front();
             }
 
             bool ready = true;
@@ -62,7 +61,8 @@ namespace FD3DW {
 
             if (!ready) {
                 std::unique_lock<std::mutex> lock(m_xMutex);
-                m_qTasks.push(std::move(task));
+                m_qTasks.pop();
+                m_qTasks.push(task);
                 continue;
             }
 
@@ -70,6 +70,7 @@ namespace FD3DW {
 
             {
                 std::unique_lock<std::mutex> lock(m_xMutex);
+                m_qTasks.pop();
                 if (m_qTasks.empty())
                     m_xIdleCV.notify_all();
             }

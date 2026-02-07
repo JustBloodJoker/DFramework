@@ -42,6 +42,7 @@ void RenderMeshesSystem::ProcessNotify(NRenderSystemNotifyType type) {
 	else if (type == NRenderSystemNotifyType::MeshActivationDeactivation) {
 		m_bNeedUpdateMeshesActivationDeactivation.store(true, std::memory_order_relaxed);
 		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
+		
 	}
 }
 
@@ -97,7 +98,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartBLASCall(std:
 		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
@@ -120,7 +121,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data) {
@@ -187,7 +188,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 			list->OMSetRenderTargets(gBuffersCount, &FD3DW::keep(data.RTV_CPU), true, &FD3DW::keep(data.DSV_CPU));
 
 			if (!m_vMeshAABBInstanceData.empty()) {
-				if (m_xMeshCullingType == MeshCullingType::GPU) {
+				auto isGPUCulling = m_xMeshCullingType == MeshCullingType::GPU;
+				if (isGPUCulling) {
 					InputMeshesCullingProcessData cullData;
 					cullData.CommandList = list;
 					cullData.Device = m_pOwner->GetDevice();
@@ -205,7 +207,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 
 				auto dataSize = (UINT)m_vMeshRenderData.size();
 				auto instanceDataSize = (UINT)m_vMeshAABBInstanceData.size();
-				if (m_xMeshCullingType == MeshCullingType::GPU) {
+				if (isGPUCulling) {
 					auto cullingRes = m_pMeshesCulling->GetResultBuffer();
 					cullingRes->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT);
 					list->ExecuteIndirect(m_pIndirectCommandSignature.Get(), dataSize, cullingRes->GetResource(), 0, cullingRes->GetResource(), m_pMeshesCulling->CountBufferOffset((UINT)instanceDataSize));

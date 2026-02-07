@@ -9,10 +9,9 @@ namespace FDWWIN {
 
     void WinWindowInputRouter::RemoveLayer(WinWindowInputLayer* layer)
     {
-        auto it = std::find_if(m_vInputLayers.begin(), m_vInputLayers.end(),
-            [layer](WinWindowInputLayer* ptr) {
-                return ptr == layer;
-            });
+        auto it = std::find_if(m_vInputLayers.begin(), m_vInputLayers.end(), [layer](WinWindowInputLayer* ptr) {
+            return ptr == layer;
+        });
 
         if (it != m_vInputLayers.end()) 
         {
@@ -31,18 +30,18 @@ namespace FDWWIN {
         }
 
        
-            switch (msg) {
+        switch (msg) {
 
-            if (!handled) {
-                case WM_KEYDOWN:
-                    if (!(lParam & (1 << 30))) m_aKeyStates[wParam] = true;
-                break;
-            }
+        if (!handled) {
+            case WM_KEYDOWN:
+                if (!(lParam & (1 << 30))) m_aKeyStates[wParam] = true;
+            break;
+        }
 
-            case WM_KEYUP:
-                m_aKeyStates[wParam] = false;
-                break;
-            }
+        case WM_KEYUP:
+            m_aKeyStates[wParam] = false;
+            break;
+        }
         
 
         return handled;

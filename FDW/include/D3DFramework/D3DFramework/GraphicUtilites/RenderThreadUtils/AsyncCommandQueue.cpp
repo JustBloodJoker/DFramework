@@ -42,7 +42,7 @@ namespace FD3DW {
 
     UINT64 AsyncCommandQueue::ReserveFenceTicket()
     {
-        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed)+1;
+        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed) ;
     }
 
     void AsyncCommandQueue::WaitFence(std::shared_ptr<ExecutionHandle> dependency)
@@ -59,9 +59,8 @@ namespace FD3DW {
 
 
     void AsyncCommandQueue::WaitIdle() {
-        const UINT64 ticket = ReserveFenceTicket();
+        const UINT64 ticket = ReserveFenceTicket() + 1;
         HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(), ticket), "Signal error");
-        m_uLastFenceEvent.store(ticket, std::memory_order_release);
 
         ExecutionHandle h;
         h.Bind(m_pFence.Get(), ticket);

@@ -54,6 +54,9 @@ void AtlasRTShadowSystem::ProcessNotify(NRenderSystemNotifyType type) {
     if (type == NRenderSystemNotifyType::Light || type == NRenderSystemNotifyType::CameraInfoChanged || type==NRenderSystemNotifyType::CameraActivationDeactivation) {
 		m_bIsNeedUpdateDataInBuffer.store(true, std::memory_order_release);
     }
+    else if (type == NRenderSystemNotifyType::UpdateTLAS) {
+        m_bIsNeedCheckEmptyAtlas.store(true, std::memory_order_release);
+    }
 }
 
 LightAtlasRect AtlasRTShadowSystem::ComputePointLightScreenRect(const dx::XMFLOAT3& lightPos, float attenuationRadius, int screenWidth, int screenHeight) {
@@ -182,7 +185,10 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
     std::shared_ptr<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>> rtRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList4>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
         auto tlas = m_pOwner->GetTLAS().pResult;
 
-        if (!tlas) return;
+        if (!tlas) {
+			if(m_bIsNeedCheckEmptyAtlas.exchange(false, std::memory_order_acq_rel) ) m_pShadowAtlas->ClearTexture(m_pOwner->GetDevice(), list, nullptr);
+            return;
+        }
 
         auto wndSettings = m_pOwner->GetMainWNDSettings();
 
@@ -208,7 +214,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         list->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, 1));
      });
 
-    return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync);
+    return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, false);
 }
 
 void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device) {
@@ -228,21 +234,18 @@ D3D12_GPU_VIRTUAL_ADDRESS AtlasRTShadowSystem::GetAtlasConstantBufferGPULocation
     return m_pAtlasPerFrameDataBuffer->GetGPULocation(0);
 }
 
-int AtlasRTShadowSystem::ComputeShadowSize(const LightComponentData& L){
-	const auto& camPos = m_pOwner->GetCurrentCameraPosition();
-	const auto& ZFar = m_pOwner->GetCameraFrustum().GetZFar();
+int AtlasRTShadowSystem::ComputeShadowSize(const LightComponentData& L) {
+    auto camPos = m_pOwner->GetCurrentCameraPosition();
+    auto  zFar = m_pOwner->GetCameraFrustum().GetZFar();
 
     auto dist = FD3DW::hlsl::length(L.Position - camPos);
-    auto lodFactor = FD3DW::hlsl::saturate((ZFar - dist) / ZFar);
-    auto sizeF = FD3DW::hlsl::lerp(64.0f, 256.0f, lodFactor);
+    auto lod = FD3DW::hlsl::saturate(1.0f - dist / zFar);
+    auto MinSize = RT_SHADOW_ATLAS_MIN_TILE_RESOLUTION_WIDTH;
+    auto MaxSize = RT_SHADOW_ATLAS_MAX_TILE_RESOLUTION_WIDTH;
 
-    if (sizeF <= 96) return 64;
-    if (sizeF <= 192) return 128;
-    return 256;
+    auto sizeF = FD3DW::hlsl::lerp((float)MinSize,(float)MaxSize,lod);
+    auto size = 1 << (int)std::round( std::log2(sizeF) );
+    size = std::clamp(size, MinSize, MaxSize);
 
-    //todo reuse this and find log2 other values between
-    //RT_SHADOW_ATLAS_MAX_TILE_RESOLUTION_WIDTH
-    //RT_SHADOW_ATLAS_MAX_TILE_RESOLUTION_HEIGHT
-    //RT_SHADOW_ATLAS_MIN_TILE_RESOLUTION_WIDTH
-    //RT_SHADOW_ATLAS_MIN_TILE_RESOLUTION_HEIGHT
+    return size;
 }
