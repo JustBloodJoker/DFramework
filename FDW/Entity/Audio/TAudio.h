@@ -21,9 +21,10 @@ public:
 	void Loop(bool loop);
 
 public:
-	BEGIN_FIELD_REGISTRATION(TAudio, ComponentHolder)
-		REGISTER_FIELD(m_sPath)
-	END_FIELD_REGISTRATION()
+    REFLECT_BODY(TAudio)
+    BEGIN_REFLECT(TAudio, ComponentHolder)
+        REFLECT_PROPERTY(m_sPath)
+    END_REFLECT(TAudio)
 
 public:
 	virtual void AfterCreation() override;

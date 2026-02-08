@@ -22,13 +22,14 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(TBaseCamera, ComponentHolder)
-		REGISTER_FIELD(m_fCameraSpeed);
-		REGISTER_FIELD(m_pCameraComponent);
-		REGISTER_FIELD(m_xStartEye);
-		REGISTER_FIELD(m_xStartUp);
-		REGISTER_FIELD(m_xStartAt);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TBaseCamera)
+    BEGIN_REFLECT(TBaseCamera, ComponentHolder)
+        REFLECT_PROPERTY(m_fCameraSpeed)
+        REFLECT_PROPERTY(m_pCameraComponent)
+        REFLECT_PROPERTY(m_xStartEye)
+        REFLECT_PROPERTY(m_xStartUp)
+        REFLECT_PROPERTY(m_xStartAt)
+    END_REFLECT(TBaseCamera)
 	
 protected:
 	virtual void OnComponentRemoved(IComponent* comp) override;

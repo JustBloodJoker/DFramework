@@ -3,7 +3,7 @@
 
 namespace FD3DW
 {
-	std::unique_ptr<CommandQueue> CommandQueue::CreateQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, size_t priority, size_t nodeMask)
+	std::unique_ptr<CommandQueue> CommandQueue::CreateQueue(ID3D12Device* pDevice, const D3D12_COMMAND_LIST_TYPE type, const D3D12_COMMAND_QUEUE_FLAGS flags, INT priority, UINT nodeMask)
 	{
 		return std::make_unique<CommandQueue>(pDevice, type, flags, priority, nodeMask);
 	}

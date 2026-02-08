@@ -10,8 +10,9 @@ public:
 
 public:
 
-	BEGIN_FIELD_REGISTRATION(TRectLight, TLight)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TRectLight)
+    BEGIN_REFLECT(TRectLight, TLight)
+    END_REFLECT(TRectLight)
 
 public:
 	virtual void AfterCreation() override;

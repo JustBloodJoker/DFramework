@@ -15,14 +15,15 @@ public:
 	bool IsActiveCameraComponent();
 
 public:
-	BEGIN_FIELD_REGISTRATION(TDefaultCamera, TBaseCamera)
-		REGISTER_FIELD(m_fCamYaw);
-		REGISTER_FIELD(m_fCamPitch);
-		REGISTER_FIELD(m_fCamRoll);
-		REGISTER_FIELD(m_xEye);
-		REGISTER_FIELD(m_xUp);
-		REGISTER_FIELD(m_xAt);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TDefaultCamera)
+    BEGIN_REFLECT(TDefaultCamera, TBaseCamera)
+        REFLECT_PROPERTY(m_fCamYaw)
+        REFLECT_PROPERTY(m_fCamPitch)
+        REFLECT_PROPERTY(m_fCamRoll)
+        REFLECT_PROPERTY(m_xEye)
+        REFLECT_PROPERTY(m_xUp)
+        REFLECT_PROPERTY(m_xAt)
+    END_REFLECT(TDefaultCamera)
 
 
 public:

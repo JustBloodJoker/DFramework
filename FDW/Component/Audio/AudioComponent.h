@@ -29,10 +29,11 @@ public:
     virtual void Destroy() override;
 
 public:
-    BEGIN_FIELD_REGISTRATION(AudioComponent, IComponent)
-        REGISTER_FIELD(m_sPath);
-        REGISTER_FIELD(m_bIsLoop);
-    END_FIELD_REGISTRATION();
+    REFLECT_BODY(AudioComponent)
+    BEGIN_REFLECT(AudioComponent, IComponent)
+        REFLECT_PROPERTY(m_sPath)
+        REFLECT_PROPERTY(m_bIsLoop)
+    END_REFLECT(AudioComponent)
 
 protected:
     std::string m_sPath;

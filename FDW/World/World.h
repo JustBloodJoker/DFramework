@@ -130,9 +130,10 @@ private:
     }
 
 public:
-    BEGIN_FIELD_REGISTRATION(World)
-        REGISTER_FIELD(m_vEntities)
-    END_FIELD_REGISTRATION();
+    REFLECT_BODY(World)
+    BEGIN_REFLECT(World)
+        REFLECT_PROPERTY(m_vEntities)
+    END_REFLECT(World)
 
 
 protected:

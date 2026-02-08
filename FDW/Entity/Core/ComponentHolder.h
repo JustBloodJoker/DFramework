@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <WinWindow/Utils/Reflection/Reflection.h>
 #include <Component/Core/IComponent.h>
 #include <System/NRenderSystemNotifyType.h>
 
@@ -106,11 +106,12 @@ public:
 
 public:
 	
-	BEGIN_FIELD_REGISTRATION(ComponentHolder)
-		REGISTER_FIELD(m_vComponents)
-		REGISTER_FIELD(m_pWorld)
-		REGISTER_FIELD(m_sName)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(ComponentHolder)
+    BEGIN_REFLECT(ComponentHolder)
+        REFLECT_PROPERTY(m_vComponents)
+        REFLECT_PROPERTY(m_pWorld)
+        REFLECT_PROPERTY(m_sName)
+    END_REFLECT(ComponentHolder)
 
 protected: 
     void HandleComponentRemoval(IComponent* comp);

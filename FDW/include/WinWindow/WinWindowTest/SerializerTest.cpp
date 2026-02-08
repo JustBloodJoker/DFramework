@@ -1,7 +1,7 @@
-
+﻿
 #include "SerializerTest.h"
-#include "../WinWindow/Utils/Serializer/MacroReflection.h"
-#include "../WinWindow/Utils/Serializer/BinarySerializer.h"
+#include "WinWindow/Utils/Reflection/Reflection.h"
+#include "WinWindow/Utils/Serializer/BinarySerializer.h"
 
 struct CustomType {
     int value{};
@@ -14,46 +14,62 @@ REGISTER_SERIALIZER(CustomType, [](IArchive& ar, void* ptr) { CustomType& obj = 
 
 class Vec3 {
 public:
+    Vec3() = default;
+    Vec3(float x, float y, float z) : x(x), y(y), z(z) {};
+
     float x{}, y{}, z{};
-    BEGIN_FIELD_REGISTRATION(Vec3)
-        REGISTER_FIELD(x)
-        REGISTER_FIELD(y)
-        REGISTER_FIELD(z)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Vec3)
+    BEGIN_REFLECT(Vec3)
+        REFLECT_PROPERTY(x)
+        REFLECT_PROPERTY(y)
+        REFLECT_PROPERTY(z)
+    END_REFLECT(Vec3)
 };
 
 class Weapon {
 public:
+	Weapon() = default;
+	Weapon(std::string name, int damage, float weight) : name(name), damage(damage), weight(weight) {}
+
     std::string name;
     int damage{};
     float weight{};
-    BEGIN_FIELD_REGISTRATION(Weapon)
-        REGISTER_FIELD(name)
-        REGISTER_FIELD(damage)
-        REGISTER_FIELD(weight)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Weapon)
+    BEGIN_REFLECT(Weapon)
+        REFLECT_PROPERTY(name)
+        REFLECT_PROPERTY(damage)
+        REFLECT_PROPERTY(weight)
+    END_REFLECT(Weapon)
 };
 
 class InventoryItem {
 public:
+	InventoryItem() = default;
+	InventoryItem(std::string id, int quantity) : id(id), quantity(quantity) {}
+
     std::string id;
     int quantity{};
-    BEGIN_FIELD_REGISTRATION(InventoryItem)
-        REGISTER_FIELD(id)
-        REGISTER_FIELD(quantity)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(InventoryItem)
+    BEGIN_REFLECT(InventoryItem)
+        REFLECT_PROPERTY(id)
+        REFLECT_PROPERTY(quantity)
+    END_REFLECT(InventoryItem)
 };
 
 class Stats {
 public:
+    Stats() = default;
+	Stats(int s, int a, int i) : strength(s), agility(a), intelligence(i) {}
+
     int strength{};
     int agility{};
     int intelligence{};
-    BEGIN_FIELD_REGISTRATION(Stats)
-        REGISTER_FIELD(strength)
-        REGISTER_FIELD(agility)
-        REGISTER_FIELD(intelligence)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Stats)
+    BEGIN_REFLECT(Stats)
+        REFLECT_PROPERTY(strength)
+        REFLECT_PROPERTY(agility)
+        REFLECT_PROPERTY(intelligence)
+    END_REFLECT(Stats)
 };
 
 class CharacterBase {
@@ -61,41 +77,48 @@ public:
     std::string name;
     int health{};
     Vec3 position;
-    BEGIN_FIELD_REGISTRATION(CharacterBase)
-        REGISTER_FIELD(name)
-        REGISTER_FIELD(health)
-        REGISTER_FIELD(position)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(CharacterBase)
+    BEGIN_REFLECT(CharacterBase)
+        REFLECT_PROPERTY(name)
+        REFLECT_PROPERTY(health)
+        REFLECT_PROPERTY(position)
+    END_REFLECT(CharacterBase)
 };
 
 class Character : public CharacterBase {
 public:
     Stats stats;
     Weapon weapon;
-    BEGIN_FIELD_REGISTRATION(Character, CharacterBase)
-        REGISTER_FIELD(stats)
-        REGISTER_FIELD(weapon)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Character)
+    BEGIN_REFLECT(Character, CharacterBase)
+        // Own Props
+        REFLECT_PROPERTY(stats)
+        REFLECT_PROPERTY(weapon)
+    END_REFLECT(Character)
 };
 
 class PlayerCharacter : public Character {
 public:
     std::string playerID;
     InventoryItem item;
-    BEGIN_FIELD_REGISTRATION(PlayerCharacter, Character)
-        REGISTER_FIELD(playerID)
-        REGISTER_FIELD(item)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(PlayerCharacter)
+    BEGIN_REFLECT(PlayerCharacter, Character)
+        // Own Props
+        REFLECT_PROPERTY(playerID)
+        REFLECT_PROPERTY(item)
+    END_REFLECT(PlayerCharacter)
 };
 
 class SuperEntity : public Character, public InventoryItem, public Vec3 {
 public:
     std::string tag;
     int score{};
-    BEGIN_FIELD_REGISTRATION(SuperEntity, Character, InventoryItem, Vec3)
-        REGISTER_FIELD(tag)
-        REGISTER_FIELD(score)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(SuperEntity)
+    BEGIN_REFLECT(SuperEntity, Character, InventoryItem, Vec3)
+        // Own
+        REFLECT_PROPERTY(tag)
+        REFLECT_PROPERTY(score)
+    END_REFLECT(SuperEntity)
 };
 
 class Bag {
@@ -105,12 +128,13 @@ public:
     std::map<std::string, int> dict;
     std::unordered_map<int, std::string> idMap;
 
-    BEGIN_FIELD_REGISTRATION(Bag)
-        REGISTER_FIELD(names)
-        REGISTER_FIELD(values)
-        REGISTER_FIELD(dict)
-        REGISTER_FIELD(idMap)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Bag)
+    BEGIN_REFLECT(Bag)
+        REFLECT_PROPERTY(names)
+        REFLECT_PROPERTY(values)
+        REFLECT_PROPERTY(dict)
+        REFLECT_PROPERTY(idMap)
+    END_REFLECT(Bag)
 };
 
 class Team {
@@ -118,23 +142,27 @@ public:
     std::vector<PlayerCharacter> members;
     std::map<std::string, SuperEntity> bosses;
 
-    BEGIN_FIELD_REGISTRATION(Team)
-        REGISTER_FIELD(members)
-        REGISTER_FIELD(bosses)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Team)
+    BEGIN_REFLECT(Team)
+        REFLECT_PROPERTY(members)
+        REFLECT_PROPERTY(bosses)
+    END_REFLECT(Team)
 };
 
 class Player {
 public:
+    Player()=default;
+    Player(std::string name, int level, float experience) : name(name), level(level), experience(experience) {}
     std::string name;
     int level{};
     float experience{};
 
-    BEGIN_FIELD_REGISTRATION(Player)
-        REGISTER_FIELD(name)
-        REGISTER_FIELD(level)
-        REGISTER_FIELD(experience)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Player)
+    BEGIN_REFLECT(Player)
+        REFLECT_PROPERTY(name)
+        REFLECT_PROPERTY(level)
+        REFLECT_PROPERTY(experience)
+    END_REFLECT(Player)
 };
 
 class PointerHolder {
@@ -145,13 +173,14 @@ public:
     std::unique_ptr<Weapon> uniqWeapon;
     Weapon* rawWeapon = nullptr;
 
-    BEGIN_FIELD_REGISTRATION(PointerHolder)
-        REGISTER_FIELD(weapon1)
-        REGISTER_FIELD(weapon2)
-        REGISTER_FIELD(weaponWeak)
-        REGISTER_FIELD(rawWeapon)
-        REGISTER_FIELD(uniqWeapon)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(PointerHolder)
+    BEGIN_REFLECT(PointerHolder)
+        REFLECT_PROPERTY(weapon1)
+        REFLECT_PROPERTY(weapon2)
+        REFLECT_PROPERTY(weaponWeak)
+        REFLECT_PROPERTY(rawWeapon)
+        REFLECT_PROPERTY(uniqWeapon)
+    END_REFLECT(PointerHolder)
 };
 
 class Node {
@@ -159,10 +188,11 @@ public:
     std::string name;
     std::shared_ptr<Node> next;
 
-    BEGIN_FIELD_REGISTRATION(Node)
-        REGISTER_FIELD(name)
-        REGISTER_FIELD(next)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Node)
+    BEGIN_REFLECT(Node)
+        REFLECT_PROPERTY(name)
+        REFLECT_PROPERTY(next)
+    END_REFLECT(Node)
 };
 
 class Outer;
@@ -172,10 +202,11 @@ public:
     int value = 2;
     Outer* owner = nullptr;
 
-    BEGIN_FIELD_REGISTRATION(Inner)
-        REGISTER_FIELD(value)
-        REGISTER_FIELD(owner)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Inner)
+    BEGIN_REFLECT(Inner)
+        REFLECT_PROPERTY(value)
+        REFLECT_PROPERTY(owner)
+    END_REFLECT(Inner)
 };
 
 class Outer {
@@ -183,10 +214,11 @@ public:
     std::string name;
     std::unique_ptr<Inner> inner;
 
-    BEGIN_FIELD_REGISTRATION(Outer)
-        REGISTER_FIELD(name)
-        REGISTER_FIELD(inner)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Outer)
+    BEGIN_REFLECT(Outer)
+        REFLECT_PROPERTY(name)
+        REFLECT_PROPERTY(inner)
+    END_REFLECT(Outer)
 };
 
 
@@ -195,9 +227,10 @@ public:
     std::string name;
     virtual ~Base_ID() = default;
 
-    BEGIN_FIELD_REGISTRATION(Base_ID)
-        REGISTER_FIELD(name)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Base_ID)
+    BEGIN_REFLECT(Base_ID)
+        REFLECT_PROPERTY(name)
+    END_REFLECT(Base_ID)
 };
 
 class Derived_ID_1 : public Base_ID {
@@ -208,9 +241,10 @@ public:
     Derived_ID_1(int val) : id1(val) {}
     virtual ~Derived_ID_1() = default;
 
-    BEGIN_FIELD_REGISTRATION(Derived_ID_1, Base_ID)
-        REGISTER_FIELD(id1)
-    END_FIELD_REGISTRATION()
+    REFLECT_BODY(Derived_ID_1)
+    BEGIN_REFLECT(Derived_ID_1, Base_ID)
+        REFLECT_PROPERTY(id1)
+    END_REFLECT(Derived_ID_1)
 };
 
 class Derived_ID_2 : public Base_ID {
@@ -221,17 +255,19 @@ public:
     Derived_ID_2(int val) : id2(val) {}
     virtual ~Derived_ID_2() = default;
 
-    BEGIN_FIELD_REGISTRATION(Derived_ID_2, Base_ID)
-        REGISTER_FIELD(id2)
-        END_FIELD_REGISTRATION()
+    REFLECT_BODY(Derived_ID_2)
+    BEGIN_REFLECT(Derived_ID_2, Base_ID)
+        REFLECT_PROPERTY(id2)
+    END_REFLECT(Derived_ID_2)
 };
 
 class IDManager {
 public:
     std::vector<std::shared_ptr<Base_ID>> IDs;
-    BEGIN_FIELD_REGISTRATION(IDManager)
-        REGISTER_FIELD(IDs)
-    END_FIELD_REGISTRATION()
+    REFLECT_BODY(IDManager)
+    BEGIN_REFLECT(IDManager)
+        REFLECT_PROPERTY(IDs)
+    END_REFLECT(IDManager)
 };
 
 void RunBaseTypePointerForDeriverType() {

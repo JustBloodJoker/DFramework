@@ -12,9 +12,10 @@ public:
 	virtual ~TSimpleMesh() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(TSimpleMesh, TMesh)
-		REGISTER_FIELD(m_mPathToTextures);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TSimpleMesh)
+    BEGIN_REFLECT(TSimpleMesh, TMesh)
+        REFLECT_PROPERTY(m_mPathToTextures)
+    END_REFLECT(TSimpleMesh)
 
 public:
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <WinWindow/Utils/Reflection/Reflection.h>
 
 class ComponentHolder;
 class World;
@@ -12,11 +12,12 @@ public:
 	virtual ~IComponent() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(IComponent)
-		REGISTER_FIELD(m_sName);
-		REGISTER_FIELD(m_bIsActive);
-		REGISTER_FIELD(m_pOwner);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(IComponent)
+    BEGIN_REFLECT(IComponent)
+        REFLECT_PROPERTY(m_sName)
+        REFLECT_PROPERTY(m_bIsActive)
+        REFLECT_PROPERTY(m_pOwner)
+    END_REFLECT(IComponent)
 
 public:
 	void SetOwner(ComponentHolder* owner);

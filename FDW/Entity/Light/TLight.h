@@ -26,10 +26,11 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(TLight, ComponentHolder)
-		REGISTER_FIELD(m_pLightComponent);
-		REGISTER_FIELD(m_pShadowComponent);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TLight)
+    BEGIN_REFLECT(TLight, ComponentHolder)
+        REFLECT_PROPERTY(m_pLightComponent)
+        REFLECT_PROPERTY(m_pShadowComponent)
+    END_REFLECT(TLight)
 
 
 public:

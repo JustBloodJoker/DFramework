@@ -10,8 +10,9 @@ public:
 	
 public:
 
-	BEGIN_FIELD_REGISTRATION(TDirectionalLight, TLight)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TDirectionalLight)
+    BEGIN_REFLECT(TDirectionalLight, TLight)
+    END_REFLECT(TDirectionalLight)
 
 public:
 	virtual void AfterCreation() override;

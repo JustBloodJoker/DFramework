@@ -1,18 +1,12 @@
 #pragma once
-#include <string>
-#include <map>
-#include <list>
-#include <vector>
-#include <unordered_map>
-#include <cstring>
-#include <type_traits>
 #include "Concepts.h"
 #include "DynamicSerializerRegistry.h"
 #include "PolymorphicFactory.h"
 #include "../Macroses.h"
 
 
-void SerializeObject(IArchive& ar, void* baseObj, const std::vector<FieldInfo>& fields);
+struct ClassInfo;
+void SerializeObject(IArchive& ar, void* baseObj, const ClassInfo* info);
 void SerializeFieldName(IArchive& ar, const char* name);
 void SkipFieldName(IArchive& ar);
 
@@ -363,15 +357,28 @@ inline void SkipFieldName(IArchive& ar) {
     ar.Serialize(dummy.data(), len);
 }
 
-inline void SerializeObject(IArchive& ar, void* baseObj, const std::vector<FieldInfo>& fields) {
-    for (const auto& f : fields) {
-        void* fieldPtr = static_cast<void*>(static_cast<char*>(baseObj) + f.Offset);
+#include "../Reflection/ReflectionRegistry.h"
+
+inline void SerializeObject(IArchive& ar, void* baseObj, const ClassInfo* info) {
+    if (!info) return;
+
+    // Serialize Parents
+    for (const auto& [type, offset] : info->Parents) {
+        auto* parentInfo = ReflectionRegistry::GetInstance()->GetReflectedClassInfo(type);
+        if (parentInfo) {
+            SerializeObject(ar, static_cast<char*>(baseObj) + offset, parentInfo);
+        }
+    }
+
+    // Serialize Properties
+    for (const auto& f : info->Properties) {
         if (ar.IsOutput()) {
             SerializeFieldName(ar, f.Name.c_str());
         }
         else {
             SkipFieldName(ar);
         }
-        f.Serializer(ar, fieldPtr);
+        f.Serializer(ar, baseObj);
     }
 }
+

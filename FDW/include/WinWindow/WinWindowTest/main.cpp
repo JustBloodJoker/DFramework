@@ -1,5 +1,6 @@
 #include "TestBaseWindow.h"
 #include "SerializerTest.h"
+#include "ScriptTests.h"
 
 
 void RunOneWindow() {
@@ -28,11 +29,11 @@ void RunMultipleWindow() {
 }
 
 int main() {
-
+	//Utils tests
+	RunScriptTests();
 	RunAllSerializationsTests();
 
+	//WinWindow tests
 	RunOneWindow();
-
 	RunMultipleWindow();
-
 }

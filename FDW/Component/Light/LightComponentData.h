@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <WinWindow/Utils/Reflection/Reflection.h>
 
 enum class NLightComponentTypes {
     PointLight = 0,
@@ -35,17 +35,18 @@ struct LightComponentData {
     dx::XMFLOAT2 RectSize = { 1.0f, 1.0f };
     dx::XMFLOAT3 Rotation = { 0.0f, dx::XMConvertToRadians(90.0f), 0.0f };
 
-    BEGIN_FIELD_REGISTRATION(LightComponentData)
-        REGISTER_FIELD(LightType)
-        REGISTER_FIELD(Color)
-        REGISTER_FIELD(Intensity)
-        REGISTER_FIELD(Position)
-        REGISTER_FIELD(AttenuationRadius)
-        REGISTER_FIELD(SourceRadius)
-        REGISTER_FIELD(Direction)
-        REGISTER_FIELD(InnerConeAngle)
-        REGISTER_FIELD(OuterConeAngle)
-        REGISTER_FIELD(RectSize)
-        REGISTER_FIELD(Rotation)
-    END_FIELD_REGISTRATION()
+    REFLECT_STRUCT(LightComponentData)
+    BEGIN_REFLECT(LightComponentData)
+        REFLECT_PROPERTY(LightType)
+        REFLECT_PROPERTY(Color)
+        REFLECT_PROPERTY(Intensity)
+        REFLECT_PROPERTY(Position)
+        REFLECT_PROPERTY(AttenuationRadius)
+        REFLECT_PROPERTY(SourceRadius)
+        REFLECT_PROPERTY(Direction)
+        REFLECT_PROPERTY(InnerConeAngle)
+        REFLECT_PROPERTY(OuterConeAngle)
+        REFLECT_PROPERTY(RectSize)
+        REFLECT_PROPERTY(Rotation)
+    END_REFLECT(LightComponentData)
 };

@@ -11,9 +11,10 @@ public:
 	virtual ~TSkybox() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(TSkybox, TRender)
-		REGISTER_FIELD(m_sPath)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TSkybox)
+    BEGIN_REFLECT(TSkybox, TRender)
+        REFLECT_PROPERTY(m_sPath)
+    END_REFLECT(TSkybox)
 
 public:
 	virtual void AfterCreation() override;

@@ -11,8 +11,9 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(TRender, ComponentHolder)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TRender)
+    BEGIN_REFLECT(TRender, ComponentHolder)
+    END_REFLECT(TRender)
 
 public:
 	std::shared_ptr<FD3DW::ExecutionHandle> RenderInit(ID3D12Device* device, std::shared_ptr<FD3DW::ExecutionHandle> sync);

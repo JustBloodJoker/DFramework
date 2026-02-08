@@ -11,9 +11,10 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(LightComponent, IComponent)
-		REGISTER_FIELD(m_xData)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(LightComponent)
+    BEGIN_REFLECT(LightComponent, IComponent)
+        REFLECT_PROPERTY(m_xData)
+    END_REFLECT(LightComponent)
 
 public:
 

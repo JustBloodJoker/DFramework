@@ -21,9 +21,10 @@ public:
 	virtual ~RenderComponent() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(RenderComponent, IComponent)
-        REGISTER_FIELD(m_xWorldMatrix)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(RenderComponent)
+    BEGIN_REFLECT(RenderComponent, IComponent)
+        REFLECT_PROPERTY(m_xWorldMatrix)
+    END_REFLECT(RenderComponent)
 
 public:
     dx::XMMATRIX GetWorldMatrix() const;

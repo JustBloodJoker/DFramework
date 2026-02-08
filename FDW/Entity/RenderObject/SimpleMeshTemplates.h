@@ -9,8 +9,9 @@ public:																																									\
 	TSimple##name() = default;																																			\
 	virtual ~TSimple##name() = default;																																	\
 	virtual void AfterCreation() override { m_sName = std::string("Simple") + std::string(#name); };																	\
-	BEGIN_FIELD_REGISTRATION(TSimple##name, TSimpleMesh)																												\
-		END_FIELD_REGISTRATION();																																		\
+    REFLECT_BODY(TSimple##name) \
+    BEGIN_REFLECT(TSimple##name, TSimpleMesh) \
+    END_REFLECT(TSimple##name)	\
 	virtual std::unique_ptr<FD3DW::SimpleObject<FD3DW::VertexFrameWork>> CreateSimpleObject(ID3D12Device* device, ID3D12GraphicsCommandList* list) override {		\
 		return std::make_unique<FD3DW::SimpleObject<FD3DW::VertexFrameWork>>(device, list, GenerateSimple##name##Scene);											\
 	}																																									\

@@ -22,10 +22,11 @@ struct MeshComponentCreationData {
     D3D12_VERTEX_BUFFER_VIEW* VertexBufferView;
     UINT VertexStructSize;
 
-    BEGIN_FIELD_REGISTRATION(MeshComponentCreationData)
-        REGISTER_FIELD(MaterialCBufferData);
-        REGISTER_FIELD(ID);
-    END_FIELD_REGISTRATION()
+    REFLECT_STRUCT(MeshComponentCreationData)
+    BEGIN_REFLECT(MeshComponentCreationData)
+        REFLECT_PROPERTY(MaterialCBufferData);
+        REFLECT_PROPERTY(ID);
+    END_REFLECT(MeshComponentCreationData)
 };
 
 
@@ -36,18 +37,19 @@ public:
 
 
 public:
-    BEGIN_FIELD_REGISTRATION(MeshComponent, RenderComponent)
-        REGISTER_FIELD(m_xPosition);
-        REGISTER_FIELD(m_xRotation);
-        REGISTER_FIELD(m_xScaling);
-        REGISTER_FIELD(m_xData);
-        REGISTER_FIELD(m_xParentPosition);
-        REGISTER_FIELD(m_xParentRotation);
-        REGISTER_FIELD(m_xParentScaling);
-        REGISTER_FIELD(m_bIgnoreParentScaling);
-        REGISTER_FIELD(m_bIgnoreParentRotation);
-        REGISTER_FIELD(m_bIgnoreParentPosition);
-    END_FIELD_REGISTRATION();
+    REFLECT_BODY(MeshComponent)
+    BEGIN_REFLECT(MeshComponent, RenderComponent)
+        REFLECT_PROPERTY(m_xPosition);
+        REFLECT_PROPERTY(m_xRotation);
+        REFLECT_PROPERTY(m_xScaling);
+        REFLECT_PROPERTY(m_xData);
+        REFLECT_PROPERTY(m_xParentPosition);
+        REFLECT_PROPERTY(m_xParentRotation);
+        REFLECT_PROPERTY(m_xParentScaling);
+        REFLECT_PROPERTY(m_bIgnoreParentScaling);
+        REFLECT_PROPERTY(m_bIgnoreParentRotation);
+        REFLECT_PROPERTY(m_bIgnoreParentPosition);
+    END_REFLECT(MeshComponent)
 
 public:
 

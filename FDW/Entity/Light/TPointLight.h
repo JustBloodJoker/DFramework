@@ -10,8 +10,9 @@ public:
 
 public:
 
-	BEGIN_FIELD_REGISTRATION(TPointLight, TLight)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TPointLight)
+    BEGIN_REFLECT(TPointLight, TLight)
+    END_REFLECT(TPointLight)
 
 public:
 	virtual void AfterCreation() override;

@@ -1,7 +1,7 @@
 #pragma once
 
 
-#define _XM_NO_INTRINSICS_
+#define _XM_NO_INTRINSICS_ 
 #include <iostream>
 #include <cassert>
 #include <string>
@@ -17,8 +17,18 @@
 #include <random>
 #include <chrono>
 #include <map>
+#include <concepts>
 #include <codecvt>
 #include <locale>
+#include <list>
+#include <cstring>
+#include <type_traits>
+#include <typeindex>
+#include <variant>
+#include <functional>
+#include <typeinfo>
+#include <sstream>
+#include <stack>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>

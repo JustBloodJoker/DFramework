@@ -31,6 +31,30 @@
     <ClCompile Include="WinWindow\Utils\Thread.cpp">
       <Filter>WinWindow\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptManager.cpp">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindowTest\ScriptTests.cpp">
+      <Filter>WinWindowTest</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Reflection\ReflectionRegistry.cpp">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Reflection\ClassInfo.cpp">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptValue.cpp">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptNodes.cpp">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptLexer.cpp">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClCompile>
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptParser.cpp">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinWindow\Utils\Macroses.h">
@@ -60,22 +84,13 @@
     <ClInclude Include="WinWindow\Utils\CreativeSingleton.h">
       <Filter>WinWindow\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="WinWindow\Utils\Serializer\BaseFieldCollector.h">
-      <Filter>WinWindow\Utils\Serializer</Filter>
-    </ClInclude>
     <ClInclude Include="WinWindow\Utils\Serializer\BinarySerializer.h">
       <Filter>WinWindow\Utils\Serializer</Filter>
     </ClInclude>
     <ClInclude Include="WinWindow\Utils\Serializer\Concepts.h">
       <Filter>WinWindow\Utils\Serializer</Filter>
     </ClInclude>
-    <ClInclude Include="WinWindow\Utils\Serializer\FieldInfo.h">
-      <Filter>WinWindow\Utils\Serializer</Filter>
-    </ClInclude>
     <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h">
-      <Filter>WinWindow\Utils\Serializer</Filter>
-    </ClInclude>
-    <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h">
       <Filter>WinWindow\Utils\Serializer</Filter>
     </ClInclude>
     <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h">
@@ -96,6 +111,48 @@
     <ClInclude Include="WinWindow\Utils\Thread.h">
       <Filter>WinWindow\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\PropertyInfo.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\Reflection.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\ReflectionRegistry.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptManager.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptValue.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\ClassInfo.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\MethodInfo.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Reflection\ReflectionTemplates.h">
+      <Filter>WinWindow\Utils\Reflection</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptNodes.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptTokenType.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptLexer.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptParser.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptToken.h">
+      <Filter>WinWindow\Utils\Scripting</Filter>
+    </ClInclude>
+    <ClInclude Include="WinWindowTest\ScriptTests.h">
+      <Filter>WinWindowTest</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="WinWindowTest">
@@ -112,6 +169,12 @@
     </Filter>
     <Filter Include="WinWindow\Utils\Serializer">
       <UniqueIdentifier>{44625d3a-ab5f-4c2f-a72a-2d3abeda6f83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow\Utils\Reflection">
+      <UniqueIdentifier>{1420e9ce-07f7-430b-aba1-88b477d990f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="WinWindow\Utils\Scripting">
+      <UniqueIdentifier>{215b954c-3cd9-4388-bb0d-1ded9abc195a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

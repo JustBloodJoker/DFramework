@@ -1,7 +1,7 @@
 #pragma once
 
 #include <pch.h>
-#include <D3DFramework/Utilites/Serializer/ReflectionImpl.h>
+#include <WinWindow/Utils/Reflection/Reflection.h>
 
 class CameraFrustum {
 public:

@@ -12,9 +12,10 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(ShadowComponent, IComponent)
-		REGISTER_FIELD(m_xData)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(ShadowComponent)
+    BEGIN_REFLECT(ShadowComponent, IComponent)
+        REFLECT_PROPERTY(m_xData)
+    END_REFLECT(ShadowComponent)
 
 
 public:

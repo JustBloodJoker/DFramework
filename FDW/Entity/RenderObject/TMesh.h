@@ -10,12 +10,13 @@ public:
 	virtual ~TMesh() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(TMesh, TRender)
-		REGISTER_FIELD(m_bIsCreated);
-		REGISTER_FIELD(m_xPosition);
-		REGISTER_FIELD(m_xRotation);
-		REGISTER_FIELD(m_xScaling);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TMesh)
+    BEGIN_REFLECT(TMesh, TRender)
+        REFLECT_PROPERTY(m_bIsCreated)
+        REFLECT_PROPERTY(m_xPosition)
+        REFLECT_PROPERTY(m_xRotation)
+        REFLECT_PROPERTY(m_xScaling)
+    END_REFLECT(TMesh)
 
 
 public:

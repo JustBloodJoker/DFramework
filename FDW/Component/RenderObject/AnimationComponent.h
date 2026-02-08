@@ -24,12 +24,13 @@ public:
 	virtual ~AnimationComponent() = default;
 
 public:
-	BEGIN_FIELD_REGISTRATION(AnimationComponent, IComponent)
-		REGISTER_FIELD(m_fAnimationTime)
-		REGISTER_FIELD(m_sCurrentAnimation)
-		REGISTER_FIELD(m_bNeedFreezeBonesBuffer)
-		REGISTER_FIELD(m_bIsBonesActive)
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(AnimationComponent)
+    BEGIN_REFLECT(AnimationComponent, IComponent)
+        REFLECT_PROPERTY(m_fAnimationTime)
+        REFLECT_PROPERTY(m_sCurrentAnimation)
+        REFLECT_PROPERTY(m_bNeedFreezeBonesBuffer)
+        REFLECT_PROPERTY(m_bIsBonesActive)
+    END_REFLECT(AnimationComponent)
 
 
 public:

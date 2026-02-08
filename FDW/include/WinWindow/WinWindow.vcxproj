@@ -27,6 +27,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="WinWindowTest\ScriptTests.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="WinWindowTest\SerializerTest.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
     </ClInclude>
@@ -38,13 +41,21 @@
     <ClInclude Include="WinWindow\pch.h" />
     <ClInclude Include="WinWindow\Utils\CreativeSingleton.h" />
     <ClInclude Include="WinWindow\Utils\Macroses.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\ClassInfo.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\MethodInfo.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\ReflectionTemplates.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptLexer.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptNodes.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptParser.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptToken.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptTokenType.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptValue.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\BaseFieldCollector.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\BinarySerializer.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\Concepts.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\DynamicSerializerRegistry.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\FieldInfo.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\IArchive.h" />
-    <ClInclude Include="WinWindow\Utils\Serializer\MacroReflection.h" />
     <ClInclude Include="WinWindow\Utils\Serializer\Serializer.h" />
     <ClInclude Include="WinWindow\Utils\Thread.h" />
     <ClInclude Include="WinWindow\Utils\Timer.h" />
@@ -52,6 +63,10 @@
     <ClInclude Include="WinWindow\Utils\WorkerPool.h" />
     <ClInclude Include="WinWindow\Utils\WorkerThread.h" />
     <ClInclude Include="WinWindow\WinWindow.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\PropertyInfo.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\Reflection.h" />
+    <ClInclude Include="WinWindow\Utils\Reflection\ReflectionRegistry.h" />
+    <ClInclude Include="WinWindow\Utils\Scripting\ScriptManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinWindowTest\main.cpp">
@@ -65,11 +80,21 @@
     </ClCompile>
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp" />
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp" />
+    <ClCompile Include="WinWindow\Utils\Reflection\ClassInfo.cpp" />
+    <ClCompile Include="WinWindow\Utils\Reflection\ReflectionRegistry.cpp" />
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptLexer.cpp" />
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptNodes.cpp" />
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptParser.cpp" />
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptValue.cpp" />
     <ClCompile Include="WinWindow\Utils\Thread.cpp" />
     <ClCompile Include="WinWindow\Utils\Timer.cpp" />
     <ClCompile Include="WinWindow\Utils\WorkerPool.cpp" />
     <ClCompile Include="WinWindow\Utils\WorkerThread.cpp" />
     <ClCompile Include="WinWindow\WinWindow.cpp" />
+    <ClCompile Include="WinWindow\Utils\Scripting\ScriptManager.cpp" />
+    <ClCompile Include="WinWindowTest\ScriptTests.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="WinWindow\Utils\Serializer\PolymorphicFactory.h" />
@@ -191,7 +216,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>WinWindow;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\WinWindow;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>

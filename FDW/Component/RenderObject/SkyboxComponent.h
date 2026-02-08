@@ -15,9 +15,10 @@ public:
 
 public:
 
-	BEGIN_FIELD_REGISTRATION(SkyboxComponent, RenderComponent)
-		REGISTER_FIELD(m_sPathToTexture);
-	END_FIELD_REGISTRATION()
+    REFLECT_BODY(SkyboxComponent)
+    BEGIN_REFLECT(SkyboxComponent, RenderComponent)
+        REFLECT_PROPERTY(m_sPathToTexture)
+    END_REFLECT(SkyboxComponent)
 
 
 public:

@@ -10,12 +10,13 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(CameraComponent, IComponent)
-		REGISTER_FIELD(m_xView);
-		REGISTER_FIELD(m_xEye);
-		REGISTER_FIELD(m_xUp);
-		REGISTER_FIELD(m_xAt);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(CameraComponent)
+    BEGIN_REFLECT(CameraComponent, IComponent)
+        REFLECT_PROPERTY(m_xView)
+        REFLECT_PROPERTY(m_xEye)
+        REFLECT_PROPERTY(m_xUp)
+        REFLECT_PROPERTY(m_xAt)
+    END_REFLECT(CameraComponent)
 
 public:
 

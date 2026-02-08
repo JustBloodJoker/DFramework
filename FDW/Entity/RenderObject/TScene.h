@@ -15,9 +15,10 @@ public:
 
 
 public:
-	BEGIN_FIELD_REGISTRATION(TScene, TMesh)
-		REGISTER_FIELD(m_sPath);
-	END_FIELD_REGISTRATION();
+    REFLECT_BODY(TScene)
+    BEGIN_REFLECT(TScene, TMesh)
+        REFLECT_PROPERTY(m_sPath)
+    END_REFLECT(TScene)
 
 public:
 	bool IsHaveAnimation();
