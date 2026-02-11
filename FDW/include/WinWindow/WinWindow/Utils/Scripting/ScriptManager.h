@@ -5,9 +5,12 @@
 #include "../Reflection/ReflectionRegistry.h"
 
 class ScriptManager : public FDWWIN::CreativeSingleton<ScriptManager> {
+
 public:
-    void ExecuteScript(const std::string& script);
-    void Update(); 
+    size_t ExecuteScript(const std::string& script);
+    size_t ExecuteFile(const std::string& filepath);
+    void Update(float dt);
+    float GetDeltaTime() const;
 
 public:
     void SetVariable(const std::string& name, ScriptValue val);
@@ -20,10 +23,20 @@ public:
     
     ScriptValue CreateObject(const std::string& className);
 
-    void AddPredicate(std::shared_ptr<ASTNode> condition, std::shared_ptr<ASTNode> body);
+    void AddPredicate(std::shared_ptr<ASTNode> condition, std::shared_ptr<ASTNode> body, bool loop = false);
 
-private:
-    std::unordered_map<std::string, ScriptValue> m_mVariables;
+    void StopAllScripts();
+    void StopScript(size_t id);
+
+protected:
+    struct ScriptContext {
+        std::unordered_map<std::string, ScriptValue> Variables;
+    };
+
+    std::shared_ptr<ScriptContext> m_pCurrentContext;
+    size_t m_uNextScriptId = 1;
+    size_t m_uCurrentExecutionScriptId = 0;
+
     std::unordered_map<std::string, std::pair<void*, const ClassInfo*>> m_mRegisteredObjects;
     
     struct ScriptPredicate {
@@ -31,6 +44,9 @@ private:
         std::shared_ptr<ASTNode> Body;
         bool Checked = false;
         bool Loop = false;
+        std::shared_ptr<ScriptContext> Context; 
+        size_t ScriptId = 0;
     };
     std::vector<ScriptPredicate> m_vPredicates;
+    float m_fDeltaTime = 0.0f;
 };

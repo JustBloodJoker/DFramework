@@ -20,6 +20,7 @@ enum ScriptTokenType {
     IF,
     ELSE,
     WHILE,
+    LOOP,
     DOT,
     SEMICOLON,
     END

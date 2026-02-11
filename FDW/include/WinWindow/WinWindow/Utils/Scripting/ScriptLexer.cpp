@@ -36,6 +36,9 @@ std::vector<ScriptToken> ScriptLexer::Tokenize() {
             else if (id == "while") {
                 tokens.push_back({ WHILE, id, m_iLine });
             }
+            else if (id == "loop") {
+                tokens.push_back({ LOOP, id, m_iLine });
+            }
             else {
                 tokens.push_back({ ID, id, m_iLine });
             }

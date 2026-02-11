@@ -129,6 +129,11 @@ std::shared_ptr<ASTNode> ScriptParser::ParseStatement() {
         auto body = ParseBlock();
         return std::make_shared<WhileNode>(cond, body);
     }
+    if (Match(LOOP)) {
+        auto cond = ParseExpression();
+        auto body = ParseBlock();
+        return std::make_shared<PredicateRegisterNode>(cond, body, true);
+    }
 
     auto startPos = m_uPos;
     auto expr = ParseExpression();

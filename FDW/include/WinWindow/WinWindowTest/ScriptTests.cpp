@@ -21,7 +21,7 @@ void RunScriptTest() {
 
     ScriptManager::GetInstance()->RegisterObject("player", &player, "GameEntity");
 
-    std::string script = R"(
+    auto script = R"(
         x = 0;
         player.x = 50;
         
@@ -37,7 +37,7 @@ void RunScriptTest() {
     )";
 
     std::cout << "Executing Script...\n";
-    ScriptManager::GetInstance()->ExecuteScript(script);
+    auto id = ScriptManager::GetInstance()->ExecuteScript(script);
     
     std::cout << "Player X after script (before Update): " << player.x << "\n";
     assert(player.x >= 100);
@@ -45,11 +45,13 @@ void RunScriptTest() {
     assert(player.hp == 100);
 
     std::cout << "Running Update...\n";
-    ScriptManager::GetInstance()->Update();
+    ScriptManager::GetInstance()->Update(0.1f);
     std::cout << "Player HP after Update: " << player.hp << "\n";
     assert(player.hp == 0);
 
     std::cout << "\nScript Test Passed!\n";
+
+    ScriptManager::GetInstance()->StopScript(id);
 }
 
 struct GameManager {
@@ -74,7 +76,7 @@ void RunMethodTest() {
     GameManager gm;
     ScriptManager::GetInstance()->RegisterObject("gm", &gm, "GameManager");
 
-    std::string script = R"(
+    auto script = R"(
         
         # Create a new entity (via factory)
         e = CreateObject("GameEntity");
@@ -88,7 +90,7 @@ void RunMethodTest() {
         
     )";
 
-    ScriptManager::GetInstance()->ExecuteScript(script);
+    auto id = ScriptManager::GetInstance()->ExecuteScript(script);
 
     assert(gm.entities.size() == 1);
     if (!gm.entities.empty()) {
@@ -96,6 +98,8 @@ void RunMethodTest() {
         assert(gm.entities[0]->x > 123.4 && gm.entities[0]->x < 123.5);
     }
     
+    ScriptManager::GetInstance()->StopScript(id);
+
     std::cout << "Script Method Test Passed!\n";
 }
 
@@ -162,20 +166,22 @@ void RunComprehensiveTests() {
    {
         std::cout << "Test 1: Arithmetic & Precedence... ";
         testObj.Reset();
-        std::string script = R"(
+        auto script = R"(
             test.IntVal = 1 + 2 * 3;     # Should be 7
             test.FloatVal = (1.0 + 2.0) * 3.0; # Should be 9.0
         )";
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.IntVal == 7);
         assert(std::abs(testObj.FloatVal - 9.0f) < 0.001f);
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     {
         std::cout << "Test 2: Logic & IF... ";
         testObj.Reset();
-        std::string script = R"(
+        auto script = R"(
             # True condition
             if (1 < 2) {
                 test.IntVal = 100;
@@ -185,9 +191,11 @@ void RunComprehensiveTests() {
                 test.IntVal = 200;
             }
         )";
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.IntVal == 100);
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     {
@@ -199,24 +207,28 @@ void RunComprehensiveTests() {
                 test.IncrementCounter();
             }
         )";
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.Counter == 5);
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     {
         std::cout << "Test 4: Method Calls... ";
         testObj.Reset();
-        std::string script = R"(
+        auto script = R"(
             test.IntVal = test.Add(10, 20);
             test.FloatVal = test.Multiply(2.5, 4.0);
             test.StringVal = test.Concat("Hello ", "World");
         )";
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.IntVal == 30);
         assert(std::abs(testObj.FloatVal - 10.0f) < 0.001f);
         assert(testObj.StringVal == "Hello World");
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     {
@@ -235,9 +247,11 @@ void RunComprehensiveTests() {
                 test.IncrementCounter();
             }
         )";
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.IntVal == 30);
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     {
@@ -245,7 +259,7 @@ void RunComprehensiveTests() {
         GameManager gm;
         ScriptManager::GetInstance()->RegisterObject("gm_test", &gm, "GameManager");
         
-        std::string script = R"(
+        auto script = R"(
             newObj = CreateObject("ComprehensiveTestObject");
             newObj.SetInt(999);
             newObj.StringVal = "Created";
@@ -255,31 +269,219 @@ void RunComprehensiveTests() {
             test.StringVal = newObj.StringVal;
         )";
         
-        ScriptManager::GetInstance()->ExecuteScript(script);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
         assert(testObj.IntVal == 999);
         assert(testObj.StringVal == "Created");
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
     
     {
         std::cout << "Test 7: Predicates... ";
         testObj.Reset();
         
-        std::string setupScript = R"(
+        auto setupScript = R"(
             test.IntVal > 50 {
                 test.StringVal = "Triggered";
             }
         )";
-        ScriptManager::GetInstance()->ExecuteScript(setupScript);
+        auto id = ScriptManager::GetInstance()->ExecuteScript(setupScript);
         
         testObj.IntVal = 60;
-        ScriptManager::GetInstance()->Update();
+        ScriptManager::GetInstance()->Update(0.1f);
         
         assert(testObj.StringVal == "Triggered");
         std::cout << "Passed\n";
+
+        ScriptManager::GetInstance()->StopScript(id);
     }
 
     std::cout << "All Comprehensive Tests Passed!\n";
+}
+
+void RunLoopAndDeltaTimeTest() {
+    std::cout << "\nRunning Loop and DeltaTime Test...\n";
+    
+    ScriptManager::GetInstance()->Update(0.5f);
+    assert(std::abs(ScriptManager::GetInstance()->GetDeltaTime() - 0.5f) < 0.001f);
+    
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("loopTest", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto script = R"(
+        loop (loopTest.Counter < 3) {
+            loopTest.FloatVal = GetDeltaTime();
+            loopTest.IncrementCounter();
+        }
+    )";
+    auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+
+    ScriptManager::GetInstance()->Update(0.1f);
+    assert(testObj.Counter == 1);
+    assert(std::abs(testObj.FloatVal - 0.1f) < 0.001f);
+
+    ScriptManager::GetInstance()->Update(0.2f);
+    assert(testObj.Counter == 2);
+    assert(std::abs(testObj.FloatVal - 0.2f) < 0.001f);
+
+    ScriptManager::GetInstance()->Update(0.1f);
+    assert(testObj.Counter == 3);
+    assert(std::abs(testObj.FloatVal - 0.1f) < 0.001f);
+
+    ScriptManager::GetInstance()->Update(0.1f);
+    assert(testObj.Counter == 3);
+
+    std::cout << "Loop and DeltaTime Test Passed!\n";
+
+    ScriptManager::GetInstance()->StopScript(id);
+}
+
+void RunExecuteFileTest() {
+    std::cout << "\nRunning ExecuteFile Test...\n";
+    
+    auto filename = "test_script.dfs";
+    {
+        std::ofstream out(filename);
+        out << "loopTest.IntVal = 555;"; 
+    }
+    
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("loopTest", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+    
+    auto id = ScriptManager::GetInstance()->ExecuteFile(filename);
+    
+    assert(testObj.IntVal == 555);
+    
+    std::cout << "ExecuteFile Test Passed!\n";
+    
+    ScriptManager::GetInstance()->StopScript(id);
+}
+
+void RunReactiveLoopTest() {
+    std::cout << "\nRunning Reactive Loop Auto-Lambda Test...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("reactive", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto id = ScriptManager::GetInstance()->ExecuteScript("loop (reactive.GetInt() > 10) { reactive.IncrementCounter(); }");
+
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 0);
+
+    testObj.IntVal = 20;
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 1);
+    
+    testObj.IntVal = 5;
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 1);
+
+    testObj.IntVal = 30;
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 2);
+    
+    testObj.FloatVal = 0.0f;
+    ScriptManager::GetInstance()->ExecuteScript("loop (reactive.FloatVal < 5.0) { reactive.FloatVal = reactive.FloatVal + 1.0; }");
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 3);
+    assert(std::abs(testObj.FloatVal - 1.0f) < 0.001f);
+    
+    std::cout << "Reactive Loop Auto-Lambda Test Passed!\n";
+
+    ScriptManager::GetInstance()->StopScript(id);
+}
+
+void RunContextIsolationTest() {
+    std::cout << "\nRunning Context Isolation Test...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("iso", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto script1 = R"(
+        a = 10;
+        loop (iso.IntVal < a) {
+            iso.IncrementCounter();
+        }
+    )";
+    auto id1 = ScriptManager::GetInstance()->ExecuteScript(script1);
+
+    auto script2 = R"(
+        a = 5;
+    )";
+    auto id2 = ScriptManager::GetInstance()->ExecuteScript(script2);
+
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 1);
+
+    testObj.IntVal = 6;
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 2); 
+
+    ScriptManager::GetInstance()->StopAllScripts();
+    
+    std::cout << "Context Isolation Test Passed!\n";
+}
+
+void RunStopScriptsTest() {
+    std::cout << "\nRunning StopAllScripts Test...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("stopTest", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto id = ScriptManager::GetInstance()->ExecuteScript("loop(1==1) { stopTest.IncrementCounter(); }");
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 1);
+    
+    std::cout << "Stopping script...\n";
+    ScriptManager::GetInstance()->StopScript(id);
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.Counter == 1);
+    
+    std::cout << "StopAllScripts Test Passed!\n";
+}
+
+void RunStopSingleScriptTest() {
+    std::cout << "\nRunning StopSingleScript Test (ID-based)...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("singleStop", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto script1 = "loop(1==1) { singleStop.SetInt(singleStop.GetInt() + 1); }";
+    auto id1 = ScriptManager::GetInstance()->ExecuteScript(script1);
+
+    auto script2 = "loop(1==1) { singleStop.FloatVal = singleStop.FloatVal + 1.0; }";
+    auto id2 = ScriptManager::GetInstance()->ExecuteScript(script2);
+
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.IntVal == 1);
+    assert(std::abs(testObj.FloatVal - 1.0f) < 0.001f);
+    
+    std::cout << "Stopping Script 1 (ID: " << id1 << ")...\n";
+    ScriptManager::GetInstance()->StopScript(id1);
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.IntVal == 1);
+    assert(std::abs(testObj.FloatVal - 2.0f) < 0.001f);
+    
+    std::cout << "Stopping Script 2 (ID: " << id2 << ")...\n";
+    ScriptManager::GetInstance()->StopScript(id2);
+    
+    ScriptManager::GetInstance()->Update(1.0f);
+    assert(testObj.IntVal == 1);
+    assert(std::abs(testObj.FloatVal - 2.0f) < 0.001f);
+
+    std::cout << "StopSingleScript Test Passed!\n";
 }
 
 
@@ -289,7 +491,7 @@ void RunStressTest() {
     ComprehensiveTestObject testObj;
     ScriptManager::GetInstance()->RegisterObject("stress", &testObj, "ComprehensiveTestObject");
     
-    std::string script = R"(
+    auto script = R"(
         # ==========================================
         # 1. Fibonacci Sequence (Logic & Variables)
         # ==========================================
@@ -427,7 +629,7 @@ void RunInheritanceTest() {
     Derived d;
     ScriptManager::GetInstance()->RegisterObject("d", &d, "Derived");
     
-    std::string script = R"(
+    auto script = R"(
         d.ValA = 100;
         d.ValB = 200.5;
         d.ValD = "Modified";
@@ -446,4 +648,10 @@ void RunScriptTests() {
     RunComprehensiveTests();
     RunStressTest();
     RunInheritanceTest();
+    RunLoopAndDeltaTimeTest();
+    RunExecuteFileTest();
+    RunReactiveLoopTest();
+    RunContextIsolationTest();
+    RunStopScriptsTest();
+    RunStopSingleScriptTest();
 }

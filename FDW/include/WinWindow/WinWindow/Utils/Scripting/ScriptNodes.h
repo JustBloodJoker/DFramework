@@ -95,7 +95,8 @@ struct MethodCallNode : public ASTNode {
 struct PredicateRegisterNode : public ASTNode {
     std::shared_ptr<ASTNode> Cond;
     std::shared_ptr<ASTNode> Body;
+    bool Loop = false;
     
-    PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::shared_ptr<ASTNode> b);
+    PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::shared_ptr<ASTNode> b, bool loop = false);
     ScriptValue Execute(ScriptManager& sm) override;
 };

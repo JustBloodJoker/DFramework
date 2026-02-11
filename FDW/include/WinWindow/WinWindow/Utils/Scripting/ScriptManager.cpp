@@ -5,21 +5,47 @@
 #include "../Serializer/PolymorphicFactory.h"
 
 
-void ScriptManager::ExecuteScript(const std::string& script) {
+size_t ScriptManager::ExecuteScript(const std::string& script) {
     ScriptLexer lexer(script);
     auto tokens = lexer.Tokenize();
     ScriptParser parser(tokens);
     auto block = parser.ParseBlock();
+
+    auto prevContext = m_pCurrentContext;
+    m_pCurrentContext = std::make_shared<ScriptContext>();
+    
+    auto prevId = m_uCurrentExecutionScriptId;
+    auto newId = m_uNextScriptId++;
+    m_uCurrentExecutionScriptId = newId;
 
 	parser.Flush();
     while (parser.Peek().Type != END) {
         auto stmt = parser.ParseStatement();
         if(stmt) stmt->Execute(*this);
     }
+    
+    m_pCurrentContext = prevContext;
+    m_uCurrentExecutionScriptId = prevId;
+    
+    return newId;
 }
 
-void ScriptManager::Update() {
+size_t ScriptManager::ExecuteFile(const std::string& filepath) {
+    std::ifstream t(filepath);
+    if (!t.is_open()) return 0;
+
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return ExecuteScript(buffer.str());
+}
+
+void ScriptManager::Update(float dt) {
+    m_fDeltaTime = dt;
+    auto prevContext = m_pCurrentContext;
+
     for (auto it = m_vPredicates.begin(); it != m_vPredicates.end(); ) {
+        m_pCurrentContext = it->Context;
+
         if ( it->Condition->Execute(*this).AsBool() ) {
             it->Body->Execute(*this);
             it->Checked = true;
@@ -34,13 +60,19 @@ void ScriptManager::Update() {
             ++it;
         }
     }
+    m_pCurrentContext = prevContext;
+}
+
+float ScriptManager::GetDeltaTime() const {
+    return m_fDeltaTime;
 }
 
 void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
-    m_mVariables[name] = val;
+    if(m_pCurrentContext) m_pCurrentContext->Variables[name] = val;
 }
 ScriptValue ScriptManager::GetVariable(const std::string& name) {
-    if ( m_mVariables.find(name) != m_mVariables.end() ) return m_mVariables[name];
+    if (m_pCurrentContext && m_pCurrentContext->Variables.find(name) != m_pCurrentContext->Variables.end() ) 
+        return m_pCurrentContext->Variables[name];
 
     if (m_mRegisteredObjects.find(name) != m_mRegisteredObjects.end()) {
         return ScriptValue(m_mRegisteredObjects[name].first);
@@ -112,6 +144,20 @@ ScriptValue ScriptManager::CreateObject(const std::string& className) {
     return ScriptValue(obj);
 }
 
-void ScriptManager::AddPredicate(std::shared_ptr<ASTNode> condition, std::shared_ptr<ASTNode> body) {
-    m_vPredicates.push_back({ condition, body });
+void ScriptManager::AddPredicate(std::shared_ptr<ASTNode> condition, std::shared_ptr<ASTNode> body, bool loop) {
+    m_vPredicates.push_back({ condition, body, false, loop, m_pCurrentContext, m_uCurrentExecutionScriptId });
+}
+
+void ScriptManager::StopAllScripts() {
+    m_vPredicates.clear();
+}
+
+void ScriptManager::StopScript(size_t id) {
+    for (auto it = m_vPredicates.begin(); it != m_vPredicates.end(); ) {
+        if (it->ScriptId == id) {
+            it = m_vPredicates.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }

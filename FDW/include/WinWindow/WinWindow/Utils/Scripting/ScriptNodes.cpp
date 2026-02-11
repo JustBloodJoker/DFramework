@@ -126,6 +126,10 @@ ScriptValue CallNode::Execute(ScriptManager& sm) {
     for (auto& a : Args) evalArgs.push_back( a->Execute(sm) );
 
 	//TODO remove hardcoded functions and use a reflection or something for extensibility.
+    if (FuncName == "GetDeltaTime") {
+        return sm.GetDeltaTime();
+    }
+
     if (FuncName == "CreateObject") {
         if (!evalArgs.empty() && evalArgs[0].IsString()) {
             return sm.CreateObject(evalArgs[0].AsString());
@@ -156,10 +160,10 @@ ScriptValue MethodCallNode::Execute(ScriptManager& sm) {
 //////////////////////////////
 ////////// PredicateRegisterNode
 
-PredicateRegisterNode::PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::shared_ptr<ASTNode> b) : Cond(c), Body(b) {}
+PredicateRegisterNode::PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::shared_ptr<ASTNode> b, bool loop) : Cond(c), Body(b), Loop(loop) {}
 
 ScriptValue PredicateRegisterNode::Execute(ScriptManager& sm) {
-    sm.AddPredicate(Cond, Body);
+    sm.AddPredicate(Cond, Body, Loop);
     return 0;
 }
 
