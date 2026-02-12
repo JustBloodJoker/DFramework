@@ -51,7 +51,7 @@ void AtlasRTShadowSystem::AfterConstruction() {
 }
 
 void AtlasRTShadowSystem::ProcessNotify(NRenderSystemNotifyType type) {
-    if (type == NRenderSystemNotifyType::Light || type == NRenderSystemNotifyType::CameraInfoChanged || type==NRenderSystemNotifyType::CameraActivationDeactivation) {
+    if (type == NRenderSystemNotifyType::Light || type == NRenderSystemNotifyType::LightUpdateData || type == NRenderSystemNotifyType::CameraInfoChanged || type==NRenderSystemNotifyType::CameraActivationDeactivation) {
 		m_bIsNeedUpdateDataInBuffer.store(true, std::memory_order_release);
     }
     else if (type == NRenderSystemNotifyType::UpdateTLAS) {

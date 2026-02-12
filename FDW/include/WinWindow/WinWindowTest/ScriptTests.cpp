@@ -358,6 +358,7 @@ void RunExecuteFileTest() {
     std::cout << "ExecuteFile Test Passed!\n";
     
     ScriptManager::GetInstance()->StopScript(id);
+	std::remove(filename);
 }
 
 void RunReactiveLoopTest() {

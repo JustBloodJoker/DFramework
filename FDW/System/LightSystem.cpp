@@ -54,7 +54,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
 }
 
 void LightSystem::ProcessNotify(NRenderSystemNotifyType type) {
-    if (type == NRenderSystemNotifyType::Light) {
+    if (type == NRenderSystemNotifyType::Light || type == NRenderSystemNotifyType::LightUpdateData) {
         m_bIsNeedUpdateDataInBuffer.store(true, std::memory_order_relaxed);
     }
 }

@@ -28,15 +28,16 @@ public:
     virtual void Activate(bool a) override;
     virtual void Destroy() override;
 
-public:
     REFLECT_BODY(AudioComponent)
-    BEGIN_REFLECT(AudioComponent, IComponent)
+        BEGIN_REFLECT(AudioComponent, IComponent)
         REFLECT_PROPERTY(m_sPath)
         REFLECT_PROPERTY(m_bIsLoop)
     END_REFLECT(AudioComponent)
+
 
 protected:
     std::string m_sPath;
     std::unique_ptr<FD3DW::Audio> m_pAudio;
     bool m_bIsLoop = false;
 };
+

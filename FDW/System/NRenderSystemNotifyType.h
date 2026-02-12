@@ -3,6 +3,7 @@
 enum class NRenderSystemNotifyType {
 	AudioActivationDeactivation,
 	Light,
+	LightUpdateData,
 	Shadow,
 	CameraActivationDeactivation,
 	CameraInfoChanged,
