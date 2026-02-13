@@ -100,3 +100,19 @@ struct PredicateRegisterNode : public ASTNode {
     PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::shared_ptr<ASTNode> b, bool loop = false);
     ScriptValue Execute(ScriptManager& sm) override;
 };
+
+struct FunctionDefNode : public ASTNode {
+    std::string FuncName;
+    std::vector<std::string> Params;
+    std::shared_ptr<ASTNode> Body;
+
+    FunctionDefNode(std::string name, std::vector<std::string> params, std::shared_ptr<ASTNode> body);
+    ScriptValue Execute(ScriptManager& sm) override;
+};
+
+struct ReturnNode : public ASTNode {
+    std::shared_ptr<ASTNode> Expr;
+
+    ReturnNode(std::shared_ptr<ASTNode> e);
+    ScriptValue Execute(ScriptManager& sm) override;
+};

@@ -21,7 +21,12 @@ size_t ScriptManager::ExecuteScript(const std::string& script) {
 	parser.Flush();
     while (parser.Peek().Type != END) {
         auto stmt = parser.ParseStatement();
-        if(stmt) stmt->Execute(*this);
+        if (stmt) {
+            stmt->Execute(*this);
+        }
+        else {
+            parser.Advance();
+        }
     }
     
     m_pCurrentContext = prevContext;
@@ -68,16 +73,70 @@ float ScriptManager::GetDeltaTime() const {
 }
 
 void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
-    if(m_pCurrentContext) m_pCurrentContext->Variables[name] = val;
+    if (!m_pCurrentContext) return;
+    
+    auto ctx = m_pCurrentContext;
+    while (ctx) {
+        if (ctx->Variables.find(name) != ctx->Variables.end()) {
+            ctx->Variables[name] = val;
+            return;
+        }
+        ctx = ctx->Parent;
+    }
+    m_pCurrentContext->Variables[name] = val;
 }
+
 ScriptValue ScriptManager::GetVariable(const std::string& name) {
-    if (m_pCurrentContext && m_pCurrentContext->Variables.find(name) != m_pCurrentContext->Variables.end() ) 
-        return m_pCurrentContext->Variables[name];
+    auto ctx = m_pCurrentContext;
+    while (ctx) {
+        if (ctx->Variables.find(name) != ctx->Variables.end())
+            return ctx->Variables[name];
+        ctx = ctx->Parent;
+    }
 
     if (m_mRegisteredObjects.find(name) != m_mRegisteredObjects.end()) {
         return ScriptValue(m_mRegisteredObjects[name].first);
     }
     return 0; 
+}
+
+void ScriptManager::RegisterFunction(const std::string& name, const std::vector<std::string>& params, std::shared_ptr<ASTNode> body) {
+    if (m_pCurrentContext) {
+        m_pCurrentContext->Functions[name] = body;
+        m_pCurrentContext->FunctionParams[name] = params;
+    }
+}
+
+ScriptValue ScriptManager::CallFunction(const std::string& name, const std::vector<ScriptValue>& args) {
+    auto ctx = m_pCurrentContext;
+    while (ctx) {
+        if (ctx->Functions.find(name) != ctx->Functions.end()) {
+            auto funBody = ctx->Functions[name];
+            auto& params = ctx->FunctionParams[name];
+            
+            auto fnCtx = std::make_shared<ScriptContext>();
+            fnCtx->Parent = ctx;
+
+            for (size_t i = 0; i < params.size() && i < args.size(); ++i) {
+                fnCtx->Variables[params[i]] = args[i];
+            }
+            
+            auto oldCtx = m_pCurrentContext;
+            m_pCurrentContext = fnCtx;
+            
+            ScriptValue result = 0;
+            try {
+                funBody->Execute(*this);
+            } catch (ScriptValue& retVal) {
+                result = retVal;
+            }
+            
+            m_pCurrentContext = oldCtx;
+            return result;
+        }
+        ctx = ctx->Parent;
+    }
+    return 0;
 }
 
 void ScriptManager::RegisterObject(const std::string& name, void* obj, const std::string& className) {

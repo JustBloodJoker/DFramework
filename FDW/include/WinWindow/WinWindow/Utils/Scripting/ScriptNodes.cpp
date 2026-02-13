@@ -61,6 +61,8 @@ ScriptValue BinaryOpNode::Execute(ScriptManager& sm) {
         case EQ: return l == r ? 1 : 0;
         case GT: return l > r ? 1 : 0;
         case LT: return l < r ? 1 : 0;
+        case LE: return l < r || l == r ? 1 : 0;
+        case GE: return l > r || l == r ? 1 : 0;
     }
 
     return 0;
@@ -125,7 +127,7 @@ ScriptValue CallNode::Execute(ScriptManager& sm) {
     std::vector<ScriptValue> evalArgs;
     for (auto& a : Args) evalArgs.push_back( a->Execute(sm) );
 
-	//TODO remove hardcoded functions and use a reflection or something for extensibility.
+	//TODO remove hardcoded functions and use-a reflection or something for extensibility.
     if (FuncName == "GetDeltaTime") {
         return sm.GetDeltaTime();
     }
@@ -135,7 +137,8 @@ ScriptValue CallNode::Execute(ScriptManager& sm) {
             return sm.CreateObject(evalArgs[0].AsString());
         }
     }
-    return 0;
+
+    return sm.CallFunction(FuncName, evalArgs);
 }
 
 //////////////////////////////
@@ -165,6 +168,31 @@ PredicateRegisterNode::PredicateRegisterNode(std::shared_ptr<ASTNode> c, std::sh
 ScriptValue PredicateRegisterNode::Execute(ScriptManager& sm) {
     sm.AddPredicate(Cond, Body, Loop);
     return 0;
+}
+
+//////////////////////////////
+
+//////////////////////////////
+////////// FunctionDefNode
+
+FunctionDefNode::FunctionDefNode(std::string name, std::vector<std::string> params, std::shared_ptr<ASTNode> body) 
+    : FuncName(name), Params(params), Body(body) {}
+
+ScriptValue FunctionDefNode::Execute(ScriptManager& sm) {
+    sm.RegisterFunction(FuncName, Params, Body);
+    return 0;
+}
+
+//////////////////////////////
+
+//////////////////////////////
+////////// ReturnNode
+
+ReturnNode::ReturnNode(std::shared_ptr<ASTNode> e) : Expr(e) {}
+
+ScriptValue ReturnNode::Execute(ScriptManager& sm) {
+    auto val = Expr ? Expr->Execute(sm) : ScriptValue(0);
+    throw val;
 }
 
 //////////////////////////////

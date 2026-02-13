@@ -16,6 +16,7 @@ public:
     bool Match(ScriptTokenType t);
 
     std::shared_ptr<ASTNode> ParseExpression();
+    std::shared_ptr<ASTNode> ParseFunctionDef();
     std::shared_ptr<ASTNode> ParseEquality();
     std::shared_ptr<ASTNode> ParseTerm();
     std::shared_ptr<ASTNode> ParseFactor();

@@ -39,6 +39,15 @@ std::vector<ScriptToken> ScriptLexer::Tokenize() {
             else if (id == "loop") {
                 tokens.push_back({ LOOP, id, m_iLine });
             }
+            else if (id == "function") {
+                tokens.push_back({ FUNCTION, id, m_iLine });
+            }
+            else if (id == "return") {
+                tokens.push_back({ RETURN, id, m_iLine });
+            }
+            else if (id == "void") {
+                tokens.push_back({ VOID, id, m_iLine });
+            }
             else {
                 tokens.push_back({ ID, id, m_iLine });
             }
@@ -65,9 +74,14 @@ std::vector<ScriptToken> ScriptLexer::Tokenize() {
                 if (Peek() == '=') { Advance(); tokens.push_back({ EQ, "==", m_iLine }); }
                 else tokens.push_back({ ASSIGN, "=", m_iLine });
                 break;
-            case '>': tokens.push_back({ GT, ">", m_iLine }); break;
-            case
-            '<': tokens.push_back({ LT, "<", m_iLine }); break;
+            case '>': 
+                if (Peek() == '=') { Advance(); tokens.push_back({ GE, ">=", m_iLine }); }
+                else tokens.push_back({ GT, ">", m_iLine }); 
+                break;
+            case '<': 
+                if (Peek() == '=') { Advance(); tokens.push_back({ LE, "<=", m_iLine }); }
+                else tokens.push_back({ LT, "<", m_iLine }); 
+                break;
             case '{': tokens.push_back({ LBRACE, "{", m_iLine }); break;
             case '}': tokens.push_back({ RBRACE, "}", m_iLine }); break;
             case '(': tokens.push_back({ LPAREN, "(", m_iLine }); break;

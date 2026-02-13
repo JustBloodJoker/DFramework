@@ -23,7 +23,7 @@ std::shared_ptr<ASTNode> ScriptParser::ParseExpression() {
 
 std::shared_ptr<ASTNode> ScriptParser::ParseEquality() {
     auto left = ParseTerm();
-    while (Peek().Type == EQ || Peek().Type == GT || Peek().Type == LT) {
+    while (Peek().Type == EQ || Peek().Type == GT || Peek().Type == LT || Peek().Type == LE || Peek().Type == GE) {
         auto op = Peek().Type;
 
         Advance();
@@ -105,20 +105,38 @@ std::shared_ptr<ASTNode> ScriptParser::ParsePrimary() {
         }
         return node;
     }
+    
+    Advance(); 
     return std::make_shared<LiteralNode>(0);
 }
 
 std::shared_ptr<ASTNode> ScriptParser::ParseBlock() {
-    Match(LBRACE);
+    if (!Match(LBRACE)) {
+        return std::make_shared<BlockNode>(); 
+    }
+    
     auto block = std::make_shared<BlockNode>();
     while (Peek().Type != RBRACE && Peek().Type != END) {
-        block->Statements.push_back(ParseStatement());
+        auto stmt = ParseStatement();
+        if (stmt) block->Statements.push_back(stmt);
     }
     Match(RBRACE);
     return block;
 }
 
 std::shared_ptr<ASTNode> ScriptParser::ParseStatement() {
+    if (Match(FUNCTION) || Match(VOID)) {
+        return ParseFunctionDef();
+    }
+    if (Match(RETURN)) {
+        std::shared_ptr<ASTNode> expr = nullptr;
+        if (Peek().Type != SEMICOLON) {
+            expr = ParseExpression();
+        }
+        Match(SEMICOLON);
+        return std::make_shared<ReturnNode>(expr);
+    }
+
     if (Match(IF)) {
         auto cond = ParseExpression();
         auto then = ParseBlock();
@@ -158,6 +176,27 @@ std::shared_ptr<ASTNode> ScriptParser::ParseStatement() {
 
     Match(SEMICOLON);
     return expr;
+}
+
+std::shared_ptr<ASTNode> ScriptParser::ParseFunctionDef() {
+    if (Peek().Type == ID) {
+        std::string name = Advance().Text;
+        Match(LPAREN);
+        
+        std::vector<std::string> params;
+        if (Peek().Type != RPAREN) {
+            do {
+                if (Peek().Type == ID) {
+                    params.push_back(Advance().Text);
+                }
+            } while (Match(COMMA));
+        }
+        Match(RPAREN);
+        
+        auto body = ParseBlock();
+        return std::make_shared<FunctionDefNode>(name, params, body);
+    }
+    return nullptr;
 }
 
 void ScriptParser::Flush() {

@@ -22,6 +22,9 @@ public:
     ScriptValue CallMethod(void* obj, const std::string& methodName, const std::vector<ScriptValue>& args);
     
     ScriptValue CreateObject(const std::string& className);
+    
+    void RegisterFunction(const std::string& name, const std::vector<std::string>& params, std::shared_ptr<ASTNode> body);
+    ScriptValue CallFunction(const std::string& name, const std::vector<ScriptValue>& args);
 
     void AddPredicate(std::shared_ptr<ASTNode> condition, std::shared_ptr<ASTNode> body, bool loop = false);
 
@@ -31,6 +34,9 @@ public:
 protected:
     struct ScriptContext {
         std::unordered_map<std::string, ScriptValue> Variables;
+        std::unordered_map<std::string, std::shared_ptr<ASTNode>> Functions;
+        std::unordered_map<std::string, std::vector<std::string>> FunctionParams;
+        std::shared_ptr<ScriptContext> Parent = nullptr;
     };
 
     std::shared_ptr<ScriptContext> m_pCurrentContext;

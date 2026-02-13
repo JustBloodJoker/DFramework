@@ -1,5 +1,7 @@
 #pragma once
 
+#undef VOID
+
 enum ScriptTokenType {
     ID,
     NUMBER,
@@ -12,6 +14,8 @@ enum ScriptTokenType {
     EQ,
     GT,
     LT,
+    LE,
+    GE,
     LBRACE,
     RBRACE,
     LPAREN,
@@ -21,6 +25,9 @@ enum ScriptTokenType {
     ELSE,
     WHILE,
     LOOP,
+    FUNCTION,
+    RETURN,
+    VOID,
     DOT,
     SEMICOLON,
     END

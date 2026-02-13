@@ -643,6 +643,71 @@ void RunInheritanceTest() {
     std::cout << "Inheritance Test Passed!\n";
 }
 
+void RunFunctionTest() {
+    std::cout << "\nRunning Function Test...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("fnTest", &testObj, "ComprehensiveTestObject");
+    testObj.Reset();
+
+    auto script = R"(
+        # Define a function with return value
+        function Add(a, b) {
+            return a + b;
+        }
+
+        # Define a void function
+        void DoSomething() {
+            fnTest.StringVal = "Did Something";
+        }
+
+        # Recursive Factorial (Standard)
+        function Factorial(n) {
+            if (n <= 1) { return 1; }
+            return n * Factorial(n - 1);
+        }
+
+        # Tail Recursion
+        function SumTail(n, acc) {
+            if (n <= 0) { return acc; }
+            return SumTail(n - 1, acc + n);
+        }
+
+        # Mutual Recursion
+        function IsEven(n) {
+            if (n == 0) { return 1; }
+            return IsOdd(n - 1);
+        }
+        
+        function IsOdd(n) {
+            if (n == 0) { return 0; }
+            return IsEven(n - 1);
+        }
+
+        fnTest.IntVal = Add(10, 20);
+        DoSomething();
+        fnTest.Counter = Factorial(5); # 120
+        fnTest.FloatVal = SumTail(10, 0); # 55
+        
+        # Test Mutual Recursion
+        if (IsEven(10) == 1) {
+            fnTest.StringVal = "Even"; 
+        } else {
+            fnTest.StringVal = "Odd";
+        }
+    )";
+
+    auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+
+    assert(testObj.IntVal == 30);
+    assert(testObj.StringVal == "Even"); 
+    assert(testObj.Counter == 120);
+    assert(std::abs(testObj.FloatVal - 55.0f) < 0.001f);
+
+    std::cout << "Function Test Passed!\n";
+    ScriptManager::GetInstance()->StopScript(id);
+}
+
 void RunScriptTests() {
     RunScriptTest();
     RunMethodTest();
@@ -655,4 +720,5 @@ void RunScriptTests() {
     RunContextIsolationTest();
     RunStopScriptsTest();
     RunStopSingleScriptTest();
+    RunFunctionTest();
 }
