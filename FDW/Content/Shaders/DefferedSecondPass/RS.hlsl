@@ -6,4 +6,5 @@
            "CBV(b1),"                                           \
            "SRV(t11),"                                          \
            "CBV(b2),"                                           \
-           "StaticSampler(s0)"
+           "StaticSampler(s0),"                                  \
+           "StaticSampler(s1, filter = FILTER_MIN_MAG_MIP_POINT, addressU = TEXTURE_ADDRESS_CLAMP, addressV = TEXTURE_ADDRESS_CLAMP)"
