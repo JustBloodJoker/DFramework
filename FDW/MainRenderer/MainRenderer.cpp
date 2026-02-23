@@ -43,6 +43,8 @@ void MainRenderer::UserInit()
 		m_pGBuffersSRVPack->PushResource(device, gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 	}
 
+	m_pGBuffersSRVPack->AddResource(m_pDSV.get(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
+
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		auto device = GetDevice();
 		auto size = GetCBV_SRV_UAVDescriptorSize(device);

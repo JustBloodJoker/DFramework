@@ -41,6 +41,7 @@ namespace FD3DW
 
 		UINT GetMSAAQualitySupport(const UINT msaaSamples) const;
 		bool IsRTSupported() const;
+		virtual DXGI_GPU_PREFERENCE GetGPUPreference() const;
 
 	protected:  //METHODS
 

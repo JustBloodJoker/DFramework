@@ -12,7 +12,7 @@ struct PIXEL_OUTPUT
 
 ConstantBuffer<LightsHelper> LHelper : register(b0);
 StructuredBuffer<LightStruct> Lights : register(t0);
-StructuredBuffer<Cluster> Clusters : register(t10);
+StructuredBuffer<Cluster> Clusters : register(t12);
 ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
 
 Texture2D GBuffer_Position : register(t1);      //x         , y         , z                 , empty
@@ -21,17 +21,20 @@ Texture2D GBuffer_Albedo : register(t3);        //r         , g         , b     
 Texture2D GBuffer_Specular : register(t4);      //r         , g         , b                 , specularFactor
 Texture2D GBuffer_Emissive : register(t5);      //r         , g         , b                 , emissiveFactor
 Texture2D GBuffer_MaterialData : register(t6);  //roughness , metalness , specular power    , AO
+Texture2D GBuffer_MotionVector : register(t7);  //dtx       , dty
 
-Texture2D<float4> LTC_Mat : register(t7);
-Texture2D<float2> LTC_Amp : register(t8);
+Texture2D DepthBuffer : register(t8);
 
-Texture2D ShadowFactorTexture : register(t9);
-StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t11);
+Texture2D<float4> LTC_Mat : register(t9);
+Texture2D<float2> LTC_Amp : register(t10);
+
+Texture2D ShadowFactorTexture : register(t11);
+StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t13);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
 
 SamplerState ss : register(s0);
-SamplerState pointSS : register(s1);
+SamplerState linearSS : register(s1);
 
 
 
@@ -69,83 +72,99 @@ LightAtlasMeta GetLightMeta(int id){
     LightAtlasMeta empty;
     return empty;
 }
-float GetShadowFactor(in LightStruct light, int id, float2 UV)
+
+float InterleavedGradientNoise(float2 position_screen)
 {
-    if (LHelper.IsShadowImpl == 0) 
-        return 1.0f;
+    float3 magic = float3(0.06711056f, 0.00583715f, 52.9829189f);
+    return frac(magic.z * frac(dot(position_screen, magic.xy)));
+}
 
+float GetLinearDepth(float2 screenUV)
+{
+    uint w, h;
+    DepthBuffer.GetDimensions(w, h);
+    int3 texCoord = int3(screenUV * float2(w, h), 0);
+    float z_b = DepthBuffer.Load(texCoord).r;
+    
+    float nearClip = LHelper.ZNear;
+    float farClip = LHelper.ZFar;
+    return (nearClip * farClip) / (farClip - z_b * (farClip - nearClip));
+}
+
+static const float2 PoissonDisk4[4] = {
+    float2(-0.5f, -0.5f), float2(0.5f, -0.5f),
+    float2(-0.5f,  0.5f), float2(0.5f,  0.5f)
+};
+
+float GetShadowFactor(in LightStruct light, int id, float2 UV) 
+{
+    if (LHelper.IsShadowImpl == 0) return 1.0f;
     LightAtlasMeta meta = GetLightMeta(id);
-
-    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
+    
+    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || 
+        UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
         return 0.0f;
 
-    float2 relUV;
-    relUV.x = (UV.x - meta.ScreenMinU) / (meta.ScreenMaxU - meta.ScreenMinU);
-    relUV.y = (UV.y - meta.ScreenMinV) / (meta.ScreenMaxV - meta.ScreenMinV);
+    float centerDepth = GetLinearDepth(UV);
 
-    float2 atlasUV;
-    atlasUV.x = (meta.AtlasOffsetX + relUV.x * meta.AtlasWidth) / ShadowAtlasData.AtlasWidth;
-    atlasUV.y = (meta.AtlasOffsetY + relUV.y * meta.AtlasHeight) / ShadowAtlasData.AtlasHeight;
+    float2 relUV = (UV - float2(meta.ScreenMinU, meta.ScreenMinV)) / float2(meta.ScreenMaxU - meta.ScreenMinU, meta.ScreenMaxV - meta.ScreenMinV);
 
-    float2 shadowTexelSize = 1.0 / float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
+    float2 atlasSize = float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
+    float2 texelSize = 1.0f / atlasSize;
     
-    float3 centerNormal = normalize(GBuffer_Normal.SampleLevel(ss, UV, 0).xyz);
-    float3 centerPos    = GBuffer_Position.SampleLevel(ss, UV, 0).xyz;
+    float2 pixelPos = float2( (meta.AtlasOffsetX + relUV.x * meta.AtlasWidth), (meta.AtlasOffsetY + relUV.y * meta.AtlasHeight) );
+    float2 baseUV = pixelPos * texelSize;
+    
+    float2 minUV = float2(meta.AtlasOffsetX, meta.AtlasOffsetY) * texelSize + (0.5f * texelSize);
+    float2 maxUV = float2(meta.AtlasOffsetX + meta.AtlasWidth, meta.AtlasOffsetY + meta.AtlasHeight) * texelSize - (0.5f * texelSize);
 
-    float kernelSpread = 1.0f; 
-    float sigmaPlane   = 2.0f;
-    float sigmaNormal  = 0.5f;
+    uint w, h;
+    DepthBuffer.GetDimensions(w, h);
+    float2 screenPixel = UV * float2(w, h);
+    
+    float noise = InterleavedGradientNoise(screenPixel);
+    float angle = noise * PI * 2;
+    float s, c;
+    sincos(angle, s, c);
+    float2x2 rotMat = float2x2(c, -s, s, c);
 
-    float totalWeight = 0.0;
-    float result = 0.0;
-
-    //Dithering
-    float2 pixel = UV * float2(ShadowAtlasData.ScreenWidth, ShadowAtlasData.ScreenHeight);
-    float angle = frac(dot(floor(), float2(12.9898, 78.233))) * 6.2831853;
-    float s = sin(angle);
-    float c = cos(angle);
-    float2x2 rot = float2x2(c, -s, s, c);
+    float shadowSum = 0.0f;
+    float weightSum = 0.0f;
+    
+    float filterRadius = ShadowAtlasData.FilterRadius; 
+    float depthRejectionSharpness = ShadowAtlasData.DepthRejectionSharpness; 
 
     [unroll]
-    for (int y = -2; y <= 2; y++)
+    for (int i = 0; i < 4; i++) 
     {
-        [unroll]
-        for (int x = -2; x <= 2; x++)
-        {
-            float2 baseOffset = float2(x, y);
-            float2 rotatedOffset = mul(rot, baseOffset);
-            
-            float2 shadowOffsetUV = rotatedOffset * shadowTexelSize * kernelSpread;
-            float2 sampleAtlasUV = atlasUV + shadowOffsetUV;
+        float2 rotatedOffset = mul(rotMat, PoissonDisk4[i]);
+        float2 sampleUV = clamp(baseUV + rotatedOffset * texelSize * filterRadius, minUV, maxUV);
+        
+        float shadow = ShadowFactorTexture.SampleLevel(linearSS, sampleUV, 0).r;
 
-            float shadow = ShadowFactorTexture.SampleLevel(pointSS, sampleAtlasUV, 0).r;
+        float2 tileUV = (sampleUV * atlasSize - float2(meta.AtlasOffsetX, meta.AtlasOffsetY)) / float2(meta.AtlasWidth, meta.AtlasHeight);
+        float2 screenUV = lerp(float2(meta.ScreenMinU, meta.ScreenMinV), float2(meta.ScreenMaxU, meta.ScreenMaxV), tileUV);
 
-            float2 sampleRelUV;
-            sampleRelUV.x = (sampleAtlasUV.x * ShadowAtlasData.AtlasWidth - meta.AtlasOffsetX) / meta.AtlasWidth;
-            sampleRelUV.y = (sampleAtlasUV.y * ShadowAtlasData.AtlasHeight - meta.AtlasOffsetY) / meta.AtlasHeight;
+        float sampleDepth = GetLinearDepth(screenUV);
+        
+        float depthDiff = abs(centerDepth - sampleDepth);
+        float weight = exp(-depthDiff * depthDiff * depthRejectionSharpness);
 
-            float2 sampleScreenUV;
-            sampleScreenUV.x = lerp(meta.ScreenMinU, meta.ScreenMaxU, sampleRelUV.x);
-            sampleScreenUV.y = lerp(meta.ScreenMinV, meta.ScreenMaxV, sampleRelUV.y);
-
-            float3 samplePos = GBuffer_Position.SampleLevel(ss, sampleScreenUV, 0).xyz;
-            float3 sampleNormal = normalize(GBuffer_Normal.SampleLevel(ss, sampleScreenUV, 0).xyz);
-
-            float normalDiff = 1.0 - saturate(dot(sampleNormal, centerNormal));
-            float wNormal = exp(-(normalDiff * normalDiff) / (sigmaNormal * sigmaNormal));
-
-            float planeDist = abs(dot(centerNormal, samplePos - centerPos));
-            float wPos = exp(-(planeDist * planeDist) / (sigmaPlane * sigmaPlane));
-
-            float weight = wNormal * wPos;
-
-            result += shadow * weight;
-            totalWeight += weight;
-        }
+        shadowSum += shadow * weight;
+        weightSum += weight;
     }
 
-    return (totalWeight > 0.0001) ? result / totalWeight : result;
+    if (weightSum < 0.001f) {
+        return ShadowFactorTexture.SampleLevel(linearSS, baseUV, 0).r;
+    }
+
+    float result = shadowSum / weightSum;
+    
+    float blackLevel = ShadowAtlasData.BlackLevel;
+    return saturate((result - blackLevel) / (1.0f - blackLevel));
 }
+
+
 float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
     float shadowFactor = GetShadowFactor(light, id, UV);

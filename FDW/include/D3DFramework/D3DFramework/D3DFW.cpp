@@ -121,6 +121,10 @@ namespace FD3DW
 		return m_bIsRTSupported;
 	}
 
+	DXGI_GPU_PREFERENCE D3DFW::GetGPUPreference() const {
+		return DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE;
+	}
+
 	void D3DFW::ChildLoop()
 	{
 		Update();
@@ -180,6 +184,25 @@ namespace FD3DW
 		HRESULT_ASSERT(CreateDXGIFactory1(IID_PPV_ARGS(m_pFactory.GetAddressOf())), "Factory create error");
 #endif
 
+		wrl::ComPtr<IDXGIFactory6> pFactory6;
+		m_pFactory.As(&pFactory6);
+
+		wrl::ComPtr<IDXGIAdapter1> bestAdapter;
+		for (auto idx = 0; ; ++idx) {
+			wrl::ComPtr<IDXGIAdapter1> adapter;
+			
+			auto ll = pFactory6 ? pFactory6->EnumAdapterByGpuPreference(idx, GetGPUPreference(), IID_PPV_ARGS(&adapter)) : m_pFactory->EnumAdapters1(idx, &adapter);
+			if (DXGI_ERROR_NOT_FOUND == ll ) {
+				break;
+			}
+			DXGI_ADAPTER_DESC1 desc;
+			adapter->GetDesc1(&desc);
+			if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) continue;
+			
+			bestAdapter = adapter;
+			break;
+		}
+
 		D3D_FEATURE_LEVEL featureLevels[] = {
 			D3D_FEATURE_LEVEL_12_1,
 			D3D_FEATURE_LEVEL_12_0,
@@ -187,11 +210,9 @@ namespace FD3DW
 			D3D_FEATURE_LEVEL_11_0,
 		};
 
-		for (auto level : featureLevels)
-		{
+		for(auto level : featureLevels) {
 			wrl::ComPtr<ID3D12Device5> testDevice;
-			if (SUCCEEDED(hr = D3D12CreateDevice(nullptr, level, IID_PPV_ARGS(&testDevice))))
-			{
+			if (SUCCEEDED(hr = D3D12CreateDevice(bestAdapter.Get(), level, IID_PPV_ARGS(&testDevice)))) {
 				m_pDevice = testDevice;
 				break;
 			}

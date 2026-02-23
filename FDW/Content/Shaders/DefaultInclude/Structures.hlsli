@@ -248,6 +248,10 @@ struct ShadowAtlasParams {
     uint ScreenHeight;
     uint AtlasWidth;
     uint AtlasHeight;
+    float FilterRadius;
+    float DepthRejectionSharpness;
+    float BlackLevel;
+    float padd;
 };
 
 

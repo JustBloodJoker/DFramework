@@ -9,9 +9,19 @@ void AlphaClipping(float alpha)
     clip(alpha < 0.1f ? -1.0f : 1.0f);
 }
 
-float3 GammaCorrection(float3 rgb, float gamma) {
-    float igm = 1.0/gamma;
-    return pow(rgb, float3(igm,igm,igm));
+float3 SRGBToLinear(float3 c)
+{
+    float3 lo = c / 12.92;
+    float3 hi = pow((c + 0.055) / 1.055, 2.4);
+    return select(c <= 0.04045, lo, hi);
+}
+
+float3 LinearToSRGB(float3 c)
+{
+    c = saturate(c);
+    float3 lo = c * 12.92;
+    float3 hi = 1.055 * pow(c, 1.0 / 2.4) - 0.055;
+    return select(c <= 0.0031308, lo, hi);
 }
 
 bool IsZeroMatrix(matrix m)

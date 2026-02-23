@@ -42,7 +42,7 @@ void AtlasRTShadowSystem::AfterConstruction() {
     desc.PlaneSlice = 0;
     m_pAtlasPack->AddResource(desc, 3, device);
 
-    m_vTexelMap.resize(RT_SHADOW_ATLAS_MAX_WIDTH * RT_SHADOW_ATLAS_MAX_HEIGHT, 0xFFFFFFFFu);
+    m_vTexelMap.resize(RT_SHADOW_ATLAS_MAX_WIDTH * RT_SHADOW_ATLAS_MAX_HEIGHT, std::numeric_limits<RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT_CPU>::max());
     auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		m_pTexelToLight->UploadData(m_pOwner->GetDevice(), list, m_vTexelMap.data(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     });
@@ -102,7 +102,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnCreateLightsMeta(
                     for (int xx = 0; xx < r.W; ++xx) {
                         int ax = r.X + xx;
                         uint32_t idx = ay * RT_SHADOW_ATLAS_MAX_WIDTH + ax;
-                        m_vTexelMap[idx] = 0xFFFFFFFFu;
+                        m_vTexelMap[idx] = std::numeric_limits<RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT_CPU>::max();
                     }
                 }
                 m_DirtyRegions.push_back(r);
@@ -214,7 +214,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         list->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, 1));
      });
 
-    return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, false);
+    return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, true);
 }
 
 void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device) {

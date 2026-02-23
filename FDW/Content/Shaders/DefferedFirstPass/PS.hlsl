@@ -20,6 +20,7 @@ struct PIXEL_OUTPUT
     float4 Specular : SV_TARGET3;
     float4 Emissive : SV_TARGET4;
     float4 MaterialData : SV_TARGET5;
+    float2 MotionVectorData : SV_TARGET6;
 };
 
 // TODO:    TBN calcs remove to vertex shader
@@ -62,6 +63,8 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     {
         albedo = GlobalTextures[LoadedTexture[TEXTURE_BASE_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord);
     }
+
+    albedo.xyz = SRGBToLinear(albedo.xyz);
 
     float roughness = objMaterials.roughness;
     if (LoadedTexture[TEXTURE_ROUGHNESS_LOAD_FLAG_LOCATION]!=-1)
@@ -114,6 +117,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     psOut.Specular      = specular;
     psOut.Emissive      = emissive;
     psOut.MaterialData  = float4(roughness, metalness, objMaterials.specularPower, ao);
+    psOut.MotionVectorData = float2(0,0);
 
     return psOut;
 }

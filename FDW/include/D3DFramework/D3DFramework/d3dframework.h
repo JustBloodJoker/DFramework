@@ -50,6 +50,7 @@
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <dxgi1_6.h>
 #include <d3d12shader.h>
 #include <dxcapi.h>
 #include "include/d3dx12.h"

@@ -39,7 +39,7 @@ protected:
 	std::unique_ptr<FD3DW::RTShaderBindingTable> m_pSoftShadowsSBT;
 
 	std::vector<LightAtlasMeta> m_vMetas;
-	std::vector<uint32_t> m_vTexelMap;
+	std::vector<RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT_CPU> m_vTexelMap;
 	std::vector<Rect> m_DirtyRegions;
 	RectsPacker m_xAtlasPacker = RectsPacker(RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, 1);;
 

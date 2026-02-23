@@ -22,6 +22,10 @@ struct AtlasRTShadowParams {
     UINT ScreenHeight;
     UINT AtlasWidth;
     UINT AtlasHeight;
+    float FilterRadius = 1.5f;
+    float DepthRejectionSharpness = 10.0f;
+    float BlackLevel = 0.5f;
+    float padd;
 };
 
 struct LightAtlasRect {
