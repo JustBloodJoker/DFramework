@@ -163,4 +163,17 @@ float3 RotateAxisQuat(float3 v, float pitch, float yaw, float roll)
 }
 /////////////////////////////////////////////////////////////////////////////
 
+
+
+float3 ReconstructWorldPosition(float2 screenUV, float hardwareDepth, matrix InverseVPMatrix)
+{
+    float2 ndc = screenUV * 2.0f - 1.0f;
+    ndc.y = -ndc.y;
+    float4 clipPos = float4(ndc, hardwareDepth, 1.0f);
+    float4 worldPos = mul(clipPos, InverseVPMatrix);
+    return worldPos.xyz / worldPos.w;
+}
+
+
+
 #endif

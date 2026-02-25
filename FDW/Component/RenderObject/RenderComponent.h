@@ -11,6 +11,7 @@ struct RenderComponentBeforeRenderInputData {
     dx::XMMATRIX Projection;
     dx::XMMATRIX View;
     dx::XMFLOAT3 CameraPosition;
+    dx::XMMATRIX PrevViewProjection;
     ID3D12Device* Device;
     ID3D12GraphicsCommandList* CommandList;
 };

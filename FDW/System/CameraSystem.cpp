@@ -28,8 +28,12 @@ void CameraSystem::BeforeDestruction() {
 	m_pCameraLayer->AddToRouter(nullptr);
 }
 
+dx::XMMATRIX CameraSystem::GetPrevViewProjectionMatrix() {
+	return m_xPrevViewProjectionMatrix;
+}
+
 dx::XMMATRIX CameraSystem::GetViewProjectionMatrix() {
-	return GetViewMatrix() * m_xProjectionMatrix;
+	return GetViewMatrix() * GetProjectionMatrix();
 }
 
 dx::XMMATRIX CameraSystem::GetProjectionMatrix() {
@@ -46,7 +50,7 @@ dx::XMFLOAT3 CameraSystem::GetCameraPosition() {
 
 void CameraSystem::UpdateProjectionMatrix() {
 	const auto& WndSet = m_pOwner->WNDSettings();
-	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(M_PI_2_F, (float)WndSet.Width / WndSet.Height, 0.1f, 10000.0f);
+	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(GetFoVY(), (float)WndSet.Width / WndSet.Height, m_fZNear, m_fZFar);
 
 	UpdateCameraFrustum();
 }
@@ -93,7 +97,13 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 			UpdateCameraFrustum();
 		}
 
-	}, { handle }, true);
+	}, { handle }, true, true);
+}
+
+std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnEndTick(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
+	return GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() {
+		m_xPrevViewProjectionMatrix = GetViewProjectionMatrix();
+	}, { handle }, true, true);
 }
 
 void CameraSystem::ProcessNotify(NRenderSystemNotifyType type) {

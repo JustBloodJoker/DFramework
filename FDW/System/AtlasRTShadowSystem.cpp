@@ -15,14 +15,14 @@ void AtlasRTShadowSystem::AfterConstruction() {
 
 	m_pLightAtlasMetaBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<LightAtlasMeta>(device, 1, true, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_HEAP_TYPE_DEFAULT);
 
-    AtlasRTShadowParams params;
-	params.AtlasHeight = RT_SHADOW_ATLAS_MAX_HEIGHT;
-	params.AtlasWidth = RT_SHADOW_ATLAS_MAX_WIDTH;
-	params.ScreenHeight = m_pOwner->WNDSettings().Height;
-	params.ScreenWidth = m_pOwner->WNDSettings().Width;
+   
+    m_xShadowParams.AtlasHeight = RT_SHADOW_ATLAS_MAX_HEIGHT;
+    m_xShadowParams.AtlasWidth = RT_SHADOW_ATLAS_MAX_WIDTH;
+    m_xShadowParams.ScreenHeight = m_pOwner->WNDSettings().Height;
+    m_xShadowParams.ScreenWidth = m_pOwner->WNDSettings().Width;
 
 	m_pAtlasPerFrameDataBuffer = std::make_unique<FD3DW::UploadBuffer<AtlasRTShadowParams>>(device, 1, true);
-	m_pAtlasPerFrameDataBuffer->CpyData(0, params);
+	m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
 
     m_pTexelToLight = FD3DW::FResource::CreateAnonimTexture(device, 1, RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT, RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, DXGI_SAMPLE_DESC({ 1,0 }), D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_NONE, &FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)), 1u);
 
@@ -190,6 +190,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
             return;
         }
 
+		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose( m_pOwner->GetViewProjectionMatrix() ) );
+        m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
+
         auto wndSettings = m_pOwner->GetMainWNDSettings();
 
         PSOManager::GetInstance()->GetPSOObject(PSOType::AtlasRTShadowDefaultConfig)->Bind(list);
@@ -212,13 +215,13 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         list->SetComputeRootConstantBufferView(ATLAS_RT_SHADOW_ATLAS_CBV_POS_IN_ROOT_SIG, m_pAtlasPerFrameDataBuffer->GetGPULocation(0));
 
         list->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, 1));
-     });
+    });
 
     return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, true);
 }
 
-void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device) {
-    m_pAtlasPack->AddResource(worldPos->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1, device);
+void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::DepthStencilView* depth, FD3DW::FResource* normal, ID3D12Device* device) {
+    m_pAtlasPack->AddResource(depth, 1, device);
     m_pAtlasPack->AddResource(normal->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 2, device);
 }
 

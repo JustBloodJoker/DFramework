@@ -17,11 +17,13 @@ public:
 	virtual void BeforeDestruction() override;
 
 	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnEndTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
 
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
 
 	void OnResizeWindow();
 
+	dx::XMMATRIX GetPrevViewProjectionMatrix();
 	dx::XMMATRIX GetViewProjectionMatrix();
 	dx::XMMATRIX GetProjectionMatrix();
 	dx::XMMATRIX GetViewMatrix();
@@ -33,7 +35,10 @@ public:
 	void UpdateCameraFrustum();
 
 	CameraComponent* GetActiveComponent();
+
 protected:
+
+	dx::XMMATRIX m_xPrevViewProjectionMatrix;
 
 	dx::XMMATRIX m_xProjectionMatrix;
 	CameraComponent* m_pCurrentActiveCamera = nullptr;

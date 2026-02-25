@@ -39,6 +39,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
             m_xLightBuffer.IsShadowImpl = (int)m_pOwner->IsShadowEnabled();
             m_xLightBuffer.ZNear = m_pOwner->GetCameraFrustum().GetZNear();
             m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
+			m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse( nullptr, dx::XMMatrixTranspose( m_pOwner->GetViewProjectionMatrix() ) );
 
             m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
 

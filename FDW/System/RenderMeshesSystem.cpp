@@ -75,6 +75,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 		inData.Device = m_pOwner->GetDevice();
 		inData.Projection = m_pOwner->GetCurrentProjectionMatrix();
 		inData.View = m_pOwner->GetCurrentViewMatrix();
+		inData.PrevViewProjection = m_pOwner->GetPrevViewProjectionMatrix();
 		auto timer = m_pOwner->GetTimer();
 
 		inData.DT = timer->GetDeltaTime();

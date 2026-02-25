@@ -230,19 +230,18 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 /////////////////////////////////////////////
 ///////    DEFFERED SECOND PASS SRV HEAP LOCATIONS  
 
-#define COUNT_SRV_IN_GBUFFER_HEAP 11
+#define COUNT_SRV_IN_GBUFFER_HEAP 10
 
-#define GBUFFER_POSITION_LOCATION_IN_HEAP 0
-#define GBUFFER_NORMAL_LOCATION_IN_HEAP 1
-#define GBUFFER_ALBEDO_LOCATION_IN_HEAP 2
-#define GBUFFER_SPECULAR_LOCATION_IN_HEAP 3 
-#define GBUFFER_EMISSIVE_LOCATION_IN_HEAP 4
-#define GBUFFER_MATERIALDATA_LOCATION_IN_HEAP 5
-#define GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP 6
-#define DEPTH_BUFFER_LOCATION_IN_HEAP 7
-#define LIGHTS_LTC_MAT_LOCATION_IN_HEAP 8
-#define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 9
-#define SHADOW_FACTOR_LOCATION_IN_HEAP 10
+#define GBUFFER_NORMAL_LOCATION_IN_HEAP 0
+#define GBUFFER_ALBEDO_LOCATION_IN_HEAP 1
+#define GBUFFER_SPECULAR_LOCATION_IN_HEAP 2 
+#define GBUFFER_EMISSIVE_LOCATION_IN_HEAP 3
+#define GBUFFER_MATERIALDATA_LOCATION_IN_HEAP 4
+#define GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP 5
+#define DEPTH_BUFFER_LOCATION_IN_HEAP 6
+#define LIGHTS_LTC_MAT_LOCATION_IN_HEAP 7
+#define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 8
+#define SHADOW_FACTOR_LOCATION_IN_HEAP 9
 
 
 
@@ -268,8 +267,3 @@ const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device);
 
 ////////////////////////////////////////////
 
-
-//<<<<
-//	посмотреть че за хуйня в тласе спонзы
-//	починить то что пишет инвалид дескрипторы в рт
-//	и поотом уже попробовать софт тени

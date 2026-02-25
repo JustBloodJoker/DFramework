@@ -24,7 +24,7 @@ public:
 	std::shared_ptr<FD3DW::ExecutionHandle> OnGenerateShadowAtlas(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync);
 
 
-	void SetGBuffersResources(FD3DW::FResource* worldPos, FD3DW::FResource* normal, ID3D12Device* device);
+	void SetGBuffersResources(FD3DW::DepthStencilView* depth, FD3DW::FResource* normal, ID3D12Device* device);
 
 	FD3DW::FResource* GetShadowAtlas() const;
 	D3D12_GPU_VIRTUAL_ADDRESS GetLightsMetasBufferGPULocation() const;
@@ -45,6 +45,7 @@ protected:
 
 	std::unique_ptr<FD3DW::StructuredBuffer> m_pLightAtlasMetaBuffer = nullptr;
 
+	AtlasRTShadowParams m_xShadowParams;
 	std::unique_ptr<FD3DW::UploadBuffer<AtlasRTShadowParams>> m_pAtlasPerFrameDataBuffer = nullptr;
 
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pAtlasPack = nullptr;

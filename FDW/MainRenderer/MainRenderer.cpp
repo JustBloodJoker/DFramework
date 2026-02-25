@@ -263,10 +263,13 @@ void MainRenderer::UserLoop()
 
 	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH, bloomPassH });
 
+
+	auto lCameraH = m_pCameraSystem->OnEndTick(indirectRenderH);
+
 	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		PresentSwapchain(); 
 		++m_uFrameIndex; 	
-	}, { postProcessPass }, true);
+	}, { postProcessPass,lCameraH }, true);
 
 	m_dInFlight.push_back(presentH);
 
@@ -343,6 +346,10 @@ dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
 
 dx::XMMATRIX MainRenderer::GetViewProjectionMatrix() const {
 	return m_pCameraSystem->GetViewProjectionMatrix();
+}
+
+dx::XMMATRIX MainRenderer::GetPrevViewProjectionMatrix() const {
+	return m_pCameraSystem->GetPrevViewProjectionMatrix();
 }
 
 dx::XMFLOAT3 MainRenderer::GetCurrentCameraPosition() const {
@@ -517,6 +524,6 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
 	m_pAtlasRTShadowSystem = CreateSystem<AtlasRTShadowSystem>();
-	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[0]->GetTexture(), m_pGBuffers[1]->GetTexture(), device);
+	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pDSV.get(), m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
 	m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 }

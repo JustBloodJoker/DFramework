@@ -7,4 +7,6 @@ struct VERTEX_OUTPUT
     float3 tangent : TANGENT;
     float3 bitangent : BITANGENT;
     uint instance : SV_InstanceID;
+    float4 currentClipPos : POSITION1; 
+    float4 prevClipPos    : POSITION2;
 };

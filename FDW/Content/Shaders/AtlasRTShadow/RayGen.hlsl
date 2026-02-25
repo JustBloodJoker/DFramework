@@ -1,12 +1,13 @@
 #include "SameShadersStructs.hlsli"
 #include "Structures.hlsli"
+#include "Utilits.hlsli"
 
 ConstantBuffer<ShadowAtlasParams> AtlasData : register(b0);
 RaytracingAccelerationStructure SceneBVH : register(t0);
 StructuredBuffer<LightStruct> Lights : register(t1);
 StructuredBuffer<LightAtlasMeta> LightAtlasMetas : register(t2);
 Texture2D<uint> TexelToLight : register(t3);
-Texture2D<float4> GBufferPos : register(t4);
+Texture2D<float4> DepthBuffer : register(t4);
 Texture2D<float4> GBufferNormal : register(t5);
 SamplerState samplerLinearClamp : register(s0);
 
@@ -63,8 +64,9 @@ void RayGen()
     
     gBuffersPixel.x = min(gBuffersPixel.x, AtlasData.ScreenWidth - 1);
     gBuffersPixel.y = min(gBuffersPixel.y, AtlasData.ScreenHeight - 1);
-
-    float3 worldPos = GBufferPos.Load(int3(gBuffersPixel,0)).xyz;
+    
+    float2 uv = (float2(gBuffersPixel) + 0.5f) / float2(AtlasData.ScreenWidth, AtlasData.ScreenHeight);
+    float3 worldPos = ReconstructWorldPosition(uv, DepthBuffer.Load(int3(gBuffersPixel,0)).x, AtlasData.InverseViewProjectionMatrix);
     float3 normal   = normalize(GBufferNormal.Load(int3(gBuffersPixel,0)).xyz);
 
     float visible = 1.0f;

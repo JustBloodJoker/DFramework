@@ -12,31 +12,28 @@ struct PIXEL_OUTPUT
 
 ConstantBuffer<LightsHelper> LHelper : register(b0);
 StructuredBuffer<LightStruct> Lights : register(t0);
-StructuredBuffer<Cluster> Clusters : register(t12);
+StructuredBuffer<Cluster> Clusters : register(t11);
 ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
 
-Texture2D GBuffer_Position : register(t1);      //x         , y         , z                 , empty
-Texture2D GBuffer_Normal : register(t2);        //x         , y         , z                 , empty
-Texture2D GBuffer_Albedo : register(t3);        //r         , g         , b                 , a
-Texture2D GBuffer_Specular : register(t4);      //r         , g         , b                 , specularFactor
-Texture2D GBuffer_Emissive : register(t5);      //r         , g         , b                 , emissiveFactor
-Texture2D GBuffer_MaterialData : register(t6);  //roughness , metalness , specular power    , AO
-Texture2D GBuffer_MotionVector : register(t7);  //dtx       , dty
+Texture2D GBuffer_Normal : register(t1);        //x         , y         , z                 , empty
+Texture2D GBuffer_Albedo : register(t2);        //r         , g         , b                 , a
+Texture2D GBuffer_Specular : register(t3);      //r         , g         , b                 , specularFactor
+Texture2D GBuffer_Emissive : register(t4);      //r         , g         , b                 , emissiveFactor
+Texture2D GBuffer_MaterialData : register(t5);  //roughness , metalness , specular power    , AO
+Texture2D GBuffer_MotionVector : register(t6);  //dtx       , dty
 
-Texture2D DepthBuffer : register(t8);
+Texture2D DepthBuffer : register(t7);
 
-Texture2D<float4> LTC_Mat : register(t9);
-Texture2D<float2> LTC_Amp : register(t10);
+Texture2D<float4> LTC_Mat : register(t8);
+Texture2D<float2> LTC_Amp : register(t9);
 
-Texture2D ShadowFactorTexture : register(t11);
-StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t13);
+Texture2D ShadowFactorTexture : register(t10);
+StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t12);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
 
 SamplerState ss : register(s0);
 SamplerState linearSS : register(s1);
-
-
 
 float3 CalculatePBRLighting(
     float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness, float3 F0
@@ -268,7 +265,9 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float2 uv = vsOut.texCoord;
     float3 N = normalize(GBuffer_Normal.Sample(ss, uv).rgb);
-    float3 WorldPos = GBuffer_Position.Sample(ss, uv).rgb;
+
+    float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
+
     float3 V = normalize(LHelper.CameraPos - WorldPos);
 
     float4 albedoOut = GBuffer_Albedo.Sample(ss, uv);

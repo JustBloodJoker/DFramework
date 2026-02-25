@@ -166,6 +166,7 @@ void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData
     cmb.Projection = dx::XMMatrixTranspose(data.Projection);
     cmb.View = dx::XMMatrixTranspose(data.View);
     cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
+    cmb.PrevViewProjectionMatrix = dx::XMMatrixTranspose(data.PrevViewProjection);
     auto isBoneActive = m_xData.IsBoneActive.lock();
     cmb.IsActiveAnimation = isBoneActive ? *isBoneActive : false;
     cmb.CameraPosition = data.CameraPosition;

@@ -26,6 +26,7 @@ struct AtlasRTShadowParams {
     float DepthRejectionSharpness = 10.0f;
     float BlackLevel = 0.5f;
     float padd;
+	dx::XMMATRIX InverseViewProjectionMatrix;
 };
 
 struct LightAtlasRect {

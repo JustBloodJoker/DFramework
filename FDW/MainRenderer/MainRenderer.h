@@ -52,6 +52,7 @@ public:
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
 	dx::XMMATRIX GetViewProjectionMatrix() const;
+	dx::XMMATRIX GetPrevViewProjectionMatrix() const;
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
 	CameraFrustum GetCameraFrustum();
 	float GetFoVY() const;

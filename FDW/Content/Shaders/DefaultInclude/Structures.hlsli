@@ -44,6 +44,7 @@ struct MeshMatrices
     matrix WorldMatrix;
     matrix ViewMatrix;
     matrix ProjectionMatrix;
+    matrix PrevViewProjMatrix;
     int IsActiveAnimations;
     float3 CameraPosition;
 };
@@ -80,6 +81,7 @@ struct LightsHelper{
     float ZNear;
     float ZFar;
     float margin;
+    matrix InverseViewProjectionMatrix;
 };
 
 
@@ -252,6 +254,7 @@ struct ShadowAtlasParams {
     float DepthRejectionSharpness;
     float BlackLevel;
     float padd;
+    matrix InverseViewProjectionMatrix;
 };
 
 

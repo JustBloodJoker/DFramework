@@ -14,13 +14,12 @@ SamplerState wraps : register(s0);
 
 struct PIXEL_OUTPUT
 {
-    float4 Position : SV_TARGET0;
-    float4 Normal : SV_TARGET1;
-    float4 Albedo : SV_TARGET2;
-    float4 Specular : SV_TARGET3;
-    float4 Emissive : SV_TARGET4;
-    float4 MaterialData : SV_TARGET5;
-    float2 MotionVectorData : SV_TARGET6;
+    float4 Normal : SV_TARGET0;
+    float4 Albedo : SV_TARGET1;
+    float4 Specular : SV_TARGET2;
+    float4 Emissive : SV_TARGET3;
+    float4 MaterialData : SV_TARGET4;
+    float2 MotionVectorData : SV_TARGET5;
 };
 
 // TODO:    TBN calcs remove to vertex shader
@@ -110,14 +109,18 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     AlphaClipping(albedo.a);
 
+    float2 currentNDC   = vsOut.currentClipPos.xy / vsOut.currentClipPos.w;
+    float2 prevNDC      = vsOut.prevClipPos.xy / vsOut.prevClipPos.w;
+    float2 currentUV    = currentNDC * float2(0.5f, -0.5f) + 0.5f;
+    float2 prevUV       = prevNDC * float2(0.5f, -0.5f) + 0.5f;
+
     PIXEL_OUTPUT psOut;
-    psOut.Position      = float4(vsOut.worldPos, 1.0f);
     psOut.Normal        = float4(normal, 1.0f);
     psOut.Albedo        = albedo;
     psOut.Specular      = specular;
     psOut.Emissive      = emissive;
     psOut.MaterialData  = float4(roughness, metalness, objMaterials.specularPower, ao);
-    psOut.MotionVectorData = float2(0,0);
+    psOut.MotionVectorData = currentUV - prevUV;
 
     return psOut;
 }
