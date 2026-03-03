@@ -40,7 +40,8 @@ void StructuredBuffer::UploadData(ID3D12Device* pDevice, ID3D12GraphicsCommandLi
 
 	if (m_uSize < 1) return;
 
-	FResource::UploadData(pDevice, pCommandList, pData, state, false);
+	const UINT sizeInBytes = m_uSize * m_iElemSizeInBytes;
+	FResource::UploadDataRegion(pDevice, pCommandList, pData, 0, sizeInBytes, state);
 
 
 }

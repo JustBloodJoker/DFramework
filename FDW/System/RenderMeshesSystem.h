@@ -50,6 +50,7 @@ public:
 	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data);
 	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemPreDepthRenderData data);
 	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnEndRenderTick(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle);
 
 
 	FD3DW::AccelerationStructureBuffers GetTLAS() const;

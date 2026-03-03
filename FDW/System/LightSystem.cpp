@@ -38,17 +38,18 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
             m_xLightBuffer.CameraPos = m_pOwner->GetCurrentCameraPosition();
             m_xLightBuffer.IsShadowImpl = (int)m_pOwner->IsShadowEnabled();
             m_xLightBuffer.ZNear = m_pOwner->GetCameraFrustum().GetZNear();
-            m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
-			m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse( nullptr, dx::XMMatrixTranspose( m_pOwner->GetViewProjectionMatrix() ) );
-
-            m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
+			m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
+			m_xLightBuffer.FrameIndex = m_pOwner->GetFrameIndex();
+			m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse( nullptr, dx::XMMatrixTranspose( m_pOwner->GetJitteredViewProjectionMatrix() ) );
 
             if (m_bIsNeedUpdateDataInBuffer.exchange(false, std::memory_order_acq_rel)) {
                 auto device = m_pOwner->GetDevice();
                 m_vLightComponentsData = GetDataFromLightComponents(components);
                 m_xLightBuffer.LightCount = int(m_vLightComponentsData.size());
-                m_pLightsStructuredBuffer->UploadData(device, list, m_vLightComponentsData.data(), m_xLightBuffer.LightCount, D3D12_RESOURCE_STATE_COPY_DEST);
+                m_pLightsStructuredBuffer->UploadData(device, list, m_vLightComponentsData.data(), m_xLightBuffer.LightCount, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
             }
+
+            m_pLightsHelperConstantBuffer->CpyData(0, m_xLightBuffer);
     });
     
     return GlobalRenderThreadManager::GetInstance()->Submit(updateRecipe, { syncHandle }, true);

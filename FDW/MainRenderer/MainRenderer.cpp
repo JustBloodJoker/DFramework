@@ -7,7 +7,7 @@
 #include <Component/Camera/CameraComponent.h>
 #include <Entity/Camera/TBaseCamera.h>
 
-static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,1.0f };
+static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,3.0f };
 
 MainRenderer::MainRenderer() : WinWindow(L"FDW", 1024, 1024, false) {}
 
@@ -21,10 +21,12 @@ void MainRenderer::UserInit()
 
 	SetVSync(true);
 
-	m_pDSV = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
-	
-	m_pDSVPack = CreateDSVPack(1u);
-	m_pDSVPack->PushResource(m_pDSV->GetResource(), m_pDSV->GetDSVDesc(), device);
+	m_pDSVPack = CreateDSVPack(2u);
+	for (int i = 0; i < 2; ++i) {
+		m_pDSV[i] = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+		m_pDSVPack->PushResource(m_pDSV[i]->GetResource(), m_pDSV[i]->GetDSVDesc(), device);
+	}
+
 
 	auto wndSettings = GetMainWNDSettings();
 
@@ -43,7 +45,7 @@ void MainRenderer::UserInit()
 		m_pGBuffersSRVPack->PushResource(device, gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 	}
 
-	m_pGBuffersSRVPack->AddResource(m_pDSV.get(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
+	m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
 
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		auto device = GetDevice();
@@ -136,8 +138,8 @@ void MainRenderer::UserLoop()
 	if (m_bIsEnabledPreDepth)
 	{
 		RenderMeshesSystemPreDepthRenderData inPredepthData;
-		inPredepthData.DSV = m_pDSV.get();
-		inPredepthData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+		inPredepthData.DSV = GetCurrentDSV();
+		inPredepthData.DSV_CPU = GetCurrentDSV_CPUAddr();
 		inPredepthData.Rect = m_xSceneRect;
 		inPredepthData.Viewport = m_xSceneViewPort;
 
@@ -147,13 +149,13 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> HiZUpdateH = nullptr;
 	if (m_pRenderMeshesSystem->GetCullingType() == MeshCullingType::GPU) {
 		RenderMeshesSystemHiZUpdateRenderData inHiZData;
-		inHiZData.DSV = m_pDSV.get();
+		inHiZData.DSV = GetCurrentDSV();
 		HiZUpdateH = m_pRenderMeshesSystem->UpdateHiZResource({preDepthH, sync}, inHiZData);
 	}
 
 	RenderMeshesSystemIndirectRenderData inIndirectData;
-	inIndirectData.DSV = m_pDSV.get();
-	inIndirectData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+	inIndirectData.DSV = GetCurrentDSV();
+	inIndirectData.DSV_CPU = GetCurrentDSV_CPUAddr();
 	for (auto& gBufferPtr : m_pGBuffers) inIndirectData.RTV.push_back(gBufferPtr.get());
 	inIndirectData.RTV_CPU = m_pGBuffersRTVPack->GetResult()->GetCPUDescriptorHandle(0);
 	inIndirectData.Rect = m_xSceneRect;
@@ -178,10 +180,11 @@ void MainRenderer::UserLoop()
 		list->RSSetViewports(1, &m_xSceneViewPort);
 
 		list->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-		list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0)));
+		list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(GetCurrentDSV_CPUAddr()));
 
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
+		m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, GetDevice());
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
@@ -207,20 +210,25 @@ void MainRenderer::UserLoop()
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
 	inSkyboxRenderData.RTV_CPU = m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0);
-	inSkyboxRenderData.DSV_CPU = m_pDSVPack->GetResult()->GetCPUDescriptorHandle(0);
+	inSkyboxRenderData.DSV_CPU = GetCurrentDSV_CPUAddr();
 	inSkyboxRenderData.Rect = m_xSceneRect;
 	inSkyboxRenderData.Viewport = m_xSceneViewPort;
 	auto skyboxRenderH = m_pSkyboxRenderSystem->RenderSkyboxPass(shadingPassH, inSkyboxRenderData);
 
-	auto bloomPassH = m_pBloomEffectSystem->ProcessBloomPass(skyboxRenderH);
+	auto taaPassH = m_pTAASystem->ProcessTAABufferCollection({ skyboxRenderH });
+
+	auto bloomPassH = m_pBloomEffectSystem->ProcessBloomPass({ skyboxRenderH , taaPassH }, GetShadingResultResource());
+
 
 	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		//////////////////////////
-		// POSTPROCESS PASS
+		// POSTPROCESS PASS	
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		BindMainViewPort(list);
 		BindMainRect(list);
 		BeginDraw(list);
+
+		m_pForwardRenderPassSRVPack->AddResource(GetShadingResultResource()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 0u, GetDevice());
 
 		{
 
@@ -261,15 +269,17 @@ void MainRenderer::UserLoop()
 		}
 	});
 
-	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH, bloomPassH });
+	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH, bloomPassH, taaPassH });
 
 
 	auto lCameraH = m_pCameraSystem->OnEndTick(indirectRenderH);
+	auto lMeshH = m_pRenderMeshesSystem->OnEndRenderTick({ indirectRenderH });
 
 	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
 		PresentSwapchain(); 
-		++m_uFrameIndex; 	
-	}, { postProcessPass,lCameraH }, true);
+		++m_uFrameIndex;
+		m_uCurrentDSVIndex = (m_uCurrentDSVIndex + 1) % 2;
+	}, { postProcessPass,lCameraH,lMeshH }, true);
 
 	m_dInFlight.push_back(presentH);
 
@@ -336,8 +346,36 @@ World* MainRenderer::GetWorld() {
 	return m_pWorld.get();
 }
 
+FD3DW::DepthStencilView* MainRenderer::GetCurrentDSV() {
+	return m_pDSV[m_uCurrentDSVIndex].get();
+}
+
+D3D12_CPU_DESCRIPTOR_HANDLE MainRenderer::GetCurrentDSV_CPUAddr() {
+	return m_pDSVPack->GetResult()->GetCPUDescriptorHandle(m_uCurrentDSVIndex);
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE MainRenderer::GetCurrentDSV_GPUAddr() {
+	return m_pDSVPack->GetResult()->GetGPUDescriptorHandle(m_uCurrentDSVIndex);
+}
+
+UINT MainRenderer::GetCurrentDSVIndex() {
+	return m_uCurrentDSVIndex;
+}
+
+dx::XMFLOAT2 MainRenderer::GetCurrentJitterOffset() const {
+	return m_pCameraSystem->GetJitterOffset();
+}
+
+dx::XMFLOAT2 MainRenderer::GetPrevJitterOffset() const {
+	return m_pCameraSystem->GetPrevJitterOffset();
+}
+
 dx::XMMATRIX MainRenderer::GetCurrentProjectionMatrix() const {
 	return m_pCameraSystem->GetProjectionMatrix();
+}
+
+dx::XMMATRIX MainRenderer::GetCurrentJitteredProjectionMatrix() const {
+	return m_pCameraSystem->GetJitteredProjectionMatrix();
 }
 
 dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
@@ -346,6 +384,10 @@ dx::XMMATRIX MainRenderer::GetCurrentViewMatrix() const {
 
 dx::XMMATRIX MainRenderer::GetViewProjectionMatrix() const {
 	return m_pCameraSystem->GetViewProjectionMatrix();
+}
+
+dx::XMMATRIX MainRenderer::GetJitteredViewProjectionMatrix() const {
+	return m_pCameraSystem->GetJitteredViewProjectionMatrix();
 }
 
 dx::XMMATRIX MainRenderer::GetPrevViewProjectionMatrix() const {
@@ -447,6 +489,10 @@ void MainRenderer::SetBloomBlurType(BloomBlurType blurType) {
 	m_pBloomEffectSystem->SetBloomBlurType(blurType);
 }
 
+FD3DW::FResource* MainRenderer::GetShadingResultResource() {
+	return (!m_pTAASystem || !m_pTAASystem->IsTAAEnabled()) ? m_pForwardRenderPassRTV->GetTexture() : m_pTAASystem->GetCurrentResultResource();
+}
+
 void MainRenderer::CreateTestWorld() {
 	m_pWorld->CreateDefaultCamera();
 	
@@ -518,12 +564,15 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 	m_pSkyboxRenderSystem = CreateSystem<SkyboxRenderSystem>();
 
 	m_pBloomEffectSystem = CreateSystem<BloomEffectSystem>();
-	m_pBloomEffectSystem->SetShadingOutputResourceResultAndRect(m_pForwardRenderPassRTV->GetTexture());
 	m_pForwardRenderPassSRVPack->AddResource(m_pBloomEffectSystem->GetResultResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1, device);
+
+	m_pTAASystem = CreateSystem<TAASystem>();
+	m_pTAASystem->SetGBufferResources(m_pForwardRenderPassRTV->GetTexture(), m_pGBuffers[GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP]->GetTexture(), m_pDSV[0].get(), m_pDSV[1].get());
+
 }
 
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
 	m_pAtlasRTShadowSystem = CreateSystem<AtlasRTShadowSystem>();
-	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pDSV.get(), m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
+	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
 	m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 }

@@ -23,8 +23,12 @@ public:
 
 	void OnResizeWindow();
 
+	dx::XMFLOAT2 GetPrevJitterOffset();
+	dx::XMFLOAT2 GetJitterOffset();
 	dx::XMMATRIX GetPrevViewProjectionMatrix();
 	dx::XMMATRIX GetViewProjectionMatrix();
+	dx::XMMATRIX GetJitteredViewProjectionMatrix();
+	dx::XMMATRIX GetJitteredProjectionMatrix();
 	dx::XMMATRIX GetProjectionMatrix();
 	dx::XMMATRIX GetViewMatrix();
 	dx::XMFLOAT3 GetCameraPosition();
@@ -37,10 +41,21 @@ public:
 	CameraComponent* GetActiveComponent();
 
 protected:
+	float Halton(int index, int base);
+
+protected:
+	dx::XMFLOAT2 m_xJitterOffset;
+	dx::XMFLOAT2 m_xPrevJitterOffset;
 
 	dx::XMMATRIX m_xPrevViewProjectionMatrix;
-
 	dx::XMMATRIX m_xProjectionMatrix;
+
+	bool m_bIsEnabledJitter = true;
+	dx::XMMATRIX m_xJitteredProjectionMatrix;
+
+protected:
+
+
 	CameraComponent* m_pCurrentActiveCamera = nullptr;
 	CameraFrustum m_xFrustum;
 	float m_fZNear = 0.1f;

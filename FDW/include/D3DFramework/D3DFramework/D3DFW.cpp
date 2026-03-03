@@ -174,6 +174,9 @@ namespace FD3DW
 		wrl::ComPtr<ID3D12Debug> pDebugController;
 		HRESULT_ASSERT(D3D12GetDebugInterface(IID_PPV_ARGS(&pDebugController)), "ID3D12 Debug mode set error");
 		pDebugController->EnableDebugLayer();
+		wrl::ComPtr<ID3D12Debug1> pDebug1Controller;
+		//pDebugController.As(&pDebug1Controller);
+		//pDebug1Controller->SetEnableGPUBasedValidation(true);
 #endif
 		
 		

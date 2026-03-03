@@ -74,6 +74,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 		inData.CommandList = list;
 		inData.Device = m_pOwner->GetDevice();
 		inData.Projection = m_pOwner->GetCurrentProjectionMatrix();
+		inData.JitteredProjection = m_pOwner->GetCurrentJitteredProjectionMatrix();
 		inData.View = m_pOwner->GetCurrentViewMatrix();
 		inData.PrevViewProjection = m_pOwner->GetPrevViewProjectionMatrix();
 		auto timer = m_pOwner->GetTimer();
@@ -226,6 +227,17 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+}
+
+std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnEndRenderTick(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle)
+{
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		for (auto& cmp : m_vActiveMeshComponents) {
+			cmp->OnEndRenderTick(list);
+		}
+	});
+
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { handle }, true);
 }
 
 FD3DW::AccelerationStructureBuffers RenderMeshesSystem::GetTLAS() const {

@@ -166,6 +166,8 @@ void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData
     cmb.Projection = dx::XMMatrixTranspose(data.Projection);
     cmb.View = dx::XMMatrixTranspose(data.View);
     cmb.World = dx::XMMatrixTranspose(m_xWorldMatrix);
+    cmb.PrevWorld = dx::XMMatrixTranspose(m_xPrevWorldMatrix);
+    cmb.JitteredProjection = dx::XMMatrixTranspose(data.JitteredProjection);
     cmb.PrevViewProjectionMatrix = dx::XMMatrixTranspose(data.PrevViewProjection);
     auto isBoneActive = m_xData.IsBoneActive.lock();
     cmb.IsActiveAnimation = isBoneActive ? *isBoneActive : false;
@@ -201,7 +203,9 @@ void MeshComponent::UpdateBLASDXR(ID3D12Device5* device, ID3D12GraphicsCommandLi
     FD3DW::UpdateBottomLevelAS(device, list, m_xBLASBuffer, { geometry });
 }
 
-void MeshComponent::OnEndRenderTick(ID3D12GraphicsCommandList* list) {}
+void MeshComponent::OnEndRenderTick(ID3D12GraphicsCommandList* list) {
+    m_xPrevWorldMatrix = m_xWorldMatrix;
+}
 
 IndirectRenderDataPair MeshComponent::GetIndirectRenderDataPair() {
     IndirectMeshRenderData data;

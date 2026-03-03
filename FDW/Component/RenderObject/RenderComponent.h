@@ -9,6 +9,7 @@ struct RenderComponentBeforeRenderInputData {
     float Time;
     float DT;
     dx::XMMATRIX Projection;
+    dx::XMMATRIX JitteredProjection;
     dx::XMMATRIX View;
     dx::XMFLOAT3 CameraPosition;
     dx::XMMATRIX PrevViewProjection;

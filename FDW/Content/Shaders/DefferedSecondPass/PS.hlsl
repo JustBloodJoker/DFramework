@@ -119,7 +119,12 @@ float GetShadowFactor(in LightStruct light, int id, float2 UV)
     DepthBuffer.GetDimensions(w, h);
     float2 screenPixel = UV * float2(w, h);
     
-    float noise = InterleavedGradientNoise(screenPixel);
+    int ffidx = LHelper.FrameIndex;
+    float2 noiseOffset = float2( frac(float(ffidx) * 0.6180339887f), frac(float(ffidx) * 0.7548776662f) ) * 100.0f;
+
+    float2 animatedScreenPixel = screenPixel + noiseOffset;
+    float noise = InterleavedGradientNoise(animatedScreenPixel);
+
     float angle = noise * PI * 2;
     float s, c;
     sincos(angle, s, c);
@@ -267,6 +272,12 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 N = normalize(GBuffer_Normal.Sample(ss, uv).rgb);
 
     float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
+
+    float4 nn = GBuffer_Normal.Sample(ss, uv).rgba;
+    if(nn.a==3.0f) {
+        psOut.result = float4(0,0,0,3.0f);
+        return psOut;
+    }
 
     float3 V = normalize(LHelper.CameraPos - WorldPos);
 

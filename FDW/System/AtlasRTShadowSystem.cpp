@@ -186,16 +186,18 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         auto tlas = m_pOwner->GetTLAS().pResult;
 
         if (!tlas) {
-			if(m_bIsNeedCheckEmptyAtlas.exchange(false, std::memory_order_acq_rel) ) m_pShadowAtlas->ClearTexture(m_pOwner->GetDevice(), list, nullptr);
+			if(m_bIsNeedCheckEmptyAtlas.exchange(false, std::memory_order_acq_rel) ) m_pShadowAtlas->ClearTexture(m_pOwner->GetDevice(), list, nullptr);    
             return;
         }
 
-		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose( m_pOwner->GetViewProjectionMatrix() ) );
+		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose( m_pOwner->GetJitteredViewProjectionMatrix() ) );
         m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
 
         auto wndSettings = m_pOwner->GetMainWNDSettings();
 
         PSOManager::GetInstance()->GetPSOObject(PSOType::AtlasRTShadowDefaultConfig)->Bind(list);
+        
+        m_pAtlasPack->AddResource(m_pOwner->GetCurrentDSV(), 1, m_pOwner->GetDevice());
 
         list->SetComputeRootShaderResourceView(ATLAS_RT_SHADOW_ACC_DXR_BUFFER_POS_IN_ROOT_SIG, tlas->GetGPUVirtualAddress());
 
@@ -220,8 +222,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
     return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, true);
 }
 
-void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::DepthStencilView* depth, FD3DW::FResource* normal, ID3D12Device* device) {
-    m_pAtlasPack->AddResource(depth, 1, device);
+void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::FResource* normal, ID3D12Device* device) {
     m_pAtlasPack->AddResource(normal->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 2, device);
 }
 

@@ -28,12 +28,28 @@ void CameraSystem::BeforeDestruction() {
 	m_pCameraLayer->AddToRouter(nullptr);
 }
 
+dx::XMFLOAT2 CameraSystem::GetPrevJitterOffset() {
+	return m_xPrevJitterOffset;
+}
+
+dx::XMFLOAT2 CameraSystem::GetJitterOffset() {
+	return m_xJitterOffset;
+}
+
 dx::XMMATRIX CameraSystem::GetPrevViewProjectionMatrix() {
 	return m_xPrevViewProjectionMatrix;
 }
 
 dx::XMMATRIX CameraSystem::GetViewProjectionMatrix() {
 	return GetViewMatrix() * GetProjectionMatrix();
+}
+
+dx::XMMATRIX CameraSystem::GetJitteredViewProjectionMatrix() {
+	return GetViewMatrix() * GetJitteredProjectionMatrix();
+}
+
+dx::XMMATRIX CameraSystem::GetJitteredProjectionMatrix() {
+	return m_xJitteredProjectionMatrix;
 }
 
 dx::XMMATRIX CameraSystem::GetProjectionMatrix() {
@@ -77,6 +93,19 @@ CameraComponent* CameraSystem::GetActiveComponent() {
 	return m_pCurrentActiveCamera;
 }
 
+float CameraSystem::Halton(int index, int base) {
+	auto f = 1.0f;
+	auto result = 0.0f;
+	auto current = index;
+
+	while (current > 0) {
+		f = f / (float)base;
+		result = result + f * (float)(current % base);
+		current = (int)(current / (float)base);
+	}
+	return result;
+}
+
 std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
 	return GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() {
 
@@ -97,12 +126,30 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 			UpdateCameraFrustum();
 		}
 
+		m_xJitteredProjectionMatrix = m_xProjectionMatrix;
+		if (!m_bIsEnabledJitter) return;
+
+		auto frameIdx = m_pOwner->GetFrameIndex();
+		const auto& wndSet = m_pOwner->WNDSettings();
+
+		auto jitterIndex = frameIdx % TAA_JITTER_PHASES_NUM;
+
+		auto haltonX = Halton(jitterIndex + 1, 2) - 0.5f;
+		auto haltonY = Halton(jitterIndex + 1, 3) - 0.5f;
+
+		
+		m_xJitterOffset.x = (haltonX * 2.0f) / (float)wndSet.Width;
+		m_xJitterOffset.y = (haltonY * 2.0f) / (float)wndSet.Height;
+
+		m_xJitteredProjectionMatrix.r[2] = dx::XMVectorAdd(m_xJitteredProjectionMatrix.r[2], dx::XMVectorSet(m_xJitterOffset.x, m_xJitterOffset.y, 0.0f, 0.0f));
+
 	}, { handle }, true, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnEndTick(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
 	return GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() {
 		m_xPrevViewProjectionMatrix = GetViewProjectionMatrix();
+		m_xPrevJitterOffset = m_xJitterOffset;
 	}, { handle }, true, true);
 }
 

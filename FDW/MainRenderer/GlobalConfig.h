@@ -26,7 +26,8 @@ D3D12_GPU_VIRTUAL_ADDRESS GetEmptyStructuredBufferGPUVirtualAddress();
 //////////////////////////////////////////////
 ////	GLOBAL RENDER THREAD
 
-#define GLOBAL_RENDER_THREAD_MANAGER_WORKER_POOL_MAX_COUNT 8
+#define GLOBAL_RENDER_THREAD_MANAGER_WORKER_POOL_MAX_COUNT 1
+#define GLOBAL_IN_FLIGHT_FRAMES_MAX_COUNT 1
 
 /////////////////////////////////////////////
 
@@ -74,6 +75,7 @@ enum class PSOType {
 	BloomEffect_CompositePass,
 	GPUSceneSkinning,
 	AtlasRTShadowDefaultConfig,
+	TAAPass,
 };
 
 struct BasePSODescriptor {
@@ -238,13 +240,34 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define GBUFFER_EMISSIVE_LOCATION_IN_HEAP 3
 #define GBUFFER_MATERIALDATA_LOCATION_IN_HEAP 4
 #define GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP 5
+
 #define DEPTH_BUFFER_LOCATION_IN_HEAP 6
 #define LIGHTS_LTC_MAT_LOCATION_IN_HEAP 7
 #define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 8
 #define SHADOW_FACTOR_LOCATION_IN_HEAP 9
 
 
+////////////////////////////////////////////
 
+
+/////////////////////////////////////////////
+///////    TAA SETTINGS
+
+#define TAA_JITTER_PHASES_NUM 16
+
+#define TAA_RENDER_TARGET_1_HISTORY_SRV_POS_IN_HEAP		0
+#define TAA_RENDER_TARGET_2_HISTORY_SRV_POS_IN_HEAP		1
+#define TAA_SCENE_SHADING_RESULT_SRV_POS_IN_HEAP		2
+#define TAA_MOTION_GBUFFER_SRV_POS_IN_HEAP				3
+#define TAA_DEPTH_1_BUFFER_SRV_POS_IN_HEAP				4
+#define TAA_DEPTH_2_BUFFER_SRV_POS_IN_HEAP				5
+
+
+#define TAA_SRV_POS_IN_ROOT_SIG					0
+#define TAA_DATA_BUFFER_POS_IN_ROOT_SIG			1
+
+
+////////////////////////////////////////////
 
 
 void InitializeDescriptorSizes(ID3D12Device* device, UINT rtvDescSize, UINT dsvDescSize, UINT cbv_srv_uavDescSize);

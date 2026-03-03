@@ -21,6 +21,7 @@
 #include <System/SkyboxRenderSystem.h>
 #include <System/BloomEffectSystem.h>
 #include <System/AtlasRTShadowSystem.h>
+#include <System/TAASystem.h>
 
 class MainRenderer : virtual public FD3DW::D3DFW {
 
@@ -45,13 +46,23 @@ public:
 	World* GetWorld();
 
 public:
+	FD3DW::DepthStencilView* GetCurrentDSV();
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentDSV_CPUAddr();
+	D3D12_GPU_DESCRIPTOR_HANDLE GetCurrentDSV_GPUAddr();
+	UINT GetCurrentDSVIndex();
+
+public:
 	///////////////////////////////////////////////////
 	//BRIDGE METHODS
 
 	//CAMERA
+	dx::XMFLOAT2 GetCurrentJitterOffset() const;
+	dx::XMFLOAT2 GetPrevJitterOffset() const;
 	dx::XMMATRIX GetCurrentProjectionMatrix() const;
+	dx::XMMATRIX GetCurrentJitteredProjectionMatrix() const;
 	dx::XMMATRIX GetCurrentViewMatrix() const;
 	dx::XMMATRIX GetViewProjectionMatrix() const;
+	dx::XMMATRIX GetJitteredViewProjectionMatrix() const;
 	dx::XMMATRIX GetPrevViewProjectionMatrix() const;
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
 	CameraFrustum GetCameraFrustum();
@@ -87,6 +98,9 @@ public:
 	BloomBlurType GetBloomBlurType();
 	void SetBloomBlurType(BloomBlurType blurType);
 
+
+	FD3DW::FResource* GetShadingResultResource();
+
 protected: //TEST METHODS
 	void CreateTestWorld();
 
@@ -113,7 +127,7 @@ private:
 
 	///////////////////////////////////////////
 	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
-	size_t m_uMaxFramesInFlight = 1;
+	size_t m_uMaxFramesInFlight = GLOBAL_IN_FLIGHT_FRAMES_MAX_COUNT;
 
 	AudioSystem* m_pAudioSystem = nullptr;
 	CameraSystem* m_pCameraSystem = nullptr;
@@ -124,6 +138,7 @@ private:
 	SkyboxRenderSystem* m_pSkyboxRenderSystem = nullptr;
 	BloomEffectSystem* m_pBloomEffectSystem = nullptr;
 	AtlasRTShadowSystem* m_pAtlasRTShadowSystem = nullptr;
+	TAASystem* m_pTAASystem = nullptr;
 
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 
@@ -161,7 +176,8 @@ protected:
 
 	std::vector< std::shared_ptr<FD3DW::FResource>> m_vLCTResources;
 
-	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV;
+	UINT m_uCurrentDSVIndex = 0;
+	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV[2];
 	std::unique_ptr<FD3DW::DSVPacker> m_pDSVPack;
 
 	std::unique_ptr<FD3DW::RenderTarget> m_pForwardRenderPassRTV;

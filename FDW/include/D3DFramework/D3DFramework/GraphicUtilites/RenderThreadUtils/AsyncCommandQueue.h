@@ -28,6 +28,7 @@ namespace FD3DW {
         UINT64 GetLoadApprox() const;
 
         UINT64 ReserveFenceTicket();
+        UINT64 CurrentFenceTicket();
 
         void WaitFence(std::shared_ptr<ExecutionHandle> dependency);
         void WaitFence(UINT64 value, AsyncCommandQueue* fromQueue);

@@ -44,10 +44,12 @@ void BloomEffectSystem::AfterConstruction() {
 	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
+std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync, FD3DW::FResource* res) {
 	if (!m_bIsBloomEnabled) return nullptr;
 	
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, res](ID3D12GraphicsCommandList* list) {
+		SetShadingOutputResourceResultAndRect(res);
+		
 		if (m_bIsNeedUpdateBrightPassData.exchange(false, std::memory_order_acq_rel)) {
 			m_pBrightPassDataBuffer->CpyData(0, m_xBrightPassData);
 		}
@@ -113,7 +115,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std:
 		m_pResultRTV->EndDraw(list);
 	});
 	
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {handle});
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, sync);
 }
 
 void BloomEffectSystem::SetShadingOutputResourceResultAndRect(FD3DW::FResource* shadingRes) {

@@ -73,6 +73,7 @@
     <ClCompile Include="System\RTShadowSystem.cpp" />
     <ClCompile Include="System\SceneAnimationSystem.cpp" />
     <ClCompile Include="System\SkyboxRenderSystem.cpp" />
+    <ClCompile Include="System\TAASystem.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
     <ClCompile Include="World\World.cpp" />
@@ -135,6 +136,8 @@
     <ClInclude Include="System\RTShadowSystemConfig.h" />
     <ClInclude Include="System\SceneAnimationSystem.h" />
     <ClInclude Include="System\SkyboxRenderSystem.h" />
+    <ClInclude Include="System\TAASystem.h" />
+    <ClInclude Include="System\TAASystemData.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
     <ClInclude Include="World\World.h" />

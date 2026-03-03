@@ -14,7 +14,7 @@ struct LightSystemBuffer {
 	int IsShadowImpl;    
 	float ZNear;
 	float ZFar;
-	float margin;
+	int FrameIndex;
 	dx::XMMATRIX InverseViewProjectionMatrix;
 };
 

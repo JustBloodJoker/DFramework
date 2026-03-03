@@ -21,6 +21,8 @@ namespace FD3DW
 
 		std::unique_ptr<BufferDescriptorHeap>& GetResult();
 
+		void ResetIterator();
+
 	protected:
 
 		std::unique_ptr <BufferDescriptorHeap> m_pDescriptorHeap;

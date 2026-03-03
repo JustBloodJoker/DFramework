@@ -7,7 +7,7 @@ static const GBuffersData s_sGBuffersData = { {
         DXGI_FORMAT_R16G16B16A16_FLOAT,
         DXGI_FORMAT_R16G16B16A16_FLOAT,
         DXGI_FORMAT_R8G8B8A8_UNORM,
-        DXGI_FORMAT_R16G16_FLOAT
+        DXGI_FORMAT_R32G32_FLOAT
 }};
 
 
@@ -17,7 +17,7 @@ const GBuffersData& GetGBufferData() {
 }
 
 const DXGI_FORMAT GetForwardRenderPassFormat() {
-    return DXGI_FORMAT_R32G32B32A32_FLOAT;
+    return DXGI_FORMAT_R16G16B16A16_FLOAT;
 }
 
 UINT GetGBuffersNum() {
@@ -201,7 +201,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                 [dsvPostProcessDesc, rasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
                     desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
                     desc.RasterizerState = rasterizerDesc;
                     desc.DepthStencilState = dsvPostProcessDesc;
@@ -219,7 +219,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                 [dsvPostProcessDesc, rasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
                     desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
                     desc.RasterizerState = rasterizerDesc;
                     desc.DepthStencilState = dsvPostProcessDesc;
@@ -237,7 +237,25 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                 [dsvPostProcessDesc, rasterizerDesc] {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
-                    desc.RTVFormats[0] = DEFAULT_SWAPCHAIN_RTV_TYPE;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+                    desc.RasterizerState = rasterizerDesc;
+                    desc.DepthStencilState = dsvPostProcessDesc;
+                    desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+                    return desc;
+                }()
+            }
+        },
+        {
+            PSOType::TAAPass,
+            {
+                PSOType::None,
+                L"TAAPass",
+                {},
+                [dsvPostProcessDesc, rasterizerDesc] {
+                    FD3DW::GraphicPipelineObjectDesc desc{};
+                    desc.NumRenderTargets = 1;
+                    desc.RTVFormats[0] = GetForwardRenderPassFormat();
                     desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
                     desc.RasterizerState = rasterizerDesc;
                     desc.DepthStencilState = dsvPostProcessDesc;

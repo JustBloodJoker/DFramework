@@ -22,13 +22,15 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
     matrix ResultWorldMatrix = objMatrices.WorldMatrix;
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
 
-    vsOut.prevClipPos = mul(vsOut.pos, objMatrices.PrevViewProjMatrix);
+    float4 prevPos = mul(float4(vsIn.pos, 1.0f), objMatrices.PrevWorldMatrix);
+
+    vsOut.prevClipPos = mul(prevPos, objMatrices.PrevViewProjMatrix);
+    vsOut.currentClipPos = mul(vsOut.pos, objMatrices.ViewMatrix);
+    vsOut.currentClipPos = mul(vsOut.currentClipPos, objMatrices.ProjectionMatrix);
 
     vsOut.worldPos = vsOut.pos.xyz;
     vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);
-    vsOut.pos = mul(vsOut.pos, objMatrices.ProjectionMatrix);
-
-    vsOut.currentClipPos = vsOut.pos;
+    vsOut.pos = mul(vsOut.pos, objMatrices.JitteredProjectionMatrix);
 
     vsOut.texCoord = vsIn.texCoord;
 

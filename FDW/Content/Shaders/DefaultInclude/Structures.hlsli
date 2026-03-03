@@ -44,6 +44,8 @@ struct MeshMatrices
     matrix WorldMatrix;
     matrix ViewMatrix;
     matrix ProjectionMatrix;
+    matrix PrevWorldMatrix;
+    matrix JitteredProjectionMatrix;
     matrix PrevViewProjMatrix;
     int IsActiveAnimations;
     float3 CameraPosition;
@@ -80,7 +82,7 @@ struct LightsHelper{
     int IsShadowImpl;
     float ZNear;
     float ZFar;
-    float margin;
+    int FrameIndex;
     matrix InverseViewProjectionMatrix;
 };
 
@@ -256,6 +258,16 @@ struct ShadowAtlasParams {
     float padd;
     matrix InverseViewProjectionMatrix;
 };
+
+struct TAAPassData {
+    int CurrentWriterIndex;
+    int CurrentReaderIndex;
+    int CurrentDepthBufferIndex;
+    float BlendWeight;
+    float2 currentJitter;
+    float2 prevJitter;
+};
+
 
 
 #endif

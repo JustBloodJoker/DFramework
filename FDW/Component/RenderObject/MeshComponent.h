@@ -108,7 +108,9 @@ public:
     FD3DW::AccelerationStructureInput GenerateGeometry();
     
 protected:
-        
+       
+	dx::XMMATRIX m_xPrevWorldMatrix = dx::XMMatrixIdentity();
+
     dx::XMFLOAT3 m_xPosition = { 0, 0, 0 };
     dx::XMFLOAT3 m_xRotation = { 0, 0, 0 };
     dx::XMFLOAT3 m_xScaling = { 1, 1, 1 };

@@ -28,6 +28,10 @@ namespace FD3DW
 		return m_pDescriptorHeap;
 	}
 
+	void ResourcePacker::ResetIterator() {
+		m_uCurrentIndex = 0;
+	}
+
 	void ResourcePacker::InitBufferDescriptorHeap(UINT descriptorSize, UINT descriptorsCount, UINT NodeMask, D3D12_DESCRIPTOR_HEAP_TYPE type, D3D12_DESCRIPTOR_HEAP_FLAGS flags, ID3D12Device* pDevice)
 	{
 		if (!pDevice) return;
