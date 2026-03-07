@@ -1,15 +1,18 @@
 #pragma once
 #include "../../pch.h"
 
+struct ScriptArray;
+
 class ScriptValue {
 public:
-    std::variant<int, float, std::string, void*> Data;
+    std::variant<int, float, std::string, void*, std::shared_ptr<ScriptArray>> Data;
 
     ScriptValue();
     ScriptValue(int v);
     ScriptValue(float v);
     ScriptValue(std::string v);
     ScriptValue(void* v);
+    ScriptValue(std::shared_ptr<ScriptArray> v);
     ScriptValue(const char* v);
     
     template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T> && !std::is_same_v<T, int> && !std::is_same_v<T, float>>>
@@ -25,11 +28,13 @@ public:
     bool IsFloat() const;
     bool IsString() const;
     bool IsObject() const;
+    bool IsArray() const;
 
     int AsInt() const;
     float AsFloat() const;
     std::string AsString() const;
     void* AsObject() const;
+    std::shared_ptr<ScriptArray> AsArray() const;
     bool AsBool() const;
 
     ScriptValue operator+(const ScriptValue& other) const;
@@ -50,4 +55,8 @@ public:
         else return T{};
     }
 
+};
+
+struct ScriptArray {
+    std::vector<ScriptValue> Values;
 };

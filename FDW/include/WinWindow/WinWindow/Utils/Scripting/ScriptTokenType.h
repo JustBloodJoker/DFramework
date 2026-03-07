@@ -20,6 +20,8 @@ enum ScriptTokenType {
     RBRACE,
     LPAREN,
     RPAREN,
+    LBRACKET,
+    RBRACKET,
     COMMA,
     IF,
     ELSE,

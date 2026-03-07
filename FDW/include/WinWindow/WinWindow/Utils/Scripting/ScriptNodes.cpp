@@ -43,6 +43,38 @@ ScriptValue MemberAccessNode::Execute(ScriptManager& sm) {
 
 //////////////////////////////
 
+//////////////////////////////
+////////// ArrayLiteralNode
+
+ScriptValue ArrayLiteralNode::Execute(ScriptManager& sm) {
+    auto arr = std::make_shared<ScriptArray>();
+    for (auto& e : Elements) {
+        arr->Values.push_back(e ? e->Execute(sm) : ScriptValue(0));
+    }
+    return ScriptValue(arr);
+}
+
+//////////////////////////////
+
+//////////////////////////////
+////////// ArrayAccessNode
+
+ArrayAccessNode::ArrayAccessNode(std::shared_ptr<ASTNode> arrayExpr, std::shared_ptr<ASTNode> indexExpr)
+    : ArrayExpr(arrayExpr), IndexExpr(indexExpr) {}
+
+ScriptValue ArrayAccessNode::Execute(ScriptManager& sm) {
+    auto arrVal = ArrayExpr ? ArrayExpr->Execute(sm) : ScriptValue(0);
+    auto idxVal = IndexExpr ? IndexExpr->Execute(sm) : ScriptValue(0);
+
+    auto arr = arrVal.AsArray();
+    const int idx = idxVal.AsInt();
+    if (!arr || idx < 0 || idx >= (int)arr->Values.size()) return 0;
+
+    return arr->Values[(size_t)idx];
+}
+
+//////////////////////////////
+
 
 //////////////////////////////
 ////////// BinaryOpNode
@@ -74,12 +106,26 @@ ScriptValue BinaryOpNode::Execute(ScriptManager& sm) {
 
 AssignNode::AssignNode(std::string name, std::shared_ptr<ASTNode> e) : VarName(name), Expr(e) {}
 AssignNode::AssignNode(std::shared_ptr<MemberAccessNode> acc, std::shared_ptr<ASTNode> e) : MemberAccess(acc), Expr(e) {}
+AssignNode::AssignNode(std::shared_ptr<ArrayAccessNode> acc, std::shared_ptr<ASTNode> e) : ArrayAccess(acc), Expr(e) {}
 
 ScriptValue AssignNode::Execute(ScriptManager& sm) {
     auto val = Expr->Execute(sm);
     if (MemberAccess) {
         auto objVal = MemberAccess->Object->Execute(sm);
         if (objVal.IsObject()) sm.SetProperty(objVal.AsObject(), MemberAccess->Member, val);
+    }
+    else if (ArrayAccess) {
+        auto arrVal = ArrayAccess->ArrayExpr ? ArrayAccess->ArrayExpr->Execute(sm) : ScriptValue(0);
+        auto idxVal = ArrayAccess->IndexExpr ? ArrayAccess->IndexExpr->Execute(sm) : ScriptValue(0);
+
+        auto arr = arrVal.AsArray();
+        int idx = idxVal.AsInt();
+        if (arr && idx >= 0) {
+            if ((size_t)idx >= arr->Values.size()) {
+                arr->Values.resize((size_t)idx + 1);
+            }
+            arr->Values[(size_t)idx] = val;
+        }
     }
     else {
         sm.SetVariable(VarName, val);

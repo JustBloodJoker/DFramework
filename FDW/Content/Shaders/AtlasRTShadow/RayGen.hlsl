@@ -19,7 +19,7 @@ float TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist)
     
     float NdotL = dot(normal, dir);
     float baseBias = 0.0002f; 
-    float bias = clamp(0.0002f * sqrt(1.0f - NdotL * NdotL) / max(NdotL, 1e-5f), 0.0002f, 0.005f);
+    float bias = clamp(0.0002f * sqrt(1.0f - NdotL * NdotL) / max(NdotL, 1e-5f), 0.002f, 0.05f);
 
     ray.Origin = origin + normal * bias; 
     

@@ -55,22 +55,32 @@ std::shared_ptr<ASTNode> ScriptParser::ParseFactor() {
 }
 
 std::shared_ptr<ASTNode> ScriptParser::ParsePrimary() {
+    std::shared_ptr<ASTNode> node = nullptr;
+
     if (Match(LPAREN)) {
         auto expr = ParseExpression();
         Match(RPAREN);
-        return expr;
+        node = expr;
     }
-    if (Peek().Type == NUMBER) {
+    else if (Peek().Type == NUMBER) {
         float v = std::stof(Advance().Text);
-        return std::make_shared<LiteralNode>(v);
+        node = std::make_shared<LiteralNode>(v);
     }
-    if (Peek().Type == STRING) {
-        return std::make_shared<LiteralNode>(Advance().Text);
+    else if (Peek().Type == STRING) {
+        node = std::make_shared<LiteralNode>(Advance().Text);
     }
-    if (Peek().Type == ID) {
+    else if (Match(LBRACKET)) {
+        auto arr = std::make_shared<ArrayLiteralNode>();
+        if (Peek().Type != RBRACKET) {
+            do {
+                arr->Elements.push_back(ParseExpression());
+            } while (Match(COMMA));
+        }
+        Match(RBRACKET);
+        node = arr;
+    }
+    else if (Peek().Type == ID) {
         auto name = Advance().Text;
-        std::shared_ptr<ASTNode> node;
-
         if (Match(LPAREN)) {
             auto callNode = std::make_shared<CallNode>(name);
             if (Peek().Type != RPAREN) {
@@ -84,8 +94,14 @@ std::shared_ptr<ASTNode> ScriptParser::ParsePrimary() {
         else {
             node = std::make_shared<VarNode>(name);
         }
+    }
+    else {
+        Advance();
+        return std::make_shared<LiteralNode>(0);
+    }
 
-        while (Match(DOT)) {
+    while (true) {
+        if (Match(DOT)) {
             if (Peek().Type == ID) {
                 std::string member = Advance().Text;
                 if (Match(LPAREN)) {
@@ -103,11 +119,17 @@ std::shared_ptr<ASTNode> ScriptParser::ParsePrimary() {
                 }
             }
         }
-        return node;
+        else if (Match(LBRACKET)) {
+            auto indexExpr = ParseExpression();
+            Match(RBRACKET);
+            node = std::make_shared<ArrayAccessNode>(node, indexExpr);
+        }
+        else {
+            break;
+        }
     }
-    
-    Advance(); 
-    return std::make_shared<LiteralNode>(0);
+
+    return node;
 }
 
 std::shared_ptr<ASTNode> ScriptParser::ParseBlock() {
@@ -153,7 +175,6 @@ std::shared_ptr<ASTNode> ScriptParser::ParseStatement() {
         return std::make_shared<PredicateRegisterNode>(cond, body, true);
     }
 
-    auto startPos = m_uPos;
     auto expr = ParseExpression();
 
     if (Match(LBRACE)) {
@@ -171,6 +192,9 @@ std::shared_ptr<ASTNode> ScriptParser::ParseStatement() {
         }
         if (auto m = std::dynamic_pointer_cast<MemberAccessNode>(expr)) {
             return std::make_shared<AssignNode>(m, rvalue);
+        }
+        if (auto a = std::dynamic_pointer_cast<ArrayAccessNode>(expr)) {
+            return std::make_shared<AssignNode>(a, rvalue);
         }
     }
 

@@ -82,8 +82,21 @@ TAudio* World::CreateAudio(std::string path) {
 }
 
 ComponentHolder* World::GetEntityByName(std::string name) {
+	if (name.empty()) return nullptr;
+
+	auto cachedIt = m_mEntityByName.find(name);
+	if (cachedIt != m_mEntityByName.end()) {
+		auto cached = cachedIt->second;
+		if (cached && cached->GetName() == name) {
+			return cached;
+		}
+
+		m_mEntityByName.erase(cachedIt);
+	}
+
 	for (auto& entity : m_vEntities) {
 		if (entity && entity->GetName() == name) {
+			m_mEntityByName[name] = entity.get();
 			return entity.get();
 		}
 	}
@@ -92,7 +105,10 @@ ComponentHolder* World::GetEntityByName(std::string name) {
 
 void World::SetEntityName(ComponentHolder* entity, std::string name) {
 	if (!entity) return;
+
+	RemoveEntityNameFromCache(entity);
 	entity->SetName(name);
+	AddEntityNameToCache(entity);
 }
 
 void World::SetEntityActive(ComponentHolder* entity, int active) {
@@ -345,11 +361,14 @@ void World::DestroyEntity(ComponentHolder* holder) {
 		GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	}
 
-	std::erase_if(m_vEntities, [&](const std::shared_ptr<ComponentHolder>& ent) {
+	std::erase_if(m_vEntities, [this, holder](const std::shared_ptr<ComponentHolder>& ent) {
 		if (ent.get() == holder) {
+
+			RemoveEntityNameFromCache(ent.get());
 			ent->Destroy();
 			ent->SetWorld(nullptr);
 			return true;
+
 		}
 		return false;
 	});
@@ -368,6 +387,7 @@ void World::AfterSetMainRenderer() {
 			InitRenderEntity(renderEntity);
 		}
 	}
+	RebuildEntityNameCache();
 }
 
 void World::SetupScriptingBindings() {
@@ -400,6 +420,32 @@ void World::RememberExecutedScript(const std::string& path) {
 	}
 	else {
 		m_vLoadedScripts.push_back(WorldScriptRecord{ normalized, true });
+	}
+}
+
+void World::AddEntityNameToCache(ComponentHolder* entity) {
+	if (!entity) return;
+
+	auto name = entity->GetName();
+
+	if (name.empty()) return;
+
+	m_mEntityByName[name] = entity;
+}
+
+void World::RemoveEntityNameFromCache(ComponentHolder* entity) {
+	if (!entity) return;
+
+	std::erase_if(m_mEntityByName, [entity](const auto& kv) {
+		return kv.second == entity;
+	});
+}
+
+void World::RebuildEntityNameCache() {
+	m_mEntityByName.clear();
+
+	for (auto& entity : m_vEntities) {
+		AddEntityNameToCache(entity.get());
 	}
 }
 

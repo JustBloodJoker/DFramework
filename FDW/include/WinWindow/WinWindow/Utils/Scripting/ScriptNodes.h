@@ -39,6 +39,20 @@ struct MemberAccessNode : public ASTNode {
     ScriptValue Execute(ScriptManager& sm) override;
 };
 
+struct ArrayLiteralNode : public ASTNode {
+    std::vector<std::shared_ptr<ASTNode>> Elements;
+
+    ScriptValue Execute(ScriptManager& sm) override;
+};
+
+struct ArrayAccessNode : public ASTNode {
+    std::shared_ptr<ASTNode> ArrayExpr;
+    std::shared_ptr<ASTNode> IndexExpr;
+
+    ArrayAccessNode(std::shared_ptr<ASTNode> arrayExpr, std::shared_ptr<ASTNode> indexExpr);
+    ScriptValue Execute(ScriptManager& sm) override;
+};
+
 struct BinaryOpNode : public ASTNode {
     std::shared_ptr<ASTNode> Left;
     std::shared_ptr<ASTNode> Right;
@@ -52,9 +66,11 @@ struct AssignNode : public ASTNode {
     std::string VarName;
     std::shared_ptr<ASTNode> Expr;
     std::shared_ptr<MemberAccessNode> MemberAccess;
+    std::shared_ptr<ArrayAccessNode> ArrayAccess;
 
     AssignNode(std::string name, std::shared_ptr<ASTNode> e);
     AssignNode(std::shared_ptr<MemberAccessNode> acc, std::shared_ptr<ASTNode> e);
+    AssignNode(std::shared_ptr<ArrayAccessNode> acc, std::shared_ptr<ASTNode> e);
     ScriptValue Execute(ScriptManager& sm) override;
 };
 

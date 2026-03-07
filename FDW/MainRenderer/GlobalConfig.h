@@ -254,6 +254,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 ///////    TAA SETTINGS
 
 #define TAA_JITTER_PHASES_NUM 16
+#define TAA_PREFER_FRAME_RATE_PHASES_NUM 60.0f
 
 #define TAA_RENDER_TARGET_1_HISTORY_SRV_POS_IN_HEAP		0
 #define TAA_RENDER_TARGET_2_HISTORY_SRV_POS_IN_HEAP		1

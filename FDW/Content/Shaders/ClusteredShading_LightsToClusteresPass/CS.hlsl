@@ -68,7 +68,7 @@ void CS(uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID)
         else if (type == LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE) addd = TestDirectionalLight(i, c);
         else if (type == LIGHT_RECT_LIGHT_ENUM_VALUE) addd = TestRectLight(i, c);
 
-        if (addd && c.Count < 100)
+        if (addd && c.Count < MAX_LIGHTS_PER_CLUSTER)
         {
             c.LightIndices[c.Count] = i;
             c.Count++;

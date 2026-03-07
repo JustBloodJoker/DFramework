@@ -5,12 +5,14 @@ ScriptValue::ScriptValue(int v) : Data(v) {}
 ScriptValue::ScriptValue(float v) : Data(v) {}
 ScriptValue::ScriptValue(std::string v) : Data(v) {}
 ScriptValue::ScriptValue(void* v) : Data(v) {}
+ScriptValue::ScriptValue(std::shared_ptr<ScriptArray> v) : Data(v) {}
 ScriptValue::ScriptValue(const char* v) : Data(std::string(v)) {}
 
 bool ScriptValue::IsInt() const { return std::holds_alternative<int>(Data); }
 bool ScriptValue::IsFloat() const { return std::holds_alternative<float>(Data); }
 bool ScriptValue::IsString() const { return std::holds_alternative<std::string>(Data); }
 bool ScriptValue::IsObject() const { return std::holds_alternative<void*>(Data); }
+bool ScriptValue::IsArray() const { return std::holds_alternative<std::shared_ptr<ScriptArray>>(Data); }
 
 int ScriptValue::AsInt() const {
     if (IsInt()) return std::get<int>(Data);
@@ -28,6 +30,7 @@ std::string ScriptValue::AsString() const {
     if (IsString()) return std::get<std::string>(Data);
     if (IsInt()) return std::to_string(std::get<int>(Data));
     if (IsFloat()) return std::to_string(std::get<float>(Data));
+    if (IsArray()) return "[array]";
     return "";
 }
 
@@ -36,11 +39,20 @@ void* ScriptValue::AsObject() const {
     return nullptr;
 }
 
+std::shared_ptr<ScriptArray> ScriptValue::AsArray() const {
+    if (IsArray()) return std::get<std::shared_ptr<ScriptArray>>(Data);
+    return nullptr;
+}
+
 bool ScriptValue::AsBool() const {
     if (IsInt()) return std::get<int>(Data) != 0;
     if (IsFloat()) return std::get<float>(Data) != 0.0f;
     if (IsString()) return !std::get<std::string>(Data).empty();
     if (IsObject()) return std::get<void*>(Data) != nullptr;
+    if (IsArray()) {
+        auto arr = AsArray();
+        return arr && !arr->Values.empty();
+    }
     return false;
 }
 
@@ -68,6 +80,7 @@ ScriptValue ScriptValue::operator/(const ScriptValue& other) const {
 
 bool ScriptValue::operator==(const ScriptValue& other) const {
     if (IsString() && other.IsString()) return AsString() == other.AsString();
+    if (IsArray() || other.IsArray()) return AsArray() == other.AsArray();
     if (IsObject() || other.IsObject()) return AsObject() == other.AsObject(); // Ptr comparison
     return std::abs(AsFloat() - other.AsFloat()) < 0.0001f;
 }

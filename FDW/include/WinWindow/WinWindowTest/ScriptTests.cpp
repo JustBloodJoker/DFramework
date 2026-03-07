@@ -708,6 +708,125 @@ void RunFunctionTest() {
     ScriptManager::GetInstance()->StopScript(id);
 }
 
+void RunArrayTests() {
+    std::cout << "\nRunning Array Script Tests...\n";
+
+    ComprehensiveTestObject testObj;
+    ScriptManager::GetInstance()->RegisterObject("arrTest", &testObj, "ComprehensiveTestObject");
+
+    {
+        std::cout << "Array Test 1: Literal + Index Read... ";
+        testObj.Reset();
+
+        auto script = R"(
+            arr = [10, 20, 30];
+            arrTest.IntVal = arr[1];
+            arrTest.FloatVal = arr[2] * 1.5;
+        )";
+
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+        assert(testObj.IntVal == 20);
+        assert(std::abs(testObj.FloatVal - 45.0f) < 0.001f);
+        ScriptManager::GetInstance()->StopScript(id);
+        std::cout << "Passed\n";
+    }
+
+    {
+        std::cout << "Array Test 2: Index Write + Auto Resize... ";
+        testObj.Reset();
+
+        auto script = R"(
+            arr = [];
+            arr[2] = 42;
+            arr[0] = 5;
+            arr[1] = arr[2] + arr[0];
+            arrTest.IntVal = arr[1];
+            arrTest.FloatVal = arr[3]; # out of initialized range after resize -> 0
+        )";
+
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+        assert(testObj.IntVal == 47);
+        assert(std::abs(testObj.FloatVal - 0.0f) < 0.001f);
+        ScriptManager::GetInstance()->StopScript(id);
+        std::cout << "Passed\n";
+    }
+
+    {
+        std::cout << "Array Test 3: Nested Arrays... ";
+        testObj.Reset();
+
+        auto script = R"(
+            grid = [[1, 2], [3, 4], [5, 6]];
+            arrTest.IntVal = grid[1][0];
+            arrTest.FloatVal = grid[2][1];
+        )";
+
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+        assert(testObj.IntVal == 3);
+        assert(std::abs(testObj.FloatVal - 6.0f) < 0.001f);
+        ScriptManager::GetInstance()->StopScript(id);
+        std::cout << "Passed\n";
+    }
+
+    {
+        std::cout << "Array Test 4: Arrays In While Loop... ";
+        testObj.Reset();
+
+        auto script = R"(
+            arr = [1, 2, 3, 4];
+            i = 0;
+            sum = 0;
+            while (i < 4) {
+                sum = sum + arr[i];
+                i = i + 1;
+            }
+            arrTest.IntVal = sum;
+        )";
+
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+        assert(testObj.IntVal == 10);
+        ScriptManager::GetInstance()->StopScript(id);
+        std::cout << "Passed\n";
+    }
+
+    {
+        std::cout << "Array Test 5: Arrays In loop() Predicates... ";
+        testObj.Reset();
+
+        auto script = R"(
+            arr = [0];
+            loop (arrTest.Counter < 3) {
+                arr[0] = arr[0] + 2;
+                arrTest.IntVal = arr[0];
+                arrTest.IncrementCounter();
+            }
+        )";
+
+        auto id = ScriptManager::GetInstance()->ExecuteScript(script);
+
+        ScriptManager::GetInstance()->Update(0.1f);
+        assert(testObj.Counter == 1);
+        assert(testObj.IntVal == 2);
+
+        ScriptManager::GetInstance()->Update(0.1f);
+        assert(testObj.Counter == 2);
+        assert(testObj.IntVal == 4);
+
+        ScriptManager::GetInstance()->Update(0.1f);
+        assert(testObj.Counter == 3);
+        assert(testObj.IntVal == 6);
+
+        ScriptManager::GetInstance()->Update(0.1f);
+        assert(testObj.Counter == 3);
+        assert(testObj.IntVal == 6);
+
+        ScriptManager::GetInstance()->StopScript(id);
+        std::cout << "Passed\n";
+    }
+
+    std::cout << "Array Script Tests Passed!\n";
+}
+
 void RunScriptTests() {
     RunScriptTest();
     RunMethodTest();
@@ -721,4 +840,5 @@ void RunScriptTests() {
     RunStopScriptsTest();
     RunStopSingleScriptTest();
     RunFunctionTest();
+    RunArrayTests();
 }

@@ -129,6 +129,7 @@ public:
             InitRenderEntity(renderEntity);
         }
         m_vEntities.push_back(ent);
+        AddEntityNameToCache(ent.get());
         return ent.get();
     }
 
@@ -253,11 +254,15 @@ protected:
     void SetupScriptingBindings();
     void RestoreScriptPredicatesAfterLoad();
     void RememberExecutedScript(const std::string& path);
+    void AddEntityNameToCache(ComponentHolder* entity);
+    void RemoveEntityNameFromCache(ComponentHolder* entity);
+    void RebuildEntityNameCache();
 
 protected:
     std::vector<std::shared_ptr<ComponentHolder>> m_vEntities;
     std::vector<WorldScriptRecord> m_vLoadedScripts;
     MainRenderer* m_pRender = nullptr;
+    std::unordered_map<std::string, ComponentHolder*> m_mEntityByName;
 
     std::vector<NRenderSystemNotifyType> m_vRenderSystemNotifies;
 };

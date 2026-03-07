@@ -15,6 +15,17 @@ bool IsPureExpressionNode(const std::shared_ptr<ASTNode>& node) {
         return IsPureExpressionNode(member->Object);
     }
 
+    if (auto* arrayLiteral = dynamic_cast<ArrayLiteralNode*>(node.get())) {
+        for (const auto& e : arrayLiteral->Elements) {
+            if (!IsPureExpressionNode(e)) return false;
+        }
+        return true;
+    }
+
+    if (auto* arrayAccess = dynamic_cast<ArrayAccessNode*>(node.get())) {
+        return IsPureExpressionNode(arrayAccess->ArrayExpr) && IsPureExpressionNode(arrayAccess->IndexExpr);
+    }
+
     if (auto* binary = dynamic_cast<BinaryOpNode*>(node.get())) {
         return IsPureExpressionNode(binary->Left) && IsPureExpressionNode(binary->Right);
     }
@@ -228,13 +239,23 @@ ScriptValue ScriptManager::CallMethod(void* obj, const std::string& methodName, 
              auto* method = pair.second->FindMethod(methodName, currentObj);
              if (method) {
                  std::vector<std::variant<int, float, std::string, void*>> funcArgs;
-                 for(auto& a : args) funcArgs.push_back(a.Data);
+                 for (auto& a : args) {
+                     if (a.IsInt()) funcArgs.push_back(a.AsInt());
+                     else if (a.IsFloat()) funcArgs.push_back(a.AsFloat());
+                     else if (a.IsString()) funcArgs.push_back(a.AsString());
+                     else if (a.IsObject()) funcArgs.push_back(a.AsObject());
+                     else if (a.IsArray()) funcArgs.push_back((void*)a.AsArray().get());
+                     else funcArgs.push_back((void*)nullptr);
+                 }
                  
                  std::variant<int, float, std::string, void*> ret;
                  method->Invoke(currentObj, funcArgs, ret);
                  
                  ScriptValue retVal;
-                 retVal.Data = ret;
+                 if (std::holds_alternative<int>(ret)) retVal.Data = std::get<int>(ret);
+                 else if (std::holds_alternative<float>(ret)) retVal.Data = std::get<float>(ret);
+                 else if (std::holds_alternative<std::string>(ret)) retVal.Data = std::get<std::string>(ret);
+                 else if (std::holds_alternative<void*>(ret)) retVal.Data = std::get<void*>(ret);
                  return retVal;
              }
         }

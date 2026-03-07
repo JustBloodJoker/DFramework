@@ -22,6 +22,11 @@ void CameraSystem::AfterConstruction() {
 	m_pCameraLayer = std::make_unique<CameraSystemInputLayer>(this);
 	m_pCameraLayer->AddToRouter(m_pOwner->GetInputRouter());
 	UpdateProjectionMatrix();
+
+	m_xJitterOffset = { 0.0f, 0.0f };
+	m_xPrevJitterOffset = { 0.0f, 0.0f };
+	m_xJitteredProjectionMatrix = m_xProjectionMatrix;
+	m_xPrevViewProjectionMatrix = GetViewProjectionMatrix();
 }
 
 void CameraSystem::BeforeDestruction() {
@@ -127,6 +132,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 		}
 
 		m_xJitteredProjectionMatrix = m_xProjectionMatrix;
+		m_xJitterOffset = { 0.0f, 0.0f };
 		if (!m_bIsEnabledJitter) return;
 
 		auto frameIdx = m_pOwner->GetFrameIndex();
@@ -137,9 +143,23 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 		auto haltonX = Halton(jitterIndex + 1, 2) - 0.5f;
 		auto haltonY = Halton(jitterIndex + 1, 3) - 0.5f;
 
+		auto jitterScale = 1.0f;
+		if (auto timer = m_pOwner->GetTimer(); timer) {
+			auto targetFrameTime = 1.0f / TAA_PREFER_FRAME_RATE_PHASES_NUM;
+			auto dt = (float)timer->GetDeltaTime();
+			if (dt > targetFrameTime && dt > 0.0001f) {
+				jitterScale = targetFrameTime / dt;
+
+				if (jitterScale > 1.0f) jitterScale = 1.0f;
+
+				jitterScale *= jitterScale;
+
+				if (jitterScale < 0.05f) jitterScale = 0.0f;
+			}
+		}
 		
-		m_xJitterOffset.x = (haltonX * 2.0f) / (float)wndSet.Width;
-		m_xJitterOffset.y = (haltonY * 2.0f) / (float)wndSet.Height;
+		m_xJitterOffset.x = ((haltonX * 2.0f) / (float)wndSet.Width) * jitterScale;
+		m_xJitterOffset.y = ((haltonY * 2.0f) / (float)wndSet.Height) * jitterScale;
 
 
 

@@ -86,6 +86,8 @@ std::vector<ScriptToken> ScriptLexer::Tokenize() {
             case '}': tokens.push_back({ RBRACE, "}", m_iLine }); break;
             case '(': tokens.push_back({ LPAREN, "(", m_iLine }); break;
             case ')': tokens.push_back({ RPAREN, ")", m_iLine }); break;
+            case '[': tokens.push_back({ LBRACKET, "[", m_iLine }); break;
+            case ']': tokens.push_back({ RBRACKET, "]", m_iLine }); break;
             case '.': tokens.push_back({ DOT, ".", m_iLine }); break;
             case ';': tokens.push_back({ SEMICOLON, ";", m_iLine }); break;
             case ',': tokens.push_back({ COMMA, ",", m_iLine }); break;
