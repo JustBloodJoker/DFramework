@@ -141,6 +141,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 		m_xJitterOffset.x = (haltonX * 2.0f) / (float)wndSet.Width;
 		m_xJitterOffset.y = (haltonY * 2.0f) / (float)wndSet.Height;
 
+
+
 		m_xJitteredProjectionMatrix.r[2] = dx::XMVectorAdd(m_xJitteredProjectionMatrix.r[2], dx::XMVectorSet(m_xJitterOffset.x, m_xJitterOffset.y, 0.0f, 0.0f));
 
 	}, { handle }, true, true);

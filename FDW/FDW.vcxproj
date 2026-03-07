@@ -76,6 +76,7 @@
     <ClCompile Include="System\TAASystem.cpp" />
     <ClCompile Include="UI\MainRenderer_UIComponent.cpp" />
     <ClCompile Include="UI\UIInputLayer.cpp" />
+    <ClCompile Include="Utilities\HelperFunctions.cpp" />
     <ClCompile Include="World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -140,6 +141,7 @@
     <ClInclude Include="System\TAASystemData.h" />
     <ClInclude Include="UI\MainRenderer_UIComponent.h" />
     <ClInclude Include="UI\UIInputLayer.h" />
+    <ClInclude Include="Utilities\HelperFunctions.h" />
     <ClInclude Include="World\World.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -229,6 +229,9 @@
     <ClCompile Include="System\TAASystem.cpp">
       <Filter>System</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities\HelperFunctions.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainRenderer\MainRenderer.h">
@@ -414,6 +417,9 @@
     </ClInclude>
     <ClInclude Include="System\TAASystemData.h">
       <Filter>System</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\HelperFunctions.h">
+      <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

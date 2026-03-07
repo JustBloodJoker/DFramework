@@ -101,6 +101,11 @@ void MainRenderer::UserInit()
 
 void MainRenderer::UserLoop()
 {	
+	if (auto timer = GetTimer(); m_pWorld && timer) {
+		m_pWorld->UpdateScripts(timer->GetDeltaTime());
+		ProcessNotifiesInWorld();
+	}
+
 	auto sync = m_dInFlight.empty() ? nullptr : m_dInFlight.back();
 
 	auto cameraH = m_pCameraSystem->OnStartTick(sync);

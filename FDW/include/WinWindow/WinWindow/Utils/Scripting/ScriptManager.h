@@ -4,13 +4,19 @@
 #include "ScriptNodes.h"
 #include "../Reflection/ReflectionRegistry.h"
 
+enum class ScriptExecutionMode {
+    Full,
+    PredicatesOnly
+};
+
 class ScriptManager : public FDWWIN::CreativeSingleton<ScriptManager> {
 
 public:
-    size_t ExecuteScript(const std::string& script);
-    size_t ExecuteFile(const std::string& filepath);
+    size_t ExecuteScript(const std::string& script, ScriptExecutionMode mode = ScriptExecutionMode::Full);
+    size_t ExecuteFile(const std::string& filepath, ScriptExecutionMode mode = ScriptExecutionMode::Full);
     void Update(float dt);
     float GetDeltaTime() const;
+    void ClearRegisteredObjects();
 
 public:
     void SetVariable(const std::string& name, ScriptValue val);

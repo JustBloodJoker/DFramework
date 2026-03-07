@@ -91,6 +91,7 @@ private:
     void SkyboxBrowser();
     void SceneBrowser();
     void AudioBrowser();
+    void ScriptBrowser();
     void SaveWorldBrowser();
     void LoadWorldBrowser();
 
@@ -133,6 +134,7 @@ private:
     bool m_bShowSkyboxBrowser = false;
     bool m_bShowSceneBrowser = false;
     bool m_bShowAudioBrowser = false;
+    bool m_bShowScriptBrowser = false;
 
     bool m_bShowTextureBrowser = false;
     std::function<void(const std::filesystem::path&)> m_onTextureSelected;

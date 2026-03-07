@@ -39,6 +39,18 @@ void TDefaultCamera::StrafeLeft(float dt) {
 	UpdateCamera();
 }
 
+void TDefaultCamera::SetEyePosition(float x, float y, float z) {
+	m_xEye = dx::XMVectorSet(x, y, z, 1.0f);
+	UpdateCamera();
+}
+
+void TDefaultCamera::SetYawPitchRoll(float yaw, float pitch, float roll) {
+	m_fCamYaw = yaw;
+	m_fCamPitch = pitch;
+	m_fCamRoll = roll;
+	UpdateCamera();
+}
+
 void TDefaultCamera::ResetRoll() {
 	m_fCamRoll = 0.0f;
 	UpdateCamera();

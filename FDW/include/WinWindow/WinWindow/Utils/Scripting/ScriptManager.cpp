@@ -4,12 +4,60 @@
 #include "ScriptParser.h"
 #include "../Serializer/PolymorphicFactory.h"
 
+bool IsPureExpressionNode(const std::shared_ptr<ASTNode>& node) {
+    if (!node) return false;
 
-size_t ScriptManager::ExecuteScript(const std::string& script) {
+    if (dynamic_cast<LiteralNode*>(node.get()) != nullptr) return true;
+
+    if (dynamic_cast<VarNode*>(node.get()) != nullptr) return true;
+
+    if (auto* member = dynamic_cast<MemberAccessNode*>(node.get())) {
+        return IsPureExpressionNode(member->Object);
+    }
+
+    if (auto* binary = dynamic_cast<BinaryOpNode*>(node.get())) {
+        return IsPureExpressionNode(binary->Left) && IsPureExpressionNode(binary->Right);
+    }
+
+    return false;
+}
+
+bool IsSafeStatementForPredicateRestore(const std::shared_ptr<ASTNode>& node) {
+    if (!node) return false;
+
+    if (dynamic_cast<FunctionDefNode*>(node.get()) != nullptr) return true;
+
+    if (dynamic_cast<PredicateRegisterNode*>(node.get()) != nullptr) return true;
+
+    if (auto* assign = dynamic_cast<AssignNode*>(node.get())) {
+        return assign->MemberAccess == nullptr && IsPureExpressionNode(assign->Expr);
+    }
+
+    return false;
+}
+
+std::vector<std::shared_ptr<ASTNode>> ParseStatements(const std::string& script) {
     ScriptLexer lexer(script);
     auto tokens = lexer.Tokenize();
     ScriptParser parser(tokens);
-    auto block = parser.ParseBlock();
+    parser.ParseBlock();
+    parser.Flush();
+
+    std::vector<std::shared_ptr<ASTNode>> statements;
+    while (parser.Peek().Type != END) {
+        auto stmt = parser.ParseStatement();
+        if (stmt) {
+            statements.push_back(stmt);
+        }
+        else {
+            parser.Advance();
+        }
+    }
+    return statements;
+}
+
+size_t ScriptManager::ExecuteScript(const std::string& script, ScriptExecutionMode mode) {
+    auto statements = ParseStatements(script);
 
     auto prevContext = m_pCurrentContext;
     m_pCurrentContext = std::make_shared<ScriptContext>();
@@ -18,15 +66,12 @@ size_t ScriptManager::ExecuteScript(const std::string& script) {
     auto newId = m_uNextScriptId++;
     m_uCurrentExecutionScriptId = newId;
 
-	parser.Flush();
-    while (parser.Peek().Type != END) {
-        auto stmt = parser.ParseStatement();
-        if (stmt) {
-            stmt->Execute(*this);
-        }
-        else {
-            parser.Advance();
-        }
+    for (const auto& stmt : statements) {
+        if (!stmt) continue;
+
+        if (mode == ScriptExecutionMode::PredicatesOnly && !IsSafeStatementForPredicateRestore(stmt)) continue;
+
+        stmt->Execute(*this);
     }
     
     m_pCurrentContext = prevContext;
@@ -35,13 +80,13 @@ size_t ScriptManager::ExecuteScript(const std::string& script) {
     return newId;
 }
 
-size_t ScriptManager::ExecuteFile(const std::string& filepath) {
+size_t ScriptManager::ExecuteFile(const std::string& filepath, ScriptExecutionMode mode) {
     std::ifstream t(filepath);
     if (!t.is_open()) return 0;
 
     std::stringstream buffer;
     buffer << t.rdbuf();
-    return ExecuteScript(buffer.str());
+    return ExecuteScript(buffer.str(), mode);
 }
 
 void ScriptManager::Update(float dt) {
@@ -72,6 +117,10 @@ float ScriptManager::GetDeltaTime() const {
     return m_fDeltaTime;
 }
 
+void ScriptManager::ClearRegisteredObjects() {
+    m_mRegisteredObjects.clear();
+}
+
 void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
     if (!m_pCurrentContext) return;
     
@@ -81,6 +130,7 @@ void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
             ctx->Variables[name] = val;
             return;
         }
+
         ctx = ctx->Parent;
     }
     m_pCurrentContext->Variables[name] = val;
@@ -89,8 +139,8 @@ void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
 ScriptValue ScriptManager::GetVariable(const std::string& name) {
     auto ctx = m_pCurrentContext;
     while (ctx) {
-        if (ctx->Variables.find(name) != ctx->Variables.end())
-            return ctx->Variables[name];
+        if (ctx->Variables.find(name) != ctx->Variables.end()) return ctx->Variables[name];
+
         ctx = ctx->Parent;
     }
 

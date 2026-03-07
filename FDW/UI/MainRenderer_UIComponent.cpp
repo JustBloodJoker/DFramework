@@ -14,6 +14,7 @@ static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf", L".fb
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
 static const std::vector<std::wstring> s_vSupportedTextureExts = { L".jpg", L".png" };
+static const std::vector<std::wstring> s_vSupportedScriptExts = { L".dfs" };
 static const std::vector<std::wstring> s_vSupportedEngineFileExts = { L".fdw" };
 
 void MainRenderer_UIComponent::DrawUI() {
@@ -24,6 +25,7 @@ void MainRenderer_UIComponent::DrawUI() {
     SceneBrowser();
     TextureBrowser();
     AudioBrowser();
+    ScriptBrowser();
 }
 
 void MainRenderer_UIComponent::MainWindow() {
@@ -720,6 +722,22 @@ void MainRenderer_UIComponent::DrawEditor_Packaging() {
     if (ImGui::Button("Load Scene")) {
         m_bShowLoadWorldBrowser = true;
     }
+
+    ImGui::SeparatorText("Scripting");
+    if (ImGui::Button("Execute Script")) {
+        m_bShowScriptBrowser = true;
+    }
+
+    auto* world = m_pOwner->GetWorld();
+    if (!world) return;
+
+    const auto& scripts = world->GetLoadedScripts();
+    if (!scripts.empty()) {
+        ImGui::TextUnformatted("Loaded scripts:");
+        for (const auto& script : scripts) {
+            ImGui::BulletText("%s", script.Path.c_str());
+        }
+    }
 }
 
 void MainRenderer_UIComponent::DrawEditor_Systems() {
@@ -864,6 +882,23 @@ void MainRenderer_UIComponent::AudioBrowser() {
         },
         [](const std::filesystem::path& path) {
             return "Audio ";
+        }
+    );
+}
+
+void MainRenderer_UIComponent::ScriptBrowser() {
+    FileBrowser(
+        m_bShowScriptBrowser,
+        "Script Browser",
+        m_xCurrentPath,
+        s_vSupportedScriptExts,
+        [this](const std::filesystem::path& path) {
+            AddCallToPull([this, path]() {
+                m_pOwner->GetWorld()->ExecuteScriptFile(path.string());
+                });
+        },
+        [](const std::filesystem::path& path) {
+            return "Script ";
         }
     );
 }

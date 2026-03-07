@@ -31,6 +31,8 @@ public:
 	void MoveBackward(float dt);
 	void StrafeLeft(float dt);
 	void StrafeRight(float dt);
+	void SetEyePosition(float x, float y, float z);
+	void SetYawPitchRoll(float yaw, float pitch, float roll);
 	void ResetRoll();
 
 	void OnMouseMove(WPARAM btnState, int x, int y);
