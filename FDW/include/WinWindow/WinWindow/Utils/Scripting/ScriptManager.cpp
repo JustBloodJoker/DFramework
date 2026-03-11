@@ -130,6 +130,7 @@ float ScriptManager::GetDeltaTime() const {
 
 void ScriptManager::ClearRegisteredObjects() {
     m_mRegisteredObjects.clear();
+    m_mRegisteredObjectsByPtr.clear();
     m_mPropertyResolveCache.clear();
     m_mMethodResolveCache.clear();
 }
