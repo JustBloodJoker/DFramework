@@ -91,18 +91,26 @@ struct WhileNode : public ASTNode {
     ScriptValue Execute(ScriptManager& sm) override;
 };
 
-struct CallNode : public ASTNode {
-    std::string FuncName;
+struct BaseCallNode : public ASTNode {
     std::vector<std::shared_ptr<ASTNode>> Args;
+
+    struct EvalArgsDepthGuard {
+        size_t* Depth = nullptr;
+        ~EvalArgsDepthGuard();
+    };
+};
+
+
+struct CallNode : public BaseCallNode {
+    std::string FuncName;
 
     CallNode(std::string name);
     ScriptValue Execute(ScriptManager& sm) override;
 };
 
-struct MethodCallNode : public ASTNode {
+struct MethodCallNode : public BaseCallNode {
     std::shared_ptr<ASTNode> Object;
     std::string MethodName;
-    std::vector<std::shared_ptr<ASTNode>> Args;
 
     MethodCallNode(std::shared_ptr<ASTNode> o, std::string m);
     ScriptValue Execute(ScriptManager& sm) override;

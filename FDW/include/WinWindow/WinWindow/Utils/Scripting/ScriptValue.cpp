@@ -44,13 +44,23 @@ std::shared_ptr<ScriptArray> ScriptValue::AsArray() const {
     return nullptr;
 }
 
+ScriptArray* ScriptValue::AsArrayRaw() {
+    if (!IsArray()) return nullptr;
+    return std::get<std::shared_ptr<ScriptArray>>(Data).get();
+}
+
+const ScriptArray* ScriptValue::AsArrayRaw() const {
+    if (!IsArray()) return nullptr;
+    return std::get<std::shared_ptr<ScriptArray>>(Data).get();
+}
+
 bool ScriptValue::AsBool() const {
     if (IsInt()) return std::get<int>(Data) != 0;
     if (IsFloat()) return std::get<float>(Data) != 0.0f;
     if (IsString()) return !std::get<std::string>(Data).empty();
     if (IsObject()) return std::get<void*>(Data) != nullptr;
     if (IsArray()) {
-        auto arr = AsArray();
+        auto arr = AsArrayRaw();
         return arr && !arr->Values.empty();
     }
     return false;

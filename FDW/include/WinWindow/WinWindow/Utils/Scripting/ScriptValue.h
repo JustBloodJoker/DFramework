@@ -35,6 +35,8 @@ public:
     std::string AsString() const;
     void* AsObject() const;
     std::shared_ptr<ScriptArray> AsArray() const;
+    ScriptArray* AsArrayRaw();
+    const ScriptArray* AsArrayRaw() const;
     bool AsBool() const;
 
     ScriptValue operator+(const ScriptValue& other) const;

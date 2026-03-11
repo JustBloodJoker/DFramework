@@ -11,8 +11,12 @@ LightComponentData LightComponent::GetLightComponentData() {
 }
 
 void LightComponent::SetLightComponentData(LightComponentData newData) {
-	m_xData = newData;
+	SetLightComponentDataSilent(newData);
 	GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::LightUpdateData);
+}
+
+void LightComponent::SetLightComponentDataSilent(const LightComponentData& newData) {
+    m_xData = newData;
 }
 
 void LightComponent::Init() {

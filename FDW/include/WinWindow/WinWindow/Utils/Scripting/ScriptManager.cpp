@@ -130,33 +130,64 @@ float ScriptManager::GetDeltaTime() const {
 
 void ScriptManager::ClearRegisteredObjects() {
     m_mRegisteredObjects.clear();
+    m_mPropertyResolveCache.clear();
+    m_mMethodResolveCache.clear();
 }
 
 void ScriptManager::SetVariable(const std::string& name, ScriptValue val) {
     if (!m_pCurrentContext) return;
-    
+
+    if (auto cachedIt = m_pCurrentContext->ResolvedVariables.find(name);
+        cachedIt != m_pCurrentContext->ResolvedVariables.end() && cachedIt->second) {
+        *(cachedIt->second) = val;
+        return;
+    }
+
     auto ctx = m_pCurrentContext;
     while (ctx) {
-        if (ctx->Variables.find(name) != ctx->Variables.end()) {
-            ctx->Variables[name] = val;
+        if (auto it = ctx->Variables.find(name); it != ctx->Variables.end()) {
+            it->second = val;
+            m_pCurrentContext->ResolvedVariables[name] = &it->second;
             return;
         }
 
         ctx = ctx->Parent;
     }
-    m_pCurrentContext->Variables[name] = val;
+
+    auto& vars = m_pCurrentContext->Variables;
+    const auto oldBucketCount = vars.bucket_count();
+    vars[name] = val;
+
+    if (vars.bucket_count() != oldBucketCount) {
+        m_pCurrentContext->ResolvedVariables.clear();
+    }
+
+    m_pCurrentContext->ResolvedVariables[name] = &vars[name];
 }
 
 ScriptValue ScriptManager::GetVariable(const std::string& name) {
+    if (m_pCurrentContext) {
+        if (auto cachedIt = m_pCurrentContext->ResolvedVariables.find(name);
+            cachedIt != m_pCurrentContext->ResolvedVariables.end() && cachedIt->second) {
+            return *(cachedIt->second);
+        }
+    }
+
     auto ctx = m_pCurrentContext;
     while (ctx) {
-        if (ctx->Variables.find(name) != ctx->Variables.end()) return ctx->Variables[name];
+        if (auto it = ctx->Variables.find(name); it != ctx->Variables.end()) {
+            if (m_pCurrentContext) {
+                m_pCurrentContext->ResolvedVariables[name] = &it->second;
+            }
+            return it->second;
+        }
 
         ctx = ctx->Parent;
     }
 
-    if (m_mRegisteredObjects.find(name) != m_mRegisteredObjects.end()) {
-        return ScriptValue(m_mRegisteredObjects[name].first);
+    auto objIt = m_mRegisteredObjects.find(name);
+    if (objIt != m_mRegisteredObjects.end()) {
+        return ScriptValue(objIt->second.first);
     }
     return 0; 
 }
@@ -203,64 +234,159 @@ ScriptValue ScriptManager::CallFunction(const std::string& name, const std::vect
 void ScriptManager::RegisterObject(const std::string& name, void* obj, const std::string& className) {
     auto* info = ReflectionRegistry::GetInstance()->GetReflectedClassInfo(className);
     if (info) {
+        auto existingIt = m_mRegisteredObjects.find(name);
+        if (existingIt != m_mRegisteredObjects.end() && existingIt->second.first != obj) {
+            m_mRegisteredObjectsByPtr.erase(existingIt->second.first);
+        }
+
         m_mRegisteredObjects[name] = std::make_pair(obj, info);
+        m_mRegisteredObjectsByPtr[obj] = info;
     }
 }
 
 ScriptValue ScriptManager::GetProperty(void* obj, const std::string& propName) {
-    for (auto& [name, pair] : m_mRegisteredObjects) {
-        if (pair.first == obj) {
-            void* currentObj = obj;
-            auto* prop = pair.second->FindProperty(propName, currentObj);
-            if (prop && prop->Getter) {
-                return prop->Getter(currentObj);
-            }
-        }
+    auto objIt = m_mRegisteredObjectsByPtr.find(obj);
+    if (objIt == m_mRegisteredObjectsByPtr.end()) {
+        return 0;
     }
-    return 0;
+
+    const ClassInfo* classInfo = objIt->second;
+    if (!classInfo) {
+        return 0;
+    }
+
+    auto& classCache = m_mPropertyResolveCache[classInfo];
+    auto cachedIt = classCache.find(propName);
+
+    if (cachedIt == classCache.end()) {
+        void* currentObj = obj;
+        const PropertyInfo* prop = classInfo->FindProperty(propName, currentObj);
+
+        if (!prop) {
+            return 0;
+        }
+
+        const auto base = reinterpret_cast<std::uintptr_t>(obj);
+        const auto resolved = reinterpret_cast<std::uintptr_t>(currentObj);
+        const ptrdiff_t offset = static_cast<ptrdiff_t>(resolved - base);
+
+        cachedIt = classCache.emplace(propName, CachedPropertyResolve{ prop, offset }).first;
+    }
+
+    const CachedPropertyResolve& cached = cachedIt->second;
+    if (!cached.Property || !cached.Property->Getter) {
+        return 0;
+    }
+
+    void* currentObj = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(obj) + cached.Offset);
+    return cached.Property->Getter(currentObj);
 }
 
 void ScriptManager::SetProperty(void* obj, const std::string& propName, ScriptValue val) {
-    for (auto& [name, pair] : m_mRegisteredObjects) {
-        if (pair.first == obj) {
-            void* currentObj = obj;
-            auto* prop = pair.second->FindProperty(propName, currentObj);
-            if (prop && prop->Setter) {
-                prop->Setter(currentObj, val);
-            }
-        }
+    auto objIt = m_mRegisteredObjectsByPtr.find(obj);
+    if (objIt == m_mRegisteredObjectsByPtr.end()) {
+        return;
     }
+
+    const ClassInfo* classInfo = objIt->second;
+    if (!classInfo) {
+        return;
+    }
+
+    auto& classCache = m_mPropertyResolveCache[classInfo];
+    auto cachedIt = classCache.find(propName);
+
+    if (cachedIt == classCache.end()) {
+        void* currentObj = obj;
+        const PropertyInfo* prop = classInfo->FindProperty(propName, currentObj);
+
+        if (!prop) {
+            return;
+        }
+
+        const auto base = reinterpret_cast<std::uintptr_t>(obj);
+        const auto resolved = reinterpret_cast<std::uintptr_t>(currentObj);
+        const ptrdiff_t offset = static_cast<ptrdiff_t>(resolved - base);
+
+        cachedIt = classCache.emplace(propName, CachedPropertyResolve{ prop, offset }).first;
+    }
+
+    const CachedPropertyResolve& cached = cachedIt->second;
+    if (!cached.Property || !cached.Property->Setter) {
+        return;
+    }
+
+    void* currentObj = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(obj) + cached.Offset);
+    cached.Property->Setter(currentObj, val);
 }
 
 ScriptValue ScriptManager::CallMethod(void* obj, const std::string& methodName, const std::vector<ScriptValue>& args) {
-    for (auto& [name, pair] : m_mRegisteredObjects) {
-        if (pair.first == obj) {
-             void* currentObj = obj;
-             auto* method = pair.second->FindMethod(methodName, currentObj);
-             if (method) {
-                 std::vector<std::variant<int, float, std::string, void*>> funcArgs;
-                 for (auto& a : args) {
-                     if (a.IsInt()) funcArgs.push_back(a.AsInt());
-                     else if (a.IsFloat()) funcArgs.push_back(a.AsFloat());
-                     else if (a.IsString()) funcArgs.push_back(a.AsString());
-                     else if (a.IsObject()) funcArgs.push_back(a.AsObject());
-                     else if (a.IsArray()) funcArgs.push_back((void*)a.AsArray().get());
-                     else funcArgs.push_back((void*)nullptr);
-                 }
-                 
-                 std::variant<int, float, std::string, void*> ret;
-                 method->Invoke(currentObj, funcArgs, ret);
-                 
-                 ScriptValue retVal;
-                 if (std::holds_alternative<int>(ret)) retVal.Data = std::get<int>(ret);
-                 else if (std::holds_alternative<float>(ret)) retVal.Data = std::get<float>(ret);
-                 else if (std::holds_alternative<std::string>(ret)) retVal.Data = std::get<std::string>(ret);
-                 else if (std::holds_alternative<void*>(ret)) retVal.Data = std::get<void*>(ret);
-                 return retVal;
-             }
-        }
+    auto objIt = m_mRegisteredObjectsByPtr.find(obj);
+    if (objIt == m_mRegisteredObjectsByPtr.end()) {
+        return 0;
     }
-    return 0;
+
+    const ClassInfo* classInfo = objIt->second;
+    if (!classInfo) {
+        return 0;
+    }
+
+    auto& classCache = m_mMethodResolveCache[classInfo];
+    auto cachedIt = classCache.find(methodName);
+
+    if (cachedIt == classCache.end()) {
+        void* currentObj = obj;
+        const MethodInfo* method = classInfo->FindMethod(methodName, currentObj);
+
+        if (!method) {
+            return 0;
+        }
+
+        const auto base = reinterpret_cast<std::uintptr_t>(obj);
+        const auto resolved = reinterpret_cast<std::uintptr_t>(currentObj);
+        const ptrdiff_t offset = static_cast<ptrdiff_t>(resolved - base);
+
+        cachedIt = classCache.emplace(methodName, CachedMethodResolve{ method, offset }).first;
+    }
+
+    const CachedMethodResolve& cached = cachedIt->second;
+    if (!cached.Method) {
+        return 0;
+    }
+
+    void* currentObj = reinterpret_cast<void*>(reinterpret_cast<std::uintptr_t>(obj) + cached.Offset);
+
+    thread_local std::vector<std::vector<std::variant<int, float, std::string, void*>>> funcArgsStack;
+    thread_local size_t funcArgsDepth = 0;
+
+    if (funcArgsStack.size() <= funcArgsDepth) {
+        funcArgsStack.emplace_back();
+    }
+
+    auto& funcArgs = funcArgsStack[funcArgsDepth];
+    ++funcArgsDepth;
+    FuncArgsDepthGuard funcArgsDepthGuard{ &funcArgsDepth };
+
+    funcArgs.clear();
+    funcArgs.reserve(args.size());
+    for (auto& a : args) {
+        if (a.IsInt()) funcArgs.push_back(a.AsInt());
+        else if (a.IsFloat()) funcArgs.push_back(a.AsFloat());
+        else if (a.IsString()) funcArgs.push_back(a.AsString());
+        else if (a.IsObject()) funcArgs.push_back(a.AsObject());
+        else if (a.IsArray()) funcArgs.push_back((void*)a.AsArrayRaw());
+        else funcArgs.push_back((void*)nullptr);
+    }
+
+    std::variant<int, float, std::string, void*> ret;
+    cached.Method->Invoke(currentObj, funcArgs, ret);
+
+    ScriptValue retVal;
+    if (std::holds_alternative<int>(ret)) retVal.Data = std::get<int>(ret);
+    else if (std::holds_alternative<float>(ret)) retVal.Data = std::get<float>(ret);
+    else if (std::holds_alternative<std::string>(ret)) retVal.Data = std::get<std::string>(ret);
+    else if (std::holds_alternative<void*>(ret)) retVal.Data = std::get<void*>(ret);
+    return retVal;
 }
 
 ScriptValue ScriptManager::CreateObject(const std::string& className) {

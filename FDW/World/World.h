@@ -74,6 +74,8 @@ public:
     void SetLightConeAngles(ComponentHolder* entity, float inner, float outer);
     void SetRectLightSize(ComponentHolder* entity, float x, float y);
     void SetRectLightRotation(ComponentHolder* entity, float x, float y, float z);
+    void ApplyScriptLightsState(void* lightsArray,void* xArray,void* yArray,void* zArray,void* intensityArray,void* kindArray,void* dirXArray,void* dirYArray,void* dirZArray,int beginIndex,int endIndex);
+    void UpdateScriptLightsNative(void* lightsArray,void* kindArray,void* xArray,void* yArray,void* zArray,void* txArray,void* tyArray,void* tzArray,void* spdArray,void* distLimArray,void* yMinLimArray,void* yMaxLimArray,void* intenArray,void* idirArray,void* heatArray,void* iminArray,void* imaxArray,void* dirXArray,void* dirYArray,void* dirZArray,void* dirLerpArray,float dt,int beginIndex,int endIndex);
 
     void SetDefaultCameraEye(ComponentHolder* entity, float x, float y, float z);
     void SetDefaultCameraYawPitchRoll(ComponentHolder* entity, float yaw, float pitch, float roll);
@@ -225,6 +227,8 @@ public:
         REFLECT_METHOD(SetLightConeAngles)
         REFLECT_METHOD(SetRectLightSize)
         REFLECT_METHOD(SetRectLightRotation)
+        REFLECT_METHOD(ApplyScriptLightsState)
+        REFLECT_METHOD(UpdateScriptLightsNative)
         REFLECT_METHOD(SetDefaultCameraEye)
         REFLECT_METHOD(SetDefaultCameraYawPitchRoll)
         REFLECT_METHOD(SetCameraSpeed)
@@ -261,6 +265,9 @@ protected:
 protected:
     std::vector<std::shared_ptr<ComponentHolder>> m_vEntities;
     std::vector<WorldScriptRecord> m_vLoadedScripts;
+    float m_fScriptUpdateAccumulator = 0.0f;
+    float m_fScriptUpdateInterval = (1.0f / 15.0f);
+    float m_fScriptUpdateMaxAccumulator = 0.2f;
     MainRenderer* m_pRender = nullptr;
     std::unordered_map<std::string, ComponentHolder*> m_mEntityByName;
 

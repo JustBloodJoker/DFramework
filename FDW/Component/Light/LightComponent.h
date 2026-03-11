@@ -20,6 +20,7 @@ public:
 
 	LightComponentData GetLightComponentData();
 	void SetLightComponentData(LightComponentData newData);
+    void SetLightComponentDataSilent(const LightComponentData& newData);
 
 	virtual void Init() override;
 	virtual void Activate(bool a) override;

@@ -182,7 +182,7 @@ struct OcclusionDataStruct {
     int HiZHeight;
 };
 
-#define MAX_LIGHTS_PER_CLUSTER 119
+#define MAX_LIGHTS_PER_CLUSTER 300
 struct Cluster
 {
     float4 MinPoint;

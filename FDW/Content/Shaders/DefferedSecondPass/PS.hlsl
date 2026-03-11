@@ -58,6 +58,9 @@ float3 CalculatePBRLighting(
 }
 
 LightAtlasMeta GetLightMeta(int id){
+    LightAtlasMeta empty = (LightAtlasMeta)0;
+    if (id < 0 || id >= LHelper.LightCount) return empty;
+
     if(ShadowLightsMeta[id].LightIndex==id) return ShadowLightsMeta[id];
 
     for(int i=0;i<LHelper.LightCount;++i) {
@@ -66,7 +69,6 @@ LightAtlasMeta GetLightMeta(int id){
         }
     }
 
-    LightAtlasMeta empty;
     return empty;
 }
 
@@ -97,10 +99,13 @@ float GetShadowFactor(in LightStruct light, int id, float2 UV)
 {
     if (LHelper.IsShadowImpl == 0) return 1.0f;
     LightAtlasMeta meta = GetLightMeta(id);
+
+    if (meta.AtlasWidth == 0 || meta.AtlasHeight == 0) return 1.0f;
+    if (meta.ScreenMaxU <= meta.ScreenMinU || meta.ScreenMaxV <= meta.ScreenMinV) return 1.0f;
     
     if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || 
         UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
-        return 0.0f;
+        return 1.0f;
 
     float centerDepth = GetLinearDepth(UV);
 
@@ -294,7 +299,10 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float3 posVS = mul(float4(WorldPos, 1.0), ClustersData.ViewMatrix).xyz;
     float  viewZAbs = abs(posVS.z);
-    float2 fragCoord = uv;
+    float2 fragCoord = float2(
+        uv.x * (float)ClustersData.ScreenWidth,
+        uv.y * (float)ClustersData.ScreenHeight
+    );
     uint tileIndex = ComputeClusterIndex(fragCoord, viewZAbs, ClustersData);
     uint lightCount = Clusters[tileIndex].Count;
     
@@ -306,16 +314,16 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
         switch (light.LightType) {
             case LIGHT_POINT_LIGHT_ENUM_VALUE:
-                Lo += ApplyPointLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyPointLight(light, uv, lightIndex, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_SPOT_LIGHT_ENUM_VALUE:
-                Lo += ApplySpotLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplySpotLight(light, uv, lightIndex, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE:
-                Lo += ApplyDirectionalLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyDirectionalLight(light, uv, lightIndex, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
             case LIGHT_RECT_LIGHT_ENUM_VALUE:
-                Lo += ApplyRectLight(light, uv, i, WorldPos, N, V, albedo, metallic, roughness, F0);
+                Lo += ApplyRectLight(light, uv, lightIndex, WorldPos, N, V, albedo, metallic, roughness, F0);
                 break;
         }
     }

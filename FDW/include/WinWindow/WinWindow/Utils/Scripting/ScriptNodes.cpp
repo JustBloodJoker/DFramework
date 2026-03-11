@@ -66,7 +66,7 @@ ScriptValue ArrayAccessNode::Execute(ScriptManager& sm) {
     auto arrVal = ArrayExpr ? ArrayExpr->Execute(sm) : ScriptValue(0);
     auto idxVal = IndexExpr ? IndexExpr->Execute(sm) : ScriptValue(0);
 
-    auto arr = arrVal.AsArray();
+    auto* arr = arrVal.AsArrayRaw();
     const int idx = idxVal.AsInt();
     if (!arr || idx < 0 || idx >= (int)arr->Values.size()) return 0;
 
@@ -118,7 +118,7 @@ ScriptValue AssignNode::Execute(ScriptManager& sm) {
         auto arrVal = ArrayAccess->ArrayExpr ? ArrayAccess->ArrayExpr->Execute(sm) : ScriptValue(0);
         auto idxVal = ArrayAccess->IndexExpr ? ArrayAccess->IndexExpr->Execute(sm) : ScriptValue(0);
 
-        auto arr = arrVal.AsArray();
+        auto* arr = arrVal.AsArrayRaw();
         int idx = idxVal.AsInt();
         if (arr && idx >= 0) {
             if ((size_t)idx >= arr->Values.size()) {
@@ -165,12 +165,34 @@ ScriptValue WhileNode::Execute(ScriptManager& sm) {
 //////////////////////////////
 
 //////////////////////////////
+////////// BaseCallNode
+
+BaseCallNode::EvalArgsDepthGuard::~EvalArgsDepthGuard() {
+    if (Depth) --(*Depth);
+}
+
+//////////////////////////////
+
+//////////////////////////////
 ////////// CallNode
 
 CallNode::CallNode(std::string name) : FuncName(name) {}
 
+
 ScriptValue CallNode::Execute(ScriptManager& sm) {
-    std::vector<ScriptValue> evalArgs;
+    thread_local std::vector<std::vector<ScriptValue>> evalArgsStack;
+    thread_local size_t evalArgsDepth = 0;
+
+    if (evalArgsStack.size() <= evalArgsDepth) {
+        evalArgsStack.emplace_back();
+    }
+
+    auto& evalArgs = evalArgsStack[evalArgsDepth];
+    ++evalArgsDepth;
+    EvalArgsDepthGuard evalArgsDepthGuard{ &evalArgsDepth };
+
+    evalArgs.clear();
+    evalArgs.reserve( Args.size() );
     for (auto& a : Args) evalArgs.push_back( a->Execute(sm) );
 
 	//TODO remove hardcoded functions and use-a reflection or something for extensibility.
@@ -198,7 +220,19 @@ ScriptValue MethodCallNode::Execute(ScriptManager& sm) {
     auto objVal = Object->Execute(sm);
     if (!objVal.IsObject()) return 0;
 
-    std::vector<ScriptValue> evalArgs;
+    thread_local std::vector<std::vector<ScriptValue>> evalArgsStack;
+    thread_local size_t evalArgsDepth = 0;
+
+    if (evalArgsStack.size() <= evalArgsDepth) {
+        evalArgsStack.emplace_back();
+    }
+
+    auto& evalArgs = evalArgsStack[evalArgsDepth];
+    ++evalArgsDepth;
+    EvalArgsDepthGuard evalArgsDepthGuard{ &evalArgsDepth };
+
+    evalArgs.clear();
+    evalArgs.reserve(Args.size());
     for (auto& a : Args) evalArgs.push_back(a->Execute(sm));
 
     return sm.CallMethod(objVal.AsObject(), MethodName, evalArgs);

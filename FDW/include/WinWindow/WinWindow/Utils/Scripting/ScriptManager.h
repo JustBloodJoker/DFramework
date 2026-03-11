@@ -40,6 +40,7 @@ public:
 protected:
     struct ScriptContext {
         std::unordered_map<std::string, ScriptValue> Variables;
+        std::unordered_map<std::string, ScriptValue*> ResolvedVariables;
         std::unordered_map<std::string, std::shared_ptr<ASTNode>> Functions;
         std::unordered_map<std::string, std::vector<std::string>> FunctionParams;
         std::shared_ptr<ScriptContext> Parent = nullptr;
@@ -50,6 +51,27 @@ protected:
     size_t m_uCurrentExecutionScriptId = 0;
 
     std::unordered_map<std::string, std::pair<void*, const ClassInfo*>> m_mRegisteredObjects;
+    std::unordered_map<void*, const ClassInfo*> m_mRegisteredObjectsByPtr;
+
+    struct CachedPropertyResolve {
+        const PropertyInfo* Property = nullptr;
+        ptrdiff_t Offset = 0;
+    };
+
+    struct CachedMethodResolve {
+        const MethodInfo* Method = nullptr;
+        ptrdiff_t Offset = 0;
+    };
+    
+    struct FuncArgsDepthGuard {
+        size_t* Depth = nullptr;
+        ~FuncArgsDepthGuard() {
+            if (Depth) --(*Depth);
+        }
+    };
+
+    std::unordered_map<const ClassInfo*, std::unordered_map<std::string, CachedPropertyResolve>> m_mPropertyResolveCache;
+    std::unordered_map<const ClassInfo*, std::unordered_map<std::string, CachedMethodResolve>> m_mMethodResolveCache;
     
     struct ScriptPredicate {
         std::shared_ptr<ASTNode> Condition;
