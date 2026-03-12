@@ -48,7 +48,15 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
         0,0,1,0,
         0,0,0,1
     );
-    if(AnimationEnabled==1){
+
+    if (AnimationEnabled == 1)
+    {
+        skinMatrix = matrix(
+            0,0,0,0,
+            0,0,0,0,
+            0,0,0,0,
+            0,0,0,0
+        );
         float totalWeight = 0.0f;
 
         [unroll]
@@ -58,14 +66,19 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
             if (w > 0.0f)
             {
                 uint boneIndex = vin.IDs[i];
-                if (NumBones == 0 || boneIndex < NumBones)
+                if (boneIndex < NumBones)
                 {
                     skinMatrix += boneMatrices[boneIndex] * w;
+                    totalWeight += w;
                 }
-                totalWeight += w;
             }
         }
-        if (totalWeight == 0.0f)
+
+        if (totalWeight > 0.0f)
+        {
+            skinMatrix *= (1.0f / totalWeight);
+        }
+        else
         {
             skinMatrix = matrix(1,0,0,0,  0,1,0,0,  0,0,1,0,  0,0,0,1);
         }
