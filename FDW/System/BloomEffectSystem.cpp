@@ -6,34 +6,10 @@
 void BloomEffectSystem::AfterConstruction() {
 	auto wndSettings = m_pOwner->GetMainWNDSettings();
 	auto device = m_pOwner->GetDevice();
-	m_pBloomRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height, DXGI_SAMPLE_DESC({1, 0}));
-	m_pResultRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height, DXGI_SAMPLE_DESC({1, 0}));
-	m_pBlurTransitRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height, DXGI_SAMPLE_DESC({1, 0}));
-
-	m_pBloomRTVPack = std::make_unique<FD3DW::RTVPacker>(GetRTVDescriptorSize(device), 3u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, device);
-	m_pBloomRTVPack->AddResource(m_pBloomRTV->GetRTVResource(), m_pBloomRTV->GetRTVDesc(), 0, device);
-	m_pBloomRTVPack->AddResource(m_pBlurTransitRTV->GetRTVResource(), m_pBlurTransitRTV->GetRTVDesc(), 1, device);
-	m_pBloomRTVPack->AddResource(m_pResultRTV->GetRTVResource(), m_pResultRTV->GetRTVDesc(), 2, device);
-	
-	m_pBloomSRVPack = FD3DW::SRV_UAVPacker::CreatePack(GetCBV_SRV_UAVDescriptorSize(device), 4u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
-	m_pBloomSRVPack->AddNullResource(0, device);
-	m_pBloomSRVPack->AddResource(m_pBloomRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1u, device);
-	m_pBloomSRVPack->AddResource(m_pBlurTransitRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 2u, device);
-	m_pBloomSRVPack->AddResource(m_pResultRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 3u, device);
 
 	m_pBrightPassDataBuffer = FD3DW::UploadBuffer<BloomSystemBrightPassData>::CreateConstantBuffer(device, 1);
 	m_pBlurParamsBuffer = FD3DW::UploadBuffer<BloomSystemBlurParams>::CreateConstantBuffer(device, 2);
 	m_pCompositeDataBuffer = FD3DW::UploadBuffer<BloomSystemCompositeData>::CreateConstantBuffer(device, 1);
-
-	BloomSystemBlurParams xBlur;
-	xBlur.TexelSize = dx::XMFLOAT2(1.0f / wndSettings.Width, 1.0f / wndSettings.Height);
-	xBlur.Horizontal = 1;
-	m_pBlurParamsBuffer->CpyData(0, xBlur);
-
-	BloomSystemBlurParams yBlur;
-	yBlur.TexelSize = dx::XMFLOAT2(1.0f / wndSettings.Width, 1.0f / wndSettings.Height);
-	yBlur.Horizontal = 0;
-	m_pBlurParamsBuffer->CpyData(1, yBlur);
 
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		m_pScreen = std::make_unique<FD3DW::Rectangle>(m_pOwner->GetDevice(), list);
@@ -42,6 +18,35 @@ void BloomEffectSystem::AfterConstruction() {
 	});
 
 	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
+	ResizeResources((UINT)wndSettings.Width, (UINT)wndSettings.Height);
+}
+
+void BloomEffectSystem::ResizeResources(UINT width, UINT height) {
+	auto device = m_pOwner->GetDevice();
+	m_pBloomRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height, DXGI_SAMPLE_DESC({ 1, 0 }));
+	m_pResultRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height, DXGI_SAMPLE_DESC({ 1, 0 }));
+	m_pBlurTransitRTV = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height, DXGI_SAMPLE_DESC({ 1, 0 }));
+
+	m_pBloomRTVPack = std::make_unique<FD3DW::RTVPacker>(GetRTVDescriptorSize(device), 3u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, device);
+	m_pBloomRTVPack->AddResource(m_pBloomRTV->GetRTVResource(), m_pBloomRTV->GetRTVDesc(), 0, device);
+	m_pBloomRTVPack->AddResource(m_pBlurTransitRTV->GetRTVResource(), m_pBlurTransitRTV->GetRTVDesc(), 1, device);
+	m_pBloomRTVPack->AddResource(m_pResultRTV->GetRTVResource(), m_pResultRTV->GetRTVDesc(), 2, device);
+
+	m_pBloomSRVPack = FD3DW::SRV_UAVPacker::CreatePack(GetCBV_SRV_UAVDescriptorSize(device), 4u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	m_pBloomSRVPack->AddNullResource(0, device);
+	m_pBloomSRVPack->AddResource(m_pBloomRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1u, device);
+	m_pBloomSRVPack->AddResource(m_pBlurTransitRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 2u, device);
+	m_pBloomSRVPack->AddResource(m_pResultRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 3u, device);
+
+	BloomSystemBlurParams xBlur;
+	xBlur.TexelSize = dx::XMFLOAT2(1.0f / width, 1.0f / height);
+	xBlur.Horizontal = 1;
+	m_pBlurParamsBuffer->CpyData(0, xBlur);
+
+	BloomSystemBlurParams yBlur;
+	yBlur.TexelSize = dx::XMFLOAT2(1.0f / width, 1.0f / height);
+	yBlur.Horizontal = 0;
+	m_pBlurParamsBuffer->CpyData(1, yBlur);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync, FD3DW::FResource* res) {

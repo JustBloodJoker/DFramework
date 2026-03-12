@@ -299,15 +299,20 @@ namespace FD3DW
 
 	}
 
+	void D3DFW::OnMainWindowResize(int width, int height){}
+
 	void D3DFW::ResizeHandler()
 	{
 		const auto& WndSet = WNDSettings();
+		if (WndSet.Width <= 0 || WndSet.Height <= 0) return;
+
+		if ((int)m_xMainVP.Width == WndSet.Width && (int)m_xMainVP.Height == WndSet.Height) return;
 
 		ClearSwapchainData();
 
 		hr = m_pSwapChain->ResizeBuffers(BUFFERS_COUNT, UINT(WndSet.Width), UINT(WndSet.Height), GetMainRTVFormat(), DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH);
-		m_xMainVP.Height = static_cast<float>(WndSet.Height);
-		m_xMainVP.Width = static_cast<float>(WndSet.Width);
+		m_xMainVP.Height = float(WndSet.Height);
+		m_xMainVP.Width = float(WndSet.Width);
 
 		m_xMainRect.left = 0;
 		m_xMainRect.right = WndSet.Width;
@@ -315,6 +320,8 @@ namespace FD3DW
 		m_xMainRect.bottom = WndSet.Height;
 
 		CreateSwapchainData();
+
+		OnMainWindowResize(WndSet.Width, WndSet.Height);
 	}
 
 	const UINT D3DFW::Get_CBV_SRV_UAV_DescriptorSize() const noexcept
@@ -572,8 +579,20 @@ namespace FD3DW
 
 	bool D3DFW::D3DFWMessageLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		if (msg == WM_EXITSIZEMOVE) {
-			if(m_hExitSizeHandler) m_hExitSizeHandler();
+		switch (msg)
+		{
+		case WM_ENTERSIZEMOVE:
+			m_bInSizeMove = true;
+			break;
+		case WM_EXITSIZEMOVE:
+			m_bInSizeMove = false;
+			if (m_hExitSizeHandler) m_hExitSizeHandler();
+			break;
+		case WM_SIZE:
+			if (wParam != SIZE_MINIMIZED && !m_bInSizeMove) {
+				if (m_hExitSizeHandler) m_hExitSizeHandler();
+			}
+			break;
 		}
 
 		return false;

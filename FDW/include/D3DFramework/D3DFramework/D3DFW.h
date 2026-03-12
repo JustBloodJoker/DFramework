@@ -54,6 +54,7 @@ namespace FD3DW
 		bool InitAudioMananger();
 		bool InitD3D();
 		void Update();
+		virtual void OnMainWindowResize(int width, int height);
 
 	private:
 		void ResizeHandler();
@@ -210,6 +211,7 @@ namespace FD3DW
 
 			private:
 				std::function<void(void)> m_hExitSizeHandler = nullptr;
+				bool m_bInSizeMove = false;
 			};
 
 			std::unique_ptr<D3DFWMessageLayer> m_pMessageLayer = nullptr;

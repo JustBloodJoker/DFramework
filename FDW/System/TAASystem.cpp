@@ -8,11 +8,24 @@ void TAASystem::AfterConstruction() {
 
 	m_pDataBuffer = FD3DW::UploadBuffer<TAASystemData>::CreateConstantBuffer(device, 1);
 
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		m_pScreen = std::make_unique<FD3DW::Rectangle>(m_pOwner->GetDevice(), list);
+		m_pSceneVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+		m_pSceneVBV_IBV->Create(m_pOwner->GetDevice(), list, m_pScreen->GetVertices(), m_pScreen->GetIndices());
+	});
+
+	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
+	ResizeResources((UINT)wndSettings.Width, (UINT)wndSettings.Height);
+}
+
+void TAASystem::ResizeResources(UINT width, UINT height) {
+	auto device = m_pOwner->GetDevice();
+
 	m_pRTVPack = std::make_unique<FD3DW::RTVPacker>(GetRTVDescriptorSize(device), 2u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_NONE, device);
 	m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(GetCBV_SRV_UAVDescriptorSize(device), 6u, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 
-	for (auto& historyBuffer : m_pHistoryBuffers){
-		historyBuffer = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height, DXGI_SAMPLE_DESC({ 1, 0 }));
+	for (auto& historyBuffer : m_pHistoryBuffers) {
+		historyBuffer = std::make_unique<FD3DW::RenderTarget>(device, GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height, DXGI_SAMPLE_DESC({ 1, 0 }));
 
 		m_pRTVPack->PushResource(historyBuffer->GetRTVResource(), historyBuffer->GetRTVDesc(), device);
 		m_pSRVPack->PushResource(device, historyBuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
@@ -21,17 +34,13 @@ void TAASystem::AfterConstruction() {
 	m_pSRVPack->AddNullResource(TAA_SCENE_SHADING_RESULT_SRV_POS_IN_HEAP, device);
 	m_pSRVPack->AddNullResource(TAA_MOTION_GBUFFER_SRV_POS_IN_HEAP, device);
 
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
-		m_pScreen = std::make_unique<FD3DW::Rectangle>(m_pOwner->GetDevice(), list);
-		m_pSceneVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
-		m_pSceneVBV_IBV->Create(m_pOwner->GetDevice(), list, m_pScreen->GetVertices(), m_pScreen->GetIndices());
-
-		for (auto i = 0; i < 2; ++i) {
+	auto clearRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+		for (int i = 0; i < 2; ++i) {
 			list->ClearRenderTargetView(m_pRTVPack->GetResult()->GetCPUDescriptorHandle(i), m_pOwner->GetClearColor(), 0, nullptr);
 		}
 	});
 
-	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
+	GlobalRenderThreadManager::GetInstance()->Submit(clearRecipe);
 }
 
 void TAASystem::SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FResource* motion, FD3DW::DepthStencilView* dsv1, FD3DW::DepthStencilView* dsv2) {

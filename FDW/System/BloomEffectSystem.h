@@ -17,6 +17,7 @@ public:
 
 public:
 	virtual void AfterConstruction() override;
+	void ResizeResources(UINT width, UINT height);
 
 	std::shared_ptr<FD3DW::ExecutionHandle> ProcessBloomPass(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync, FD3DW::FResource* in);
 	void SetShadingOutputResourceResultAndRect(FD3DW::FResource* shadingRes);

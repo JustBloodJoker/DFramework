@@ -110,6 +110,8 @@ protected:
 private:
 	void ProcessNotifiesInWorld();
 	void ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies);
+	void RecreateWindowSizeDependentResources(int width, int height);
+	void OnMainWindowResize(int width, int height) override;
 
 private:
 	void InitMainRendererParts(ID3D12Device* device);

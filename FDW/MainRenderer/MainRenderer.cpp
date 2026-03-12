@@ -21,14 +21,13 @@ void MainRenderer::UserInit()
 
 	SetVSync(true);
 
+	auto wndSettings = GetMainWNDSettings();
+
 	m_pDSVPack = CreateDSVPack(2u);
 	for (int i = 0; i < 2; ++i) {
-		m_pDSV[i] = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, 1024, 1024);
+		m_pDSV[i] = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, wndSettings.Width, wndSettings.Height);
 		m_pDSVPack->PushResource(m_pDSV[i]->GetResource(), m_pDSV[i]->GetDSVDesc(), device);
 	}
-
-
-	auto wndSettings = GetMainWNDSettings();
 
 	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;
 	auto gbuffersNum = (UINT)gBufferFormats.size();
@@ -543,6 +542,95 @@ void MainRenderer::ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies
 			sys->ProcessNotify(notify);
 		}
 	}
+}
+
+void MainRenderer::OnMainWindowResize(int width, int height) {
+	if (width <= 0 || height <= 0) return;
+
+	if (!m_pDSVPack || !m_pGBuffersRTVPack || !m_pForwardRenderPassRTVPack) return;
+
+	RecreateWindowSizeDependentResources(width, height);
+}
+
+void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
+	for (auto& handle : m_dInFlight) {
+		if ( handle && !handle->IsDone() ) {
+			handle->WaitForExecute();
+		}
+	}
+	m_dInFlight.clear();
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
+
+	auto device = GetDevice();
+	m_uCurrentDSVIndex = 0;
+
+	m_pDSVPack = CreateDSVPack(2u);
+	for (int i = 0; i < 2; ++i) {
+		m_pDSV[i] = CreateDepthStencilView(DXGI_FORMAT_R24G8_TYPELESS, DXGI_FORMAT_D24_UNORM_S8_UINT, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, D3D12_DSV_DIMENSION_TEXTURE2D, 1, width, height);
+		m_pDSVPack->PushResource(m_pDSV[i]->GetResource(), m_pDSV[i]->GetDSVDesc(), device);
+	}
+
+	const auto& gBufferFormats = GetGBufferData().GBuffersFormats;
+	const auto gbuffersNum = (UINT)gBufferFormats.size();
+
+	m_pGBuffers.clear();
+	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
+	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
+	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+
+	for (const auto& format : gBufferFormats) {
+		auto gbuffer = CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height);
+		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
+		m_pGBuffersSRVPack->PushResource(device, gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
+		m_pGBuffers.push_back(std::move(gbuffer));
+	}
+
+	m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
+	if (m_vLCTResources.size() > 0 && m_vLCTResources[0]) {
+		m_pGBuffersSRVPack->AddResource(m_vLCTResources[0]->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
+	}
+	if (m_vLCTResources.size() > 1 && m_vLCTResources[1]) {
+		m_pGBuffersSRVPack->AddResource(m_vLCTResources[1]->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
+	}
+
+	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height);
+	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
+	m_pForwardRenderPassSRVPack = CreateSRVPack(2u);
+	m_pForwardRenderPassRTVPack->PushResource(m_pForwardRenderPassRTV->GetRTVResource(), m_pForwardRenderPassRTV->GetRTVDesc(), device);
+	m_pForwardRenderPassSRVPack->PushResource(device, m_pForwardRenderPassRTV->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
+
+	if (m_pBloomEffectSystem) {
+		m_pBloomEffectSystem->ResizeResources((UINT)width, (UINT)height);
+		m_pForwardRenderPassSRVPack->AddResource(m_pBloomEffectSystem->GetResultResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 1, device);
+	}
+
+	if (m_pTAASystem) {
+		m_pTAASystem->ResizeResources((UINT)width, (UINT)height);
+		m_pTAASystem->SetGBufferResources(m_pForwardRenderPassRTV->GetTexture(), m_pGBuffers[GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP]->GetTexture(), m_pDSV[0].get(), m_pDSV[1].get());
+	}
+
+	if (IsRTSupported() && m_pAtlasRTShadowSystem) {
+		m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
+		m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	}
+
+	m_xSceneViewPort.MaxDepth = 1.0f;
+	m_xSceneViewPort.MinDepth = 0.0f;
+	m_xSceneViewPort.Width = (float)width;
+	m_xSceneViewPort.Height = (float)height;
+	m_xSceneViewPort.TopLeftX = 0.0f;
+	m_xSceneViewPort.TopLeftY = 0.0f;
+
+	m_xSceneRect.left = 0;
+	m_xSceneRect.right = width;
+	m_xSceneRect.top = 0;
+	m_xSceneRect.bottom = height;
+
+	if (m_pCameraSystem) {
+		m_pCameraSystem->OnResizeWindow();
+	}
+
+	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
 
 void MainRenderer::InitMainRendererParts(ID3D12Device* device) {

@@ -8,7 +8,7 @@ struct WindowSettings
 
 	std::wstring TittleName = L"WinTest";
 
-	bool IsResized;
+	bool IsResized = false;
 
 	int MinWidth = 200;
 	int MinHeight = 200;

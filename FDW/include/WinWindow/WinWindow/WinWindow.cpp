@@ -273,6 +273,20 @@ namespace FDWWIN
 			isHandled = true;
 			break;
 
+		case WM_SIZE:
+		{
+			if (wParam != SIZE_MINIMIZED) {
+				int clientWidth = LOWORD(lParam);
+				int clientHeight = HIWORD(lParam);
+				if (clientWidth > 0 && clientHeight > 0) {
+					m_xWndSettings.Width = clientWidth;
+					m_xWndSettings.Height = clientHeight;
+					m_xWndSettings.IsResized = true;
+				}
+			}
+			break;
+		}
+
 		case WM_EXITSIZEMOVE:
 		{
 			
@@ -283,6 +297,7 @@ namespace FDWWIN
 			
 			m_xWndSettings.Width = clientWidth;
 			m_xWndSettings.Height = clientHeight;
+			m_xWndSettings.IsResized = true;
 
 			isHandled = true;
 			break;

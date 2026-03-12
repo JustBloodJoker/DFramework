@@ -190,10 +190,11 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
             return;
         }
 
-		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose( m_pOwner->GetJitteredViewProjectionMatrix() ) );
-        m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
-
         auto wndSettings = m_pOwner->GetMainWNDSettings();
+		m_xShadowParams.ScreenWidth = wndSettings.Width;
+		m_xShadowParams.ScreenHeight = wndSettings.Height;
+		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
+        m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
 
         PSOManager::GetInstance()->GetPSOObject(PSOType::AtlasRTShadowDefaultConfig)->Bind(list);
         
