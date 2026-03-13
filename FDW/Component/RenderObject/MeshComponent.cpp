@@ -179,7 +179,8 @@ void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData
 }
 
 void MeshComponent::OnRenderPreDepthPass(ID3D12GraphicsCommandList* list) {
-    list->SetGraphicsRootShaderResourceView(PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, GetEmptyStructuredBufferGPUVirtualAddress());
+    auto bonesAddress = m_xData.BoneBuffer ? m_xData.BoneBuffer->GetResource()->GetGPUVirtualAddress() : GetEmptyStructuredBufferGPUVirtualAddress();
+    list->SetGraphicsRootShaderResourceView(PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG, bonesAddress);
 
     list->IASetVertexBuffers(0, 1, m_xData.VertexBufferView);
     list->IASetIndexBuffer(m_xData.IndexBufferView);

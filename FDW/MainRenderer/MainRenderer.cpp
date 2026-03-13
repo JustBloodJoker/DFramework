@@ -342,6 +342,41 @@ void MainRenderer::EnableBloom(bool b) {
 	m_pBloomEffectSystem->EnableBloom(b);
 }
 
+bool MainRenderer::IsEnabledTAA() {
+	return m_pTAASystem && m_pTAASystem->IsTAAEnabled();
+}
+
+void MainRenderer::EnableTAA(bool b) {
+	if (m_pTAASystem) {
+		m_pTAASystem->EnableTAA(b);
+	}
+
+	if (m_bLinkJitterToTAA && m_pCameraSystem) {
+		m_pCameraSystem->EnableJitter(b);
+	}
+}
+
+bool MainRenderer::IsEnabledJitter() {
+	return m_pCameraSystem && m_pCameraSystem->IsJitterEnabled();
+}
+
+void MainRenderer::EnableJitter(bool b) {
+	if (m_pCameraSystem) {
+		m_pCameraSystem->EnableJitter(b);
+	}
+}
+
+bool MainRenderer::IsLinkJitterToTAAEnabled() const {
+	return m_bLinkJitterToTAA;
+}
+
+void MainRenderer::EnableLinkJitterToTAA(bool b) {
+	m_bLinkJitterToTAA = b;
+	if (m_bLinkJitterToTAA && m_pCameraSystem && m_pTAASystem) {
+		m_pCameraSystem->EnableJitter(m_pTAASystem->IsTAAEnabled());
+	}
+}
+
 FLOAT* MainRenderer::GetClearColor(){
 	return COLOR;
 }
@@ -661,6 +696,8 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 
 	m_pTAASystem = CreateSystem<TAASystem>();
 	m_pTAASystem->SetGBufferResources(m_pForwardRenderPassRTV->GetTexture(), m_pGBuffers[GBUFFER_MOTIONVECTORDATA_LOCATION_IN_HEAP]->GetTexture(), m_pDSV[0].get(), m_pDSV[1].get());
+	EnableLinkJitterToTAA(m_bLinkJitterToTAA);
+	EnableTAA(m_pTAASystem->IsTAAEnabled());
 
 }
 

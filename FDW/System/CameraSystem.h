@@ -32,6 +32,8 @@ public:
 	dx::XMMATRIX GetProjectionMatrix();
 	dx::XMMATRIX GetViewMatrix();
 	dx::XMFLOAT3 GetCameraPosition();
+	bool IsJitterEnabled() const;
+	void EnableJitter(bool enabled);
 
 	void UpdateProjectionMatrix();
 	float GetFoVY() const;

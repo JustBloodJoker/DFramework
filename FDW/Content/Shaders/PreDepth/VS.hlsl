@@ -46,6 +46,6 @@ VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
 
     vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
     vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);
-    vsOut.pos = mul(vsOut.pos, objMatrices.ProjectionMatrix);
+    vsOut.pos = mul(vsOut.pos, objMatrices.JitteredProjectionMatrix);
     return vsOut;
 }

@@ -40,6 +40,12 @@ public:
 	void EnablePreDepth(bool in);
 	bool IsEnabledBloom();
 	void EnableBloom(bool b);
+	bool IsEnabledTAA();
+	void EnableTAA(bool b);
+	bool IsEnabledJitter();
+	void EnableJitter(bool b);
+	bool IsLinkJitterToTAAEnabled() const;
+	void EnableLinkJitterToTAA(bool b);
 	FLOAT* GetClearColor();
 
 public:
@@ -170,6 +176,7 @@ protected:
 
 protected:
 	bool m_bIsEnabledPreDepth = false;
+	bool m_bLinkJitterToTAA = true;
 
 protected:
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;

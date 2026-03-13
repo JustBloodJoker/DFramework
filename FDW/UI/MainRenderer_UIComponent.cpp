@@ -759,6 +759,27 @@ void MainRenderer_UIComponent::DrawEditor_Systems() {
 }
 
 void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
+    bool linkJitterToTAA = m_pOwner->IsLinkJitterToTAAEnabled();
+    if (ImGui::Checkbox("Link Jitter To TAA", &linkJitterToTAA)) {
+        m_pOwner->EnableLinkJitterToTAA(linkJitterToTAA);
+    }
+
+    bool taaEnabled = m_pOwner->IsEnabledTAA();
+    if (ImGui::Checkbox("Enable TAA", &taaEnabled)) {
+        m_pOwner->EnableTAA(taaEnabled);
+    }
+
+    bool jitterEnabled = m_pOwner->IsEnabledJitter();
+    if (linkJitterToTAA) {
+        ImGui::BeginDisabled();
+    }
+    if (ImGui::Checkbox("Enable Jitter", &jitterEnabled) && !linkJitterToTAA) {
+        m_pOwner->EnableJitter(jitterEnabled);
+    }
+    if (linkJitterToTAA) {
+        ImGui::EndDisabled();
+    }
+
     bool preDepth = m_pOwner->IsEnabledPreDepth();
     if (ImGui::Checkbox("Enable PreDepth", &preDepth)) {
         m_pOwner->EnablePreDepth(preDepth);

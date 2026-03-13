@@ -69,6 +69,21 @@ dx::XMFLOAT3 CameraSystem::GetCameraPosition() {
 	return m_pCurrentActiveCamera ? m_pCurrentActiveCamera->GetCameraPosition() : GetDummyViewPosition();
 }
 
+bool CameraSystem::IsJitterEnabled() const {
+	return m_bIsEnabledJitter;
+}
+
+void CameraSystem::EnableJitter(bool enabled) {
+	if (m_bIsEnabledJitter == enabled) return;
+
+	m_bIsEnabledJitter = enabled;
+	if (!m_bIsEnabledJitter) {
+		m_xJitterOffset = { 0.0f, 0.0f };
+		m_xPrevJitterOffset = { 0.0f, 0.0f };
+		m_xJitteredProjectionMatrix = m_xProjectionMatrix;
+	}
+}
+
 void CameraSystem::UpdateProjectionMatrix() {
 	const auto& WndSet = m_pOwner->WNDSettings();
 	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(GetFoVY(), (float)WndSet.Width / WndSet.Height, m_fZNear, m_fZFar);
