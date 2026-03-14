@@ -386,7 +386,7 @@ void RunReactiveLoopTest() {
     assert(testObj.Counter == 2);
     
     testObj.FloatVal = 0.0f;
-    ScriptManager::GetInstance()->ExecuteScript("loop (reactive.FloatVal < 5.0) { reactive.FloatVal = reactive.FloatVal + 1.0; }");
+    auto id2 = ScriptManager::GetInstance()->ExecuteScript("loop (reactive.FloatVal < 5.0) { reactive.FloatVal = reactive.FloatVal + 1.0; }");
     
     ScriptManager::GetInstance()->Update(1.0f);
     assert(testObj.Counter == 3);
@@ -395,6 +395,7 @@ void RunReactiveLoopTest() {
     std::cout << "Reactive Loop Auto-Lambda Test Passed!\n";
 
     ScriptManager::GetInstance()->StopScript(id);
+    ScriptManager::GetInstance()->StopScript(id2);
 }
 
 void RunContextIsolationTest() {

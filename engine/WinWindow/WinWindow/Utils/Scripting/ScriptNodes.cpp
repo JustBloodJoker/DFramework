@@ -183,17 +183,22 @@ ScriptValue CallNode::Execute(ScriptManager& sm) {
     thread_local std::vector<std::vector<ScriptValue>> evalArgsStack;
     thread_local size_t evalArgsDepth = 0;
 
-    if (evalArgsStack.size() <= evalArgsDepth) {
-        evalArgsStack.emplace_back();
+    auto depthIndex = evalArgsDepth;
+    if (evalArgsStack.size() <= depthIndex) {
+        evalArgsStack.resize(depthIndex + 1);
     }
 
-    auto& evalArgs = evalArgsStack[evalArgsDepth];
     ++evalArgsDepth;
     EvalArgsDepthGuard evalArgsDepthGuard{ &evalArgsDepth };
 
-    evalArgs.clear();
-    evalArgs.reserve( Args.size() );
-    for (auto& a : Args) evalArgs.push_back( a->Execute(sm) );
+    evalArgsStack[depthIndex].clear();
+    evalArgsStack[depthIndex].reserve(Args.size());
+    for (auto& a : Args) {
+        auto argVal = a->Execute(sm);
+        evalArgsStack[depthIndex].push_back(std::move(argVal));
+    }
+
+    const auto& evalArgs = evalArgsStack[depthIndex];
 
 	//TODO remove hardcoded functions and use-a reflection or something for extensibility.
     if (FuncName == "GetDeltaTime") {
@@ -223,19 +228,22 @@ ScriptValue MethodCallNode::Execute(ScriptManager& sm) {
     thread_local std::vector<std::vector<ScriptValue>> evalArgsStack;
     thread_local size_t evalArgsDepth = 0;
 
-    if (evalArgsStack.size() <= evalArgsDepth) {
-        evalArgsStack.emplace_back();
+    auto depthIndex = evalArgsDepth;
+    if (evalArgsStack.size() <= depthIndex) {
+        evalArgsStack.resize(depthIndex + 1);
     }
 
-    auto& evalArgs = evalArgsStack[evalArgsDepth];
     ++evalArgsDepth;
     EvalArgsDepthGuard evalArgsDepthGuard{ &evalArgsDepth };
 
-    evalArgs.clear();
-    evalArgs.reserve(Args.size());
-    for (auto& a : Args) evalArgs.push_back(a->Execute(sm));
+    evalArgsStack[depthIndex].clear();
+    evalArgsStack[depthIndex].reserve(Args.size());
+    for (auto& a : Args) {
+        auto argVal = a->Execute(sm);
+        evalArgsStack[depthIndex].push_back(std::move(argVal));
+    }
 
-    return sm.CallMethod(objVal.AsObject(), MethodName, evalArgs);
+    return sm.CallMethod(objVal.AsObject(), MethodName, evalArgsStack[depthIndex]);
 }
 
 //////////////////////////////
