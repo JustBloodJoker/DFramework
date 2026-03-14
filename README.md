@@ -33,8 +33,8 @@ Open `FDW.sln` in Visual Studio and build for `x64`.
 ### Debug
 
 1. Select configuration: `Debug | x64`
-2. Build solution (`Ctrl+Shift+B`)
-3. Run startup project `FDW` (`F5`)
+2. Build solution
+3. Run `FDW`
 
 Output binary:
 - `x64/Debug/FDW.exe`
