@@ -8,8 +8,6 @@
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <World/World.h>
 
-
-
 static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf", L".fbx" };
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
 static const std::vector<std::wstring> s_vSupportedAudioExts = { L".wav" };
@@ -18,6 +16,8 @@ static const std::vector<std::wstring> s_vSupportedScriptExts = { L".dfs" };
 static const std::vector<std::wstring> s_vSupportedEngineFileExts = { L".fdw" };
 
 void MainRenderer_UIComponent::DrawUI() {
+    if (!m_bUIVisible) return;
+
     MainWindow();
     LoadWorldBrowser();
     SaveWorldBrowser();
@@ -29,42 +29,138 @@ void MainRenderer_UIComponent::DrawUI() {
 }
 
 void MainRenderer_UIComponent::MainWindow() {
-    ImGui::Begin("ECS Editor");
+    DrawRightPanel();
+}
 
-    if (ImGui::BeginTabBar("MainTabs")) {
+void MainRenderer_UIComponent::DrawRightPanel() {
+    if (!m_pOwner) return;
 
-        if (ImGui::BeginTabItem("World")) {
-            DrawWorldTab();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Editor")) {
-            DrawEditorTab();
-            ImGui::EndTabItem();
-        }
-
-        ImGui::EndTabBar();
+    const auto& wndSettings = m_pOwner->WNDSettings();
+    if (wndSettings.Width <= 0 || wndSettings.Height <= 0) {
+        m_iLastPanelLeftX = -1;
+        return;
     }
+
+    auto wndWidth = std::max(1, (int)wndSettings.Width);
+    auto wndHeight = std::max(1, (int)wndSettings.Height);
+    auto maxPanelWidth = std::max(0, wndWidth - WINDOW_MINIMAL_SCENE_WIDTH);
+    auto minPanelWidth = std::min(WINDOW_MINIMAL_UI_WIDTH, maxPanelWidth);
+    
+    auto panelWidthInt = std::clamp((int)std::lround(m_fFixedPanelWidth), minPanelWidth, maxPanelWidth);
+
+    if (panelWidthInt <= 0) {
+        m_iLastPanelLeftX = -1;
+        return;
+    }
+
+    auto panelX = (float)(wndWidth - panelWidthInt);
+    auto panelWidth = (float)panelWidthInt;
+    auto panelY = 0.0f;
+    auto panelHeight = (float)wndHeight;
+
+    ImGui::SetNextWindowPos(ImVec2(panelX, panelY), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, panelHeight), ImGuiCond_Always);
+
+    ImGuiWindowFlags panelFlags =
+        ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoSavedSettings;
+
+    if (!ImGui::Begin("Editor Panel##RightPanel", nullptr, panelFlags)) {
+        ImGui::End();
+        return;
+    }
+
+    const ImVec2 panelPos = ImGui::GetWindowPos();
+    m_iLastPanelLeftX = (int)std::lround(panelPos.x);
+
+    ImGui::TextUnformatted("Outliner");
+    ImGui::SameLine();
+    if (ImGui::Button("Hide UI (F1)")) {
+        ToggleUIVisible();
+    }
+
+    ImGui::Separator();
+    DrawOutlinerPane();
+
+    ImGui::Separator();
+    DrawSelectionPane();
 
     ImGui::End();
 }
 
-void MainRenderer_UIComponent::DrawWorldTab() {
-    if (ImGui::BeginTabBar("WorldTabs")) {
-
-        if (ImGui::BeginTabItem("Entities")) {
-            DrawWorld_Entities();
-            ImGui::EndTabItem();
-        }
-
-        if (ImGui::BeginTabItem("Add Entity")) {
-            DrawWorld_AddEntity();
-            ImGui::EndTabItem();
-        }
-
-        ImGui::EndTabBar();
+void MainRenderer_UIComponent::DrawOutlinerPane() {
+    auto avail = ImGui::GetContentRegionAvail();
+    auto outlinerHeight = std::max(180.0f, avail.y * 0.52f);
+    if (ImGui::BeginChild("OutlinerPane", ImVec2(0.0f, outlinerHeight), true, ImGuiWindowFlags_None)) {
+        DrawWorld_Entities();
     }
+    ImGui::EndChild();
 }
+
+void MainRenderer_UIComponent::DrawSelectionPane() {
+    if (ImGui::BeginChild("InspectorPane", ImVec2(0.0f, 0.0f), true, ImGuiWindowFlags_None)) {
+        ImGui::SeparatorText("Selected Object");
+
+        auto* selectedEntity = m_pOwner ? m_pOwner->GetSelectedEntity() : nullptr;
+        if (selectedEntity) {
+            auto components = selectedEntity->GetComponents<IComponent>();
+            if (m_pSelectedInspectorComponent) {
+                const bool selectedInspectorAlive = std::find(components.begin(), components.end(), m_pSelectedInspectorComponent) != components.end();
+                if (!selectedInspectorAlive) {
+                    m_pSelectedInspectorComponent = nullptr;
+                }
+            }
+
+            auto inspectorComponent = m_pSelectedInspectorComponent;
+            if (!inspectorComponent) {
+                inspectorComponent = m_pOwner->GetSelectedMeshComponent();
+            }
+            if (inspectorComponent) {
+                const bool componentAlive = std::find(components.begin(), components.end(), inspectorComponent) != components.end();
+                if (!componentAlive) {
+                    inspectorComponent = nullptr;
+                }
+            }
+            m_pSelectedInspectorComponent = inspectorComponent;
+
+            std::string title = selectedEntity->GetName();
+            if (inspectorComponent) {
+                title += " :: ";
+                title += inspectorComponent->GetName();
+            }
+            ImGui::TextWrapped("%s", title.c_str());
+            ImGui::Separator();
+
+            if (inspectorComponent) {
+                DrawComponentInspector(inspectorComponent);
+            }
+            else {
+                DrawEntityInspector(selectedEntity);
+            }
+        }
+        else {
+            ImGui::TextDisabled("Nothing selected");
+        }
+
+        ImGui::SeparatorText("Tools");
+        if (ImGui::BeginTabBar("InspectorToolsTabBar")) {
+            if (ImGui::BeginTabItem("Create")) {
+                DrawWorld_AddEntity();
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Editor")) {
+                DrawEditorTab();
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
+        }
+    }
+    ImGui::EndChild();
+}
+
 void MainRenderer_UIComponent::DrawWorld_Entities() {
     auto world = m_pOwner->GetWorld();
     const auto& entities = world->GetEntities();
@@ -80,6 +176,10 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
         std::string entityName = entity->GetName();
         std::string entityLabelID = "##" + std::to_string(reinterpret_cast<uintptr_t>(entity));
         bool entityOpen = false;
+        ImGuiTreeNodeFlags entityFlags = ImGuiTreeNodeFlags_SpanFullWidth;
+        if (m_pOwner->GetSelectedEntity() == entity) {
+            entityFlags |= ImGuiTreeNodeFlags_Selected;
+        }
 
         if (renamingPtr == entity) {
             ImGui::PushID(entity);
@@ -97,15 +197,25 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
             if (ImGui::IsItemDeactivated()) {
                 renamingPtr = nullptr;
             }
-            entityOpen = ImGui::TreeNodeEx((entityLabelID + "_dummy").c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_NoAutoOpenOnLog, "");
+            entityOpen = ImGui::TreeNodeEx((entityLabelID + "_dummy").c_str(), entityFlags | ImGuiTreeNodeFlags_NoAutoOpenOnLog, "");
             ImGui::PopID();
         }
         else {
-            entityOpen = ImGui::TreeNode(entityLabelID.c_str(), "%s", entityName.c_str());
+            entityOpen = ImGui::TreeNodeEx(entityLabelID.c_str(), entityFlags, "%s", entityName.c_str());
+        }
+
+        if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+            m_pOwner->SetSelectedEntity(entity);
+            m_pOwner->SetSelectedMeshComponent(nullptr);
+            m_pSelectedInspectorComponent = nullptr;
         }
 
         if (ImGui::BeginPopupContextItem(entityLabelID.c_str())) {
             if (ImGui::MenuItem("Delete")) {
+                if (m_pOwner->GetSelectedEntity() == entity) {
+                    m_pOwner->SetSelectedEntity(nullptr);
+                    m_pSelectedInspectorComponent = nullptr;
+                }
                 AddCallToPull([world, entity]() {
                     world->DestroyEntity(entity);
                     });
@@ -120,8 +230,6 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
         }
 
         if (entityOpen) {
-            DrawEntityInspector(entity);
-
             if (ImGui::TreeNode(("Components##" + std::to_string(reinterpret_cast<uintptr_t>(entity))).c_str(),
                 "Components")) {
                 auto components = entity->GetComponents<IComponent>();
@@ -130,7 +238,10 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
                     auto* comp = components[j];
                     std::string compName = comp->GetName();
                     std::string compLabelID = "##" + std::to_string(reinterpret_cast<uintptr_t>(comp));
-                    bool compOpen = false;
+                    ImGuiTreeNodeFlags compFlags = ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+                    if (m_pOwner->GetSelectedMeshComponent() == comp) {
+                        compFlags |= ImGuiTreeNodeFlags_Selected;
+                    }
 
                     if (renamingPtr == comp) {
                         ImGui::PushID(comp);
@@ -148,15 +259,21 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
                         if (ImGui::IsItemDeactivated()) {
                             renamingPtr = nullptr;
                         }
-                        compOpen = ImGui::TreeNodeEx((compLabelID + "_dummy").c_str(), ImGuiTreeNodeFlags_SpanFullWidth | ImGuiTreeNodeFlags_NoAutoOpenOnLog, "");
+                        ImGui::TreeNodeEx((compLabelID + "_dummy").c_str(), compFlags | ImGuiTreeNodeFlags_NoAutoOpenOnLog, "");
                         ImGui::PopID();
                     }
                     else {
-                        compOpen = ImGui::TreeNode(compLabelID.c_str(), "%s", compName.c_str());
+                        ImGui::TreeNodeEx(compLabelID.c_str(), compFlags, "%s", compName.c_str());
                     }
 
                     if (ImGui::BeginPopupContextItem(compLabelID.c_str())) {
                         if (ImGui::MenuItem("Delete")) {
+                            if (m_pOwner->GetSelectedMeshComponent() == comp) {
+                                m_pOwner->SetSelectedMeshComponent(nullptr);
+                            }
+                            if (m_pSelectedInspectorComponent == comp) {
+                                m_pSelectedInspectorComponent = nullptr;
+                            }
                             AddCallToPull([entity, comp]() {
                                 entity->RemoveComponent(comp);
                                 });
@@ -169,10 +286,15 @@ void MainRenderer_UIComponent::DrawWorld_Entities() {
                         }
                         ImGui::EndPopup();
                     }
-
-                    if (compOpen) {
-                        DrawComponentInspector(comp);
-                        ImGui::TreePop();
+                    if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
+                        m_pOwner->SetSelectedEntity(entity);
+                        m_pSelectedInspectorComponent = comp;
+                        if (auto* meshComp = dynamic_cast<MeshComponent*>(comp)) {
+                            m_pOwner->SetSelectedMeshComponent(meshComp);
+                        }
+                        else {
+                            m_pOwner->SetSelectedMeshComponent(nullptr);
+                        }
                     }
                 }
                 ImGui::TreePop();
@@ -493,6 +615,9 @@ void MainRenderer_UIComponent::DrawComponentInspector(IComponent* comp) {
     }
     else if (auto animation = dynamic_cast<AnimationComponent*>(comp)) {
         DrawAnimationComponentInspector(animation);
+    }
+    else if (auto audio = dynamic_cast<AudioComponent*>(comp)) {
+        DrawAudioComponentInspector(audio);
     }
 }
 
@@ -1119,6 +1244,35 @@ void MainRenderer_UIComponent::InitImGui() {
     );
 
     ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 8.0f;
+    style.ChildRounding = 6.0f;
+    style.FrameRounding = 5.0f;
+    style.GrabRounding = 4.0f;
+    style.WindowBorderSize = 1.0f;
+    style.FrameBorderSize = 0.0f;
+    style.ItemSpacing = ImVec2(8.0f, 6.0f);
+
+    ImVec4* colors = style.Colors;
+    colors[ImGuiCol_WindowBg] = ImVec4(0.07f, 0.09f, 0.11f, 1.00f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.12f, 0.15f, 1.00f);
+    colors[ImGuiCol_Border] = ImVec4(0.24f, 0.27f, 0.30f, 1.00f);
+    colors[ImGuiCol_TitleBg] = ImVec4(0.11f, 0.14f, 0.17f, 1.00f);
+    colors[ImGuiCol_TitleBgActive] = ImVec4(0.13f, 0.17f, 0.22f, 1.00f);
+    colors[ImGuiCol_Header] = ImVec4(0.20f, 0.28f, 0.36f, 0.65f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.28f, 0.39f, 0.50f, 0.80f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.34f, 0.46f, 0.58f, 1.00f);
+    colors[ImGuiCol_Button] = ImVec4(0.28f, 0.36f, 0.44f, 0.70f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.36f, 0.49f, 0.61f, 0.85f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.42f, 0.56f, 0.69f, 1.00f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.16f, 0.19f, 0.24f, 0.90f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.21f, 0.26f, 0.32f, 1.00f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.24f, 0.30f, 0.38f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.98f, 0.69f, 0.25f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.92f, 0.64f, 0.21f, 0.90f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.98f, 0.74f, 0.29f, 1.00f);
+
     m_bIsInited = true;
 }
 
@@ -1146,6 +1300,42 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
     return false;
+}
+
+bool MainRenderer_UIComponent::IsUIVisible() const {
+    return m_bUIVisible;
+}
+
+void MainRenderer_UIComponent::SetUIVisible(bool visible) {
+    if (m_bUIVisible == visible) return;
+    m_bUIVisible = visible;
+
+    if (m_pOwner) m_pOwner->RequestSceneViewportLayoutUpdate();
+}
+
+void MainRenderer_UIComponent::ToggleUIVisible() {
+    SetUIVisible(!m_bUIVisible);
+}
+
+float MainRenderer_UIComponent::GetFixedPanelWidth() const {
+    return m_fFixedPanelWidth;
+}
+
+void MainRenderer_UIComponent::SelectEntityByWorldClick(int mouseX, int mouseY) {
+    if (!m_pOwner) return;
+
+    m_pOwner->SelectEntityAtScreenPoint(mouseX, mouseY);
+    m_pSelectedInspectorComponent = m_pOwner->GetSelectedMeshComponent();
+}
+
+bool MainRenderer_UIComponent::IsPointInsideScene(int mouseX, int mouseY) const {
+    if (!m_pOwner) return false;
+    auto sceneRect = m_pOwner->GetSceneRect();
+    
+    return mouseX >= sceneRect.left &&
+        mouseX < sceneRect.right &&
+        mouseY >= sceneRect.top &&
+        mouseY < sceneRect.bottom;
 }
 
 size_t MainRenderer_UIComponent::GetPendingAfterRenderCallsCount() const {

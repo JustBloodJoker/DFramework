@@ -85,8 +85,9 @@ void CameraSystem::EnableJitter(bool enabled) {
 }
 
 void CameraSystem::UpdateProjectionMatrix() {
-	const auto& WndSet = m_pOwner->WNDSettings();
-	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(GetFoVY(), (float)WndSet.Width / WndSet.Height, m_fZNear, m_fZFar);
+	auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+	auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
+	m_xProjectionMatrix = dx::XMMatrixPerspectiveFovLH(GetFoVY(), (float)sceneWidth / (float)sceneHeight, m_fZNear, m_fZFar);
 
 	UpdateCameraFrustum();
 }
@@ -151,7 +152,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 		if (!m_bIsEnabledJitter) return;
 
 		auto frameIdx = m_pOwner->GetFrameIndex();
-		const auto& wndSet = m_pOwner->WNDSettings();
+		auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+		auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 
 		auto jitterIndex = frameIdx % TAA_JITTER_PHASES_NUM;
 
@@ -173,8 +175,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 			}
 		}
 		
-		m_xJitterOffset.x = ((haltonX * 2.0f) / (float)wndSet.Width) * jitterScale;
-		m_xJitterOffset.y = ((haltonY * 2.0f) / (float)wndSet.Height) * jitterScale;
+		m_xJitterOffset.x = ((haltonX * 2.0f) / (float)sceneWidth) * jitterScale;
+		m_xJitterOffset.y = ((haltonY * 2.0f) / (float)sceneHeight) * jitterScale;
 
 
 

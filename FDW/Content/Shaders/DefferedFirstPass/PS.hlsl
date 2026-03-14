@@ -115,7 +115,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float2 prevUV       = prevNDC * float2(0.5f, -0.5f) + 0.5f;
 
     PIXEL_OUTPUT psOut;
-    psOut.Normal        = float4(normal, 1.0f);
+    psOut.Normal        = float4(normal, objMatrices.SelectionState == 1 ? 1.0f : 0.0f);
     psOut.Albedo        = albedo;
     psOut.Specular      = specular;
     psOut.Emissive      = emissive;

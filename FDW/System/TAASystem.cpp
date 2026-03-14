@@ -3,8 +3,9 @@
 #include <MainRenderer/PSOManager.h>
 
 void TAASystem::AfterConstruction() {
-	auto wndSettings = m_pOwner->GetMainWNDSettings();
 	auto device = m_pOwner->GetDevice();
+	auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+	auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 
 	m_pDataBuffer = FD3DW::UploadBuffer<TAASystemData>::CreateConstantBuffer(device, 1);
 
@@ -15,7 +16,7 @@ void TAASystem::AfterConstruction() {
 	});
 
 	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
-	ResizeResources((UINT)wndSettings.Width, (UINT)wndSettings.Height);
+	ResizeResources((UINT)sceneWidth, (UINT)sceneHeight);
 }
 
 void TAASystem::ResizeResources(UINT width, UINT height) {
@@ -53,8 +54,11 @@ void TAASystem::SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FReso
 
 std::shared_ptr<FD3DW::ExecutionHandle> TAASystem::ProcessTAABufferCollection(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync) {
 	if (!m_bIsTAAEnabled) return nullptr;
+	
+	auto mainRect = m_pOwner->GetSceneRect();
+	auto mainViewPort = m_pOwner->GetSceneViewport();
 
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, mainRect, mainViewPort](ID3D12GraphicsCommandList* list) {
 		auto frameIdx = m_pOwner->GetFrameIndex();
 		auto writeIndex = frameIdx % 2;
 		auto readIndex = (frameIdx + 1) % 2;
@@ -75,8 +79,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> TAASystem::ProcessTAABufferCollection(st
 
 		auto objParams = m_pScreen->GetObjectParameters(0);
 
-		list->RSSetScissorRects(1, &FD3DW::keep(m_pOwner->GetMainRect()));
-		list->RSSetViewports(1, &FD3DW::keep(m_pOwner->GetMainViewPort()));
+		list->RSSetScissorRects(1, &mainRect);
+		list->RSSetViewports(1, &mainViewPort);
 
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());

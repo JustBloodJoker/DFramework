@@ -18,8 +18,8 @@ void AtlasRTShadowSystem::AfterConstruction() {
    
     m_xShadowParams.AtlasHeight = RT_SHADOW_ATLAS_MAX_HEIGHT;
     m_xShadowParams.AtlasWidth = RT_SHADOW_ATLAS_MAX_WIDTH;
-    m_xShadowParams.ScreenHeight = m_pOwner->WNDSettings().Height;
-    m_xShadowParams.ScreenWidth = m_pOwner->WNDSettings().Width;
+    m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
+    m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
 
 	m_pAtlasPerFrameDataBuffer = std::make_unique<FD3DW::UploadBuffer<AtlasRTShadowParams>>(device, 1, true);
 	m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
@@ -86,10 +86,11 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnCreateLightsMeta(
 
 			std::vector<LightAtlasRect> lightSliceRects;
             lightSliceRects.resize(count);
-			auto wndSettings = m_pOwner->WNDSettings();
+			auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+			auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
             
             for(int i=0;i<count;++i) {
-				lightSliceRects[i] = ComputePointLightScreenRect(data[i].Position, data[i].AttenuationRadius, wndSettings.Width, wndSettings.Height);
+				lightSliceRects[i] = ComputePointLightScreenRect(data[i].Position, data[i].AttenuationRadius, sceneWidth, sceneHeight);
 			}
 
             auto updateRect = m_xAtlasPacker.SyncRects(rects);
@@ -190,9 +191,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
             return;
         }
 
-        auto wndSettings = m_pOwner->GetMainWNDSettings();
-		m_xShadowParams.ScreenWidth = wndSettings.Width;
-		m_xShadowParams.ScreenHeight = wndSettings.Height;
+		m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+		m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
         m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
 

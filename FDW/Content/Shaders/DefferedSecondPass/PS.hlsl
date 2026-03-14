@@ -31,9 +31,48 @@ Texture2D ShadowFactorTexture : register(t10);
 StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t12);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
-
 SamplerState ss : register(s0);
 SamplerState linearSS : register(s1);
+
+static const float3 SELECTION_OUTLINE_COLOR = float3(1.0f, 0.55f, 0.05f);
+
+bool IsSelectionMaskGeometry(float alphaValue) {
+    return alphaValue < 2.5f;
+}
+
+bool IsSelectionMaskSelected(float alphaValue) {
+    return IsSelectionMaskGeometry(alphaValue) && alphaValue > 0.5f;
+}
+
+float ComputeSelectionOutlineFactor(float2 uv) {
+    uint w, h;
+    GBuffer_Normal.GetDimensions(w, h);
+    if(w == 0 || h == 0) return 0.0f;
+
+    float centerAlpha = GBuffer_Normal.Sample(ss, uv).a;
+    if(!IsSelectionMaskGeometry(centerAlpha)) return 0.0f;
+
+    bool centerSelected = IsSelectionMaskSelected(centerAlpha);
+    float2 texel = 1.0f / float2(w, h);
+
+    float outline = 0.0f;
+    [unroll]
+    for(int y = -1; y <= 1; ++y) {
+        [unroll]
+        for(int x = -1; x <= 1; ++x) {
+            if(x == 0 && y == 0) continue;
+
+            float2 sampleUV = saturate(uv + float2(x, y) * texel);
+            float sampleAlpha = GBuffer_Normal.Sample(ss, sampleUV).a;
+            bool sampleSelected = IsSelectionMaskSelected(sampleAlpha);
+            if(centerSelected != sampleSelected) {
+                outline = 1.0f;
+            }
+        }
+    }
+
+    return outline;
+}
 
 float3 CalculatePBRLighting(
     float3 N, float3 V, float3 L, float3 radiance, float3 albedo, float metallic, float roughness, float3 F0
@@ -274,15 +313,15 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     PIXEL_OUTPUT psOut;
 
     float2 uv = vsOut.texCoord;
-    float3 N = normalize(GBuffer_Normal.Sample(ss, uv).rgb);
-
-    float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
-
     float4 nn = GBuffer_Normal.Sample(ss, uv).rgba;
-    if(nn.a==3.0f) {
+    float selectionOutline = ComputeSelectionOutlineFactor(uv);
+    if(nn.a > 2.5f) {
         psOut.result = float4(0,0,0,3.0f);
         return psOut;
     }
+
+    float3 N = normalize(nn.rgb);
+    float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
 
     float3 V = normalize(LHelper.CameraPos - WorldPos);
 
@@ -334,6 +373,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float3 color = Lo * ao;
     color += emissive * emissiveFactor;
+    color = lerp(color, SELECTION_OUTLINE_COLOR, selectionOutline);
     
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);

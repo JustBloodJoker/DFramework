@@ -4,8 +4,9 @@
 
 
 void BloomEffectSystem::AfterConstruction() {
-	auto wndSettings = m_pOwner->GetMainWNDSettings();
 	auto device = m_pOwner->GetDevice();
+	auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+	auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 
 	m_pBrightPassDataBuffer = FD3DW::UploadBuffer<BloomSystemBrightPassData>::CreateConstantBuffer(device, 1);
 	m_pBlurParamsBuffer = FD3DW::UploadBuffer<BloomSystemBlurParams>::CreateConstantBuffer(device, 2);
@@ -18,7 +19,7 @@ void BloomEffectSystem::AfterConstruction() {
 	});
 
 	GlobalRenderThreadManager::GetInstance()->Submit(recipe);
-	ResizeResources((UINT)wndSettings.Width, (UINT)wndSettings.Height);
+	ResizeResources((UINT)sceneWidth, (UINT)sceneHeight);
 }
 
 void BloomEffectSystem::ResizeResources(UINT width, UINT height) {
@@ -51,8 +52,11 @@ void BloomEffectSystem::ResizeResources(UINT width, UINT height) {
 
 std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync, FD3DW::FResource* res) {
 	if (!m_bIsBloomEnabled) return nullptr;
+
+	auto mainRect = m_pOwner->GetSceneRect();
+	auto mainViewPort = m_pOwner->GetSceneViewport();
 	
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, res](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, res, mainRect, mainViewPort](ID3D12GraphicsCommandList* list) {
 		SetShadingOutputResourceResultAndRect(res);
 		
 		if (m_bIsNeedUpdateBrightPassData.exchange(false, std::memory_order_acq_rel)) {
@@ -66,8 +70,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std:
 		
 		auto objParams = m_pScreen->GetObjectParameters(0);
 		
-		list->RSSetScissorRects(1, &FD3DW::keep(m_pOwner->GetMainRect()));
-		list->RSSetViewports(1, &FD3DW::keep(m_pOwner->GetMainViewPort()));
+		list->RSSetScissorRects(1, &mainRect);
+		list->RSSetViewports(1, &mainViewPort);
 
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
@@ -106,7 +110,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> BloomEffectSystem::ProcessBloomPass(std:
 			list->SetGraphicsRootDescriptorTable(BLOOM_EFFECT_GAUSSIAN_BLUR_BLOOM_SRV_POS_IN_ROOT_SIG, m_pBloomSRVPack->GetResult()->GetGPUDescriptorHandle(isHorizontal ? 2 : 1));
 			list->SetGraphicsRootConstantBufferView(BLOOM_EFFECT_GAUSSIAN_BLUR_PARAMS_CBV_POS_IN_ROOT_SIG, m_pBlurParamsBuffer->GetGPULocation(1));
 			list->DrawIndexedInstanced((UINT)objParams.IndicesCount, 1, (UINT)objParams.IndicesOffset, (UINT)objParams.VerticesOffset, 0);
-			isHorizontal ? m_pBloomRTV->EndDraw(list) : m_pBlurTransitRTV->StartDraw(list);
+			isHorizontal ? m_pBloomRTV->EndDraw(list) : m_pBlurTransitRTV->EndDraw(list);
 		}
 
 		m_pResultRTV->StartDraw(list);

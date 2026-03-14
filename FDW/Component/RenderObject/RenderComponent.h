@@ -4,15 +4,22 @@
 #include <Component/Core/IComponent.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
 
+class ComponentHolder;
+class MeshComponent;
 
 struct RenderComponentBeforeRenderInputData {
     float Time;
     float DT;
+
     dx::XMMATRIX Projection;
     dx::XMMATRIX JitteredProjection;
     dx::XMMATRIX View;
     dx::XMFLOAT3 CameraPosition;
     dx::XMMATRIX PrevViewProjection;
+
+    ComponentHolder* SelectedEntity = nullptr;
+    MeshComponent* SelectedMeshComponent = nullptr;
+    
     ID3D12Device* Device;
     ID3D12GraphicsCommandList* CommandList;
 };

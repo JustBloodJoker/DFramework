@@ -6,8 +6,23 @@
 #include <D3DFramework/GraphicUtilites/RTPipelineObject.h>
 
 //////////////////////////////////////////////
-//				GBUFFERS DATA
+//				WINDOW DATA
 
+#define WINDOW_TITLE L"FDW"
+#define WINDOW_START_WIDTH 1600
+#define WINDOW_START_HEIGHT 900
+
+#define WINDOW_MINIMAL_SCENE_WIDTH  320
+#define WINDOW_MINIMAL_UI_WIDTH  280
+#define WINDOW_FIXED_UI_WIDTH  430
+
+#define SELECTION_DRAG_THRESHOLD_PIXELS 4
+
+//////////////////////////////////////////////
+
+
+//////////////////////////////////////////////
+//				GBUFFERS DATA
 
 struct GBuffersData {
 	std::vector<DXGI_FORMAT> GBuffersFormats;

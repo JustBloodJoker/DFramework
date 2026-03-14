@@ -47,8 +47,13 @@ struct MeshMatrices
     matrix PrevWorldMatrix;
     matrix JitteredProjectionMatrix;
     matrix PrevViewProjMatrix;
+    
     int IsActiveAnimations;
+    int SelectionState;
+    float2 padd0;
+
     float3 CameraPosition;
+    float padd1;
 };
 
 #define TEXTURE_BASE_LOAD_FLAG_LOCATION             0

@@ -8,6 +8,7 @@
 #include <memory>
 #include <fstream>
 #include <queue>
+#include <algorithm>
 #include <array>
 #include <tuple>
 #include <vector>
@@ -29,6 +30,7 @@
 #include <typeinfo>
 #include <sstream>
 #include <stack>
+#include <limits>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>

@@ -23,6 +23,8 @@
 #include <System/AtlasRTShadowSystem.h>
 #include <System/TAASystem.h>
 
+class MeshComponent;
+
 class MainRenderer : virtual public FD3DW::D3DFW {
 
 public:
@@ -50,6 +52,14 @@ public:
 
 public:
 	World* GetWorld();
+
+public: //SIZE
+	D3D12_RECT GetSceneRect() const;
+	D3D12_VIEWPORT GetSceneViewport() const;
+	int GetSceneRenderWidth() const;
+	int GetSceneRenderHeight() const;
+	void RequestSceneViewportLayoutUpdate();
+
 
 public:
 	FD3DW::DepthStencilView* GetCurrentDSV();
@@ -104,7 +114,17 @@ public:
 	BloomBlurType GetBloomBlurType();
 	void SetBloomBlurType(BloomBlurType blurType);
 
+public: //SELECTION
+	void SetSelectedEntity(ComponentHolder* entity);
+	ComponentHolder* GetSelectedEntity() const;
+	void SetSelectedMeshComponent(MeshComponent* component);
+	MeshComponent* GetSelectedMeshComponent() const;
+	void SelectEntityAtScreenPoint(int mouseX, int mouseY);
+	ComponentHolder* PickEntityAtScreenPoint(int mouseX, int mouseY);
+	MeshComponent* PickMeshComponentAtScreenPoint(int mouseX, int mouseY);
+	bool RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XMFLOAT3& rayDir, const dx::XMFLOAT3& boundsMin, const dx::XMFLOAT3& boundsMax, float& outDistance);
 
+public:
 	FD3DW::FResource* GetShadingResultResource();
 
 protected: //TEST METHODS
@@ -118,6 +138,13 @@ private:
 	void ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies);
 	void RecreateWindowSizeDependentResources(int width, int height);
 	void OnMainWindowResize(int width, int height) override;
+	void ValidateSelection();
+	void UpdateSceneViewportLayout();
+
+private:
+	bool IsEntityAlive(ComponentHolder* entity);
+	bool IsComponentAlive(MeshComponent* cmp);
+
 
 private:
 	void InitMainRendererParts(ID3D12Device* device);
@@ -130,6 +157,8 @@ private:
 
 	std::unique_ptr<MainRenderer_UIComponent> m_pUIComponent = nullptr;
 	UINT m_uFrameIndex = 0;
+	ComponentHolder* m_pSelectedEntity = nullptr;
+	MeshComponent* m_pSelectedMeshComponent = nullptr;
 
 	std::shared_ptr<World> m_pWorld;
 
@@ -193,8 +222,11 @@ protected:
 	std::unique_ptr<FD3DW::RTVPacker> m_pForwardRenderPassRTVPack;
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pForwardRenderPassSRVPack;
 
-	D3D12_VIEWPORT m_xSceneViewPort;
-	D3D12_RECT m_xSceneRect;
+	D3D12_VIEWPORT m_xSceneViewPort = {};
+	D3D12_RECT m_xSceneRect = {};
+	D3D12_VIEWPORT m_xSceneOutputViewPort = {};
+	D3D12_VIEWPORT m_xMainViewPort = {};
+	D3D12_RECT m_xMainRect = {};
 	std::unique_ptr<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>> m_pSceneVBV_IBV;
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen;
 	

@@ -171,8 +171,8 @@ void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData
     cmb.PrevViewProjectionMatrix = dx::XMMatrixTranspose(data.PrevViewProjection);
     auto isBoneActive = m_xData.IsBoneActive.lock();
     cmb.IsActiveAnimation = isBoneActive ? *isBoneActive : false;
+    cmb.SelectionState = data.SelectedMeshComponent ? data.SelectedMeshComponent == this : data.SelectedEntity == GetOwner();
     cmb.CameraPosition = data.CameraPosition;
-
     m_pMatricesBuffer->CpyData(0, cmb);
 
     m_pMaterialBuffer->CpyData(0, m_xData.MaterialCBufferData);
@@ -234,8 +234,8 @@ IndirectRenderDataPair MeshComponent::GetIndirectRenderDataPair() {
 std::pair<dx::XMFLOAT3, dx::XMFLOAT3> MeshComponent::GetBoundingBoxFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world) {
     std::pair<dx::XMFLOAT3, dx::XMFLOAT3> ret;
 
-    dx::XMFLOAT3 localMin = desc.ObjectMin;
-    dx::XMFLOAT3 localMax = desc.ObjectMax;
+    auto localMin = desc.ObjectMin;
+    auto localMax = desc.ObjectMax;
 
     dx::XMFLOAT3 corners[8] = {
         { localMin.x, localMin.y, localMin.z },
@@ -255,8 +255,8 @@ std::pair<dx::XMFLOAT3, dx::XMFLOAT3> MeshComponent::GetBoundingBoxFromObjectDes
         dx::XMStoreFloat3(&transformed[i], v);
     }
 
-    dx::XMFLOAT3 worldMin = transformed[0];
-    dx::XMFLOAT3 worldMax = transformed[0];
+    auto worldMin = transformed[0];
+    auto worldMax = transformed[0];
 
     for (int i = 1; i < 8; i++) {
         worldMin.x = std::min(worldMin.x, transformed[i].x);
@@ -271,6 +271,10 @@ std::pair<dx::XMFLOAT3, dx::XMFLOAT3> MeshComponent::GetBoundingBoxFromObjectDes
     ret.first = worldMin;
     ret.second = worldMax;
     return ret;
+}
+
+std::pair<dx::XMFLOAT3, dx::XMFLOAT3> MeshComponent::GetWorldBounds() {
+    return GetBoundingBoxFromObjectDesc(m_xData.ObjectDescriptor, m_xWorldMatrix);
 }
 
 FD3DW::AccelerationStructureInput MeshComponent::GenerateGeometry() {

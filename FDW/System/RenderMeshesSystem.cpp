@@ -47,7 +47,9 @@ void RenderMeshesSystem::ProcessNotify(NRenderSystemNotifyType type) {
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
+	auto selectedEntity = m_pOwner->GetSelectedEntity();
+	auto selectedMeshComponent = m_pOwner->GetSelectedMeshComponent();
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, selectedEntity, selectedMeshComponent](ID3D12GraphicsCommandList* list) {
 		if (m_bNeedUpdateMeshesActivationDeactivation.exchange(false, std::memory_order_acq_rel)) {
 
 			m_vActiveMeshComponents.clear();
@@ -77,8 +79,11 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 		inData.JitteredProjection = m_pOwner->GetCurrentJitteredProjectionMatrix();
 		inData.View = m_pOwner->GetCurrentViewMatrix();
 		inData.PrevViewProjection = m_pOwner->GetPrevViewProjectionMatrix();
-		auto timer = m_pOwner->GetTimer();
 
+		inData.SelectedEntity = selectedEntity;
+		inData.SelectedMeshComponent = selectedMeshComponent;
+		
+		auto timer = m_pOwner->GetTimer();
 		inData.DT = timer->GetDeltaTime();
 		inData.Time = timer->GetTime();
 

@@ -25,9 +25,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 		dx::XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 		XMStoreFloat4x4(&par_1.InverseProjection, invProj);
 
-		auto wndSet = m_pOwner->GetMainWNDSettings();
-		par_1.ScreenWidth = wndSet.Width;
-		par_1.ScreenHeight = wndSet.Height;
+		par_1.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+		par_1.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 
 		auto frustum = m_pOwner->GetCameraFrustum();
 		par_1.ZNear = frustum.GetZNear();

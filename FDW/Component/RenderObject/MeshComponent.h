@@ -99,11 +99,11 @@ public:
     virtual void RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
     virtual void RenderInitDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) override;
     virtual void UpdateBLASDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list);
-    virtual void OnEndRenderTick(ID3D12GraphicsCommandList* list) override;
-    virtual IndirectRenderDataPair GetIndirectRenderDataPair();
-
+	virtual void OnEndRenderTick(ID3D12GraphicsCommandList* list) override;
+	virtual IndirectRenderDataPair GetIndirectRenderDataPair();
 
     std::pair<dx::XMFLOAT3, dx::XMFLOAT3> GetBoundingBoxFromObjectDesc(FD3DW::ObjectDesc desc, dx::XMMATRIX world);
+    std::pair<dx::XMFLOAT3, dx::XMFLOAT3> GetWorldBounds();
 
     FD3DW::AccelerationStructureInput GenerateGeometry();
     

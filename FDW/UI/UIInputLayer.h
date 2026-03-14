@@ -14,4 +14,9 @@ public:
 private:
 	MainRenderer_UIComponent* m_pUIOwner = nullptr;
 
+private:
+	bool m_bLMBPendingSelection = false;
+	bool m_bLMBDragDetected = false;
+	int m_iLMBDownX = 0;
+	int m_iLMBDownY = 0;
 };

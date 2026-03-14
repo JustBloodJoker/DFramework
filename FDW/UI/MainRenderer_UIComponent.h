@@ -40,6 +40,21 @@ public:
     void ShutDownImGui();
     bool ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
+public:
+    void SelectEntityByWorldClick(int mouseX, int mouseY);
+
+public:
+    bool IsPointInsideScene(int mouseX, int mouseY) const;
+
+public:
+    bool IsUIVisible() const;
+    void SetUIVisible(bool visible);
+    void ToggleUIVisible();
+    
+public:
+    float GetFixedPanelWidth() const;
+
 public:
     virtual void AfterConstruction() override;
     virtual void BeforeDestruction() override;
@@ -48,7 +63,11 @@ private:
     void DrawUI();
     void MainWindow();
 
-    void DrawWorldTab();
+private:
+    void DrawRightPanel();
+    void DrawOutlinerPane();
+    void DrawSelectionPane();
+
     void DrawWorld_Entities();
 
 
@@ -124,12 +143,12 @@ private:
     ID3D12GraphicsCommandList* m_pCurrentUIList = nullptr;
     std::unique_ptr<UIInputLayer> m_pUILayer = nullptr;
     std::unique_ptr<FD3DW::SRV_UAVPacker> m_pUISRVPack;
-    bool m_bIsInited = false;
 
-    struct EntityUIState {
-        bool showComponents = false;
-    };
-    std::unordered_map<ComponentHolder*, EntityUIState> m_EntityUi;
+    bool m_bIsInited = false;
+    bool m_bUIVisible = true;
+    float m_fFixedPanelWidth = WINDOW_FIXED_UI_WIDTH;
+    int m_iLastPanelLeftX = -1;
+
 
     bool m_bShowSkyboxBrowser = false;
     bool m_bShowSceneBrowser = false;
@@ -145,8 +164,5 @@ private:
     std::vector<std::filesystem::directory_entry> m_vEntries;
     bool m_bIsPathChanged = true;
 
-    int m_iSelectedEntityIndex = -1;
+    IComponent* m_pSelectedInspectorComponent = nullptr;
 };
-
-// ------------------------------------------------------
-// реализаци€ Ч см. MainRenderer_UIComponent.cpp
