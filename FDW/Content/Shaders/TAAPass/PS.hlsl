@@ -43,7 +43,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     [unroll]
     for(int i = 0; i < 4; i++) {
-        float2 neighborUV = uv + offsets[i];
+        float2 neighborUV = saturate(uv + offsets[i]);
         float neighborDepth = SRV_DepthTextures[taaData.CurrentDepthBufferIndex].SampleLevel(pointSS, neighborUV, 0).r;
         
         if (neighborDepth < closestDepth) { 
@@ -75,12 +75,16 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 maxColor = max(cC, max(cT, max(cB, max(cL, cR))));
 
     float3 clampedHistory = clamp(historyColor, minColor, maxColor);
+    historyColor = clampedHistory;
 
-    float isMoving = saturate(length(bestVelocity) * 1000.0f);
+    float motionFactor = saturate(length(bestVelocity) * 450.0f);
+    int prevDepthIndex = 1 - taaData.CurrentDepthBufferIndex;
+    float prevDepth = SRV_DepthTextures[prevDepthIndex].SampleLevel(pointSS, prevUV, 0).r;
+    float depthDelta = abs(closestDepth - prevDepth);
+    float disocclusionFactor = saturate((depthDelta - 0.0005f) * 350.0f);
 
-    historyColor = lerp(historyColor, clampedHistory, isMoving);
-
-    float3 finalColor = lerp(historyColor, currentColor, taaData.BlendWeight);
+    float responsiveWeight = max(taaData.BlendWeight, max(motionFactor, disocclusionFactor));
+    float3 finalColor = lerp(historyColor, currentColor, responsiveWeight);
 
     psOut.result = float4(finalColor, 1.0f);
     return psOut;
