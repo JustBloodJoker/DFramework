@@ -1,0 +1,278 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="D3DFramework">
+      <UniqueIdentifier>{8522955d-e187-4044-b4ba-fe7da8390012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\GraphicUtilites">
+      <UniqueIdentifier>{11f5cea1-eaf1-4124-b340-fd7a2d4a61c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\include">
+      <UniqueIdentifier>{f1f85f37-2483-44bd-93f1-2d1eac40fe1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\Objects">
+      <UniqueIdentifier>{11d87b1a-79b4-403b-b7d2-d7c036541114}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\Utilites">
+      <UniqueIdentifier>{87f27dad-2760-44cc-86ab-a7bc04621f76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\Utilites\Serializer">
+      <UniqueIdentifier>{fa96ef0e-c1f3-4f03-9ae4-23a414fd5601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3DFramework\GraphicUtilites\RenderThreadUtils">
+      <UniqueIdentifier>{4b050713-0044-4611-93e7-7966adf30639}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D3DFramework\d3dframework.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\D3DFW.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\pch.h">
+      <Filter>D3DFramework</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\DepthStencilView.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\FResource.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\Materials.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessing.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderTarget.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ResourcePacker.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\include\d3dx12.h">
+      <Filter>D3DFramework\include</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\MaterialsManager.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\Object.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\Scene.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\SimpleObjects.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Audio.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\AudioManager.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Macroses.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Structures.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\UtilFunctions.h">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cuh">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\TextureLoaders.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\StructuredBuffer.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Serializer\ReflectionImpl.h">
+      <Filter>D3DFramework\Utilites\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Utilites\Serializer\BinarySerializer.h">
+      <Filter>D3DFramework\Utilites\Serializer</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\CommandListTemplate.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ICommandList.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\ComputePipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTPipelineObject.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\RTObjectHelper.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BilateralFilter.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BaseCommandQueue.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.h">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.h">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D3DFramework\D3DFW.cpp">
+      <Filter>D3DFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\pch.cpp">
+      <Filter>D3DFramework</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\DepthStencilView.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\FResource.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\Materials.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\PostProcessing.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderTarget.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\ResourcePacker.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\MaterialsManager.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\Object.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\Scene.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\SimpleObjects.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Utilites\Audio.cpp">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp">
+      <Filter>D3DFramework\Utilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\TextureLoaders.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\StructuredBuffer.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\GraphicsPipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTPipelineObject.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\RTObjectHelper.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RTShaderBindingTable.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BilateralFilter.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandRecipe.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\ExecutionHandle.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\CommandListPool.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\AsyncCommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BaseCommandQueue.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThreadManager.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Objects\ObjectVertexIndexDataCreator.cpp">
+      <Filter>D3DFramework\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.cpp">
+      <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>

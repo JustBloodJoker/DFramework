@@ -1,0 +1,78 @@
+#pragma once
+
+#include <pch.h>
+#include <D3DFramework/GraphicUtilites/RenderTarget.h>
+#include <MainRenderer/MainRendererComponent.h>
+#include <System/MeshesCullingSubSystem.h>
+#include <Component/RenderObject/MeshesIndirectRenderData.h>
+#include <Component/RenderObject/MeshComponent.h>
+
+enum class MeshCullingType {
+	None = 0,
+	GPU = 1,
+};
+
+
+struct RenderMeshesSystemPreDepthRenderData {
+	FD3DW::DepthStencilView* DSV;
+	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
+	D3D12_RECT Rect;
+	D3D12_VIEWPORT Viewport;
+};
+
+struct RenderMeshesSystemHiZUpdateRenderData {
+	FD3DW::DepthStencilView* DSV;
+};
+
+struct RenderMeshesSystemIndirectRenderData {
+	std::vector<FD3DW::RenderTarget*> RTV;
+	FD3DW::DepthStencilView* DSV;
+	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
+	D3D12_CPU_DESCRIPTOR_HANDLE RTV_CPU;
+	D3D12_RECT Rect;
+	D3D12_VIEWPORT Viewport;
+};
+
+
+class RenderMeshesSystem : public MainRendererComponent {
+public:
+	RenderMeshesSystem() = default;
+	virtual ~RenderMeshesSystem() = default;
+
+
+public:
+	virtual void AfterConstruction() override;
+	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
+	
+	std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnStartBLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnStartTLASCall(std::vector < std::shared_ptr<FD3DW::ExecutionHandle>> handle);
+	std::shared_ptr<FD3DW::ExecutionHandle> UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> PreDepthRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemPreDepthRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> IndirectRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemIndirectRenderData data);
+	std::shared_ptr<FD3DW::ExecutionHandle> OnEndRenderTick(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle);
+
+
+	FD3DW::AccelerationStructureBuffers GetTLAS() const;
+	MeshCullingType GetCullingType() const;
+	void SetCullingType(MeshCullingType type);
+
+protected:
+	std::atomic<bool> m_bNeedUpdateTLAS{ true };
+	std::atomic<bool> m_bNeedUpdateBLAS{ true };
+	std::atomic<bool> m_bNeedUpdateMeshesActivationDeactivation{ true };
+
+	MeshCullingType m_xMeshCullingType = MeshCullingType::None;
+
+	std::vector< MeshComponent*> m_vActiveMeshComponents;
+
+	FD3DW::AccelerationStructureBuffers m_xTLASBufferData;
+	std::unique_ptr<MeshesCullingSubSystem> m_pMeshesCulling = nullptr;
+
+
+	std::vector<IndirectMeshRenderData> m_vMeshRenderData;
+	std::vector<MeshAABBInstanceData> m_vMeshAABBInstanceData;
+
+	wrl::ComPtr<ID3D12CommandSignature> m_pIndirectCommandSignature = nullptr;
+	std::unique_ptr<FD3DW::StructuredBuffer> m_pIndirectExecuteCommandsBuffer = nullptr;
+};

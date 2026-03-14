@@ -1,0 +1,51 @@
+#include "Structures.hlsli"
+#include "Utilits.hlsli"
+#include "SameShadersStructs.hlsli"
+
+
+struct ANIMVERTEX_INPUT
+{
+    float3 pos : POSITION;
+    float3 normal : NORMAL;
+    float2 texCoord : TEXCOORD;
+    float3 tangent : TANGENT;
+    float3 bitangent : BITANGENT;
+    uint IDs[NUM_BONES_PER_VEREX] : IDS_BONES;
+    float Weight[NUM_BONES_PER_VEREX] : WEIGHT_BONES;
+};
+
+ConstantBuffer<MeshMatrices> objMatrices : register(b0);
+StructuredBuffer<matrix> boneMatrices : register(t9, space1);
+
+VERTEX_OUTPUT VS(ANIMVERTEX_INPUT vsIn, uint Instance : SV_InstanceID)
+{
+    VERTEX_OUTPUT vsOut;
+    
+    matrix skinMatrix = 0.0f;
+    if (objMatrices.IsActiveAnimations==1) 
+    {
+        for (int i = 0; i < NUM_BONES_PER_VEREX; i++)
+        {
+            uint boneIndex = vsIn.IDs[i];
+            float weight = vsIn.Weight[i];
+
+            if (weight > 0.0f) 
+            {
+                skinMatrix += boneMatrices[boneIndex] * weight;
+            }
+        }
+    } else {
+        skinMatrix = matrix(1,0,0,0,
+                            0,1,0,0,
+                            0,0,1,0,
+                            0,0,0,1);
+    }
+
+    matrix ResultWorldMatrix = mul(skinMatrix, objMatrices.WorldMatrix);
+
+
+    vsOut.pos = mul(float4(vsIn.pos, 1.0f), ResultWorldMatrix);
+    vsOut.pos = mul(vsOut.pos, objMatrices.ViewMatrix);
+    vsOut.pos = mul(vsOut.pos, objMatrices.JitteredProjectionMatrix);
+    return vsOut;
+}

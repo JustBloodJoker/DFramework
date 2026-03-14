@@ -1,0 +1,275 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Component\Audio\AudioComponent.cpp" />
+    <ClCompile Include="src\Component\Camera\CameraComponent.cpp" />
+    <ClCompile Include="src\Component\Core\IComponent.cpp" />
+    <ClCompile Include="src\Component\Light\LightComponent.cpp" />
+    <ClCompile Include="src\Component\Light\ShadowComponent.cpp" />
+    <ClCompile Include="src\Component\RenderObject\AnimationComponent.cpp" />
+    <ClCompile Include="src\Component\RenderObject\MeshComponent.cpp" />
+    <ClCompile Include="src\Component\RenderObject\RenderComponent.cpp" />
+    <ClCompile Include="src\Component\RenderObject\SkyboxComponent.cpp" />
+    <ClCompile Include="src\Entity\Audio\TAudio.cpp" />
+    <ClCompile Include="src\Entity\Camera\DefaultCameraInputLayer.cpp" />
+    <ClCompile Include="src\Entity\Camera\TBaseCamera.cpp" />
+    <ClCompile Include="src\Entity\Camera\TDefaultCamera.cpp" />
+    <ClCompile Include="src\Entity\Core\ComponentHolder.cpp" />
+    <ClCompile Include="src\Entity\Light\TDirectionalLight.cpp" />
+    <ClCompile Include="src\Entity\Light\TLight.cpp" />
+    <ClCompile Include="src\Entity\Light\TPointLight.cpp" />
+    <ClCompile Include="src\Entity\Light\TRectLight.cpp" />
+    <ClCompile Include="src\Entity\Light\TSpotLight.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\SimpleMeshTemplatesGenerators.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\TMesh.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\TRender.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\TScene.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\TSimpleMesh.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\TSkybox.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\VerticesConverter.cpp" />
+    <ClCompile Include="..\..\external\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\..\external\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\external\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\external\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\external\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\external\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MainRenderer\GlobalConfig.cpp" />
+    <ClCompile Include="src\MainRenderer\GlobalRenderThreadManager.cpp" />
+    <ClCompile Include="src\MainRenderer\GlobalTextureHeap.cpp" />
+    <ClCompile Include="src\MainRenderer\MainRenderer.cpp" />
+    <ClCompile Include="src\MainRenderer\MainRendererComponent.cpp" />
+    <ClCompile Include="src\MainRenderer\PSOManager.cpp" />
+    <ClCompile Include="src\System\AtlasRTShadowSystem.cpp" />
+    <ClCompile Include="src\System\AudioSystem.cpp" />
+    <ClCompile Include="src\System\BloomEffectSystem.cpp" />
+    <ClCompile Include="src\System\CameraFrustum.cpp" />
+    <ClCompile Include="src\System\CameraSystem.cpp" />
+    <ClCompile Include="src\System\CameraSystemInputLayer.cpp" />
+    <ClCompile Include="src\System\ClusteredLightningSystem.cpp" />
+    <ClCompile Include="src\System\LightSystem.cpp" />
+    <ClCompile Include="src\System\MeshesCullingSubSystem.cpp" />
+    <ClCompile Include="src\System\RectsPacker.cpp" />
+    <ClCompile Include="src\System\RenderMeshesSystem.cpp" />
+    <ClCompile Include="src\System\RTShadowSystem.cpp" />
+    <ClCompile Include="src\System\SceneAnimationSystem.cpp" />
+    <ClCompile Include="src\System\SkyboxRenderSystem.cpp" />
+    <ClCompile Include="src\System\TAASystem.cpp" />
+    <ClCompile Include="src\UI\MainRenderer_UIComponent.cpp" />
+    <ClCompile Include="src\UI\UIInputLayer.cpp" />
+    <ClCompile Include="src\Utilities\HelperFunctions.cpp" />
+    <ClCompile Include="src\World\World.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Component\Audio\AudioComponent.h" />
+    <ClInclude Include="src\Component\Camera\CameraComponent.h" />
+    <ClInclude Include="src\Component\Core\IComponent.h" />
+    <ClInclude Include="src\Component\Light\LightComponent.h" />
+    <ClInclude Include="src\Component\Light\LightComponentData.h" />
+    <ClInclude Include="src\Component\Light\ShadowComponent.h" />
+    <ClInclude Include="src\Component\Light\ShadowComponentData.h" />
+    <ClInclude Include="src\Component\RenderObject\AnimationComponent.h" />
+    <ClInclude Include="src\Component\RenderObject\MeshComponent.h" />
+    <ClInclude Include="src\Component\RenderObject\MeshComponentMaterialData.h" />
+    <ClInclude Include="src\Component\RenderObject\MeshComponentMatricesData.h" />
+    <ClInclude Include="src\Component\RenderObject\MeshesIndirectRenderData.h" />
+    <ClInclude Include="src\Component\RenderObject\RenderComponent.h" />
+    <ClInclude Include="src\Component\RenderObject\SkyboxComponent.h" />
+    <ClInclude Include="src\Entity\Audio\TAudio.h" />
+    <ClInclude Include="src\Entity\Camera\DefaultCameraInputLayer.h" />
+    <ClInclude Include="src\Entity\Camera\TBaseCamera.h" />
+    <ClInclude Include="src\Entity\Camera\TDefaultCamera.h" />
+    <ClInclude Include="src\Entity\Core\ComponentHolder.h" />
+    <ClInclude Include="src\Entity\Light\TDirectionalLight.h" />
+    <ClInclude Include="src\Entity\Light\TLight.h" />
+    <ClInclude Include="src\Entity\Light\TPointLight.h" />
+    <ClInclude Include="src\Entity\Light\TRectLight.h" />
+    <ClInclude Include="src\Entity\Light\TSpotLight.h" />
+    <ClInclude Include="src\Entity\RenderObject\VerticesConverter.h" />
+    <ClInclude Include="src\Entity\RenderObject\SimpleMeshTemplates.h" />
+    <ClInclude Include="src\Entity\RenderObject\SimpleMeshTemplatesGenerators.h" />
+    <ClInclude Include="src\Entity\RenderObject\TMesh.h" />
+    <ClInclude Include="src\Entity\RenderObject\TRender.h" />
+    <ClInclude Include="src\Entity\RenderObject\TScene.h" />
+    <ClInclude Include="src\Entity\RenderObject\TSimpleMesh.h" />
+    <ClInclude Include="src\Entity\RenderObject\TSkybox.h" />
+    <ClInclude Include="src\MainRenderer\GlobalConfig.h" />
+    <ClInclude Include="src\MainRenderer\GlobalRenderThreadManager.h" />
+    <ClInclude Include="src\MainRenderer\GlobalTextureHeap.h" />
+    <ClInclude Include="src\MainRenderer\MainRenderer.h" />
+    <ClInclude Include="src\MainRenderer\MainRendererComponent.h" />
+    <ClInclude Include="src\MainRenderer\PSOManager.h" />
+    <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\System\AtlasRTShadowLightParams.h" />
+    <ClInclude Include="src\System\AtlasRTShadowSystem.h" />
+    <ClInclude Include="src\System\AudioSystem.h" />
+    <ClInclude Include="src\System\BloomEffectSystem.h" />
+    <ClInclude Include="src\System\BloomSystemConfigs.h" />
+    <ClInclude Include="src\System\CameraFrustum.h" />
+    <ClInclude Include="src\System\CameraSystem.h" />
+    <ClInclude Include="src\System\CameraSystemInputLayer.h" />
+    <ClInclude Include="src\System\ClusteredLightningSystem.h" />
+    <ClInclude Include="src\System\LightSystem.h" />
+    <ClInclude Include="src\System\MeshesCullingSubSystem.h" />
+    <ClInclude Include="src\System\NRenderSystemNotifyType.h" />
+    <ClInclude Include="src\System\RectsPacker.h" />
+    <ClInclude Include="src\System\RenderMeshesSystem.h" />
+    <ClInclude Include="src\System\RTShadowSystem.h" />
+    <ClInclude Include="src\System\RTShadowSystemConfig.h" />
+    <ClInclude Include="src\System\SceneAnimationSystem.h" />
+    <ClInclude Include="src\System\SkyboxRenderSystem.h" />
+    <ClInclude Include="src\System\TAASystem.h" />
+    <ClInclude Include="src\System\TAASystemData.h" />
+    <ClInclude Include="src\UI\MainRenderer_UIComponent.h" />
+    <ClInclude Include="src\UI\UIInputLayer.h" />
+    <ClInclude Include="src\Utilities\HelperFunctions.h" />
+    <ClInclude Include="src\World\World.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{f48a9e6a-5470-4826-b0b7-4296c088d111}</ProjectGuid>
+    <RootNamespace>FDW</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\x64\Debug_Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>x64/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Verbose>true</Verbose>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>..\..\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>..\..\include\DLSS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.targets" />
+  </ImportGroup>
+</Project>
+
+

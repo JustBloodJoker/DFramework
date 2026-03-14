@@ -1,0 +1,3 @@
+struct ShadowPayload {
+    float shadow;
+};
