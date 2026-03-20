@@ -134,8 +134,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnCreateLightsMeta(
                     int ay = r.Y + yy;
                     for (int xx = 0; xx < r.W; ++xx) {
                         int ax = r.X + xx;
-                        uint32_t idx = ay * RT_SHADOW_ATLAS_MAX_WIDTH + ax;
-                        m_vTexelMap[idx] = isVisible ? (uint32_t)r.ID : 0xFFFFFFFFu;
+                        auto idx = ay * RT_SHADOW_ATLAS_MAX_WIDTH + ax;
+                        m_vTexelMap[idx] = isVisible ? (RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT_CPU)r.ID : std::numeric_limits<RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT_CPU>::max();
                     }
                 }
                 m_DirtyRegions.push_back(r);

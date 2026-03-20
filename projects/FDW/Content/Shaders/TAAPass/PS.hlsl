@@ -65,18 +65,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
 
     float3 historyColor = SRV_RTVTextures[taaData.CurrentReaderIndex].SampleLevel(linearSS, prevUV, 0).rgb;
 
-    float3 cC = currentColor;
-    float3 cT = RenderOutput.SampleLevel(pointSS, uv + float2(0, -texelSize.y), 0).rgb;
-    float3 cB = RenderOutput.SampleLevel(pointSS, uv + float2(0, texelSize.y), 0).rgb;
-    float3 cL = RenderOutput.SampleLevel(pointSS, uv + float2(-texelSize.x, 0), 0).rgb;
-    float3 cR = RenderOutput.SampleLevel(pointSS, uv + float2(texelSize.x, 0), 0).rgb;
-
-    float3 minColor = min(cC, min(cT, min(cB, min(cL, cR))));
-    float3 maxColor = max(cC, max(cT, max(cB, max(cL, cR))));
-
-    float3 clampedHistory = clamp(historyColor, minColor, maxColor);
-    historyColor = clampedHistory;
-
     float motionFactor = saturate(length(bestVelocity) * 450.0f);
     int prevDepthIndex = 1 - taaData.CurrentDepthBufferIndex;
     float prevDepth = SRV_DepthTextures[prevDepthIndex].SampleLevel(pointSS, prevUV, 0).r;
