@@ -129,9 +129,10 @@ float GetLinearDepth(float2 screenUV)
     return (nearClip * farClip) / (farClip - z_b * (farClip - nearClip));
 }
 
-static const float2 PoissonDisk4[4] = {
-    float2(-0.5f, -0.5f), float2(0.5f, -0.5f),
-    float2(-0.5f,  0.5f), float2(0.5f,  0.5f)
+static const float2 ShadowRing3[3] = {
+    float2(1.0f, 0.0f),
+    float2(-0.5f, 0.8660254f),
+    float2(-0.5f, -0.8660254f)
 };
 
 float GetShadowFactor(in LightStruct light, int id, float2 UV) 
@@ -178,13 +179,33 @@ float GetShadowFactor(in LightStruct light, int id, float2 UV)
     float weightSum = 0.0f;
     
     float filterRadius = ShadowAtlasData.FilterRadius; 
-    float depthRejectionSharpness = ShadowAtlasData.DepthRejectionSharpness; 
+    float depthRejectionSharpness = ShadowAtlasData.DepthRejectionSharpness;
+
+    float2 jitterNoise = float2(
+        InterleavedGradientNoise(animatedScreenPixel + float2(13.1f, 71.7f)),
+        InterleavedGradientNoise(animatedScreenPixel + float2(91.7f, 29.3f))
+    );
+    float2 subPixelJitter = (jitterNoise - float2(0.5f, 0.5f)) * texelSize * 0.75f;
+    float2 jitteredBaseUV = clamp(baseUV + subPixelJitter, minUV, maxUV);
+
+    {
+        float2 sampleUV = jitteredBaseUV;
+        float shadow = ShadowFactorTexture.SampleLevel(linearSS, sampleUV, 0).r;
+        float2 tileUV = (sampleUV * atlasSize - float2(meta.AtlasOffsetX, meta.AtlasOffsetY)) / float2(meta.AtlasWidth, meta.AtlasHeight);
+        float2 screenUV = lerp(float2(meta.ScreenMinU, meta.ScreenMinV), float2(meta.ScreenMaxU, meta.ScreenMaxV), tileUV);
+        float sampleDepth = GetLinearDepth(screenUV);
+        float depthDiff = abs(centerDepth - sampleDepth);
+        float weight = exp(-depthDiff * depthDiff * depthRejectionSharpness);
+
+        shadowSum += shadow * weight;
+        weightSum += weight;
+    }
 
     [unroll]
-    for (int i = 0; i < 4; i++) 
+    for (int i = 0; i < 3; i++) 
     {
-        float2 rotatedOffset = mul(rotMat, PoissonDisk4[i]);
-        float2 sampleUV = clamp(baseUV + rotatedOffset * texelSize * filterRadius, minUV, maxUV);
+        float2 rotatedOffset = mul(rotMat, ShadowRing3[i]);
+        float2 sampleUV = clamp(jitteredBaseUV + rotatedOffset * texelSize * filterRadius, minUV, maxUV);
         
         float shadow = ShadowFactorTexture.SampleLevel(linearSS, sampleUV, 0).r;
 
@@ -201,7 +222,7 @@ float GetShadowFactor(in LightStruct light, int id, float2 UV)
     }
 
     if (weightSum < 0.001f) {
-        return ShadowFactorTexture.SampleLevel(linearSS, baseUV, 0).r;
+        return ShadowFactorTexture.SampleLevel(linearSS, jitteredBaseUV, 0).r;
     }
 
     float result = shadowSum / weightSum;

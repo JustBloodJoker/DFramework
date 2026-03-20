@@ -80,8 +80,3 @@ Output binary:
 
 - Source assets are in `projects/FDW/Content`
 - For CMake build, `Content` is copied automatically near `FDW.exe` after build
-
-## Notes
-
-- If `cmake` is not in `PATH`, run from `x64 Native Tools Command Prompt for VS 2022`, or use Visual Studio bundled CMake binary.
-- If build logs mention missing `pwsh.exe`, MSBuild usually falls back to Windows PowerShell and continues.
