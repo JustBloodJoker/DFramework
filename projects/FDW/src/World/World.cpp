@@ -578,13 +578,39 @@ void World::SetBloomBlurType(int blurType) {
 	m_pRender->SetBloomBlurType(BloomBlurType(clamped));
 }
 
+void World::SetIBLEnabled(int enabled) {
+	if (!m_pRender) return;
+
+	m_pRender->EnableIBL(enabled != 0);
+}
+
+void World::SetIBLDiffuseIntensity(float intensity) {
+	if (!m_pRender) return;
+
+	m_pRender->SetIBLDiffuseIntensity(intensity);
+}
+
+void World::SetIBLSpecularIntensity(float intensity) {
+	if (!m_pRender) return;
+
+	m_pRender->SetIBLSpecularIntensity(intensity);
+}
+
+void World::SetIBLMaxReflectionMip(float value) {
+	if (!m_pRender) return;
+
+	m_pRender->SetIBLMaxReflectionMip(value);
+}
+
 void World::LoadWorldFile(std::string path) {
 	if (!m_pRender) return;
+
 	m_pRender->LoadWorld(path);
 }
 
 void World::SaveWorldFile(std::string path) {
 	if (!m_pRender) return;
+
 	m_pRender->SaveActiveWorld(path);
 }
 

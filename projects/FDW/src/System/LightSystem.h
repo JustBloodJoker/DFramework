@@ -15,6 +15,10 @@ struct LightSystemBuffer {
 	float ZNear;
 	float ZFar;
 	int FrameIndex;
+	int IsIBLEnabled;
+	float IBLDiffuseIntensity;
+	float IBLSpecularIntensity;
+	float IBLMaxReflectionMip;
 	dx::XMMATRIX InverseViewProjectionMatrix;
 };
 
@@ -39,6 +43,20 @@ public:
 
 	const std::vector<LightComponentData>& GetLightComponentsData() const;
 
+
+public: //IBL
+	bool IsEnabledIBL();
+	void EnableIBL(bool b);
+
+	float GetIBLDiffuseIntensity() const;
+	void SetIBLDiffuseIntensity(float value);
+
+	float GetIBLSpecularIntensity() const;
+	void SetIBLSpecularIntensity(float value);
+
+	float GetIBLMaxReflectionMip() const;
+	void SetIBLMaxReflectionMip(float value);
+
 protected:
 	std::vector<LightComponentData> GetDataFromLightComponents(std::vector<LightComponent*> cmps);
 
@@ -51,4 +69,9 @@ protected:
 	std::unique_ptr<FD3DW::UploadBuffer<LightSystemBuffer>> m_pLightsHelperConstantBuffer;
 	std::unique_ptr<FD3DW::StructuredBuffer> m_pLightsStructuredBuffer;
 
+protected:
+	bool m_bIsIBLEnabled = true;
+	float m_fIBLDiffuseIntensity = 1.0f;
+	float m_fIBLSpecularIntensity = 1.0f;
+	float m_fIBLMaxReflectionMip = 8.0f;
 };

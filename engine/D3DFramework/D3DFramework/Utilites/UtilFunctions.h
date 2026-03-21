@@ -98,6 +98,19 @@ namespace FD3DW
 
 	}
 
+	inline float WrapUnit(float value) {
+		value = value - std::floor(value);
+		if (value < 0.0f) value += 1.0f;
+		return value;
+	}
+
+	inline std::string ToLowerASCII(std::string value) {
+		std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+			return char(std::tolower(c));
+		});
+		return value;
+	}
+
 	inline UINT AlignForUavCounter(UINT bufferSize)
 	{
 		const UINT alignment = D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT;

@@ -37,6 +37,7 @@ void MainRenderer::UserInit()
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
 	
 	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 
 	for (const auto& format : gBufferFormats) {
 		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, sceneWidth, sceneHeight));
@@ -50,13 +51,15 @@ void MainRenderer::UserInit()
 
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		auto device = GetDevice();
-		auto size = GetCBV_SRV_UAVDescriptorSize(device);
 
 		auto LTCMat = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_MAT, device, list);
 		m_pGBuffersSRVPack->AddResource(LTCMat->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
 
 		auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
 		m_pGBuffersSRVPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
+
+		m_pFallbackIBLSkyboxResource = FD3DW::FResource::CreateTextureFromPath(LIGHTS_IBL_FALLBACK_TEXTURE_PATH, device, list);
+		m_pGBuffersSRVPack->AddResource(m_pFallbackIBLSkyboxResource->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 
 		m_vLCTResources.push_back(LTCMat);
 		m_vLCTResources.push_back(LTCAmp);
@@ -187,6 +190,8 @@ void MainRenderer::UserLoop()
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
 		m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, GetDevice());
+		UpdateIBLResource();
+
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
@@ -207,7 +212,7 @@ void MainRenderer::UserLoop()
 		m_pForwardRenderPassRTV->EndDraw(list);
 	});
 
-	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { lightsH, clusterAssignH, indirectRenderH, atlasRtShadowsH });
+	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { lightsH, clusterAssignH, indirectRenderH, atlasRtShadowsH, skyboxH });
 
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
@@ -379,6 +384,38 @@ void MainRenderer::EnableLinkJitterToTAA(bool b) {
 	}
 }
 
+bool MainRenderer::IsEnabledIBL() {
+	return m_pLightSystem->IsEnabledIBL();
+}
+
+void MainRenderer::EnableIBL(bool b) {
+	m_pLightSystem->EnableIBL(b);
+}
+
+float MainRenderer::GetIBLDiffuseIntensity() const {
+	return m_pLightSystem->GetIBLDiffuseIntensity();
+}
+
+void MainRenderer::SetIBLDiffuseIntensity(float value) {
+	m_pLightSystem->SetIBLDiffuseIntensity(value);
+}
+
+float MainRenderer::GetIBLSpecularIntensity() const {
+	return m_pLightSystem->GetIBLSpecularIntensity();
+}
+
+void MainRenderer::SetIBLSpecularIntensity(float value) {
+	m_pLightSystem->SetIBLSpecularIntensity(value);
+}
+
+float MainRenderer::GetIBLMaxReflectionMip() const {
+	return m_pLightSystem->GetIBLMaxReflectionMip();
+}
+
+void MainRenderer::SetIBLMaxReflectionMip(float value) {
+	m_pLightSystem->SetIBLMaxReflectionMip(value);
+}
+
 FLOAT* MainRenderer::GetClearColor(){
 	return COLOR;
 }
@@ -434,6 +471,15 @@ bool MainRenderer::RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XM
 	return outDistance >= 0.0f;
 }
 
+void MainRenderer::UpdateIBLResource() {
+	auto iblSkyboxTexture = m_pSkyboxRenderSystem->GetActiveSkyboxTexture();
+	if (!iblSkyboxTexture) iblSkyboxTexture = m_pFallbackIBLSkyboxResource.get();
+
+	if (iblSkyboxTexture && iblSkyboxTexture->GetResource()) {
+		m_pGBuffersSRVPack->AddResource(iblSkyboxTexture->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, GetDevice());
+	}
+}
+
 ComponentHolder* MainRenderer::GetSelectedEntity() const {
 	return m_pSelectedEntity;
 }
@@ -441,8 +487,6 @@ ComponentHolder* MainRenderer::GetSelectedEntity() const {
 void MainRenderer::SetSelectedMeshComponent(MeshComponent* component) {
 	if (component && m_pWorld) {
 		if (! IsComponentAlive(component) ) component = nullptr;
-
-		
 	}
 
 	m_pSelectedMeshComponent = component;
@@ -888,6 +932,7 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
 	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 
 	for (const auto& format : gBufferFormats) {
 		auto gbuffer = CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height);
@@ -902,6 +947,9 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	}
 	if (m_vLCTResources.size() > 1 && m_vLCTResources[1]) {
 		m_pGBuffersSRVPack->AddResource(m_vLCTResources[1]->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
+	}
+	if (m_pFallbackIBLSkyboxResource) {
+		m_pGBuffersSRVPack->AddResource(m_pFallbackIBLSkyboxResource->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 	}
 
 	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height);

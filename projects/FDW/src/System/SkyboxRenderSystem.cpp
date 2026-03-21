@@ -19,6 +19,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::OnStartRenderTick(st
 					break;
 				}
 			}
+
+			m_pOwner->UpdateIBLResource();
 		}
 
 		if (!m_pActiveComponent) return;
@@ -77,4 +79,11 @@ void SkyboxRenderSystem::ProcessNotify(NRenderSystemNotifyType type) {
 	if (type == NRenderSystemNotifyType::SkyboxActivationDeactivation) {
 		m_bIsNeedUpdateActiveSkybox.store(true, std::memory_order_relaxed);
 	}
+}
+
+FD3DW::FResource* SkyboxRenderSystem::GetActiveSkyboxTexture() {
+	if( !m_pActiveComponent || !m_pActiveComponent->Material() ) return nullptr;
+
+	auto texture = m_pActiveComponent->Material()->GetTexture(FD3DW::TextureType::BASE);
+	return texture.get();
 }

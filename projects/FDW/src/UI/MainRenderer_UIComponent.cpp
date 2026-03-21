@@ -6,7 +6,9 @@
 #include <backends/imgui_impl_win32.h>
 #include <MainRenderer/MainRenderer.h>
 #include <D3DFramework/GraphicUtilites/ResourcePacker.h>
+#include <Component/RenderObject/SkyboxComponent.h>
 #include <World/World.h>
+#include <Utilities/HelperFunctions.h>
 
 static const std::vector<std::wstring> s_vSupportedSceneExts = { L".gltf", L".fbx" };
 static const std::vector<std::wstring> s_vSupportedSkyboxExts = { L".hdr", L".dds", L".skybox" };
@@ -616,6 +618,9 @@ void MainRenderer_UIComponent::DrawComponentInspector(IComponent* comp) {
     else if (auto animation = dynamic_cast<AnimationComponent*>(comp)) {
         DrawAnimationComponentInspector(animation);
     }
+    else if (auto skybox = dynamic_cast<SkyboxComponent*>(comp)) {
+        DrawSkyboxComponentInspector(skybox);
+    }
     else if (auto audio = dynamic_cast<AudioComponent*>(comp)) {
         DrawAudioComponentInspector(audio);
     }
@@ -809,6 +814,7 @@ void MainRenderer_UIComponent::DrawWorld_AddEntity() {
     ImGui::Separator();
 
     if (ImGui::Button("Skybox...")) {
+        m_onSkyboxSelected = nullptr;
         m_bShowSkyboxBrowser = true;
     }
 
@@ -910,6 +916,28 @@ void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
         m_pOwner->EnablePreDepth(preDepth);
     }
 
+    bool iblEnabled = m_pOwner->IsEnabledIBL();
+    if (ImGui::Checkbox("Enable IBL", &iblEnabled)) {
+        m_pOwner->EnableIBL(iblEnabled);
+    }
+
+    if (iblEnabled) {
+        float diffuseIntensity = m_pOwner->GetIBLDiffuseIntensity();
+        if (ImGui::SliderFloat("IBL Diffuse Intensity", &diffuseIntensity, 0.0f, 4.0f)) {
+            m_pOwner->SetIBLDiffuseIntensity(diffuseIntensity);
+        }
+
+        float specularIntensity = m_pOwner->GetIBLSpecularIntensity();
+        if (ImGui::SliderFloat("IBL Specular Intensity", &specularIntensity, 0.0f, 4.0f)) {
+            m_pOwner->SetIBLSpecularIntensity(specularIntensity);
+        }
+
+        float maxReflectionMip = m_pOwner->GetIBLMaxReflectionMip();
+        if (ImGui::SliderFloat("IBL Max Reflection Mip", &maxReflectionMip, 0.0f, 16.0f)) {
+            m_pOwner->SetIBLMaxReflectionMip(maxReflectionMip);
+        }
+    }
+
     MeshCullingType cullingType = m_pOwner->GetMeshCullingType();
     int type = static_cast<int>(cullingType);
 
@@ -982,12 +1010,19 @@ void MainRenderer_UIComponent::TextureBrowser() {
 }
 
 void MainRenderer_UIComponent::SkyboxBrowser() {
+    auto wasOpen = m_bShowSkyboxBrowser;
     FileBrowser(
         m_bShowSkyboxBrowser,
         "Skybox Browser",
         m_xCurrentPath,
         s_vSupportedSkyboxExts,
         [this](const std::filesystem::path& path) {
+            if (m_onSkyboxSelected) {
+                auto onSelected = std::move(m_onSkyboxSelected);
+                m_onSkyboxSelected = nullptr;
+                onSelected(path);
+                return;
+            }
             AddCallToPull([this, path]() {
                 m_pOwner->GetWorld()->CreateSkybox(path.string());
                 });
@@ -996,6 +1031,10 @@ void MainRenderer_UIComponent::SkyboxBrowser() {
             return "Skybox ";
         }
     );
+
+    if (wasOpen && !m_bShowSkyboxBrowser && m_onSkyboxSelected) {
+        m_onSkyboxSelected = nullptr;
+    }
 }
 
 void MainRenderer_UIComponent::SceneBrowser() {
@@ -1089,7 +1128,7 @@ void MainRenderer_UIComponent::SceneFileBrowser(bool& isOpen, const std::string&
     for (const auto& entry : m_vEntries) {
         if (!entry.exists()) continue;
         const auto& path = entry.path();
-        std::wstring ext = path.extension().wstring();
+        std::wstring ext = FDWUtils::NormalizeExtension(path.extension().wstring());
         std::string label = WStringToUTF8(path.filename().wstring());
 
         if (entry.is_directory()) {
@@ -1161,7 +1200,7 @@ void MainRenderer_UIComponent::FileBrowser(
         if (!entry.exists()) continue;
 
         const auto& path = entry.path();
-        std::wstring ext = path.extension().wstring();
+        std::wstring ext = FDWUtils::NormalizeExtension(path.extension().wstring());
         std::string label = WStringToUTF8(path.filename().wstring());
 
         bool selected = false;
@@ -1274,6 +1313,25 @@ void MainRenderer_UIComponent::InitImGui() {
     colors[ImGuiCol_SliderGrabActive] = ImVec4(0.98f, 0.74f, 0.29f, 1.00f);
 
     m_bIsInited = true;
+}
+
+void MainRenderer_UIComponent::DrawSkyboxComponentInspector(SkyboxComponent* skyboxComponent) {
+    if (!skyboxComponent) return;
+
+    ImGui::SeparatorText("Skybox");
+
+    auto texturePath = skyboxComponent->PathToTexture();
+    ImGui::TextWrapped( "Texture: %s", texturePath.c_str() );
+
+    if( ImGui::Button("Set Skybox HDR/DDS...") ) {
+        m_bShowSkyboxBrowser = true;
+        
+        m_onSkyboxSelected = [this, skyboxComponent](const std::filesystem::path& path) {
+            if (!skyboxComponent) return;
+
+            skyboxComponent->SetupTexture(path.string(), m_pOwner->GetDevice(), m_pCurrentUIList);
+        };
+    }
 }
 
 void MainRenderer_UIComponent::RenderImGui(ID3D12GraphicsCommandList* list) {

@@ -27,6 +27,7 @@ public:
 	virtual std::shared_ptr<FD3DW::ExecutionHandle> OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync);
 	virtual std::shared_ptr<FD3DW::ExecutionHandle> RenderSkyboxPass(std::shared_ptr<FD3DW::ExecutionHandle> sync, SkyboxRenderPassInput input);
 	virtual void ProcessNotify(NRenderSystemNotifyType type) override;
+	FD3DW::FResource* GetActiveSkyboxTexture();
 
 
 protected:

@@ -12,7 +12,7 @@ struct PIXEL_OUTPUT
 
 ConstantBuffer<LightsHelper> LHelper : register(b0);
 StructuredBuffer<LightStruct> Lights : register(t0);
-StructuredBuffer<Cluster> Clusters : register(t11);
+StructuredBuffer<Cluster> Clusters : register(t12);
 ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
 
 Texture2D GBuffer_Normal : register(t1);        //x         , y         , z                 , empty
@@ -28,7 +28,10 @@ Texture2D<float4> LTC_Mat : register(t8);
 Texture2D<float2> LTC_Amp : register(t9);
 
 Texture2D ShadowFactorTexture : register(t10);
-StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t12);
+
+TextureCube IBL_SkyboxTexture : register(t11);
+
+StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t13);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
 SamplerState ss : register(s0);
@@ -94,6 +97,24 @@ float3 CalculatePBRLighting(
     float NdotL = max(dot(N, L), 0.0);
 
     return (kD * albedo / PI + specular) * radiance * NdotL;
+}
+
+float3 CalculateImageBasedLighting(float3 N, float3 V, float3 albedo, float metallic, float roughness, float ao, float3 F0) {
+    float NdotV = saturate(dot(N, V));
+    float3 kS = FresnelSchlickRoughness(NdotV, F0, roughness);
+    float3 kD = (1.0 - kS) * (1.0 - metallic);
+
+    float3 irradiance = IBL_SkyboxTexture.SampleLevel(ss, N, 0.0f).rgb;
+    float3 diffuse = irradiance * albedo;
+
+    float3 R = reflect(-V, N);
+    float mipLevel = saturate(roughness) * LHelper.IBLMaxReflectionMip;
+    float3 prefilteredColor = IBL_SkyboxTexture.SampleLevel(ss, R, mipLevel).rgb;
+    float3 specular = prefilteredColor * kS;
+
+    float3 diffuseTerm = kD * diffuse * LHelper.IBLDiffuseIntensity;
+    float3 specularTerm = specular * LHelper.IBLSpecularIntensity;
+    return (diffuseTerm + specularTerm) * ao;
 }
 
 LightAtlasMeta GetLightMeta(int id){
@@ -393,6 +414,9 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float emissiveFactor = emissiveTexture.w;
 
     float3 color = Lo * ao;
+    
+    if (LHelper.IsIBLEnabled != 0) color += CalculateImageBasedLighting(N, V, albedo, metallic, roughness, ao, F0);
+
     color += emissive * emissiveFactor;
     color = lerp(color, SELECTION_OUTLINE_COLOR, selectionOutline);
     

@@ -188,6 +188,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG				4
 #define LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG		5
 #define LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG		    6
+#define DEFFERED_SKYBOX_IBL_POS_IN_ROOT_SIG						7
 /////////////////////////////////////////////
 
 /////////////////////////////////////////////
@@ -247,7 +248,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 /////////////////////////////////////////////
 ///////    DEFFERED SECOND PASS SRV HEAP LOCATIONS  
 
-#define COUNT_SRV_IN_GBUFFER_HEAP 10
+#define COUNT_SRV_IN_GBUFFER_HEAP 11
 
 #define GBUFFER_NORMAL_LOCATION_IN_HEAP 0
 #define GBUFFER_ALBEDO_LOCATION_IN_HEAP 1
@@ -260,6 +261,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define LIGHTS_LTC_MAT_LOCATION_IN_HEAP 7
 #define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 8
 #define SHADOW_FACTOR_LOCATION_IN_HEAP 9
+#define IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP 10
 
 
 ////////////////////////////////////////////
@@ -302,6 +304,8 @@ const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device);
 ////////////////////////////////////////////
 #define LIGHTS_LTC_TEXTURES_PATH_MAT "Content/LTC/ltc_mat.dds"
 #define LIGHTS_LTC_TEXTURES_PATH_AMP "Content/LTC/ltc_amp.dds"
+
+#define LIGHTS_IBL_FALLBACK_TEXTURE_PATH "Content/Skybox/Moon.dds"
 
 
 ////////////////////////////////////////////

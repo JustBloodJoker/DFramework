@@ -14,4 +14,10 @@ namespace FDWUtils {
 		return normalized.generic_string();
 	}
 
+	std::wstring NormalizeExtension(std::wstring extension) {
+		std::transform(extension.begin(), extension.end(), extension.begin(), [](wchar_t ch) {
+			return std::towlower(ch);
+		});
+		return extension;
+	}
 }

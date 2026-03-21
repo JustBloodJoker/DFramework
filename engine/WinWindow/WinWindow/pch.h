@@ -31,6 +31,7 @@
 #include <sstream>
 #include <stack>
 #include <limits>
+#include <cwctype>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>

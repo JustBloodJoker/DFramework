@@ -33,6 +33,7 @@ public:
 
 public:
 	std::string PathToTexture() const;
+	void SetupTexture(const std::string& path, ID3D12Device* device, ID3D12GraphicsCommandList* list);
 	FD3DW::SRV_UAVPacker* SRVPack() const;
 	FD3DW::Material* Material() const;
 	FD3DW::Cube* Cube() const;

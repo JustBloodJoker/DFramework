@@ -68,7 +68,7 @@ namespace FD3DW
         {
             CONSOLE_MESSAGE(std::string("CREATING TEXTURE WITH PATH: " + path));
             std::filesystem::path pt(path);
-            std::string extension = pt.extension().string();
+            std::string extension = ToLowerASCII(pt.extension().string());
             if (extension == ".dds")
             {
                 TextureDataOutput resultData;
@@ -80,7 +80,41 @@ namespace FD3DW
             }
             else if (extension == ".hdr")
             {
-                SAFE_ASSERT(false, "hdr texture parser not impl");
+                auto width = 0;
+                auto height = 0;
+                auto channels = 0;
+                auto hdrData = stbi_loadf(path.c_str(), &width, &height, &channels, 0);
+                SAFE_ASSERT(hdrData, std::string("HDR load failed: " + path).c_str());
+                if (!hdrData) return;
+
+                auto faceSize = ComputeHDRCubemapFaceSize(width, height);
+                SAFE_ASSERT( faceSize>0, std::string("Unsupported HDR size for cubemap: "+path).c_str() );
+                if(faceSize==0) {
+                    stbi_image_free(hdrData);
+                    return;
+                }
+
+                std::vector<float> cubemapPixels = ConvertEquirectHDRToCubemap(hdrData, width, height, channels, faceSize);
+                stbi_image_free(hdrData);
+
+                CreateTextureBuffer(
+                    pDevice,
+                    6,
+                    DXGI_FORMAT_R32G32B32A32_FLOAT,
+                    faceSize,
+                    faceSize,
+                    DXGI_SAMPLE_DESC({ 1, 0 }),
+                    D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                    D3D12_RESOURCE_FLAG_NONE,
+                    D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                    D3D12_HEAP_FLAG_NONE,
+                    &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+                    1u,
+                    false
+                );
+
+
+                UploadData(pDevice, pCommandList, cubemapPixels.data());
             }
             else if (extension == ".tga")
             {
@@ -88,7 +122,9 @@ namespace FD3DW
             }
             else
             {
-                int width, height, channels;
+                auto width = 0;
+                auto height = 0;
+                auto channels = 0;
                 unsigned char* dat = stbi_load(path.c_str(), &width, &height, &channels, 0);
                 
                 if (channels == 3) {
@@ -153,6 +189,128 @@ namespace FD3DW
         ptr = std::shared_ptr<FResource>(new FResource(path, pDevice, pCommandList));
         s_vTextures.emplace(path, std::weak_ptr<FResource>(ptr));
         return ptr;
+    }
+
+    dx::XMFLOAT3 FResource::ReadHDRTexel(const float* data, int width, int height, int channels, int x, int y) {
+        x = std::clamp(x, 0, width - 1);
+        y = std::clamp(y, 0, height - 1);
+
+        auto pixelOffset = (y * width + x) * channels;
+        dx::XMFLOAT3 result;
+        if (channels == 1) {
+            result.x = data[pixelOffset];
+            result.y = result.x;
+            result.z = result.x;
+            return result;
+        }
+        if (channels == 2) {
+            result.x = data[pixelOffset + 0];
+            result.y = data[pixelOffset + 1];
+            result.z = result.x;
+            return result;
+        }
+
+        result.x = data[pixelOffset + 0];
+        result.y = data[pixelOffset + 1];
+        result.z = data[pixelOffset + 2];
+        return result;
+    }
+
+    dx::XMFLOAT3 FResource::LerpHDRColor(const dx::XMFLOAT3& a, const dx::XMFLOAT3& b, float t) {
+        dx::XMFLOAT3 result;
+        result.x = a.x + (b.x - a.x) * t;
+        result.y = a.y + (b.y - a.y) * t;
+        result.z = a.z + (b.z - a.z) * t;
+        return result;
+    }
+
+    dx::XMFLOAT3 FResource::SampleEquirectHDRBilinear(const float* data, int width, int height, int channels, float u, float v) {
+        u = FD3DW::WrapUnit(u);
+        v = std::clamp(v, 0.0f, 1.0f);
+
+        const float x = u * float(width - 1);
+        const float y = v * float(height - 1);
+
+        const int x0 = int(std::floor(x));
+        const int y0 = int(std::floor(y));
+        const int x1 = (x0 + 1) % width;
+        const int y1 = std::min(y0 + 1, height - 1);
+
+        const float tx = x - float(x0);
+        const float ty = y - float(y0);
+
+        const dx::XMFLOAT3 c00 = ReadHDRTexel(data, width, height, channels, x0, y0);
+        const dx::XMFLOAT3 c10 = ReadHDRTexel(data, width, height, channels, x1, y0);
+        const dx::XMFLOAT3 c01 = ReadHDRTexel(data, width, height, channels, x0, y1);
+        const dx::XMFLOAT3 c11 = ReadHDRTexel(data, width, height, channels, x1, y1);
+
+        const dx::XMFLOAT3 cx0 = LerpHDRColor(c00, c10, tx);
+        const dx::XMFLOAT3 cx1 = LerpHDRColor(c01, c11, tx);
+        return LerpHDRColor(cx0, cx1, ty);
+    }
+
+    std::vector<float> FResource::ConvertEquirectHDRToCubemap(const float* hdrData, int hdrWidth, int hdrHeight, int hdrChannels, UINT faceSize) {
+        auto floatCountPerFace = faceSize * faceSize * 4u;
+        std::vector<float> result(floatCountPerFace * 6u, 0.0f);
+
+        for (auto face = 0; face < 6; ++face) {
+            float* dstFace = result.data() + face * floatCountPerFace;
+
+            for (auto y = 0; y < faceSize; ++y) {
+                for (auto x = 0; x < faceSize; ++x) {
+                    auto nx = ((float(x) + 0.5f) / float(faceSize)) * 2.0f - 1.0f;
+                    auto ny = 1.0f - ((float(y) + 0.5f) / float(faceSize)) * 2.0f;
+
+                    auto dir = CubemapDirectionFromFaceUV(face, nx, ny);
+
+                    auto longitude = std::atan2(dir.z, dir.x);
+                    auto latitude = std::asin(std::clamp(dir.y, -1.0f, 1.0f));
+
+                    auto u = longitude / (2.0f * M_PI_F) + 0.5f;
+                    auto v = 0.5f - (latitude / M_PI_F);
+
+                    auto sample = SampleEquirectHDRBilinear(hdrData, hdrWidth, hdrHeight, hdrChannels, u, v);
+
+                    auto dstIndex = (y * faceSize + x) * 4u;
+                    dstFace[dstIndex + 0] = sample.x;
+                    dstFace[dstIndex + 1] = sample.y;
+                    dstFace[dstIndex + 2] = sample.z;
+                    dstFace[dstIndex + 3] = 1.0f;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    dx::XMFLOAT3 FResource::NormalizeDirection(const dx::XMFLOAT3& dir) {
+        auto lenSq = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
+        if (lenSq <= 1e-12f) return dx::XMFLOAT3(0.0f, 0.0f, 1.0f);
+
+        auto invLen = 1.0f / std::sqrt(lenSq);
+        return dx::XMFLOAT3(dir.x*invLen, dir.y*invLen, dir.z*invLen);
+    }
+
+    dx::XMFLOAT3 FResource::CubemapDirectionFromFaceUV(UINT face, float u, float v) {
+        switch (face) {
+            case 0: return NormalizeDirection(dx::XMFLOAT3(1.0f, v, -u));
+            case 1: return NormalizeDirection(dx::XMFLOAT3(-1.0f, v, u));
+            case 2: return NormalizeDirection(dx::XMFLOAT3(u, 1.0f, -v));
+            case 3: return NormalizeDirection(dx::XMFLOAT3(u, -1.0f, v));
+            case 4: return NormalizeDirection(dx::XMFLOAT3(u, v, 1.0f));
+            default:return NormalizeDirection(dx::XMFLOAT3(-u, v, -1.0f));
+        }
+    }
+
+    UINT FResource::ComputeHDRCubemapFaceSize(int hdrWidth, int hdrHeight) {
+        if(hdrWidth<=0 || hdrHeight<=0) return 0;
+
+        auto maxFaceSize = std::min(hdrWidth/4, hdrHeight/2);
+        if(maxFaceSize <= 0) return 0;
+
+        auto pow2Size = 1;
+        while( (pow2Size << 1)<=maxFaceSize )pow2Size <<= 1;
+        return pow2Size;
     }
 
     FResource::FResource(ID3D12Device* pDevice, const UINT16 arraySize, const DXGI_FORMAT format, const UINT width, const UINT height, DXGI_SAMPLE_DESC sampleDesc, const D3D12_RESOURCE_DIMENSION dimension, const D3D12_RESOURCE_FLAGS resourceFlags, const D3D12_TEXTURE_LAYOUT layout, const D3D12_HEAP_FLAGS heapFlags, const D3D12_HEAP_PROPERTIES* heapProperties, const UINT16 mipLevels)

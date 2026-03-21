@@ -6,13 +6,16 @@
 
 class MainRenderer;
 
-namespace FD3DW { class SRV_UAVPacker; }
+namespace FD3DW { 
+    class SRV_UAVPacker; 
+}
 
 class IComponent;
 class LightComponent;
 class MeshComponent;
 class AnimationComponent;
 class AudioComponent;
+class SkyboxComponent;
 
 class ComponentHolder;
 class TLight;
@@ -92,6 +95,7 @@ private:
 
     void DrawMeshComponentInspector(MeshComponent* meshComponent);
     void DrawAnimationComponentInspector(AnimationComponent* animComponent);
+    void DrawSkyboxComponentInspector(SkyboxComponent* skyboxComponent);
 
     void DrawAudioComponentInspector(AudioComponent* audio);
 
@@ -157,6 +161,7 @@ private:
 
     bool m_bShowTextureBrowser = false;
     std::function<void(const std::filesystem::path&)> m_onTextureSelected;
+    std::function<void(const std::filesystem::path&)> m_onSkyboxSelected;
 
     bool m_bShowSaveWorldBrowser = false;
     bool m_bShowLoadWorldBrowser = false;

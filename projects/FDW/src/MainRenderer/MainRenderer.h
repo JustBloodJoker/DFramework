@@ -38,16 +38,34 @@ public:
 	FD3DW::BaseCommandQueue* UserSwapchainCommandQueue(ID3D12Device* device) override;
 
 	UINT GetFrameIndex();
+
 	bool IsEnabledPreDepth();
 	void EnablePreDepth(bool in);
+
 	bool IsEnabledBloom();
 	void EnableBloom(bool b);
+
 	bool IsEnabledTAA();
 	void EnableTAA(bool b);
+
 	bool IsEnabledJitter();
 	void EnableJitter(bool b);
+
 	bool IsLinkJitterToTAAEnabled() const;
 	void EnableLinkJitterToTAA(bool b);
+
+	bool IsEnabledIBL();
+	void EnableIBL(bool b);
+
+	float GetIBLDiffuseIntensity() const;
+	void SetIBLDiffuseIntensity(float value);
+
+	float GetIBLSpecularIntensity() const;
+	void SetIBLSpecularIntensity(float value);
+
+	float GetIBLMaxReflectionMip() const;
+	void SetIBLMaxReflectionMip(float value);
+
 	FLOAT* GetClearColor();
 
 public:
@@ -123,6 +141,9 @@ public: //SELECTION
 	ComponentHolder* PickEntityAtScreenPoint(int mouseX, int mouseY);
 	MeshComponent* PickMeshComponentAtScreenPoint(int mouseX, int mouseY);
 	bool RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XMFLOAT3& rayDir, const dx::XMFLOAT3& boundsMin, const dx::XMFLOAT3& boundsMax, float& outDistance);
+
+public:
+	void UpdateIBLResource();
 
 public:
 	FD3DW::FResource* GetShadingResultResource();
@@ -213,6 +234,7 @@ protected:
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
 
 	std::vector< std::shared_ptr<FD3DW::FResource>> m_vLCTResources;
+	std::shared_ptr<FD3DW::FResource> m_pFallbackIBLSkyboxResource;
 
 	UINT m_uCurrentDSVIndex = 0;
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV[2];

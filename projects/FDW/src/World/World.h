@@ -98,6 +98,10 @@ public:
     void SetBloomThreshold(float threshold);
     void SetBloomIntensity(float intensity);
     void SetBloomBlurType(int blurType);
+    void SetIBLEnabled(int enabled);
+    void SetIBLDiffuseIntensity(float intensity);
+    void SetIBLSpecularIntensity(float intensity);
+    void SetIBLMaxReflectionMip(float value);
     void LoadWorldFile(std::string path);
     void SaveWorldFile(std::string path);
 
@@ -247,6 +251,10 @@ public:
         REFLECT_METHOD(SetBloomThreshold)
         REFLECT_METHOD(SetBloomIntensity)
         REFLECT_METHOD(SetBloomBlurType)
+        REFLECT_METHOD(SetIBLEnabled)
+        REFLECT_METHOD(SetIBLDiffuseIntensity)
+        REFLECT_METHOD(SetIBLSpecularIntensity)
+        REFLECT_METHOD(SetIBLMaxReflectionMip)
         REFLECT_METHOD(LoadWorldFile)
         REFLECT_METHOD(SaveWorldFile)
         REFLECT_METHOD(ExecuteScriptFile)

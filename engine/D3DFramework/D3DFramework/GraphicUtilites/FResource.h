@@ -98,6 +98,16 @@ namespace FD3DW
 		
 		D3D12_RESOURCE_STATES GetCurrentState() const;
 
+	protected:
+		//HDR PARSER UTILS
+		dx::XMFLOAT3 ReadHDRTexel(const float* data, int width, int height, int channels, int x, int y);
+		dx::XMFLOAT3 LerpHDRColor(const dx::XMFLOAT3& a, const dx::XMFLOAT3& b, float t);
+		dx::XMFLOAT3 SampleEquirectHDRBilinear(const float* data, int width, int height, int channels, float u, float v);
+		std::vector<float> ConvertEquirectHDRToCubemap(const float* hdrData, int hdrWidth, int hdrHeight, int hdrChannels, UINT faceSize);
+		dx::XMFLOAT3 NormalizeDirection(const dx::XMFLOAT3& dir);
+		dx::XMFLOAT3 CubemapDirectionFromFaceUV(UINT face, float u, float v);
+		UINT ComputeHDRCubemapFaceSize(int hdrWidth, int hdrHeight);
+
 	private:
 		D3D12_RESOURCE_STATES m_xCurrState;
 

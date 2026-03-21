@@ -4,4 +4,5 @@
 
 namespace FDWUtils {
 	std::string NormalizePath(const std::string& path);
+	std::wstring NormalizeExtension(std::wstring extension);
 }

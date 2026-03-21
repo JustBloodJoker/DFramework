@@ -49,6 +49,22 @@ void SkyboxComponent::Activate(bool a) {
 
 std::string SkyboxComponent::PathToTexture() const { return m_sPathToTexture; }
 
+void SkyboxComponent::SetupTexture(const std::string& path, ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	if( path.empty() ) return;
+
+	m_sPathToTexture = path;
+	m_sName = m_sPathToTexture;
+
+	if (!m_pMaterial) m_pMaterial = std::make_unique<FD3DW::Material>();
+	m_pMaterial->SetTexture(m_sPathToTexture, FD3DW::TextureType::BASE, device, list);
+
+	if (!m_pSRVPack) {
+		auto cbvsrvuavSize = GetCBV_SRV_UAVDescriptorSize(device);
+		m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavSize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+	}
+	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURECUBE, 0, device);
+}
+
 FD3DW::SRV_UAVPacker* SkyboxComponent::SRVPack() const { return m_pSRVPack.get(); }
 
 FD3DW::Material* SkyboxComponent::Material() const { return m_pMaterial.get(); }

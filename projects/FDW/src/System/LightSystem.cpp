@@ -30,6 +30,38 @@ const std::vector<LightComponentData>& LightSystem::GetLightComponentsData() con
     return m_vLightComponentsData; 
 }
 
+bool LightSystem::IsEnabledIBL() {
+    return m_bIsIBLEnabled;
+}
+
+void LightSystem::EnableIBL(bool b) {
+    m_bIsIBLEnabled = b;
+}
+
+float LightSystem::GetIBLDiffuseIntensity() const {
+    return m_fIBLDiffuseIntensity;
+}
+
+void LightSystem::SetIBLDiffuseIntensity(float value) {
+    m_fIBLDiffuseIntensity = std::max(0.0f, value);
+}
+
+float LightSystem::GetIBLSpecularIntensity() const {
+    return m_fIBLSpecularIntensity;
+}
+
+void LightSystem::SetIBLSpecularIntensity(float value) {
+    m_fIBLSpecularIntensity = std::max(0.0f, value);
+}
+
+float LightSystem::GetIBLMaxReflectionMip() const {
+    return m_fIBLMaxReflectionMip;
+}
+
+void LightSystem::SetIBLMaxReflectionMip(float value) {
+    m_fIBLMaxReflectionMip = std::clamp(value, 0.0f, 16.0f);
+}
+
 std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle) {
     auto updateRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, 
         [this](ID3D12GraphicsCommandList* list) mutable {
@@ -40,6 +72,10 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
             m_xLightBuffer.ZNear = m_pOwner->GetCameraFrustum().GetZNear();
 			m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
 			m_xLightBuffer.FrameIndex = m_pOwner->GetFrameIndex();
+			m_xLightBuffer.IsIBLEnabled = int(m_pOwner->IsEnabledIBL());
+			m_xLightBuffer.IBLDiffuseIntensity = m_pOwner->GetIBLDiffuseIntensity();
+			m_xLightBuffer.IBLSpecularIntensity = m_pOwner->GetIBLSpecularIntensity();
+			m_xLightBuffer.IBLMaxReflectionMip = m_pOwner->GetIBLMaxReflectionMip();
 			m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse( nullptr, dx::XMMatrixTranspose( m_pOwner->GetJitteredViewProjectionMatrix() ) );
 
             if (m_bIsNeedUpdateDataInBuffer.exchange(false, std::memory_order_acq_rel)) {
