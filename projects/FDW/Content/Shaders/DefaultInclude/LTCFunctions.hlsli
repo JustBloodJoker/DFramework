@@ -43,7 +43,17 @@ float3 IntegrateEdgeVec(float3 v1, float3 v2)
 float3 LTCEvaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
 {
     float3 T1, T2;
-    T1 = normalize(V - N * dot(V, N));
+    T1 = V - N * dot(V, N);
+    float t1LenSq = dot(T1, T1);
+    if (t1LenSq < 1e-7f)
+    {
+        float3 fallbackAxis = (abs(N.z) < 0.999f) ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
+        T1 = normalize(cross(fallbackAxis, N));
+    }
+    else
+    {
+        T1 *= rsqrt(t1LenSq);
+    }
     T2 = cross(N, T1);
 
     Minv = mul(Minv, (float3x3(T1, T2, N)));

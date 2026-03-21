@@ -413,7 +413,7 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float3 emissive = emissiveTexture.rgb;
     float emissiveFactor = emissiveTexture.w;
 
-    float3 color = Lo * ao;
+    float3 color = Lo;
     
     if (LHelper.IsIBLEnabled != 0) color += CalculateImageBasedLighting(N, V, albedo, metallic, roughness, ao, F0);
 
