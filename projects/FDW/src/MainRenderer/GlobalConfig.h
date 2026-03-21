@@ -128,6 +128,15 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define PRE_DEPTH_ANIMATIONS_CONSTANT_BUFFER_IN_ROOT_SIG		1
 ////////////////////////////////////////////
 
+
+////////////////////////////////////////////
+//  IBL DATA BINDS
+
+#define IBL_BRDF_LUT_SIZE 256
+#define IBL_BRDF_LUT_SAMPLES 256
+
+////////////////////////////////////////////
+
 ////////////////////////////////////////////
 //   CLUSTERED SHADING PASS BINDS
 #define CLUSTERED_THREADS_PER_GROUP_X_1		1
@@ -248,7 +257,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 /////////////////////////////////////////////
 ///////    DEFFERED SECOND PASS SRV HEAP LOCATIONS  
 
-#define COUNT_SRV_IN_GBUFFER_HEAP 11
+#define COUNT_SRV_IN_GBUFFER_HEAP 12
 
 #define GBUFFER_NORMAL_LOCATION_IN_HEAP 0
 #define GBUFFER_ALBEDO_LOCATION_IN_HEAP 1
@@ -262,6 +271,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define LIGHTS_LTC_AMP_LOCATION_IN_HEAP 8
 #define SHADOW_FACTOR_LOCATION_IN_HEAP 9
 #define IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP 10
+#define IBL_BRDF_LUT_LOCATION_IN_HEAP 11
 
 
 ////////////////////////////////////////////

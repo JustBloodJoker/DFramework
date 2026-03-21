@@ -88,14 +88,57 @@ namespace FD3DW
                 if (!hdrData) return;
 
                 auto faceSize = ComputeHDRCubemapFaceSize(width, height);
-                SAFE_ASSERT( faceSize>0, std::string("Unsupported HDR size for cubemap: "+path).c_str() );
-                if(faceSize==0) {
+                SAFE_ASSERT( (faceSize > 0u), std::string("Unsupported HDR size for cubemap: " + path).c_str());
+                if(faceSize==0u) {
                     stbi_image_free(hdrData);
                     return;
                 }
 
                 std::vector<float> cubemapPixels = ConvertEquirectHDRToCubemap(hdrData, width, height, channels, faceSize);
                 stbi_image_free(hdrData);
+
+                auto mipLevels = std::max(1u, CalculateMipCount(faceSize, faceSize));
+                auto subresourceCount = 6u * mipLevels;
+
+                std::vector<std::vector<float>> faceMipPixels(subresourceCount);
+                auto mip0FaceFloatCount = size_t(faceSize) * size_t(faceSize) * 4u;
+                for (auto face = 0; face < 6u; ++face) {
+                    auto subresourceIndex = face * mipLevels;
+                    auto& dstMip = faceMipPixels[subresourceIndex];
+                    dstMip.resize(mip0FaceFloatCount);
+                    auto srcFace = cubemapPixels.data() + face * mip0FaceFloatCount;
+                    std::memcpy( dstMip.data(), srcFace, mip0FaceFloatCount * sizeof(float) );
+                }
+
+                for (auto face = 0; face < 6u; ++face) {
+                    for (auto mip = 1u; mip < mipLevels; ++mip) {
+                        auto prevSize = std::max(1u, faceSize >> (mip - 1u));
+                        auto currSize = std::max(1u, faceSize >> mip);
+
+                        const auto& prevMip = faceMipPixels[(mip - 1u) + face * mipLevels];
+                        auto& currMip = faceMipPixels[mip + face * mipLevels];
+                        currMip.resize(size_t(currSize) * size_t(currSize) * 4u, 0.0f);
+
+                        for (unsigned y = 0; y < currSize; ++y) {
+                            for (unsigned x = 0; x < currSize; ++x) {
+                                auto srcX0 = std::min(x * 2u + 0u, prevSize - 1u);
+                                auto srcX1 = std::min(x * 2u + 1u, prevSize - 1u);
+                                auto srcY0 = std::min(y * 2u + 0u, prevSize - 1u);
+                                auto srcY1 = std::min(y * 2u + 1u, prevSize - 1u);
+
+                                auto dstIndex = (y * currSize + x) * 4u;
+                                auto s00 = (srcY0 * prevSize + srcX0) * 4u;
+                                auto s10 = (srcY0 * prevSize + srcX1) * 4u;
+                                auto s01 = (srcY1 * prevSize + srcX0) * 4u;
+                                auto s11 = (srcY1 * prevSize + srcX1) * 4u;
+
+                                for (auto c = 0; c < 4u; ++c) {
+                                    currMip[dstIndex + c] = 0.25f * (prevMip[s00 + c] + prevMip[s10 + c] +prevMip[s01 + c] +prevMip[s11 + c]);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 CreateTextureBuffer(
                     pDevice,
@@ -109,12 +152,30 @@ namespace FD3DW
                     D3D12_TEXTURE_LAYOUT_UNKNOWN,
                     D3D12_HEAP_FLAG_NONE,
                     &keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
-                    1u,
+                    UINT16(mipLevels),
                     false
                 );
 
+                auto uploadBufferSize = GetRequiredIntermediateSize(m_pResource.Get(), 0, subresourceCount);
+                m_pUploadBuffer = std::make_unique<UploadBuffer<char>>(pDevice, static_cast<UINT>(uploadBufferSize), false);
 
-                UploadData(pDevice, pCommandList, cubemapPixels.data());
+                std::vector<D3D12_SUBRESOURCE_DATA> subresources(subresourceCount);
+                for (auto face = 0; face < 6u; ++face) {
+                    for (auto mip = 0u; mip < mipLevels; ++mip) {
+                        auto mipSize = std::max(1u, faceSize >> mip);
+                        auto subresourceIndex = mip + face * mipLevels;
+                        auto rowPitch = UINT64(mipSize) * 4u * sizeof(float);
+                        auto slicePitch = rowPitch * UINT64(mipSize);
+
+                        subresources[subresourceIndex].pData = faceMipPixels[subresourceIndex].data();
+                        subresources[subresourceIndex].RowPitch = static_cast<LONG_PTR>(rowPitch);
+                        subresources[subresourceIndex].SlicePitch = static_cast<LONG_PTR>(slicePitch);
+                    }
+                }
+
+                ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_COPY_DEST);
+                UpdateSubresources( pCommandList, m_pResource.Get(),m_pUploadBuffer->GetResource(),0,0,subresourceCount,subresources.data());
+                ResourceBarrierChange(pCommandList, 1, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
             }
             else if (extension == ".tga")
             {
@@ -256,8 +317,8 @@ namespace FD3DW
         for (auto face = 0; face < 6; ++face) {
             float* dstFace = result.data() + face * floatCountPerFace;
 
-            for (auto y = 0; y < faceSize; ++y) {
-                for (auto x = 0; x < faceSize; ++x) {
+            for (unsigned y = 0; y < faceSize; ++y) {
+                for (unsigned x = 0; x < faceSize; ++x) {
                     auto nx = ((float(x) + 0.5f) / float(faceSize)) * 2.0f - 1.0f;
                     auto ny = 1.0f - ((float(y) + 0.5f) / float(faceSize)) * 2.0f;
 
@@ -283,22 +344,14 @@ namespace FD3DW
         return result;
     }
 
-    dx::XMFLOAT3 FResource::NormalizeDirection(const dx::XMFLOAT3& dir) {
-        auto lenSq = dir.x * dir.x + dir.y * dir.y + dir.z * dir.z;
-        if (lenSq <= 1e-12f) return dx::XMFLOAT3(0.0f, 0.0f, 1.0f);
-
-        auto invLen = 1.0f / std::sqrt(lenSq);
-        return dx::XMFLOAT3(dir.x*invLen, dir.y*invLen, dir.z*invLen);
-    }
-
     dx::XMFLOAT3 FResource::CubemapDirectionFromFaceUV(UINT face, float u, float v) {
         switch (face) {
-            case 0: return NormalizeDirection(dx::XMFLOAT3(1.0f, v, -u));
-            case 1: return NormalizeDirection(dx::XMFLOAT3(-1.0f, v, u));
-            case 2: return NormalizeDirection(dx::XMFLOAT3(u, 1.0f, -v));
-            case 3: return NormalizeDirection(dx::XMFLOAT3(u, -1.0f, v));
-            case 4: return NormalizeDirection(dx::XMFLOAT3(u, v, 1.0f));
-            default:return NormalizeDirection(dx::XMFLOAT3(-u, v, -1.0f));
+            case 0: return Normalize3(dx::XMFLOAT3(1.0f, v, -u));
+            case 1: return Normalize3(dx::XMFLOAT3(-1.0f, v, u));
+            case 2: return Normalize3(dx::XMFLOAT3(u, 1.0f, -v));
+            case 3: return Normalize3(dx::XMFLOAT3(u, -1.0f, v));
+            case 4: return Normalize3(dx::XMFLOAT3(u, v, 1.0f));
+            default:return Normalize3(dx::XMFLOAT3(-u, v, -1.0f));
         }
     }
 

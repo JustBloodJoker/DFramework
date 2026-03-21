@@ -144,6 +144,7 @@ public: //SELECTION
 
 public:
 	void UpdateIBLResource();
+	void UpdateIBL_LUT_Resource();
 
 public:
 	FD3DW::FResource* GetShadingResultResource();

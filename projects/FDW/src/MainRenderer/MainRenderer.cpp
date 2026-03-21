@@ -38,6 +38,7 @@ void MainRenderer::UserInit()
 	
 	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
+	m_pGBuffersSRVPack->AddNullResource(IBL_BRDF_LUT_LOCATION_IN_HEAP, device);
 
 	for (const auto& format : gBufferFormats) {
 		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, sceneWidth, sceneHeight));
@@ -190,8 +191,7 @@ void MainRenderer::UserLoop()
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
 		m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, GetDevice());
-		UpdateIBLResource();
-
+		
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
@@ -478,6 +478,10 @@ void MainRenderer::UpdateIBLResource() {
 	if (iblSkyboxTexture && iblSkyboxTexture->GetResource()) {
 		m_pGBuffersSRVPack->AddResource(iblSkyboxTexture->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, GetDevice());
 	}
+}
+
+void MainRenderer::UpdateIBL_LUT_Resource() {
+	m_pGBuffersSRVPack->AddResource(m_pLightSystem->GetIBLBrdfLUTResource()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, IBL_BRDF_LUT_LOCATION_IN_HEAP, GetDevice());
 }
 
 ComponentHolder* MainRenderer::GetSelectedEntity() const {
@@ -933,6 +937,7 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
 	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
+	m_pGBuffersSRVPack->AddNullResource(IBL_BRDF_LUT_LOCATION_IN_HEAP, device);
 
 	for (const auto& format : gBufferFormats) {
 		auto gbuffer = CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, width, height);
@@ -942,6 +947,9 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	}
 
 	m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
+	if (m_pLightSystem->GetIBLBrdfLUTResource()) {
+		m_pGBuffersSRVPack->AddResource(m_pLightSystem->GetIBLBrdfLUTResource()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, IBL_BRDF_LUT_LOCATION_IN_HEAP, device);
+	}
 	if (m_vLCTResources.size() > 0 && m_vLCTResources[0]) {
 		m_pGBuffersSRVPack->AddResource(m_vLCTResources[0]->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
 	}

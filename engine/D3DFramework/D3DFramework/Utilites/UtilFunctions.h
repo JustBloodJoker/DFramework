@@ -2,7 +2,6 @@
 #include "../pch.h"
 
 
-
 namespace FD3DW
 {
 
@@ -109,6 +108,31 @@ namespace FD3DW
 			return char(std::tolower(c));
 		});
 		return value;
+	}
+
+	inline float Clamp01(float value) {
+		if (value < 0.0f) return 0.0f;
+		if (value > 1.0f) return 1.0f;
+		return value;
+	}
+
+	inline float Dot3(const dx::XMFLOAT3& a, const dx::XMFLOAT3& b) {
+		return a.x * b.x + a.y * b.y + a.z * b.z;
+	}
+
+	inline dx::XMFLOAT3 Add3(const dx::XMFLOAT3& a, const dx::XMFLOAT3& b) {
+		return dx::XMFLOAT3(a.x + b.x, a.y + b.y, a.z + b.z);
+	}
+
+	inline dx::XMFLOAT3 Scale3(const dx::XMFLOAT3& value, float scale) {
+		return dx::XMFLOAT3(value.x * scale, value.y * scale, value.z * scale);
+	}
+
+	inline dx::XMFLOAT3 Normalize3(const dx::XMFLOAT3& value) {
+		auto lenSq = Dot3(value, value);
+		if (lenSq <= 1e-12f) return dx::XMFLOAT3(0.0f, 0.0f, 1.0f);
+		auto invLen = 1.0f / std::sqrt(lenSq);
+		return Scale3(value, invLen);
 	}
 
 	inline UINT AlignForUavCounter(UINT bufferSize)
