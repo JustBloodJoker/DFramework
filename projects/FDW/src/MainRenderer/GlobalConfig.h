@@ -315,7 +315,7 @@ const UINT& GetCBV_SRV_UAVDescriptorSize(ID3D12Device* device);
 #define LIGHTS_LTC_TEXTURES_PATH_MAT "Content/LTC/ltc_mat.dds"
 #define LIGHTS_LTC_TEXTURES_PATH_AMP "Content/LTC/ltc_amp.dds"
 
-#define LIGHTS_IBL_FALLBACK_TEXTURE_PATH "Content/Skybox/Moon.dds"
+//#define LIGHTS_IBL_FALLBACK_TEXTURE_PATH "Content/Skybox/Moon.dds"
 
 
 ////////////////////////////////////////////

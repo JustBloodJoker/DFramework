@@ -59,8 +59,11 @@ void MainRenderer::UserInit()
 		auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
 		m_pGBuffersSRVPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
 
+#ifdef LIGHTS_IBL_FALLBACK_TEXTURE_PATH
 		m_pFallbackIBLSkyboxResource = FD3DW::FResource::CreateTextureFromPath(LIGHTS_IBL_FALLBACK_TEXTURE_PATH, device, list);
 		m_pGBuffersSRVPack->AddResource(m_pFallbackIBLSkyboxResource->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
+#endif
+
 
 		m_vLCTResources.push_back(LTCMat);
 		m_vLCTResources.push_back(LTCAmp);
@@ -473,7 +476,7 @@ bool MainRenderer::RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XM
 
 void MainRenderer::UpdateIBLResource() {
 	auto iblSkyboxTexture = m_pSkyboxRenderSystem->GetActiveSkyboxTexture();
-	if (!iblSkyboxTexture) iblSkyboxTexture = m_pFallbackIBLSkyboxResource.get();
+	if (!iblSkyboxTexture && m_pFallbackIBLSkyboxResource) iblSkyboxTexture = m_pFallbackIBLSkyboxResource.get();
 
 	if (iblSkyboxTexture && iblSkyboxTexture->GetResource()) {
 		m_pGBuffersSRVPack->AddResource(iblSkyboxTexture->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, GetDevice());

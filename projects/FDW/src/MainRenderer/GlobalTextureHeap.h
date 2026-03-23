@@ -18,26 +18,27 @@ public:
 	void RemoveTexture(FD3DW::FResource* resource, ID3D12Device* device);
 	void CleanupExpired(ID3D12Device* device);
 	size_t GetIndex(FD3DW::FResource* resource) const;
-
 private:
 
-	struct WeakPtrHash {
-		size_t operator()(const std::weak_ptr<FD3DW::FResource>& w) const noexcept;
+	struct ResourceEntry
+	{
+		std::weak_ptr<FD3DW::FResource> Resource;
+		size_t Index = std::numeric_limits<size_t>::max();
 	};
 
-	struct WeakPtrEqual {
-		bool operator()(const std::weak_ptr<FD3DW::FResource>& a, const std::weak_ptr<FD3DW::FResource>& b) const noexcept;
-	};
-
-	using IndicesMapType = std::unordered_map<std::weak_ptr<FD3DW::FResource>, size_t, WeakPtrHash, WeakPtrEqual>;
+	using IndicesMapType = std::unordered_map<FD3DW::FResource*, ResourceEntry>;
 
 
 private:
 
+	size_t InvalidIndex() const;
+	void CleanupExpired_NoLock(ID3D12Device* device);
+
+private:
 	void RemoveTexture(size_t idx, ID3D12Device* device);
-	IndicesMapType::const_iterator FindByRawPtr(FD3DW::FResource* resource) const;
 
 private:
 
+	mutable std::mutex m_xMutex;
 	IndicesMapType m_mIndices;
 };
