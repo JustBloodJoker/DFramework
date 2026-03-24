@@ -11,24 +11,22 @@ DefaultCameraInputLayer::DefaultCameraInputLayer(TDefaultCamera* cameraOwner) {
 bool DefaultCameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (!m_pCameraOwner->IsActiveCameraComponent()) return false;
 
-	auto isInput = false;
 	switch (msg)
 	{
 	case WM_KEYDOWN:
 		if (wParam == 'R')
 		{
 			m_pCameraOwner->ResetRoll();
+			return true;
 		}
-		isInput = true;
-		break;
+		return false;
 
 	case WM_MOUSEMOVE:
 		m_pCameraOwner->OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		isInput = true;
-		break;
+		return true;
 	}
 
-	return isInput;
+	return false;
 }
 
 void DefaultCameraInputLayer::PreTickUpdate(float DT) {

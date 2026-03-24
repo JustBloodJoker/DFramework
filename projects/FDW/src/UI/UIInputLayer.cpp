@@ -6,7 +6,8 @@ UIInputLayer::UIInputLayer(MainRenderer_UIComponent* uiOwner) {
 }
 
 bool UIInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-	m_pUIOwner->ImGuiInputProcess(hwnd, msg, wParam, lParam);
+	if( m_pUIOwner->ImGuiInputProcess(hwnd, msg, wParam, lParam) ) return true;
+
 
 	if ((msg == WM_KEYDOWN || msg == WM_SYSKEYDOWN) && wParam == VK_F1) {
 		

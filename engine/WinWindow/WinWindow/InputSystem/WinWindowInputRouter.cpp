@@ -31,13 +31,11 @@ namespace FDWWIN {
 
        
         switch (msg) {
-
-        if (!handled) {
-            case WM_KEYDOWN:
-                if (!(lParam & (1 << 30))) m_aKeyStates[wParam] = true;
+        
+        case WM_KEYDOWN:
+            if (!handled && !(lParam & (1 << 30))) m_aKeyStates[wParam] = true;
             break;
-        }
-
+        
         case WM_KEYUP:
             m_aKeyStates[wParam] = false;
             break;

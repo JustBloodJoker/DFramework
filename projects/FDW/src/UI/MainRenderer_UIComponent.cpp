@@ -1357,7 +1357,30 @@ void MainRenderer_UIComponent::ShutDownImGui() {
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 bool MainRenderer_UIComponent::ImGuiInputProcess(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam);
-    return false;
+
+    if (!m_bIsInited) return false;
+	
+    const ImGuiIO& io = ImGui::GetIO();
+
+    bool isMouseMsg =
+        msg == WM_LBUTTONDOWN ||
+        msg == WM_RBUTTONDOWN ||
+        msg == WM_MBUTTONDOWN ||
+        msg == WM_LBUTTONUP ||
+        msg == WM_RBUTTONUP ||
+        msg == WM_MBUTTONUP ||
+        msg == WM_MOUSEMOVE ||
+        msg == WM_MOUSEWHEEL ||
+        msg == WM_MOUSEHWHEEL;
+
+    bool isKeyboardMsg =
+        msg == WM_KEYDOWN ||
+        msg == WM_KEYUP ||
+        msg == WM_SYSKEYDOWN ||
+        msg == WM_SYSKEYUP ||
+        msg == WM_CHAR;
+
+    return (isMouseMsg && io.WantCaptureMouse) || (isKeyboardMsg && io.WantCaptureKeyboard);
 }
 
 bool MainRenderer_UIComponent::IsUIVisible() const {
