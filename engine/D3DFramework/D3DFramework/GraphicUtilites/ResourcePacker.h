@@ -55,7 +55,7 @@ namespace FD3DW
 		UINT ArraySize = 1;
 		UINT PlaneSlice = 0;
 		UINT FirstWSlice = 0;
-		UINT WSize = -1;
+		UINT WSize = 0;
 	};
 
 

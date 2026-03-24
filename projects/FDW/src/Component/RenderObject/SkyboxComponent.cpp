@@ -63,6 +63,8 @@ void SkyboxComponent::SetupTexture(const std::string& path, ID3D12Device* device
 		m_pSRVPack = FD3DW::SRV_UAVPacker::CreatePack(cbvsrvuavSize, 1, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
 	}
 	m_pSRVPack->AddResource(m_pMaterial->GetResourceTexture(FD3DW::TextureType::BASE), D3D12_SRV_DIMENSION_TEXTURECUBE, 0, device);
+
+	if (auto world = GetWorld()) world->AddNotifyToPull(NRenderSystemNotifyType::SkyboxActivationDeactivation);
 }
 
 FD3DW::SRV_UAVPacker* SkyboxComponent::SRVPack() const { return m_pSRVPack.get(); }

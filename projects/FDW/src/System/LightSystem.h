@@ -5,6 +5,7 @@
 #include <D3DFramework/GraphicUtilites/BufferManager.h>
 #include <D3DFramework/GraphicUtilites/FResource.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
+#include <D3DFramework/GraphicUtilites/ResourcePacker.h>
 #include <D3DFramework/GraphicUtilites/RenderThreadUtils/ExecutionHandle.h>
 #include <Component/Light/LightComponent.h>
 
@@ -46,6 +47,12 @@ public:
 
 public: //IBL
 	FD3DW::FResource* GetIBLBrdfLUTResource();
+	FD3DW::FResource* GetIBLIrradianceResource();
+	FD3DW::FResource* GetIBLPrefilteredResource();
+	std::shared_ptr<FD3DW::ExecutionHandle> UpdateIBLResources(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle, FD3DW::FResource* environmentMap);
+	void InvalidateIBLResourceBindings();
+	bool UpdateIBLIrradianceResource(FD3DW::FResource* environmentMap, ID3D12GraphicsCommandList* list);
+	bool UpdateIBLPrefilteredResource(FD3DW::FResource* environmentMap, ID3D12GraphicsCommandList* list);
 
 	bool IsEnabledIBL();
 	void EnableIBL(bool b);
@@ -67,6 +74,8 @@ protected:
 	float GeometrySmith_IBL(float nDotV, float nDotL, float roughness);
     dx::XMFLOAT2 IntegrateBRDF(float nDotV, float roughness);
     std::shared_ptr<FD3DW::FResource> CreateIBLBrdfLutResource(ID3D12Device* device, ID3D12GraphicsCommandList* list);
+	std::shared_ptr<FD3DW::FResource> CreateIBLIrradianceResource(ID3D12Device* device);
+	std::shared_ptr<FD3DW::FResource> CreateIBLPrefilteredResource(ID3D12Device* device);
 
 protected:
 	std::vector<LightComponentData> GetDataFromLightComponents(std::vector<LightComponent*> cmps);
@@ -79,7 +88,14 @@ protected:
 
 	std::unique_ptr<FD3DW::UploadBuffer<LightSystemBuffer>> m_pLightsHelperConstantBuffer;
 	std::unique_ptr<FD3DW::StructuredBuffer> m_pLightsStructuredBuffer;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pIBLIrradianceConvolutionPack;
+	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pIBLPrefilterConvolutionPack;
 	std::shared_ptr<FD3DW::FResource> m_pIBLBrdfLUTResource;
+	std::shared_ptr<FD3DW::FResource> m_pIBLIrradianceResource;
+	std::shared_ptr<FD3DW::FResource> m_pIBLPrefilteredResource;
+	FD3DW::FResource* m_pLastIBLSourceTexture = nullptr;
+	bool m_bIBLResourcesBound = false;
+	bool m_bNeedIBLResourcesRefresh = true;
 
 protected:
 	bool m_bIsIBLEnabled = true;

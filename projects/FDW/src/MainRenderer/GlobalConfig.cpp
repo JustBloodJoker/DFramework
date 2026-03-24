@@ -356,6 +356,22 @@ const std::unordered_map<PSOType, PSOComputeDescriptor>& GetComputePSODescriptor
             }
         },
         {
+            PSOType::IBL_IrradianceConvolution,
+            {
+                PSOType::None,
+                L"IBLIrradianceConvolution",
+                { }
+            }
+        },
+        {
+            PSOType::IBL_PrefilterConvolution,
+            {
+                PSOType::None,
+                L"IBLPrefilterConvolution",
+                { }
+            }
+        },
+        {
             PSOType::GPUSceneSkinning,
             {
                 PSOType::None,

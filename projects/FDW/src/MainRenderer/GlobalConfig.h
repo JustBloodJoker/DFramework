@@ -88,6 +88,8 @@ enum class PSOType {
 	BloomEffect_BrightPass,
 	BloomEffect_GaussianBlurPass,
 	BloomEffect_CompositePass,
+	IBL_IrradianceConvolution,
+	IBL_PrefilterConvolution,
 	GPUSceneSkinning,
 	AtlasRTShadowDefaultConfig,
 	TAAPass,
@@ -134,6 +136,17 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 
 #define IBL_BRDF_LUT_SIZE 256
 #define IBL_BRDF_LUT_SAMPLES 256
+#define IBL_IRRADIANCE_CUBEMAP_SIZE 32
+#define IBL_PREFILTERED_CUBEMAP_SIZE 128u
+
+
+#define IBL_IRRADIANCE_CONV_ENV_SRV_POS_IN_ROOT_SIG 0
+#define IBL_IRRADIANCE_CONV_OUT_UAV_POS_IN_ROOT_SIG 1
+
+
+#define IBL_PREFILTER_CONV_ENV_SRV_POS_IN_ROOT_SIG 0
+#define IBL_PREFILTER_CONV_OUT_UAV_POS_IN_ROOT_SIG 1
+#define IBL_PREFILTER_CONV_PARAMS_POS_IN_ROOT_SIG 2
 
 ////////////////////////////////////////////
 
@@ -257,7 +270,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 /////////////////////////////////////////////
 ///////    DEFFERED SECOND PASS SRV HEAP LOCATIONS  
 
-#define COUNT_SRV_IN_GBUFFER_HEAP 12
+#define COUNT_SRV_IN_GBUFFER_HEAP 14
 
 #define GBUFFER_NORMAL_LOCATION_IN_HEAP 0
 #define GBUFFER_ALBEDO_LOCATION_IN_HEAP 1
@@ -272,6 +285,8 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 #define SHADOW_FACTOR_LOCATION_IN_HEAP 9
 #define IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP 10
 #define IBL_BRDF_LUT_LOCATION_IN_HEAP 11
+#define IBL_IRRADIANCE_SKYBOX_LOCATION_IN_HEAP 12
+#define IBL_PREFILTERED_SKYBOX_LOCATION_IN_HEAP 13
 
 
 ////////////////////////////////////////////

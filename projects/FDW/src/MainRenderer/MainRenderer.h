@@ -143,8 +143,11 @@ public: //SELECTION
 	bool RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XMFLOAT3& rayDir, const dx::XMFLOAT3& boundsMin, const dx::XMFLOAT3& boundsMax, float& outDistance);
 
 public:
-	void UpdateIBLResource();
+	std::shared_ptr<FD3DW::ExecutionHandle> UpdateIBLResource(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle);
 	void UpdateIBL_LUT_Resource();
+	void BindIBLEnvironmentResource(FD3DW::FResource* environmentResource);
+	void BindIBLIrradianceResource(FD3DW::FResource* irradianceResource);
+	void BindIBLPrefilteredResource(FD3DW::FResource* prefilteredResource);
 
 public:
 	FD3DW::FResource* GetShadingResultResource();
@@ -235,7 +238,6 @@ protected:
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
 
 	std::vector< std::shared_ptr<FD3DW::FResource>> m_vLCTResources;
-	std::shared_ptr<FD3DW::FResource> m_pFallbackIBLSkyboxResource;
 
 	UINT m_uCurrentDSVIndex = 0;
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV[2];

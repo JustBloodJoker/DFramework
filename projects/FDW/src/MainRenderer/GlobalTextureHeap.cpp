@@ -15,7 +15,7 @@ void GlobalTextureHeap::Init(ID3D12Device* device, UINT descriptorsCount, UINT n
         D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
         device);
 
-    for (auto i = 0; i < descriptorsCount; ++i) {
+    for (auto i = 0u; i < descriptorsCount; ++i) {
         AddNullResource(i, device);
     }
 }

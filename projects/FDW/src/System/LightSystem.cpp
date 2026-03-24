@@ -1,4 +1,5 @@
 #include <MainRenderer/MainRenderer.h>
+#include <MainRenderer/PSOManager.h>
 #include <System/LightSystem.h>
 #include <Component/Light/LightComponent.h>
 #include <D3DFramework/GraphicUtilites/FResource.h>
@@ -14,7 +15,6 @@ void LightSystem::AfterConstruction() {
         std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, 
             [this](ID3D12GraphicsCommandList* list) mutable {
                 m_pIBLBrdfLUTResource = CreateIBLBrdfLutResource(m_pOwner->GetDevice(), list);
-
                 m_pOwner->UpdateIBL_LUT_Resource();
         } )
     );
@@ -38,6 +38,178 @@ D3D12_GPU_VIRTUAL_ADDRESS LightSystem::GetLightsConstantBufferGPULocation() {
 
 FD3DW::FResource* LightSystem::GetIBLBrdfLUTResource() {
     return m_pIBLBrdfLUTResource.get();
+}
+
+FD3DW::FResource* LightSystem::GetIBLIrradianceResource() {
+    return m_pIBLIrradianceResource.get();
+}
+
+FD3DW::FResource* LightSystem::GetIBLPrefilteredResource() {
+    return m_pIBLPrefilteredResource.get();
+}
+
+void LightSystem::InvalidateIBLResourceBindings() {
+    m_bIBLResourcesBound = false;
+    m_bNeedIBLResourcesRefresh = true;
+}
+
+std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::UpdateIBLResources(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle, FD3DW::FResource* environmentMap) {
+    if (!environmentMap || !environmentMap->GetResource()) {
+        m_pLastIBLSourceTexture = nullptr;
+        m_bIBLResourcesBound = false;
+        m_bNeedIBLResourcesRefresh = true;
+        return syncHandle;
+    }
+
+    auto needRebuildIrradiance = m_bNeedIBLResourcesRefresh || (environmentMap != m_pLastIBLSourceTexture) || !m_pIBLIrradianceResource;
+    auto needRebuildPrefilter = m_bNeedIBLResourcesRefresh || (environmentMap != m_pLastIBLSourceTexture) || !m_pIBLPrefilteredResource;
+    if (!needRebuildIrradiance && !needRebuildPrefilter && m_bIBLResourcesBound) {
+        return syncHandle;
+    }
+
+    auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT,
+        [this, environmentMap, needRebuildIrradiance, needRebuildPrefilter](ID3D12GraphicsCommandList* list) {
+            m_pOwner->BindIBLEnvironmentResource(environmentMap);
+
+            bool irradianceReady = m_pIBLIrradianceResource && m_pIBLIrradianceResource->GetResource();
+            bool prefilteredReady = m_pIBLPrefilteredResource && m_pIBLPrefilteredResource->GetResource();
+
+            if (needRebuildIrradiance) {
+                irradianceReady = UpdateIBLIrradianceResource(environmentMap, list);
+            }
+            if (needRebuildPrefilter) {
+                prefilteredReady = UpdateIBLPrefilteredResource(environmentMap, list);
+            }
+
+            m_bIBLResourcesBound = irradianceReady && prefilteredReady;
+            if (m_bIBLResourcesBound && (needRebuildIrradiance || needRebuildPrefilter)) {
+                m_pLastIBLSourceTexture = environmentMap;
+                m_bNeedIBLResourcesRefresh = false;
+            }
+            else if (!m_bIBLResourcesBound && (needRebuildIrradiance || needRebuildPrefilter)) {
+                m_pLastIBLSourceTexture = nullptr;
+                m_bNeedIBLResourcesRefresh = true;
+            }
+
+            if (irradianceReady && m_pIBLIrradianceResource && m_pIBLIrradianceResource->GetResource()) {
+                m_pOwner->BindIBLIrradianceResource(m_pIBLIrradianceResource.get());
+            }
+            else {
+                m_pOwner->BindIBLIrradianceResource(environmentMap);
+            }
+            if (prefilteredReady && m_pIBLPrefilteredResource && m_pIBLPrefilteredResource->GetResource()) {
+                m_pOwner->BindIBLPrefilteredResource(m_pIBLPrefilteredResource.get());
+            }
+            else {
+                m_pOwner->BindIBLPrefilteredResource(environmentMap);
+            }
+        }
+    );
+
+    return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { syncHandle });
+}
+
+bool LightSystem::UpdateIBLIrradianceResource(FD3DW::FResource* environmentMap, ID3D12GraphicsCommandList* list) {
+    if (!environmentMap) return false;
+
+    auto device = m_pOwner->GetDevice();
+    if (!m_pIBLIrradianceResource) {
+        m_pIBLIrradianceResource = CreateIBLIrradianceResource(device);
+    }
+
+    if (!m_pIBLIrradianceConvolutionPack) {
+        auto descriptorSize = GetCBV_SRV_UAVDescriptorSize(device);
+        m_pIBLIrradianceConvolutionPack = FD3DW::SRV_UAVPacker::CreatePack(descriptorSize, 2u, 0u, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+    }
+
+    m_pIBLIrradianceConvolutionPack->AddResource(environmentMap->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, 0u, device);
+
+    FD3DW::UAVResourceDesc irradianceUAVDesc{};
+    irradianceUAVDesc.Resource = m_pIBLIrradianceResource->GetResource();
+    irradianceUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+    irradianceUAVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+    irradianceUAVDesc.MipSlice = 0u;
+    irradianceUAVDesc.FirstArraySlice = 0u;
+    irradianceUAVDesc.ArraySize = 6u;
+    m_pIBLIrradianceConvolutionPack->AddResource(irradianceUAVDesc, 1u, device);
+
+    environmentMap->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    m_pIBLIrradianceResource->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    auto pso = PSOManager::GetInstance()->GetPSOObject(PSOType::IBL_IrradianceConvolution);
+    pso->Bind(list);
+
+    ID3D12DescriptorHeap* heaps[] = { m_pIBLIrradianceConvolutionPack->GetResult()->GetDescriptorPtr() };
+    list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+    list->SetComputeRootDescriptorTable(IBL_IRRADIANCE_CONV_ENV_SRV_POS_IN_ROOT_SIG,m_pIBLIrradianceConvolutionPack->GetResult()->GetGPUDescriptorHandle(0));
+    list->SetComputeRootDescriptorTable(IBL_IRRADIANCE_CONV_OUT_UAV_POS_IN_ROOT_SIG, m_pIBLIrradianceConvolutionPack->GetResult()->GetGPUDescriptorHandle(1) );
+
+    auto dispatchSize = (IBL_IRRADIANCE_CUBEMAP_SIZE + 7u) / 8u;
+    list->Dispatch(dispatchSize, dispatchSize, 6u);
+    
+    environmentMap->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    m_pIBLIrradianceResource->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    return true;
+}
+
+bool LightSystem::UpdateIBLPrefilteredResource(FD3DW::FResource* environmentMap, ID3D12GraphicsCommandList* list) {
+    if (!environmentMap) return false;
+
+    auto device = m_pOwner->GetDevice();
+    if (!m_pIBLPrefilteredResource) {
+        m_pIBLPrefilteredResource = CreateIBLPrefilteredResource(device);
+    }
+
+    auto prefilteredDesc = m_pIBLPrefilteredResource->GetResource()->GetDesc();
+    auto mipCount = std::max<UINT>(1u, prefilteredDesc.MipLevels);
+
+    if (!m_pIBLPrefilterConvolutionPack) {
+        auto descriptorSize = GetCBV_SRV_UAVDescriptorSize(device);
+        m_pIBLPrefilterConvolutionPack = FD3DW::SRV_UAVPacker::CreatePack(descriptorSize, 1u + mipCount, 0u, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, device);
+    }
+
+    m_pIBLPrefilterConvolutionPack->AddResource(environmentMap->GetResource(), D3D12_SRV_DIMENSION_TEXTURECUBE, 0u, device);
+    for (auto mip = 0u; mip < mipCount; ++mip) {
+        FD3DW::UAVResourceDesc prefilterUAVDesc{};
+        prefilterUAVDesc.Resource = m_pIBLPrefilteredResource->GetResource();
+        prefilterUAVDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+        prefilterUAVDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+        prefilterUAVDesc.MipSlice = mip;
+        prefilterUAVDesc.FirstArraySlice = 0u;
+        prefilterUAVDesc.ArraySize = 6u;
+        m_pIBLPrefilterConvolutionPack->AddResource(prefilterUAVDesc, 1u + mip, device);
+    }
+
+    environmentMap->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
+    m_pIBLPrefilteredResource->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+    auto pso = PSOManager::GetInstance()->GetPSOObject(PSOType::IBL_PrefilterConvolution);
+    bool generated = false;
+    pso->Bind(list);
+
+    ID3D12DescriptorHeap* heaps[] = { m_pIBLPrefilterConvolutionPack->GetResult()->GetDescriptorPtr() };
+    list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+    list->SetComputeRootDescriptorTable(IBL_PREFILTER_CONV_ENV_SRV_POS_IN_ROOT_SIG,m_pIBLPrefilterConvolutionPack->GetResult()->GetGPUDescriptorHandle(0));
+
+    auto baseSize = UINT(prefilteredDesc.Width);
+
+    for (auto mip = 0u; mip < mipCount; ++mip) {
+        list->SetComputeRootDescriptorTable( IBL_PREFILTER_CONV_OUT_UAV_POS_IN_ROOT_SIG,m_pIBLPrefilterConvolutionPack->GetResult()->GetGPUDescriptorHandle(1u + mip));
+
+        auto roughness = (mipCount > 1u) ? float(mip) / float(mipCount - 1u) : 0.0f;
+        list->SetComputeRoot32BitConstants(IBL_PREFILTER_CONV_PARAMS_POS_IN_ROOT_SIG, 1u, &roughness, 0u);
+
+        auto mipSize = std::max(1u, baseSize >> mip);
+        auto dispatchSize = (mipSize + 7u) / 8u;
+        list->Dispatch(dispatchSize, dispatchSize, 6u);
+    }
+    generated = true;
+
+    environmentMap->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    m_pIBLPrefilteredResource->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    return generated;
 }
 
 const std::vector<LightComponentData>& LightSystem::GetLightComponentsData() const { 
@@ -108,6 +280,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
 void LightSystem::ProcessNotify(NRenderSystemNotifyType type) {
     if (type == NRenderSystemNotifyType::Light || type == NRenderSystemNotifyType::LightUpdateData) {
         m_bIsNeedUpdateDataInBuffer.store(true, std::memory_order_relaxed);
+    }
+    else if (type == NRenderSystemNotifyType::SkyboxActivationDeactivation) {
+        InvalidateIBLResourceBindings();
     }
 }
 
@@ -202,6 +377,49 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLBrdfLutResource(ID3D12De
     }
 
     texture->UploadData(device, list, pixels.data());
+    return std::shared_ptr<FD3DW::FResource>(texture.release());
+}
+
+std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLIrradianceResource(ID3D12Device* device) {
+    auto texture = FD3DW::FResource::CreateAnonimTexture(
+        device,
+        6,
+        DXGI_FORMAT_R16G16B16A16_FLOAT,
+        IBL_IRRADIANCE_CUBEMAP_SIZE,
+        IBL_IRRADIANCE_CUBEMAP_SIZE,
+        DXGI_SAMPLE_DESC({ 1, 0 }),
+        D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+        D3D12_TEXTURE_LAYOUT_UNKNOWN,
+        D3D12_HEAP_FLAG_NONE,
+        &FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+        1
+    );
+
+    return std::shared_ptr<FD3DW::FResource>(texture.release());
+}
+
+std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLPrefilteredResource(ID3D12Device* device) {
+    auto mipLevels = 1u;
+    for (auto size = IBL_PREFILTERED_CUBEMAP_SIZE; size > 1u; size >>= 1u) {
+        ++mipLevels;
+    }
+
+    auto texture = FD3DW::FResource::CreateAnonimTexture(
+        device,
+        6,
+        DXGI_FORMAT_R16G16B16A16_FLOAT,
+        IBL_PREFILTERED_CUBEMAP_SIZE,
+        IBL_PREFILTERED_CUBEMAP_SIZE,
+        DXGI_SAMPLE_DESC({ 1, 0 }),
+        D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
+        D3D12_TEXTURE_LAYOUT_UNKNOWN,
+        D3D12_HEAP_FLAG_NONE,
+        &FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+        UINT16(mipLevels)
+    );
+
     return std::shared_ptr<FD3DW::FResource>(texture.release());
 }
 

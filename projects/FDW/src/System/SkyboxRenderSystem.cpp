@@ -20,7 +20,6 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::OnStartRenderTick(st
 				}
 			}
 
-			m_pOwner->UpdateIBLResource();
 		}
 
 		if (!m_pActiveComponent) return;

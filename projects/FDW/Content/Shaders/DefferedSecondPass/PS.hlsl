@@ -12,7 +12,7 @@ struct PIXEL_OUTPUT
 
 ConstantBuffer<LightsHelper> LHelper : register(b0);
 StructuredBuffer<LightStruct> Lights : register(t0);
-StructuredBuffer<Cluster> Clusters : register(t13);
+StructuredBuffer<Cluster> Clusters : register(t15);
 ConstantBuffer<ClusterParamsPS> ClustersData : register(b1);
 
 Texture2D GBuffer_Normal : register(t1);        //x         , y         , z                 , empty
@@ -29,10 +29,12 @@ Texture2D<float2> LTC_Amp : register(t9);
 
 Texture2D ShadowFactorTexture : register(t10);
 
-TextureCube IBL_SkyboxTexture : register(t11);
+TextureCube IBL_EnvironmentTexture : register(t11);
 Texture2D<float2> IBL_BRDF_LUT : register(t12); //x = scale, y = bias (split-sum BRDF LUT)
+TextureCube IBL_IrradianceTexture : register(t13); //preconvolved diffuse irradiance
+TextureCube IBL_PrefilteredTexture : register(t14); //GGX prefiltered environment for specular IBL
 
-StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t14);
+StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t16);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
 SamplerState ss : register(s0);
@@ -100,61 +102,25 @@ float3 CalculatePBRLighting(
     return (kD * albedo / PI + specular) * radiance * NdotL;
 }
 
-float RadicalInverse_VdC(uint bits)
-{
-    bits = (bits << 16u) | (bits >> 16u);
-    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-    return float(bits) * 2.3283064365386963e-10f;
-}
-
-float2 Hammersley(uint i, uint n)
-{
-    return float2(float(i) / float(n), RadicalInverse_VdC(i));
-}
-
-float3 SampleCosineHemisphere(float2 xi)
-{
-    float phi = 2.0f * PI * xi.x;
-    float cosTheta = sqrt(1.0f - xi.y);
-    float sinTheta = sqrt(xi.y);
-    return float3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
-}
-
-//We are currently calculating diffuse IBL in realtime. TODO: use a preconvolved irradiance cube.
-float3 CalculateDiffuseIrradiance(float3 N)
-{
-    float3 up = (abs(N.z) < 0.999f) ? float3(0.0f, 0.0f, 1.0f) : float3(1.0f, 0.0f, 0.0f);
-    float3 tangent = normalize(cross(up, N));
-    float3 bitangent = cross(N, tangent);
-
-    const uint SAMPLE_COUNT = 16u;
-    float3 irradiance = float3(0.0f, 0.0f, 0.0f);
-
-    [unroll]
-    for (uint i = 0u; i < SAMPLE_COUNT; ++i) {
-        float2 xi = Hammersley(i, SAMPLE_COUNT);
-        float3 localL = SampleCosineHemisphere(xi);
-        float3 L = normalize(localL.x * tangent + localL.y * bitangent + localL.z * N);
-        irradiance += IBL_SkyboxTexture.SampleLevel(ss, L, 0.0f).rgb;
-    }
-
-    return irradiance * (PI / float(SAMPLE_COUNT));
-}
-
 float3 CalculateImageBasedLighting(float3 N, float3 V, float3 albedo, float metallic, float roughness, float ao, float3 F0) {
     float NdotV = saturate(dot(N, V));
     float3 kS = FresnelSchlickRoughness(NdotV, F0, roughness);
     float3 kD = (1.0 - kS) * (1.0 - metallic);
 
-    float3 irradiance = CalculateDiffuseIrradiance(N);
+    float3 irradiance = IBL_IrradianceTexture.SampleLevel(ss, N, 0.0f).rgb;
     float3 diffuse = irradiance * albedo;
 
     float3 R = reflect(-V, N);
-    float mipLevel = saturate(roughness) * LHelper.IBLMaxReflectionMip;
-    float3 prefilteredColor = IBL_SkyboxTexture.SampleLevel(ss, R, mipLevel).rgb;
+    
+    uint prefilteredWidth, prefilteredHeight, prefilteredMipCount;
+
+    IBL_PrefilteredTexture.GetDimensions(0u, prefilteredWidth, prefilteredHeight, prefilteredMipCount);
+    float3 prefilteredColor = IBL_EnvironmentTexture.SampleLevel(ss, R, 0.0f).rgb;
+    if (prefilteredMipCount > 0u) {
+        float maxReflectionMip = min(LHelper.IBLMaxReflectionMip, max(float(prefilteredMipCount) - 1.0f, 0.0f));
+        float mipLevel = saturate(roughness) * maxReflectionMip;
+        prefilteredColor = IBL_PrefilteredTexture.SampleLevel(ss, R, mipLevel).rgb;
+    }
     float2 envBRDF = IBL_BRDF_LUT.SampleLevel(linearSS, float2(NdotV, saturate(roughness)), 0.0f).rg;
     float3 specular = prefilteredColor * (kS * envBRDF.x + envBRDF.y);
 
