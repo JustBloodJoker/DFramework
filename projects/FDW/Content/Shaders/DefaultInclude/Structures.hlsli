@@ -89,9 +89,11 @@ struct LightsHelper{
     float ZFar;
     int FrameIndex;
     int IsIBLEnabled;
+    int IsUnlitScene;
     float IBLDiffuseIntensity;
     float IBLSpecularIntensity;
     float IBLMaxReflectionMip;
+    float3 Padding0;
     matrix InverseViewProjectionMatrix;
 };
 

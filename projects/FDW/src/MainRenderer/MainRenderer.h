@@ -57,6 +57,9 @@ public:
 	bool IsEnabledIBL();
 	void EnableIBL(bool b);
 
+	bool IsUnlitScene() const;
+	void EnableUnlitScene(bool b);
+
 	float GetIBLDiffuseIntensity() const;
 	void SetIBLDiffuseIntensity(float value);
 
@@ -231,6 +234,8 @@ protected:
 protected:
 	bool m_bIsEnabledPreDepth = false;
 	bool m_bLinkJitterToTAA = true;
+	bool m_bIsUnlitScene = false;
+	bool m_bJitterStateBeforeUnlit = false;
 
 protected:
 	std::vector<std::unique_ptr<FD3DW::RenderTarget>> m_pGBuffers;

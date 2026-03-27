@@ -256,13 +256,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> LightSystem::OnStartRenderTick(std::shar
             m_xLightBuffer.CameraPos = m_pOwner->GetCurrentCameraPosition();
             m_xLightBuffer.IsShadowImpl = (int)m_pOwner->IsShadowEnabled();
             m_xLightBuffer.ZNear = m_pOwner->GetCameraFrustum().GetZNear();
-			m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
-			m_xLightBuffer.FrameIndex = m_pOwner->GetFrameIndex();
-			m_xLightBuffer.IsIBLEnabled = int(m_pOwner->IsEnabledIBL());
-			m_xLightBuffer.IBLDiffuseIntensity = m_pOwner->GetIBLDiffuseIntensity();
-			m_xLightBuffer.IBLSpecularIntensity = m_pOwner->GetIBLSpecularIntensity();
-			m_xLightBuffer.IBLMaxReflectionMip = m_pOwner->GetIBLMaxReflectionMip();
-			m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse( nullptr, dx::XMMatrixTranspose( m_pOwner->GetJitteredViewProjectionMatrix() ) );
+            m_xLightBuffer.ZFar = m_pOwner->GetCameraFrustum().GetZFar();
+            m_xLightBuffer.FrameIndex = m_pOwner->GetFrameIndex();
+            m_xLightBuffer.IsIBLEnabled = int(m_pOwner->IsEnabledIBL());
+            m_xLightBuffer.IsUnlitScene = int(m_pOwner->IsUnlitScene());
+            m_xLightBuffer.IBLDiffuseIntensity = m_pOwner->GetIBLDiffuseIntensity();
+            m_xLightBuffer.IBLSpecularIntensity = m_pOwner->GetIBLSpecularIntensity();
+            m_xLightBuffer.IBLMaxReflectionMip = m_pOwner->GetIBLMaxReflectionMip();
+            m_xLightBuffer.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
 
             if (m_bIsNeedUpdateDataInBuffer.exchange(false, std::memory_order_acq_rel)) {
                 auto device = m_pOwner->GetDevice();

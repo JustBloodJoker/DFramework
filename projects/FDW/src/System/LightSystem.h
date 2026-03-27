@@ -18,9 +18,11 @@ struct LightSystemBuffer {
 	float ZFar;
 	int FrameIndex;
 	int IsIBLEnabled;
+	int IsUnlitScene;
 	float IBLDiffuseIntensity;
 	float IBLSpecularIntensity;
 	float IBLMaxReflectionMip;
+	dx::XMFLOAT3 Padding0 = { 0.0f, 0.0f, 0.0f };
 	dx::XMMATRIX InverseViewProjectionMatrix;
 };
 

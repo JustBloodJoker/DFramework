@@ -890,6 +890,16 @@ void MainRenderer_UIComponent::DrawEditor_Systems() {
 }
 
 void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
+    bool unlitScene = m_pOwner->IsUnlitScene();
+    if (ImGui::Checkbox("Unlit Scene (Global)", &unlitScene)) {
+        m_pOwner->EnableUnlitScene(unlitScene);
+    }
+    if (unlitScene) {
+        ImGui::TextDisabled("Disables scene lighting, shadows, TAA and Bloom.");
+    }
+
+    ImGui::BeginDisabled(unlitScene);
+
     bool linkJitterToTAA = m_pOwner->IsLinkJitterToTAAEnabled();
     if (ImGui::Checkbox("Link Jitter To TAA", &linkJitterToTAA)) {
         m_pOwner->EnableLinkJitterToTAA(linkJitterToTAA);
@@ -945,9 +955,16 @@ void MainRenderer_UIComponent::DrawEditor_GlobalRenderSystem() {
     if (ImGui::Combo("Mesh Culling", &type, items, IM_ARRAYSIZE(items))) {
         m_pOwner->SetMeshCullingType(static_cast<MeshCullingType>(type));
     }
+
+    ImGui::EndDisabled();
 }
 
 void MainRenderer_UIComponent::DrawEditor_BloomSystem() {
+    if (m_pOwner->IsUnlitScene()) {
+        ImGui::TextDisabled("Bloom disabled by Unlit Scene.");
+        return;
+    }
+
     bool bloom = m_pOwner->IsEnabledBloom();
     if (ImGui::Checkbox("Enable Bloom", &bloom)) {
         m_pOwner->EnableBloom(bloom);

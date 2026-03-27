@@ -374,11 +374,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         return psOut;
     }
 
-    float3 N = normalize(nn.rgb);
-    float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
-
-    float3 V = normalize(LHelper.CameraPos - WorldPos);
-
     float4 albedoOut = GBuffer_Albedo.Sample(ss, uv);
     float3 albedo = albedoOut.rgb;
     float alpha = albedoOut.a;
@@ -387,6 +382,22 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     float roughness = matData.r;
     float metallic = matData.g;
     float ao = matData.a;
+
+    float4 emissiveTexture = GBuffer_Emissive.Sample(ss, uv);
+    float3 emissive = emissiveTexture.rgb;
+    float emissiveFactor = emissiveTexture.w;
+
+    if(LHelper.IsUnlitScene != 0) {
+        float3 color = albedo + emissive * emissiveFactor;
+        color = lerp(color, SELECTION_OUTLINE_COLOR, selectionOutline);
+        AlphaClipping(alpha);
+        psOut.result = float4(color, alpha);
+        return psOut;
+    }
+
+    float3 N = normalize(nn.rgb);
+    float3 WorldPos = ReconstructWorldPosition(uv,  DepthBuffer.Sample(ss, uv).r, LHelper.InverseViewProjectionMatrix);
+    float3 V = normalize(LHelper.CameraPos - WorldPos);
 
     float3 F0 = lerp(float3(0.04, 0.04, 0.04), albedo, metallic);
 
@@ -421,10 +432,6 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         }
     }
     
-    float4 emissiveTexture = GBuffer_Emissive.Sample(ss, uv);
-    float3 emissive = emissiveTexture.rgb;
-    float emissiveFactor = emissiveTexture.w;
-
     float3 color = Lo;
     
     if (LHelper.IsIBLEnabled != 0) color += CalculateImageBasedLighting(N, V, albedo, metallic, roughness, ao, F0);

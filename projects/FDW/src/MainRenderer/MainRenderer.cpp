@@ -106,6 +106,7 @@ void MainRenderer::UserLoop()
 	auto sceneOutputViewPort = m_xSceneOutputViewPort;
 	auto mainViewPort = m_xMainViewPort;
 	auto mainRect = m_xMainRect;
+	const bool isUnlitScene = m_bIsUnlitScene;
 
 	auto sync = m_dInFlight.empty() ? nullptr : m_dInFlight.back();
 
@@ -116,7 +117,7 @@ void MainRenderer::UserLoop()
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
 	std::shared_ptr<FD3DW::ExecutionHandle> uploadMetaH = nullptr;
-	if (IsRTSupported()) {
+	if (!isUnlitScene && IsRTSupported()) {
 		auto createMetaH = m_pAtlasRTShadowSystem->OnCreateLightsMeta({ lightsH, cameraH });
 		uploadMetaH = m_pAtlasRTShadowSystem->OnUploadLightsMeta(createMetaH);
 	}
@@ -124,7 +125,7 @@ void MainRenderer::UserLoop()
 	auto meshH = m_pRenderMeshesSystem->OnStartRenderTick(cameraH);
 
 	auto skyboxH = m_pSkyboxRenderSystem->OnStartRenderTick(cameraH);
-	auto iblUpdateH = UpdateIBLResource(skyboxH);
+	auto iblUpdateH = isUnlitScene ? skyboxH : UpdateIBLResource(skyboxH);
 	if (!iblUpdateH) iblUpdateH = skyboxH;
 
 	auto animationH = m_pSceneAnimationSystem->OnStartRenderTick(sync);
@@ -134,13 +135,17 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> blasCallH = nullptr;
 
-	if (IsRTSupported()) {
+	if (!isUnlitScene && IsRTSupported()) {
 		blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
 		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ blasCallH, meshH });
 	}
 
-	auto clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
-	auto clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({clusteredH, lightsH, cameraH });
+	std::shared_ptr<FD3DW::ExecutionHandle> clusteredH = nullptr;
+	std::shared_ptr<FD3DW::ExecutionHandle> clusterAssignH = nullptr;
+	if (!isUnlitScene) {
+		clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
+		clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({ clusteredH, lightsH, cameraH });
+	}
 
 	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = nullptr;
 	if (m_bIsEnabledPreDepth)
@@ -172,10 +177,8 @@ void MainRenderer::UserLoop()
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> atlasRtShadowsH = nullptr;
-	if (IsRTSupported()) {
-
+	if (!isUnlitScene && IsRTSupported()) {
 		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
-	
 	}
 
 	//////////////////////////
@@ -224,12 +227,12 @@ void MainRenderer::UserLoop()
 	inSkyboxRenderData.Viewport = sceneViewPort;
 	auto skyboxRenderH = m_pSkyboxRenderSystem->RenderSkyboxPass(shadingPassH, inSkyboxRenderData);
 
-	auto taaPassH = m_pTAASystem->ProcessTAABufferCollection({ skyboxRenderH });
+	auto taaPassH = isUnlitScene ? skyboxRenderH : m_pTAASystem->ProcessTAABufferCollection({ skyboxRenderH });
 
-	auto bloomPassH = m_pBloomEffectSystem->ProcessBloomPass({ skyboxRenderH , taaPassH }, GetShadingResultResource());
+	auto bloomPassH = isUnlitScene ? taaPassH : m_pBloomEffectSystem->ProcessBloomPass({ skyboxRenderH , taaPassH }, GetShadingResultResource());
 
 
-	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneOutputViewPort, mainViewPort, mainRect](ID3D12GraphicsCommandList* list) {
+	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneOutputViewPort, mainViewPort, mainRect, isUnlitScene](ID3D12GraphicsCommandList* list) {
 		//////////////////////////
 		// POSTPROCESS PASS	
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -251,7 +254,7 @@ void MainRenderer::UserLoop()
 
 			ID3D12DescriptorHeap* heaps[] = { m_pForwardRenderPassSRVPack->GetResult()->GetDescriptorPtr() };
 			list->SetDescriptorHeaps(_countof(heaps), heaps);
-			auto id = m_pBloomEffectSystem->IsEnabledBloom() ? 1 : 0;
+			auto id = (!isUnlitScene && m_pBloomEffectSystem->IsEnabledBloom()) ? 1 : 0;
 			list->SetGraphicsRootDescriptorTable(0,  m_pForwardRenderPassSRVPack->GetResult()->GetGPUDescriptorHandle(id));
 
 			list->RSSetViewports(1, &sceneOutputViewPort);
@@ -360,7 +363,7 @@ void MainRenderer::EnableTAA(bool b) {
 		m_pTAASystem->EnableTAA(b);
 	}
 
-	if (m_bLinkJitterToTAA && m_pCameraSystem) {
+	if (m_bLinkJitterToTAA && m_pCameraSystem && !m_bIsUnlitScene) {
 		m_pCameraSystem->EnableJitter(b);
 	}
 }
@@ -370,7 +373,7 @@ bool MainRenderer::IsEnabledJitter() {
 }
 
 void MainRenderer::EnableJitter(bool b) {
-	if (m_pCameraSystem) {
+	if (m_pCameraSystem && !m_bIsUnlitScene) {
 		m_pCameraSystem->EnableJitter(b);
 	}
 }
@@ -381,7 +384,7 @@ bool MainRenderer::IsLinkJitterToTAAEnabled() const {
 
 void MainRenderer::EnableLinkJitterToTAA(bool b) {
 	m_bLinkJitterToTAA = b;
-	if (m_bLinkJitterToTAA && m_pCameraSystem && m_pTAASystem) {
+	if (m_bLinkJitterToTAA && m_pCameraSystem && m_pTAASystem && !m_bIsUnlitScene) {
 		m_pCameraSystem->EnableJitter(m_pTAASystem->IsTAAEnabled());
 	}
 }
@@ -392,6 +395,28 @@ bool MainRenderer::IsEnabledIBL() {
 
 void MainRenderer::EnableIBL(bool b) {
 	m_pLightSystem->EnableIBL(b);
+}
+
+bool MainRenderer::IsUnlitScene() const {
+	return m_bIsUnlitScene;
+}
+
+void MainRenderer::EnableUnlitScene(bool b) {
+	if (m_bIsUnlitScene == b) return;
+	m_bIsUnlitScene = b;
+
+	if (!m_pCameraSystem) return;
+
+	if (m_bIsUnlitScene) {
+		m_bJitterStateBeforeUnlit = m_pCameraSystem->IsJitterEnabled();
+		m_pCameraSystem->EnableJitter(false);
+	}
+	else if (m_bLinkJitterToTAA && m_pTAASystem) {
+		m_pCameraSystem->EnableJitter(m_pTAASystem->IsTAAEnabled());
+	}
+	else {
+		m_pCameraSystem->EnableJitter(m_bJitterStateBeforeUnlit);
+	}
 }
 
 float MainRenderer::GetIBLDiffuseIntensity() const {
@@ -742,7 +767,7 @@ int MainRenderer::GetLightsCount() {
 }
 
 bool MainRenderer::IsShadowEnabled() {
-	return IsRTSupported();
+	return !m_bIsUnlitScene && IsRTSupported();
 }
 
 std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
@@ -788,6 +813,7 @@ void MainRenderer::SetBloomBlurType(BloomBlurType blurType) {
 }
 
 FD3DW::FResource* MainRenderer::GetShadingResultResource() {
+	if (m_bIsUnlitScene) return m_pForwardRenderPassRTV->GetTexture();
 	return (!m_pTAASystem || !m_pTAASystem->IsTAAEnabled()) ? m_pForwardRenderPassRTV->GetTexture() : m_pTAASystem->GetCurrentResultResource();
 }
 
