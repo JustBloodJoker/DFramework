@@ -10,6 +10,7 @@ DefaultCameraInputLayer::DefaultCameraInputLayer(TDefaultCamera* cameraOwner) {
 
 bool DefaultCameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	if (!m_pCameraOwner->IsActiveCameraComponent()) return false;
+	if (!m_pCameraOwner->IsInputEnabled()) return false;
 
 	switch (msg)
 	{
@@ -30,6 +31,8 @@ bool DefaultCameraInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, L
 }
 
 void DefaultCameraInputLayer::PreTickUpdate(float DT) {
+	if (!m_pCameraOwner->IsInputEnabled()) return;
+
 	if (IsKeyDown('W')) m_pCameraOwner->MoveForward(DT);
 	if (IsKeyDown('S')) m_pCameraOwner->MoveBackward(DT);
 	if (IsKeyDown('D')) m_pCameraOwner->StrafeRight(DT);

@@ -25,6 +25,8 @@ public:
 	FD3DW::FResource* GetCurrentResultResource();
 	bool IsTAAEnabled();
 	void EnableTAA(bool b);
+	float GetBlendWeight() const;
+	void SetBlendWeight(float weight);
 
 protected:
 	std::unique_ptr<FD3DW::RenderTarget> m_pHistoryBuffers[2];
@@ -38,4 +40,5 @@ protected:
 	std::unique_ptr<FD3DW::Rectangle> m_pScreen = nullptr;
 
 	bool m_bIsTAAEnabled = true;
+	float m_fBlendWeight = 0.1f;
 };

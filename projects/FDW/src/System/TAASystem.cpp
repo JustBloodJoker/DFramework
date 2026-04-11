@@ -70,7 +70,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> TAASystem::ProcessTAABufferCollection(st
 		data.CurrentReaderIndex = readIndex;
 		data.CurrentWriterIndex = writeIndex;
 		data.CurrentDepthBufferIndex = m_pOwner->GetCurrentDSVIndex();
-		data.BlendWeight = 0.1f;
+		data.BlendWeight = m_fBlendWeight;
 		data.CurrentJitterOffset = m_pOwner->GetCurrentJitterOffset();
 		data.PrevJitterOffset = m_pOwner->GetPrevJitterOffset();
 		m_pDataBuffer->CpyData(0, data);
@@ -114,4 +114,12 @@ bool TAASystem::IsTAAEnabled() {
 
 void TAASystem::EnableTAA(bool b) {
 	m_bIsTAAEnabled = b;
+}
+
+float TAASystem::GetBlendWeight() const {
+	return m_fBlendWeight;
+}
+
+void TAASystem::SetBlendWeight(float weight) {
+	m_fBlendWeight = std::clamp(weight, 0.01f, 0.99f);
 }

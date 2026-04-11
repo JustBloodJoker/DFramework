@@ -32,8 +32,11 @@ public:
 	void StrafeLeft(float dt);
 	void StrafeRight(float dt);
 	void SetEyePosition(float x, float y, float z);
+	void SetEyeAndLookAt(float eyeX, float eyeY, float eyeZ, float lookX, float lookY, float lookZ);
 	void SetYawPitchRoll(float yaw, float pitch, float roll);
 	void ResetRoll();
+	void SetInputEnabled(int enabled);
+	int IsInputEnabled() const;
 
 	void OnMouseMove(WPARAM btnState, int x, int y);
 
@@ -53,6 +56,7 @@ protected:
 	dx::XMVECTOR m_xEye;
 	dx::XMVECTOR m_xUp;
 	dx::XMVECTOR m_xAt;
+	bool m_bInputEnabled = true;
 
 private:
 	std::unique_ptr<DefaultCameraInputLayer> m_pCameraLayer = nullptr;

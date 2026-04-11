@@ -12,8 +12,10 @@
 #include <Entity/RenderObject/SimpleMeshTemplates.h>
 #include <Entity/RenderObject/TScene.h>
 #include <Entity/RenderObject/TSkybox.h>
+#include <WinWindow/Utils/WorkerPool.h>
 
 class MainRenderer;
+class MeshComponent;
 
 struct WorldScriptRecord {
     std::string Path;
@@ -24,6 +26,40 @@ struct WorldScriptRecord {
         REFLECT_PROPERTY(Path)
         REFLECT_PROPERTY(WasExecuted)
     END_REFLECT(WorldScriptRecord)
+};
+
+struct ScriptBoundsInfo {
+    float MinX = 0.0f;
+    float MinY = 0.0f;
+    float MinZ = 0.0f;
+
+    float MaxX = 0.0f;
+    float MaxY = 0.0f;
+    float MaxZ = 0.0f;
+
+    float SizeX = 0.0f;
+    float SizeY = 0.0f;
+    float SizeZ = 0.0f;
+
+    float CenterX = 0.0f;
+    float CenterY = 0.0f;
+    float CenterZ = 0.0f;
+
+    REFLECT_STRUCT(ScriptBoundsInfo)
+    BEGIN_REFLECT(ScriptBoundsInfo)
+        REFLECT_PROPERTY(MinX)
+        REFLECT_PROPERTY(MinY)
+        REFLECT_PROPERTY(MinZ)
+        REFLECT_PROPERTY(MaxX)
+        REFLECT_PROPERTY(MaxY)
+        REFLECT_PROPERTY(MaxZ)
+        REFLECT_PROPERTY(SizeX)
+        REFLECT_PROPERTY(SizeY)
+        REFLECT_PROPERTY(SizeZ)
+        REFLECT_PROPERTY(CenterX)
+        REFLECT_PROPERTY(CenterY)
+        REFLECT_PROPERTY(CenterZ)
+    END_REFLECT(ScriptBoundsInfo)
 };
 
 class World {
@@ -60,6 +96,9 @@ public:
     void SetEntityName(ComponentHolder* entity, std::string name);
     void SetEntityActive(ComponentHolder* entity, int active);
 
+    void ActivateCamera(ComponentHolder* entity);
+    int FillEntityBounds(ComponentHolder* entity, ScriptBoundsInfo* outBounds);
+
     void SetMeshPosition(ComponentHolder* entity, float x, float y, float z);
     void SetMeshRotation(ComponentHolder* entity, float x, float y, float z);
     void SetMeshScale(ComponentHolder* entity, float x, float y, float z);
@@ -78,7 +117,9 @@ public:
     void UpdateScriptLightsNative(void* lightsArray,void* kindArray,void* xArray,void* yArray,void* zArray,void* txArray,void* tyArray,void* tzArray,void* spdArray,void* distLimArray,void* yMinLimArray,void* yMaxLimArray,void* intenArray,void* idirArray,void* heatArray,void* iminArray,void* imaxArray,void* dirXArray,void* dirYArray,void* dirZArray,void* dirLerpArray,float dt,int beginIndex,int endIndex);
 
     void SetDefaultCameraEye(ComponentHolder* entity, float x, float y, float z);
+    void SetDefaultCameraEyeAndLookAt(ComponentHolder* entity, float eyeX, float eyeY, float eyeZ, float lookX, float lookY, float lookZ);
     void SetDefaultCameraYawPitchRoll(ComponentHolder* entity, float yaw, float pitch, float roll);
+    void SetDefaultCameraInputEnabled(ComponentHolder* entity, int enabled);
     void SetCameraSpeed(ComponentHolder* entity, float speed);
     void ResetCamera(ComponentHolder* entity);
     void MoveDefaultCameraForward(ComponentHolder* entity, float dt);
@@ -102,6 +143,26 @@ public:
     void SetIBLDiffuseIntensity(float intensity);
     void SetIBLSpecularIntensity(float intensity);
     void SetIBLMaxReflectionMip(float value);
+    void SetTAAEnabled(int enabled);
+    void SetTAABlendWeight(float value);
+    void SetJitterEnabled(int enabled);
+    void SetLinkJitterToTAA(int enabled);
+    void SetUnlitScene(int enabled);
+    void SetMeshCullingType(int type);
+    void SetScriptUpdateInterval(float seconds);
+    void SetScriptUpdateMaxAccumulator(float seconds);
+    void SetScriptNativeParallelUpdateEnabled(int enabled);
+    void SetScriptNativeParallelWorkerCount(int workerCount);
+    void SetScriptNativeParallelChunkSize(int chunkSize);
+    void CinematicClearPath();
+    void CinematicAddPoint(float eyeX, float eyeY, float eyeZ, float lookX, float lookY, float lookZ);
+    void CinematicSetDuration(float durationSeconds);
+    void CinematicSetLoop(int loop);
+    void CinematicSetUseSmoothStep(int enabled);
+    int CinematicPlay(ComponentHolder* cameraEntity, int lockInput);
+    void CinematicStop();
+    int CinematicIsPlaying();
+    float CinematicGetProgress();
     void LoadWorldFile(std::string path);
     void SaveWorldFile(std::string path);
 
@@ -217,6 +278,8 @@ public:
         REFLECT_METHOD(GetEntityByName)
         REFLECT_METHOD(SetEntityName)
         REFLECT_METHOD(SetEntityActive)
+        REFLECT_METHOD(ActivateCamera)
+        REFLECT_METHOD(FillEntityBounds)
         REFLECT_METHOD(DestroyEntity)
         REFLECT_METHOD(SetMeshPosition)
         REFLECT_METHOD(SetMeshRotation)
@@ -234,7 +297,9 @@ public:
         REFLECT_METHOD(ApplyScriptLightsState)
         REFLECT_METHOD(UpdateScriptLightsNative)
         REFLECT_METHOD(SetDefaultCameraEye)
+        REFLECT_METHOD(SetDefaultCameraEyeAndLookAt)
         REFLECT_METHOD(SetDefaultCameraYawPitchRoll)
+        REFLECT_METHOD(SetDefaultCameraInputEnabled)
         REFLECT_METHOD(SetCameraSpeed)
         REFLECT_METHOD(ResetCamera)
         REFLECT_METHOD(MoveDefaultCameraForward)
@@ -255,6 +320,26 @@ public:
         REFLECT_METHOD(SetIBLDiffuseIntensity)
         REFLECT_METHOD(SetIBLSpecularIntensity)
         REFLECT_METHOD(SetIBLMaxReflectionMip)
+        REFLECT_METHOD(SetTAAEnabled)
+        REFLECT_METHOD(SetTAABlendWeight)
+        REFLECT_METHOD(SetJitterEnabled)
+        REFLECT_METHOD(SetLinkJitterToTAA)
+        REFLECT_METHOD(SetUnlitScene)
+        REFLECT_METHOD(SetMeshCullingType)
+        REFLECT_METHOD(SetScriptUpdateInterval)
+        REFLECT_METHOD(SetScriptUpdateMaxAccumulator)
+        REFLECT_METHOD(SetScriptNativeParallelUpdateEnabled)
+        REFLECT_METHOD(SetScriptNativeParallelWorkerCount)
+        REFLECT_METHOD(SetScriptNativeParallelChunkSize)
+        REFLECT_METHOD(CinematicClearPath)
+        REFLECT_METHOD(CinematicAddPoint)
+        REFLECT_METHOD(CinematicSetDuration)
+        REFLECT_METHOD(CinematicSetLoop)
+        REFLECT_METHOD(CinematicSetUseSmoothStep)
+        REFLECT_METHOD(CinematicPlay)
+        REFLECT_METHOD(CinematicStop)
+        REFLECT_METHOD(CinematicIsPlaying)
+        REFLECT_METHOD(CinematicGetProgress)
         REFLECT_METHOD(LoadWorldFile)
         REFLECT_METHOD(SaveWorldFile)
         REFLECT_METHOD(ExecuteScriptFile)
@@ -271,13 +356,44 @@ protected:
     void RebuildEntityNameCache();
 
 protected:
+    bool BuildBoundsFromMeshes(const std::vector<MeshComponent*>& meshes, ScriptBoundsInfo& outBounds) const;
+    void UpdateCinematic(float dt);
+    void SetCinematicInputLock(bool lockInput);
+    static float ApplyCinematicSmoothStep(float t);
+
+    struct CinematicPoint {
+        dx::XMFLOAT3 Eye = { 0.0f, 0.0f, 0.0f };
+        dx::XMFLOAT3 LookAt = { 0.0f, 0.0f, 0.0f };
+    };
+
+    static dx::XMFLOAT3 CatmullRom(const dx::XMFLOAT3& p0, const dx::XMFLOAT3& p1, const dx::XMFLOAT3& p2, const dx::XMFLOAT3& p3, float t);
+    static dx::XMFLOAT3 EvaluateCinematicSpline(const std::vector<CinematicPoint>& points, float t01, bool sampleLookAt);
+
+protected:
     std::vector<std::shared_ptr<ComponentHolder>> m_vEntities;
     std::vector<WorldScriptRecord> m_vLoadedScripts;
     float m_fScriptUpdateAccumulator = 0.0f;
     float m_fScriptUpdateInterval = (1.0f / 15.0f);
     float m_fScriptUpdateMaxAccumulator = 0.2f;
+    bool m_bScriptNativeParallelUpdateEnabled = true;
+    int m_iScriptNativeParallelWorkerCount = 3;
+    int m_iScriptNativeParallelChunkSize = 48;
+    FDWWIN::WorkerPool m_xScriptNativeWorkerPool;
+    bool m_bIsScriptNativeWorkerPoolInitialized = false;
     MainRenderer* m_pRender = nullptr;
     std::unordered_map<std::string, ComponentHolder*> m_mEntityByName;
 
+protected:
+    std::vector<CinematicPoint> m_vCinematicPoints;
+    TDefaultCamera* m_pCinematicCamera = nullptr;
+    float m_fCinematicDuration = 24.0f;
+    float m_fCinematicTime = 0.0f;
+    bool m_bCinematicPlaying = false;
+    bool m_bCinematicLoop = false;
+    bool m_bCinematicUseSmoothStep = true;
+    bool m_bCinematicLockInput = true;
+    int m_iCinematicPrevInputEnabled = 1;
+
+protected:
     std::vector<NRenderSystemNotifyType> m_vRenderSystemNotifies;
 };

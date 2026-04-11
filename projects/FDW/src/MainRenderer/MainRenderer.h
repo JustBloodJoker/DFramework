@@ -47,6 +47,8 @@ public:
 
 	bool IsEnabledTAA();
 	void EnableTAA(bool b);
+	float GetTAABlendWeight() const;
+	void SetTAABlendWeight(float value);
 
 	bool IsEnabledJitter();
 	void EnableJitter(bool b);

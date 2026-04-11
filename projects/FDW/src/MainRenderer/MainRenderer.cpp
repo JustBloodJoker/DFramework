@@ -368,6 +368,16 @@ void MainRenderer::EnableTAA(bool b) {
 	}
 }
 
+float MainRenderer::GetTAABlendWeight() const {
+	if (!m_pTAASystem) return 0.1f;
+	return m_pTAASystem->GetBlendWeight();
+}
+
+void MainRenderer::SetTAABlendWeight(float value) {
+	if (!m_pTAASystem) return;
+	m_pTAASystem->SetBlendWeight(value);
+}
+
 bool MainRenderer::IsEnabledJitter() {
 	return m_pCameraSystem && m_pCameraSystem->IsJitterEnabled();
 }
