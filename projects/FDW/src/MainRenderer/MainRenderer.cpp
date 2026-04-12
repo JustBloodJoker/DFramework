@@ -780,6 +780,18 @@ bool MainRenderer::IsShadowEnabled() {
 	return !m_bIsUnlitScene && IsRTSupported();
 }
 
+ShadowUpscaleSettings MainRenderer::GetShadowUpscaleSettings() const {
+	if (!m_pAtlasRTShadowSystem) {
+		return ShadowUpscaleSettings{};
+	}
+	return m_pAtlasRTShadowSystem->GetShadowUpscaleSettings();
+}
+
+void MainRenderer::SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings) {
+	if (!m_pAtlasRTShadowSystem) return;
+	m_pAtlasRTShadowSystem->SetShadowUpscaleSettings(settings);
+}
+
 std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
 	auto world = std::make_shared<World>();
 	world->SetMainRenderer(this);

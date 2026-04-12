@@ -23,6 +23,8 @@ public:
 	std::shared_ptr<FD3DW::ExecutionHandle> OnUploadLightsMeta(std::shared_ptr<FD3DW::ExecutionHandle> sync);
 	std::shared_ptr<FD3DW::ExecutionHandle> OnGenerateShadowAtlas(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync);
 
+    ShadowUpscaleSettings GetShadowUpscaleSettings() const;
+    void SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings);
 
 	void SetGBuffersResources(FD3DW::FResource* normal, ID3D12Device* device);
 
@@ -46,6 +48,7 @@ protected:
 	std::unique_ptr<FD3DW::StructuredBuffer> m_pLightAtlasMetaBuffer = nullptr;
 
 	AtlasRTShadowParams m_xShadowParams;
+    mutable std::mutex m_xShadowParamsMutex;
 	std::unique_ptr<FD3DW::UploadBuffer<AtlasRTShadowParams>> m_pAtlasPerFrameDataBuffer = nullptr;
 
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pAtlasPack = nullptr;

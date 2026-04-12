@@ -150,16 +150,72 @@ float InterleavedGradientNoise(float2 position_screen)
     return frac(magic.z * frac(dot(position_screen, magic.xy)));
 }
 
+float2 GetAnimatedNoisePixel(float2 screenUV)
+{
+    uint w, h;
+    DepthBuffer.GetDimensions(w, h);
+    float2 screenPixel = screenUV * float2(w, h);
+
+    float frameIdx = (float)LHelper.FrameIndex;
+    float2 temporalShift = float2(
+        frac(frameIdx * 0.6180339887f),
+        frac(frameIdx * 0.7548776662f)
+    ) * 100.0f;
+
+    return screenPixel + temporalShift;
+}
+
 float GetLinearDepth(float2 screenUV)
 {
     uint w, h;
     DepthBuffer.GetDimensions(w, h);
-    int3 texCoord = int3(screenUV * float2(w, h), 0);
+    if (w == 0 || h == 0) return 0.0f;
+
+    int2 texCoord2 = int2(screenUV * float2(w, h));
+    texCoord2 = clamp(texCoord2, int2(0, 0), int2((int)w - 1, (int)h - 1));
+    int3 texCoord = int3(texCoord2, 0);
     float z_b = DepthBuffer.Load(texCoord).r;
     
     float nearClip = LHelper.ZNear;
     float farClip = LHelper.ZFar;
     return (nearClip * farClip) / (farClip - z_b * (farClip - nearClip));
+}
+
+float3 GetSurfaceNormal(float2 screenUV)
+{
+    float3 normal = GBuffer_Normal.SampleLevel(linearSS, saturate(screenUV), 0).xyz;
+    float nLen = max(length(normal), 1e-6f);
+    return normal / nLen;
+}
+
+float2 AtlasUVToScreenUV(in LightAtlasMeta meta, float2 atlasUV, float2 atlasSize)
+{
+    float2 atlasOffset = float2(meta.AtlasOffsetX, meta.AtlasOffsetY);
+    float2 atlasDim = max(float2(meta.AtlasWidth, meta.AtlasHeight), float2(1.0f, 1.0f));
+    float2 tileUV = (atlasUV * atlasSize - atlasOffset) / atlasDim;
+    tileUV = saturate(tileUV);
+    return lerp(float2(meta.ScreenMinU, meta.ScreenMinV), float2(meta.ScreenMaxU, meta.ScreenMaxV), tileUV);
+}
+
+float ComputeJointBilateralWeight(float centerDepth, float3 centerNormal, float2 sampleScreenUV)
+{
+    float sampleDepth = GetLinearDepth(sampleScreenUV);
+    float depthDiff = abs(centerDepth - sampleDepth);
+    float depthWeight = exp(-depthDiff * depthDiff * ShadowAtlasData.DepthRejectionSharpness);
+
+    float3 sampleNormal = GetSurfaceNormal(sampleScreenUV);
+    float normalDiff = 1.0f - saturate(dot(centerNormal, sampleNormal));
+    float normalWeight = exp(-normalDiff * normalDiff * ShadowAtlasData.NormalRejectionSharpness);
+
+    return depthWeight * normalWeight;
+}
+
+float ApplyBlackLevelAndContrast(float shadowValue)
+{
+    float blackLevel = saturate(ShadowAtlasData.BlackLevel);
+    float normalized = saturate((shadowValue - blackLevel) / max(1.0f - blackLevel, 1e-6f));
+    float contrast = max(ShadowAtlasData.ShadowContrast, 0.1f);
+    return saturate(pow(normalized, contrast));
 }
 
 static const float2 ShadowRing3[3] = {
@@ -168,106 +224,328 @@ static const float2 ShadowRing3[3] = {
     float2(-0.5f, -0.8660254f)
 };
 
-float GetShadowFactor(in LightStruct light, int id, float2 UV) 
+static const float2 PoissonDisk16[16] = {
+    float2(-0.94201624f, -0.39906216f),
+    float2(0.94558609f, -0.76890725f),
+    float2(-0.09418410f, -0.92938870f),
+    float2(0.34495938f, 0.29387760f),
+    float2(-0.91588581f, 0.45771432f),
+    float2(-0.81544232f, -0.87912464f),
+    float2(-0.38277543f, 0.27676845f),
+    float2(0.97484398f, 0.75648379f),
+    float2(0.44323325f, -0.97511554f),
+    float2(0.53742981f, -0.47373420f),
+    float2(-0.26496911f, -0.41893023f),
+    float2(0.79197514f, 0.19090188f),
+    float2(-0.24188840f, 0.99706507f),
+    float2(-0.81409955f, 0.91437590f),
+    float2(0.19984126f, 0.78641367f),
+    float2(0.14383161f, -0.14100790f)
+};
+
+float SampleShadowPoint(int2 atlasPixel, in LightAtlasMeta meta)
 {
-    if (LHelper.IsShadowImpl == 0) return 1.0f;
-    LightAtlasMeta meta = GetLightMeta(id);
+    int2 minPixel = int2(meta.AtlasOffsetX, meta.AtlasOffsetY);
+    int2 maxPixel = minPixel + int2(meta.AtlasWidth, meta.AtlasHeight) - int2(1, 1);
+    atlasPixel = clamp(atlasPixel, minPixel, maxPixel);
+    return ShadowFactorTexture.Load(int3(atlasPixel, 0)).r;
+}
 
-    if (meta.AtlasWidth == 0 || meta.AtlasHeight == 0) return 1.0f;
-    if (meta.ScreenMaxU <= meta.ScreenMinU || meta.ScreenMaxV <= meta.ScreenMinV) return 1.0f;
-    
-    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || 
-        UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
-        return 1.0f;
+float SampleShadowBilinear(float2 atlasUV)
+{
+    return ShadowFactorTexture.SampleLevel(linearSS, atlasUV, 0).r;
+}
 
-    float centerDepth = GetLinearDepth(UV);
+float ApplyJointBilateralRingFilter(
+    in LightAtlasMeta meta,
+    float2 baseUV,
+    float2 minUV,
+    float2 maxUV,
+    float2 atlasSize,
+    float2 texelSize,
+    float centerDepth,
+    float3 centerNormal,
+    float2 animatedNoisePixel)
+{
+    float2 jitterNoise = float2(
+        InterleavedGradientNoise(animatedNoisePixel + float2(13.1f, 71.7f)),
+        InterleavedGradientNoise(animatedNoisePixel + float2(91.7f, 29.3f))
+    );
+    float2 subPixelJitter = (jitterNoise - float2(0.5f, 0.5f)) * texelSize * 0.75f * ShadowAtlasData.NoiseScale;
+    float2 jitteredBaseUV = clamp(baseUV + subPixelJitter, minUV, maxUV);
 
-    float2 relUV = (UV - float2(meta.ScreenMinU, meta.ScreenMinV)) / float2(meta.ScreenMaxU - meta.ScreenMinU, meta.ScreenMaxV - meta.ScreenMinV);
-
-    float2 atlasSize = float2(ShadowAtlasData.AtlasWidth, ShadowAtlasData.AtlasHeight);
-    float2 texelSize = 1.0f / atlasSize;
-    
-    float2 pixelPos = float2( (meta.AtlasOffsetX + relUV.x * meta.AtlasWidth), (meta.AtlasOffsetY + relUV.y * meta.AtlasHeight) );
-    float2 baseUV = pixelPos * texelSize;
-    
-    float2 minUV = float2(meta.AtlasOffsetX, meta.AtlasOffsetY) * texelSize + (0.5f * texelSize);
-    float2 maxUV = float2(meta.AtlasOffsetX + meta.AtlasWidth, meta.AtlasOffsetY + meta.AtlasHeight) * texelSize - (0.5f * texelSize);
-
-    uint w, h;
-    DepthBuffer.GetDimensions(w, h);
-    float2 screenPixel = UV * float2(w, h);
-    
-    int ffidx = LHelper.FrameIndex;
-    float2 noiseOffset = float2( frac(float(ffidx) * 0.6180339887f), frac(float(ffidx) * 0.7548776662f) ) * 100.0f;
-
-    float2 animatedScreenPixel = screenPixel + noiseOffset;
-    float noise = InterleavedGradientNoise(animatedScreenPixel);
-
-    float angle = noise * PI * 2;
+    float noise = InterleavedGradientNoise(animatedNoisePixel);
+    float angle = noise * PI * 2.0f;
     float s, c;
     sincos(angle, s, c);
     float2x2 rotMat = float2x2(c, -s, s, c);
 
     float shadowSum = 0.0f;
     float weightSum = 0.0f;
-    
-    float filterRadius = ShadowAtlasData.FilterRadius; 
-    float depthRejectionSharpness = ShadowAtlasData.DepthRejectionSharpness;
-
-    float2 jitterNoise = float2(
-        InterleavedGradientNoise(animatedScreenPixel + float2(13.1f, 71.7f)),
-        InterleavedGradientNoise(animatedScreenPixel + float2(91.7f, 29.3f))
-    );
-    float2 subPixelJitter = (jitterNoise - float2(0.5f, 0.5f)) * texelSize * 0.75f;
-    float2 jitteredBaseUV = clamp(baseUV + subPixelJitter, minUV, maxUV);
 
     {
-        float2 sampleUV = jitteredBaseUV;
-        float shadow = ShadowFactorTexture.SampleLevel(linearSS, sampleUV, 0).r;
-        float2 tileUV = (sampleUV * atlasSize - float2(meta.AtlasOffsetX, meta.AtlasOffsetY)) / float2(meta.AtlasWidth, meta.AtlasHeight);
-        float2 screenUV = lerp(float2(meta.ScreenMinU, meta.ScreenMinV), float2(meta.ScreenMaxU, meta.ScreenMaxV), tileUV);
-        float sampleDepth = GetLinearDepth(screenUV);
-        float depthDiff = abs(centerDepth - sampleDepth);
-        float weight = exp(-depthDiff * depthDiff * depthRejectionSharpness);
-
-        shadowSum += shadow * weight;
+        float2 sampleScreenUV = AtlasUVToScreenUV(meta, jitteredBaseUV, atlasSize);
+        float weight = ComputeJointBilateralWeight(centerDepth, centerNormal, sampleScreenUV);
+        shadowSum += SampleShadowBilinear(jitteredBaseUV) * weight;
         weightSum += weight;
     }
 
     [unroll]
-    for (int i = 0; i < 3; i++) 
+    for (int i = 0; i < 3; ++i)
     {
         float2 rotatedOffset = mul(rotMat, ShadowRing3[i]);
-        float2 sampleUV = clamp(jitteredBaseUV + rotatedOffset * texelSize * filterRadius, minUV, maxUV);
-        
-        float shadow = ShadowFactorTexture.SampleLevel(linearSS, sampleUV, 0).r;
+        float2 sampleUV = clamp(
+            jitteredBaseUV + rotatedOffset * texelSize * max(ShadowAtlasData.FilterRadius, 0.01f),
+            minUV,
+            maxUV
+        );
 
-        float2 tileUV = (sampleUV * atlasSize - float2(meta.AtlasOffsetX, meta.AtlasOffsetY)) / float2(meta.AtlasWidth, meta.AtlasHeight);
-        float2 screenUV = lerp(float2(meta.ScreenMinU, meta.ScreenMinV), float2(meta.ScreenMaxU, meta.ScreenMaxV), tileUV);
-
-        float sampleDepth = GetLinearDepth(screenUV);
-        
-        float depthDiff = abs(centerDepth - sampleDepth);
-        float weight = exp(-depthDiff * depthDiff * depthRejectionSharpness);
-
-        shadowSum += shadow * weight;
+        float2 sampleScreenUV = AtlasUVToScreenUV(meta, sampleUV, atlasSize);
+        float weight = ComputeJointBilateralWeight(centerDepth, centerNormal, sampleScreenUV);
+        shadowSum += SampleShadowBilinear(sampleUV) * weight;
         weightSum += weight;
     }
 
-    if (weightSum < 0.001f) {
-        return ShadowFactorTexture.SampleLevel(linearSS, jitteredBaseUV, 0).r;
+    if (weightSum <= 1e-6f) return SampleShadowBilinear(jitteredBaseUV);
+    return shadowSum / weightSum;
+}
+
+float ApplyKernelPCFFilter(
+    in LightAtlasMeta meta,
+    float2 baseUV,
+    float2 minUV,
+    float2 maxUV,
+    float2 atlasSize,
+    float2 texelSize,
+    int inputKernelSize,
+    bool useJointBilateral,
+    float centerDepth,
+    float3 centerNormal)
+{
+    int kernelSize = max(inputKernelSize, 1);
+    int start = -(kernelSize / 2);
+    int end = start + kernelSize;
+
+    float sigma = max(1.0f, float(kernelSize) * 0.5f);
+    float invTwoSigma2 = 1.0f / (2.0f * sigma * sigma);
+    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f);
+
+    float shadowSum = 0.0f;
+    float weightSum = 0.0f;
+
+    [loop]
+    for (int y = start; y < end; ++y)
+    {
+        [loop]
+        for (int x = start; x < end; ++x)
+        {
+            float2 offset = float2((float)x, (float)y) * texelSize * radiusScale;
+            float2 sampleUV = clamp(baseUV + offset, minUV, maxUV);
+
+            float sampleShadow = SampleShadowBilinear(sampleUV);
+            float spatialWeight = exp(-(float(x * x + y * y)) * invTwoSigma2);
+            float weight = spatialWeight;
+
+            if (useJointBilateral) {
+                float2 sampleScreenUV = AtlasUVToScreenUV(meta, sampleUV, atlasSize);
+                weight *= ComputeJointBilateralWeight(centerDepth, centerNormal, sampleScreenUV);
+            }
+
+            shadowSum += sampleShadow * weight;
+            weightSum += weight;
+        }
     }
 
-    float result = shadowSum / weightSum;
+    if (weightSum <= 1e-6f) return SampleShadowBilinear(baseUV);
+    return shadowSum / weightSum;
+}
+
+float ApplyPoisson16Filter(
+    in LightAtlasMeta meta,
+    float2 baseUV,
+    float2 minUV,
+    float2 maxUV,
+    float2 atlasSize,
+    float2 texelSize,
+    bool useJointBilateral,
+    float centerDepth,
+    float3 centerNormal,
+    float2 animatedNoisePixel)
+{
+    float angle = InterleavedGradientNoise(animatedNoisePixel) * PI * 2.0f;
+    float s, c;
+    sincos(angle, s, c);
+    float2x2 rotMat = float2x2(c, -s, s, c);
+
+    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f);
+    float noiseScale = ShadowAtlasData.NoiseScale;
+
+    float shadowSum = 0.0f;
+    float weightSum = 0.0f;
+
+    [unroll]
+    for (int i = 0; i < 16; ++i)
+    {
+        float2 rotatedOffset = mul(rotMat, PoissonDisk16[i]);
+        float jitter = InterleavedGradientNoise(animatedNoisePixel + float2(float(i) * 17.13f, float(i) * 23.71f)) - 0.5f;
+        float2 jitterOffset = texelSize * jitter * noiseScale * 0.5f;
+        float2 sampleUV = clamp(baseUV + rotatedOffset * texelSize * radiusScale + jitterOffset, minUV, maxUV);
+
+        float sampleShadow = SampleShadowBilinear(sampleUV);
+        float weight = 1.0f;
+
+        if (useJointBilateral) {
+            float2 sampleScreenUV = AtlasUVToScreenUV(meta, sampleUV, atlasSize);
+            weight *= ComputeJointBilateralWeight(centerDepth, centerNormal, sampleScreenUV);
+        }
+
+        shadowSum += sampleShadow * weight;
+        weightSum += weight;
+    }
+
+    if (weightSum <= 1e-6f) return SampleShadowBilinear(baseUV);
+    return shadowSum / weightSum;
+}
+
+float GetShadowFactor(int id, float2 UV)
+{
+    if (LHelper.IsShadowImpl == 0) return 1.0f;
     
-    float blackLevel = ShadowAtlasData.BlackLevel;
-    return saturate((result - blackLevel) / (1.0f - blackLevel));
+    LightAtlasMeta meta = GetLightMeta(id);
+    if (meta.AtlasWidth == 0 || meta.AtlasHeight == 0) return 1.0f;
+    if (meta.ScreenMaxU <= meta.ScreenMinU || meta.ScreenMaxV <= meta.ScreenMinV) return 1.0f;
+    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
+        return 1.0f;
+
+    float2 atlasSize = float2(max(ShadowAtlasData.AtlasWidth, 1u), max(ShadowAtlasData.AtlasHeight, 1u));
+    float2 texelSize = 1.0f / atlasSize;
+
+    float2 screenMinUV = float2(meta.ScreenMinU, meta.ScreenMinV);
+    float2 screenMaxUV = float2(meta.ScreenMaxU, meta.ScreenMaxV);
+    float2 relUV = (UV - screenMinUV) / max(screenMaxUV - screenMinUV, float2(1e-5f, 1e-5f));
+    relUV = saturate(relUV);
+
+    float2 tileSize = float2(meta.AtlasWidth, meta.AtlasHeight);
+    float2 minPixel = float2(meta.AtlasOffsetX, meta.AtlasOffsetY);
+    float2 maxPixel = minPixel + tileSize - float2(1.0f, 1.0f);
+    float2 atlasPixel = clamp(minPixel + relUV * tileSize, minPixel, maxPixel);
+    int2 atlasPixelInt = int2(atlasPixel);
+
+    float2 baseUV = (atlasPixel + 0.5f) * texelSize;
+    float2 minUV = (minPixel + 0.5f) * texelSize;
+    float2 maxUV = (minPixel + tileSize - 0.5f) * texelSize;
+
+    float centerDepth = GetLinearDepth(UV);
+    float3 centerNormal = GetSurfaceNormal(UV);
+    float2 animatedNoisePixel = GetAnimatedNoisePixel(UV);
+
+    float rawShadow = 1.0f;
+    switch (ShadowAtlasData.UpscaleMode)
+    {
+    case SHADOW_UPSCALE_MODE_POINT:
+        rawShadow = SampleShadowPoint(atlasPixelInt, meta);
+        break;
+
+    case SHADOW_UPSCALE_MODE_BILINEAR:
+        rawShadow = SampleShadowBilinear(baseUV);
+        break;
+
+    case SHADOW_UPSCALE_MODE_PCF:
+        rawShadow = ApplyKernelPCFFilter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            (int)ShadowAtlasData.PCFKernelSize,
+            false,
+            centerDepth,
+            centerNormal
+        );
+        break;
+
+    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL:
+        rawShadow = ApplyJointBilateralRingFilter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            centerDepth,
+            centerNormal,
+            animatedNoisePixel
+        );
+        break;
+
+    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL_PCF:
+        rawShadow = ApplyKernelPCFFilter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            (int)ShadowAtlasData.PCFKernelSize,
+            true,
+            centerDepth,
+            centerNormal
+        );
+        break;
+
+    case SHADOW_UPSCALE_MODE_POISSON_16:
+        rawShadow = ApplyPoisson16Filter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            false,
+            centerDepth,
+            centerNormal,
+            animatedNoisePixel
+        );
+        break;
+
+    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL_POISSON_16:
+        rawShadow = ApplyPoisson16Filter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            true,
+            centerDepth,
+            centerNormal,
+            animatedNoisePixel
+        );
+        break;
+
+    default:
+        rawShadow = ApplyJointBilateralRingFilter(
+            meta,
+            baseUV,
+            minUV,
+            maxUV,
+            atlasSize,
+            texelSize,
+            centerDepth,
+            centerNormal,
+            animatedNoisePixel
+        );
+        break;
+    }
+
+    return ApplyBlackLevelAndContrast(rawShadow);
 }
 
 
 float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
-    float shadowFactor = GetShadowFactor(light, id, UV);
+    float shadowFactor = GetShadowFactor(id, UV);
     if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
 
     float3 L = light.Position - WorldPos;
@@ -290,7 +568,7 @@ float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos,
 
 float3 ApplySpotLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
-    float shadowFactor = GetShadowFactor(light, id, UV);
+    float shadowFactor = GetShadowFactor(id, UV);
     if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
 
     float3 L = light.Position - WorldPos;
@@ -317,7 +595,7 @@ float3 ApplySpotLight(in LightStruct light, float2 UV, int id, float3 WorldPos, 
 
 float3 ApplyDirectionalLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
-    float shadowFactor = GetShadowFactor(light, id, UV);
+    float shadowFactor = GetShadowFactor(id, UV);
     if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
 
     float3 L = normalize(-light.Direction);
@@ -330,7 +608,7 @@ float3 ApplyDirectionalLight(in LightStruct light, float2 UV, int id, float3 Wor
 
 
 float3 ApplyRectLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
-    float shadowFactor = GetShadowFactor(light, id, UV);
+    float shadowFactor = GetShadowFactor(id, UV);
     if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
 
     float3 points[4];

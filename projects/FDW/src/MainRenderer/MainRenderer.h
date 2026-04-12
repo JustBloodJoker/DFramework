@@ -124,6 +124,8 @@ public:
 
 	//SHADOWS
 	bool IsShadowEnabled();
+	ShadowUpscaleSettings GetShadowUpscaleSettings() const;
+	void SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings);
 
 	//WORLD
 	void LoadWorld(std::string pathTo);

@@ -16,13 +16,19 @@ void AtlasRTShadowSystem::AfterConstruction() {
 	m_pLightAtlasMetaBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<LightAtlasMeta>(device, 1, true, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS, D3D12_HEAP_TYPE_DEFAULT);
 
    
-    m_xShadowParams.AtlasHeight = RT_SHADOW_ATLAS_MAX_HEIGHT;
-    m_xShadowParams.AtlasWidth = RT_SHADOW_ATLAS_MAX_WIDTH;
-    m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
-    m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+    {
+        std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
+        m_xShadowParams.AtlasHeight = RT_SHADOW_ATLAS_MAX_HEIGHT;
+        m_xShadowParams.AtlasWidth = RT_SHADOW_ATLAS_MAX_WIDTH;
+        m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
+        m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+    }
 
 	m_pAtlasPerFrameDataBuffer = std::make_unique<FD3DW::UploadBuffer<AtlasRTShadowParams>>(device, 1, true);
-	m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
+    {
+        std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
+	    m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
+    }
 
     m_pTexelToLight = FD3DW::FResource::CreateAnonimTexture(device, 1, RT_SHADOW_ATLAS_LIGHT_IDX_FORMAT, RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, DXGI_SAMPLE_DESC({ 1,0 }), D3D12_RESOURCE_DIMENSION_TEXTURE2D, D3D12_RESOURCE_FLAG_NONE, D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_NONE, &FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)), 1u);
 
@@ -57,6 +63,16 @@ void AtlasRTShadowSystem::ProcessNotify(NRenderSystemNotifyType type) {
     else if (type == NRenderSystemNotifyType::UpdateTLAS) {
         m_bIsNeedCheckEmptyAtlas.store(true, std::memory_order_release);
     }
+}
+
+ShadowUpscaleSettings AtlasRTShadowSystem::GetShadowUpscaleSettings() const {
+    std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
+    return m_xShadowParams.GetUpscaleSettings();
+}
+
+void AtlasRTShadowSystem::SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings) {
+    std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
+    m_xShadowParams.SetUpscaleSettings(settings);
 }
 
 LightAtlasRect AtlasRTShadowSystem::ComputePointLightScreenRect(const dx::XMFLOAT3& lightPos, float attenuationRadius, int screenWidth, int screenHeight) {
@@ -191,10 +207,15 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
             return;
         }
 
-		m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
-		m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
-		m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
-        m_pAtlasPerFrameDataBuffer->CpyData(0, m_xShadowParams);
+        AtlasRTShadowParams perFrameParams{};
+        {
+            std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
+		    m_xShadowParams.ScreenWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
+		    m_xShadowParams.ScreenHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
+		    m_xShadowParams.InverseViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
+            perFrameParams = m_xShadowParams;
+        }
+        m_pAtlasPerFrameDataBuffer->CpyData(0, perFrameParams);
 
         PSOManager::GetInstance()->GetPSOObject(PSOType::AtlasRTShadowDefaultConfig)->Bind(list);
         

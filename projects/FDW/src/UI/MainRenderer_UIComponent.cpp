@@ -1001,10 +1001,99 @@ void MainRenderer_UIComponent::DrawEditor_BloomSystem() {
 
 void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     auto enabled = m_pOwner->IsShadowEnabled();
+    if (!enabled) {
+        if (m_pOwner->IsUnlitScene()) {
+            ImGui::TextDisabled("Shadows disabled by Unlit Scene.");
+        }
+        else {
+            ImGui::TextDisabled("Shadow system unavailable (DXR required).");
+        }
+        return;
+    }
 
-    if (!enabled) return;
+    auto settings = m_pOwner->GetShadowUpscaleSettings();
+    bool isDirty = false;
 
-	//TODO: Shadow settings
+    const char* upscaleModes[] = {
+        "Point (Nearest)",
+        "Bilinear",
+        "PCF",
+        "Joint Bilateral",
+        "Joint Bilateral + PCF",
+        "Poisson 16 taps",
+        "Joint Bilateral + Poisson 16"
+    };
+
+    int mode = static_cast<int>(settings.Mode);
+    if (ImGui::Combo("Upscale Mode", &mode, upscaleModes, IM_ARRAYSIZE(upscaleModes))) {
+        mode = std::clamp(mode, 0, (int)ShadowUpscaleMode::COUNT - 1);
+        settings.Mode = static_cast<ShadowUpscaleMode>(mode);
+        isDirty = true;
+    }
+
+    const bool usesKernel =
+        settings.Mode == ShadowUpscaleMode::PCF ||
+        settings.Mode == ShadowUpscaleMode::JointBilateralPCF;
+
+    const UINT kernelSizes[] = { 3u, 5u, 16u };
+    const char* kernelLabels[] = { "3x3", "5x5", "16x16" };
+    int kernelIndex = 0;
+    if (settings.PCFKernelSize >= 16u) kernelIndex = 2;
+    else if (settings.PCFKernelSize >= 5u) kernelIndex = 1;
+
+    if (!usesKernel) ImGui::BeginDisabled();
+    if (ImGui::Combo("PCF Kernel", &kernelIndex, kernelLabels, IM_ARRAYSIZE(kernelLabels))) {
+        settings.PCFKernelSize = kernelSizes[kernelIndex];
+        isDirty = true;
+    }
+    if (!usesKernel) ImGui::EndDisabled();
+
+    const bool usesFilterRadius =
+        settings.Mode != ShadowUpscaleMode::Point &&
+        settings.Mode != ShadowUpscaleMode::Bilinear;
+    if (!usesFilterRadius) ImGui::BeginDisabled();
+    if (ImGui::SliderFloat("Filter Radius", &settings.FilterRadius, 0.1f, 8.0f, "%.2f")) {
+        isDirty = true;
+    }
+    if (!usesFilterRadius) ImGui::EndDisabled();
+
+    const bool usesJointBilateral =
+        settings.Mode == ShadowUpscaleMode::JointBilateral ||
+        settings.Mode == ShadowUpscaleMode::JointBilateralPCF ||
+        settings.Mode == ShadowUpscaleMode::JointBilateralPoisson16;
+
+    if (!usesJointBilateral) ImGui::BeginDisabled();
+    if (ImGui::SliderFloat("Depth Rejection", &settings.DepthRejectionSharpness, 0.01f, 128.0f, "%.2f")) {
+        isDirty = true;
+    }
+    if (ImGui::SliderFloat("Normal Rejection", &settings.NormalRejectionSharpness, 0.01f, 256.0f, "%.2f")) {
+        isDirty = true;
+    }
+    if (!usesJointBilateral) ImGui::EndDisabled();
+
+    const bool usesNoise =
+        settings.Mode == ShadowUpscaleMode::JointBilateral ||
+        settings.Mode == ShadowUpscaleMode::Poisson16 ||
+        settings.Mode == ShadowUpscaleMode::JointBilateralPoisson16;
+    if (!usesNoise) ImGui::BeginDisabled();
+    if (ImGui::SliderFloat("Noise Scale", &settings.NoiseScale, 0.0f, 2.0f, "%.2f")) {
+        isDirty = true;
+    }
+    if (!usesNoise) ImGui::EndDisabled();
+
+    if (ImGui::SliderFloat("Black Level", &settings.BlackLevel, 0.0f, 0.95f, "%.3f")) {
+        isDirty = true;
+    }
+    if (ImGui::SliderFloat("Shadow Contrast", &settings.ShadowContrast, 0.1f, 4.0f, "%.2f")) {
+        isDirty = true;
+    }
+
+    if (isDirty) {
+        m_pOwner->SetShadowUpscaleSettings(settings);
+    }
+
+    ImGui::Separator();
+    ImGui::TextDisabled("Presets: Bilinear, PCF 3x3/5x5/16x16, Joint Bilateral + PCF, Poisson16.");
 }
 
 
