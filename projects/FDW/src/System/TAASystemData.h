@@ -7,4 +7,6 @@ struct TAASystemData {
 	float BlendWeight = 0.1f;
 	dx::XMFLOAT2 CurrentJitterOffset;
 	dx::XMFLOAT2 PrevJitterOffset;
+	dx::XMMATRIX CurrentInvViewProjectionMatrix;
+	dx::XMMATRIX PrevViewProjectionMatrix;
 };

@@ -289,6 +289,8 @@ struct TAAPassData {
     float BlendWeight;
     float2 currentJitter;
     float2 prevJitter;
+    matrix CurrentInvViewProjectionMatrix;
+    matrix PrevViewProjectionMatrix;
 };
 
 

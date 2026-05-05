@@ -73,6 +73,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> TAASystem::ProcessTAABufferCollection(st
 		data.BlendWeight = m_fBlendWeight;
 		data.CurrentJitterOffset = m_pOwner->GetCurrentJitterOffset();
 		data.PrevJitterOffset = m_pOwner->GetPrevJitterOffset();
+		data.CurrentInvViewProjectionMatrix = dx::XMMatrixInverse(nullptr, dx::XMMatrixTranspose(m_pOwner->GetJitteredViewProjectionMatrix()));
+		data.PrevViewProjectionMatrix = dx::XMMatrixTranspose(m_pOwner->GetPrevViewProjectionMatrix());
 		m_pDataBuffer->CpyData(0, data);
 		
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

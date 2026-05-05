@@ -13,24 +13,66 @@ SamplerState samplerLinearClamp : register(s0);
 
 RWTexture2D<float> ShadowAtlasUAV : register(u0);
 
-float TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist)
+float3 ReconstructWorldPositionFromPixel(uint2 gBufferPixel)
+{
+    float2 uv = (float2(gBufferPixel) + 0.5f) / float2(AtlasData.ScreenWidth, AtlasData.ScreenHeight);
+    float depth = DepthBuffer.Load(int3(gBufferPixel, 0)).x;
+    return ReconstructWorldPosition(uv, depth, AtlasData.InverseViewProjectionMatrix);
+}
+
+float3 ComputeDepthNormal(uint2 gBufferPixel, float3 fallbackNormal, out float pixelWorldSize)
+{
+    uint2 maxPixel = uint2(AtlasData.ScreenWidth - 1, AtlasData.ScreenHeight - 1);
+    uint2 leftPixel = uint2(gBufferPixel.x > 0 ? gBufferPixel.x - 1 : gBufferPixel.x, gBufferPixel.y);
+    uint2 rightPixel = uint2(min(gBufferPixel.x + 1, maxPixel.x), gBufferPixel.y);
+    uint2 upPixel = uint2(gBufferPixel.x, gBufferPixel.y > 0 ? gBufferPixel.y - 1 : gBufferPixel.y);
+    uint2 downPixel = uint2(gBufferPixel.x, min(gBufferPixel.y + 1, maxPixel.y));
+
+    float3 centerPos = ReconstructWorldPositionFromPixel(gBufferPixel);
+    float3 leftPos = ReconstructWorldPositionFromPixel(leftPixel);
+    float3 rightPos = ReconstructWorldPositionFromPixel(rightPixel);
+    float3 upPos = ReconstructWorldPositionFromPixel(upPixel);
+    float3 downPos = ReconstructWorldPositionFromPixel(downPixel);
+
+    float3 dxForward = rightPos - centerPos;
+    float3 dxBackward = centerPos - leftPos;
+    float3 dyForward = downPos - centerPos;
+    float3 dyBackward = centerPos - upPos;
+
+    float3 dx = dot(dxForward, dxForward) < dot(dxBackward, dxBackward) ? dxForward : dxBackward;
+    float3 dy = dot(dyForward, dyForward) < dot(dyBackward, dyBackward) ? dyForward : dyBackward;
+    pixelWorldSize = max(length(dx), length(dy));
+
+    float3 depthNormal = cross(dy, dx);
+    float normalLenSq = dot(depthNormal, depthNormal);
+    if (normalLenSq <= 1e-10f) {
+        return fallbackNormal;
+    }
+
+    depthNormal *= rsqrt(normalLenSq);
+    return dot(depthNormal, fallbackNormal) < 0.0f ? -depthNormal : depthNormal;
+}
+
+float TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist, float pixelWorldSize)
 {
     RayDesc ray;
     
     float NdotL = dot(normal, dir);
     float baseBias = 0.0002f; 
-    float bias = clamp(0.0002f * sqrt(1.0f - NdotL * NdotL) / max(NdotL, 1e-5f), 0.002f, 0.05f);
+    float bias = clamp(baseBias * sqrt(1.0f - NdotL * NdotL) / max(NdotL, 1e-5f), 0.003f, 0.07f);
+    bias = clamp(max(bias, pixelWorldSize * 0.65f), 0.03f, 1.75f);
 
-    ray.Origin = origin + normal * bias; 
+    float rayEpsilon = max(0.03f, bias * 0.7f);
+    ray.Origin = origin + normal * bias + dir * rayEpsilon; 
     
     ray.Direction = dir;
-    ray.TMin = 0.0f;
-    ray.TMax = dist - bias;
+    ray.TMin = rayEpsilon;
+    ray.TMax = max(dist - bias - rayEpsilon, ray.TMin);
 
     ShadowPayload payload;
     payload.Visible = 1.0f;
     
-    TraceRay(SceneBVH, RAY_FLAG_CULL_BACK_FACING_TRIANGLES | RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF, 0, 1, 0, ray, payload);
+    TraceRay(SceneBVH, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF, 0, 1, 0, ray, payload);
 
     return payload.Visible;
 }
@@ -65,9 +107,10 @@ void RayGen()
     gBuffersPixel.x = min(gBuffersPixel.x, AtlasData.ScreenWidth - 1);
     gBuffersPixel.y = min(gBuffersPixel.y, AtlasData.ScreenHeight - 1);
     
-    float2 uv = (float2(gBuffersPixel) + 0.5f) / float2(AtlasData.ScreenWidth, AtlasData.ScreenHeight);
-    float3 worldPos = ReconstructWorldPosition(uv, DepthBuffer.Load(int3(gBuffersPixel,0)).x, AtlasData.InverseViewProjectionMatrix);
-    float3 normal   = normalize(GBufferNormal.Load(int3(gBuffersPixel,0)).xyz);
+    float3 worldPos = ReconstructWorldPositionFromPixel(gBuffersPixel);
+    float3 shadingNormal = normalize(GBufferNormal.Load(int3(gBuffersPixel,0)).xyz);
+    float pixelWorldSize = 0.0f;
+    float3 normal = ComputeDepthNormal(gBuffersPixel, shadingNormal, pixelWorldSize);
 
     float visible = 1.0f;
 
@@ -75,7 +118,7 @@ void RayGen()
     {
         float3 lightDir = -normalize(light.Direction);
         const float INF_DIST = 1e6f;
-        visible = TraceShadowRay(worldPos, normal, lightDir, INF_DIST);
+        visible = TraceShadowRay(worldPos, normal, lightDir, INF_DIST, pixelWorldSize);
     }
     else if (light.LightType == LIGHT_POINT_LIGHT_ENUM_VALUE)
     {
@@ -91,7 +134,7 @@ void RayGen()
             else
             {
                 float3 dir = toLight / dist;
-                visible = TraceShadowRay(worldPos, normal, dir, dist);
+                visible = TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize);
             }
         }
     }
@@ -113,7 +156,7 @@ void RayGen()
             } else 
             {
                 float3 dir = normalize(toLight);
-                visible = TraceShadowRay(worldPos, normal,dir, dist);
+                visible = TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize);
             }
             
         }
