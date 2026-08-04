@@ -5,6 +5,9 @@
 #include <MainRenderer/PSOManager.h>
 #include <Component/Light/LightComponentData.h>
 
+constexpr float CLEARVALUE[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+
 void AtlasRTShadowSystem::AfterConstruction() {
 	auto device = m_pOwner->GetDevice();
 	auto dxrDevice = m_pOwner->GetDXRDevice();
@@ -65,14 +68,14 @@ void AtlasRTShadowSystem::ProcessNotify(NRenderSystemNotifyType type) {
     }
 }
 
-ShadowUpscaleSettings AtlasRTShadowSystem::GetShadowUpscaleSettings() const {
+HardShadowAtlasFilterSettings AtlasRTShadowSystem::GetHardShadowAtlasFilterSettings() const {
     std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
-    return m_xShadowParams.GetUpscaleSettings();
+    return m_xShadowParams.GetFilterSettings();
 }
 
-void AtlasRTShadowSystem::SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings) {
+void AtlasRTShadowSystem::SetHardShadowAtlasFilterSettings(const HardShadowAtlasFilterSettings& settings) {
     std::lock_guard<std::mutex> lock(m_xShadowParamsMutex);
-    m_xShadowParams.SetUpscaleSettings(settings);
+    m_xShadowParams.SetFilterSettings(settings);
 }
 
 LightAtlasRect AtlasRTShadowSystem::ComputePointLightScreenRect(const dx::XMFLOAT3& lightPos, float attenuationRadius, int screenWidth, int screenHeight) {
@@ -167,7 +170,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnUploadLightsMeta(
     std::shared_ptr<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>> uploadRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
         if (m_bIsNeedUploadDataInBuffer.exchange(false, std::memory_order_acq_rel)) {
 
-            m_pLightAtlasMetaBuffer->UploadDataNoBarrier(m_pOwner->GetDevice(), list, m_vMetas.data(), int(m_vMetas.size()));
+            m_pLightAtlasMetaBuffer->UploadData(m_pOwner->GetDevice(), list, m_vMetas.data(), int(m_vMetas.size()), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
             if (!m_DirtyRegions.empty()) {
                 auto device = m_pOwner->GetDevice();
@@ -203,7 +206,20 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         auto tlas = m_pOwner->GetTLAS().pResult;
 
         if (!tlas) {
-			if(m_bIsNeedCheckEmptyAtlas.exchange(false, std::memory_order_acq_rel) ) m_pShadowAtlas->ClearTexture(m_pOwner->GetDevice(), list, nullptr);    
+			if (m_bIsNeedCheckEmptyAtlas.exchange(false, std::memory_order_acq_rel)) {
+				m_pShadowAtlas->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+				ID3D12DescriptorHeap* heaps[] = { m_pAtlasPack->GetResult()->GetDescriptorPtr() };
+				list->SetDescriptorHeaps(_countof(heaps), heaps);
+
+				list->ClearUnorderedAccessViewFloat(m_pAtlasPack->GetResult()->GetGPUDescriptorHandle(3),m_pAtlasPack->GetResult()->GetCPUDescriptorHandle(3),m_pShadowAtlas->GetResource(),CLEARVALUE,0,nullptr);
+
+				auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_pShadowAtlas->GetResource());
+				list->ResourceBarrier(1, &uavBarrier);
+			}
+
+			m_pShadowAtlas->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+			m_pLightAtlasMetaBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
             return;
         }
 
@@ -223,9 +239,18 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
 
         list->SetComputeRootShaderResourceView(ATLAS_RT_SHADOW_ACC_DXR_BUFFER_POS_IN_ROOT_SIG, tlas->GetGPUVirtualAddress());
 
+        auto* depthBuffer = m_pOwner->GetCurrentDSV();
+
+        SAFE_ASSERT(m_pNormalBuffer, "AtlasRTShadowSystem: normal G-buffer is not bound");
+        SAFE_ASSERT(depthBuffer, "AtlasRTShadowSystem: depth buffer is not available");
+
+        m_pNormalBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+        depthBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+
         m_pLightAtlasMetaBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         m_pTexelToLight->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
-        m_pShadowAtlas->ResourceBarrierChange(list, 1, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+
+        m_pShadowAtlas->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         
         ID3D12DescriptorHeap* r[1] = { m_pAtlasPack->GetResult()->GetDescriptorPtr() };
         list->SetDescriptorHeaps(ARRAYSIZE(r), r);
@@ -239,12 +264,22 @@ std::shared_ptr<FD3DW::ExecutionHandle> AtlasRTShadowSystem::OnGenerateShadowAtl
         list->SetComputeRootConstantBufferView(ATLAS_RT_SHADOW_ATLAS_CBV_POS_IN_ROOT_SIG, m_pAtlasPerFrameDataBuffer->GetGPULocation(0));
 
         list->DispatchRays(m_pSoftShadowsSBT->GetDispatchRaysDesc(RT_SHADOW_ATLAS_MAX_WIDTH, RT_SHADOW_ATLAS_MAX_HEIGHT, 1));
+
+        auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_pShadowAtlas->GetResource());
+        list->ResourceBarrier(1, &uavBarrier);
+
+        m_pShadowAtlas->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        m_pLightAtlasMetaBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        m_pNormalBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        depthBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     });
 
     return GlobalRenderThreadManager::GetInstance()->Submit(rtRecipe, sync, true);
 }
 
 void AtlasRTShadowSystem::SetGBuffersResources(FD3DW::FResource* normal, ID3D12Device* device) {
+    m_pNormalBuffer = normal;
+
     m_pAtlasPack->AddResource(normal->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, 2, device);
 }
 

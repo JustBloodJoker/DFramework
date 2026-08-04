@@ -7,7 +7,8 @@ TestBaseWindow::TestBaseWindow(std::wstring windowTittle, int width, int height,
 
 bool TestBaseWindow::ChildInit()
 {
-    return false;
+	PostMessage(GETHWND(), WM_CLOSE, 0, 0);
+	return true;
 }
 
 void TestBaseWindow::ChildLoop() 

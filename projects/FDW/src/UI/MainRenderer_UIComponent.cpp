@@ -1000,22 +1000,56 @@ void MainRenderer_UIComponent::DrawEditor_BloomSystem() {
 }
 
 void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
+    struct ShadowModeOption {
+        ShadowMode Mode;
+        const char* AvailableLabel;
+        const char* UnavailableLabel;
+    };
+
+    static constexpr ShadowModeOption shadowModeOptions[] = {
+        { ShadowMode::HardShadowAtlas, "Hard Shadow Atlas", "Hard Shadow Atlas (Unavailable: DXR required)" },
+        { ShadowMode::RayTraced, "Ray Traced", "Ray Traced (Unavailable: not implemented)" },
+        { ShadowMode::Neural, "Neural", "Neural (Unavailable: not implemented)" }
+    };
+    static_assert(IM_ARRAYSIZE(shadowModeOptions) == static_cast<int>(ShadowMode::COUNT)); // mmm
+
+    const auto currentShadowMode = m_pOwner->GetShadowMode();
+    ImGui::TextUnformatted("Shadow Mode");
+    for (const auto& option : shadowModeOptions) {
+        const bool isAvailable = m_pOwner->IsShadowModeAvailable(option.Mode);
+        const bool isSelected = currentShadowMode == option.Mode;
+        if (!isAvailable) ImGui::BeginDisabled();
+        if (ImGui::RadioButton(isAvailable ? option.AvailableLabel : option.UnavailableLabel, isSelected)) {
+            m_pOwner->SetShadowMode(option.Mode);
+        }
+        if (!isAvailable) ImGui::EndDisabled();
+    }
+
+    const auto routing = m_pOwner->GetShadowRoutingState();
+    if (routing.UsesHardShadowAtlas) {
+        ImGui::Text("Active backend: Hard Shadow Atlas");
+    }
+    else {
+        ImGui::TextDisabled(
+            "Active backend: Fully Lit Fallback (%s)",
+            GetShadowFallbackReasonLabel(routing.FallbackReason));
+    }
+
+    ImGui::Separator();
     auto enabled = m_pOwner->IsShadowEnabled();
     if (!enabled) {
-        if (m_pOwner->IsUnlitScene()) {
-            ImGui::TextDisabled("Shadows disabled by Unlit Scene.");
-        }
-        else {
-            ImGui::TextDisabled("Shadow system unavailable (DXR required).");
-        }
+        ImGui::TextDisabled("Shadow filtering is inactive while the fully-lit fallback is selected.");
         return;
     }
 
-    auto settings = m_pOwner->GetShadowUpscaleSettings();
+    ImGui::TextDisabled("Active path: deferred hard-atlas reconstruction");
+    ImGui::TextDisabled("Legacy RT soft-shadow prototype: inactive");
+
+    auto settings = m_pOwner->GetHardShadowAtlasFilterSettings();
     bool isDirty = false;
 
     const char* upscaleModes[] = {
-        "Point (Nearest)",
+        "Nearest (unfiltered atlas sample)",
         "Bilinear",
         "PCF",
         "Joint Bilateral",
@@ -1025,15 +1059,15 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     };
 
     int mode = static_cast<int>(settings.Mode);
-    if (ImGui::Combo("Upscale Mode", &mode, upscaleModes, IM_ARRAYSIZE(upscaleModes))) {
-        mode = std::clamp(mode, 0, (int)ShadowUpscaleMode::COUNT - 1);
-        settings.Mode = static_cast<ShadowUpscaleMode>(mode);
+    if (ImGui::Combo("Hard Atlas Filter", &mode, upscaleModes, IM_ARRAYSIZE(upscaleModes))) {
+        mode = std::clamp(mode, 0, (int)HardShadowAtlasFilterMode::COUNT - 1);
+        settings.Mode = static_cast<HardShadowAtlasFilterMode>(mode);
         isDirty = true;
     }
 
     const bool usesKernel =
-        settings.Mode == ShadowUpscaleMode::PCF ||
-        settings.Mode == ShadowUpscaleMode::JointBilateralPCF;
+        settings.Mode == HardShadowAtlasFilterMode::PCF ||
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateralPCF;
 
     const UINT kernelSizes[] = { 3u, 5u, 16u };
     const char* kernelLabels[] = { "3x3", "5x5", "16x16" };
@@ -1049,8 +1083,9 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     if (!usesKernel) ImGui::EndDisabled();
 
     const bool usesFilterRadius =
-        settings.Mode != ShadowUpscaleMode::Point &&
-        settings.Mode != ShadowUpscaleMode::Bilinear;
+        settings.Mode != HardShadowAtlasFilterMode::Nearest &&
+        settings.Mode != HardShadowAtlasFilterMode::Bilinear;
+
     if (!usesFilterRadius) ImGui::BeginDisabled();
     if (ImGui::SliderFloat("Filter Radius", &settings.FilterRadius, 0.1f, 8.0f, "%.2f")) {
         isDirty = true;
@@ -1058,9 +1093,9 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     if (!usesFilterRadius) ImGui::EndDisabled();
 
     const bool usesJointBilateral =
-        settings.Mode == ShadowUpscaleMode::JointBilateral ||
-        settings.Mode == ShadowUpscaleMode::JointBilateralPCF ||
-        settings.Mode == ShadowUpscaleMode::JointBilateralPoisson16;
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateral ||
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateralPCF ||
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateralPoisson16;
 
     if (!usesJointBilateral) ImGui::BeginDisabled();
     if (ImGui::SliderFloat("Depth Rejection", &settings.DepthRejectionSharpness, 0.01f, 128.0f, "%.2f")) {
@@ -1072,9 +1107,10 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     if (!usesJointBilateral) ImGui::EndDisabled();
 
     const bool usesNoise =
-        settings.Mode == ShadowUpscaleMode::JointBilateral ||
-        settings.Mode == ShadowUpscaleMode::Poisson16 ||
-        settings.Mode == ShadowUpscaleMode::JointBilateralPoisson16;
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateral ||
+        settings.Mode == HardShadowAtlasFilterMode::Poisson16 ||
+        settings.Mode == HardShadowAtlasFilterMode::JointBilateralPoisson16;
+
     if (!usesNoise) ImGui::BeginDisabled();
     if (ImGui::SliderFloat("Noise Scale", &settings.NoiseScale, 0.0f, 2.0f, "%.2f")) {
         isDirty = true;
@@ -1089,7 +1125,7 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
     }
 
     if (isDirty) {
-        m_pOwner->SetShadowUpscaleSettings(settings);
+        m_pOwner->SetHardShadowAtlasFilterSettings(settings);
     }
 
     ImGui::Separator();

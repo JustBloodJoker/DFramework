@@ -258,20 +258,20 @@ struct LightAtlasMeta {
     float ScreenMaxV;
 };
 
-#define SHADOW_UPSCALE_MODE_POINT                        0
-#define SHADOW_UPSCALE_MODE_BILINEAR                     1
-#define SHADOW_UPSCALE_MODE_PCF                          2
-#define SHADOW_UPSCALE_MODE_JOINT_BILATERAL              3
-#define SHADOW_UPSCALE_MODE_JOINT_BILATERAL_PCF          4
-#define SHADOW_UPSCALE_MODE_POISSON_16                   5
-#define SHADOW_UPSCALE_MODE_JOINT_BILATERAL_POISSON_16   6
+#define SHADOW_ATLAS_FILTER_MODE_NEAREST                     0
+#define SHADOW_ATLAS_FILTER_MODE_BILINEAR                    1
+#define SHADOW_ATLAS_FILTER_MODE_PCF                         2
+#define SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL             3
+#define SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL_PCF         4
+#define SHADOW_ATLAS_FILTER_MODE_POISSON_16                  5
+#define SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL_POISSON_16  6
 
 struct ShadowAtlasParams {
     uint ScreenWidth;
     uint ScreenHeight;
     uint AtlasWidth;
     uint AtlasHeight;
-    uint UpscaleMode;
+    uint FilterMode;
     uint PCFKernelSize;
     float FilterRadius;
     float DepthRejectionSharpness;

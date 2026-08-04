@@ -69,7 +69,9 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
     skyboxDepthDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
 
     CD3DX12_DEPTH_STENCIL_DESC secondPassDSVDesc(D3D12_DEFAULT);
+    secondPassDSVDesc.DepthEnable = FALSE;
     secondPassDSVDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+    secondPassDSVDesc.StencilEnable = FALSE;
    
 
     CD3DX12_RASTERIZER_DESC skyboxRasterizerDesc(D3D12_DEFAULT);
@@ -148,7 +150,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
                     FD3DW::GraphicPipelineObjectDesc desc{};
                     desc.NumRenderTargets = 1;
                     desc.RTVFormats[0] = GetForwardRenderPassFormat();
-                    desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                    desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
                     desc.DepthStencilState = secondPassDSVDesc;
                     desc.RasterizerState = rasterizerDesc;
                     desc.TopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
@@ -272,7 +274,7 @@ const std::unordered_map<PSOType, PSODescriptor>& GetGraphicsPSODescriptors() {
 const std::unordered_map<PSOType, PSORTDescriptor>& GetRTPSODescriptors() {
     static const std::unordered_map<PSOType, PSORTDescriptor> descriptors = {
         {
-            PSOType::RTSoftShadowDefaultConfig,
+            PSOType::RTSoftShadowDefaultConfig, // Compiled legacy prototype.
             {
                 PSOType::None,
                 L"RTSoftShadow",

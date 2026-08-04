@@ -28,7 +28,7 @@ namespace FD3DW {
         UINT64 GetLoadApprox() const;
 
         UINT64 ReserveFenceTicket();
-        UINT64 CurrentFenceTicket();
+        UINT64 CurrentFenceTicket() const;
 
         void WaitFence(std::shared_ptr<ExecutionHandle> dependency);
         void WaitFence(UINT64 value, AsyncCommandQueue* fromQueue);
@@ -42,7 +42,7 @@ namespace FD3DW {
 
     private:
         std::atomic<UINT64> m_uLastFenceEvent = 0;
-        std::atomic<UINT64> m_uNextFenceTicket = 0;
+        std::atomic<UINT64> m_uNextFenceTicket = 1;
         mutable std::mutex m_xMutex;
         std::deque<std::shared_ptr<ClosedBatch>> m_dInFlight;
     };

@@ -2,8 +2,9 @@
 
 #include <pch.h>
 
-enum class ShadowUpscaleMode : UINT {
-    Point = 0,
+// Mirrored by SHADOW_ATLAS_FILTER_MODE_* in Structures.hlsli.
+enum class HardShadowAtlasFilterMode : UINT {
+    Nearest = 0,
     Bilinear = 1,
     PCF = 2,
     JointBilateral = 3,
@@ -13,8 +14,10 @@ enum class ShadowUpscaleMode : UINT {
     COUNT
 };
 
-struct ShadowUpscaleSettings {
-    ShadowUpscaleMode Mode = ShadowUpscaleMode::JointBilateral;
+constexpr HardShadowAtlasFilterMode DEFAULT_HARD_SHADOW_ATLAS_FILTER_MODE = HardShadowAtlasFilterMode::JointBilateral;
+
+struct HardShadowAtlasFilterSettings {
+    HardShadowAtlasFilterMode Mode = DEFAULT_HARD_SHADOW_ATLAS_FILTER_MODE;
     UINT PCFKernelSize = 5;
     float FilterRadius = 1.5f;
     float DepthRejectionSharpness = 10.0f;
@@ -26,14 +29,17 @@ struct ShadowUpscaleSettings {
 
 inline UINT NormalizeShadowPCFKernelSize(UINT requestedKernelSize) {
     if (requestedKernelSize <= 3u) return 3u;
+
     if (requestedKernelSize <= 5u) return 5u;
+
     return 16u;
 }
 
-inline ShadowUpscaleSettings SanitizeShadowUpscaleSettings(ShadowUpscaleSettings settings) {
+inline HardShadowAtlasFilterSettings SanitizeHardShadowAtlasFilterSettings(HardShadowAtlasFilterSettings settings) {
     const auto modeValue = static_cast<UINT>(settings.Mode);
-    if (modeValue >= static_cast<UINT>(ShadowUpscaleMode::COUNT)) {
-        settings.Mode = ShadowUpscaleMode::JointBilateral;
+
+    if (modeValue >= static_cast<UINT>(HardShadowAtlasFilterMode::COUNT)) {
+        settings.Mode = DEFAULT_HARD_SHADOW_ATLAS_FILTER_MODE;
     }
 
     settings.PCFKernelSize = NormalizeShadowPCFKernelSize(settings.PCFKernelSize);
@@ -66,7 +72,7 @@ struct AtlasRTShadowParams {
     UINT ScreenHeight;
     UINT AtlasWidth;
     UINT AtlasHeight;
-    UINT UpscaleMode = static_cast<UINT>(ShadowUpscaleMode::JointBilateral);
+    UINT FilterMode = static_cast<UINT>(DEFAULT_HARD_SHADOW_ATLAS_FILTER_MODE);
     UINT PCFKernelSize = 5u;
     float FilterRadius = 1.5f;
     float DepthRejectionSharpness = 10.0f;
@@ -76,9 +82,9 @@ struct AtlasRTShadowParams {
     float NoiseScale = 1.0f;
 	dx::XMMATRIX InverseViewProjectionMatrix;
 
-    void SetUpscaleSettings(const ShadowUpscaleSettings& settings) {
-        const auto sanitized = SanitizeShadowUpscaleSettings(settings);
-        UpscaleMode = static_cast<UINT>(sanitized.Mode);
+    void SetFilterSettings(const HardShadowAtlasFilterSettings& settings) {
+        const auto sanitized = SanitizeHardShadowAtlasFilterSettings(settings);
+        FilterMode = static_cast<UINT>(sanitized.Mode);
         PCFKernelSize = sanitized.PCFKernelSize;
         FilterRadius = sanitized.FilterRadius;
         DepthRejectionSharpness = sanitized.DepthRejectionSharpness;
@@ -88,11 +94,13 @@ struct AtlasRTShadowParams {
         NoiseScale = sanitized.NoiseScale;
     }
 
-    ShadowUpscaleSettings GetUpscaleSettings() const {
-        ShadowUpscaleSettings settings{};
-        if (UpscaleMode < static_cast<UINT>(ShadowUpscaleMode::COUNT)) {
-            settings.Mode = static_cast<ShadowUpscaleMode>(UpscaleMode);
+    HardShadowAtlasFilterSettings GetFilterSettings() const {
+        HardShadowAtlasFilterSettings settings{};
+
+        if (FilterMode < static_cast<UINT>(HardShadowAtlasFilterMode::COUNT)) {
+            settings.Mode = static_cast<HardShadowAtlasFilterMode>(FilterMode);
         }
+
         settings.PCFKernelSize = PCFKernelSize;
         settings.FilterRadius = FilterRadius;
         settings.DepthRejectionSharpness = DepthRejectionSharpness;
@@ -100,7 +108,7 @@ struct AtlasRTShadowParams {
         settings.BlackLevel = BlackLevel;
         settings.ShadowContrast = ShadowContrast;
         settings.NoiseScale = NoiseScale;
-        return SanitizeShadowUpscaleSettings(settings);
+        return SanitizeHardShadowAtlasFilterSettings(settings);
     }
 };
 

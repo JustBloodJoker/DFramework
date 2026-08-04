@@ -25,9 +25,11 @@ namespace FD3DW {
 
 	protected:
 		ID3D12Fence* m_pFence = nullptr;
-		UINT64 m_uValue;
 
-		std::atomic<bool> m_bMustFullExecuteWait;
+		UINT64 m_uValue = 0;
+
+		std::atomic<bool> m_bMustFullExecuteWait{ false };
+
 		std::promise<void>        m_xBoundPromise;
 		std::shared_future<void>  m_xBoundFuture = m_xBoundPromise.get_future().share();
 	};

@@ -6,8 +6,15 @@
 #include <System/RTShadowSystemConfig.h>
 #include <D3DFramework/GraphicUtilites/RTShaderBindingTable.h>
 
+// Inactive legacy full-screen prototype. It averages visibility across lights and
+// is not the permanent per-light Ray Traced backend represented by ShadowMode.
+// MainRenderer intentionally does not own, create, schedule, or bind this class.
+
 class RTShadowSystem : public MainRendererComponent {
 public:
+
+	static constexpr bool IsPermanentPerLightBackend = false;
+
 	RTShadowSystem() = default;
 	virtual ~RTShadowSystem() = default;
 

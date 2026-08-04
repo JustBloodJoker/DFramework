@@ -36,8 +36,9 @@ void MainRenderer::UserInit()
 	auto gbuffersNum = (UINT)gBufferFormats.size();
 	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
-	
-	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+
+	InitNeutralShadowResources(device);
+
 	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_BRDF_LUT_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_IRRADIANCE_SKYBOX_LOCATION_IN_HEAP, device);
@@ -107,6 +108,8 @@ void MainRenderer::UserLoop()
 	auto mainViewPort = m_xMainViewPort;
 	auto mainRect = m_xMainRect;
 	const bool isUnlitScene = m_bIsUnlitScene;
+	const auto shadowRouting = GetShadowRoutingState();
+	const bool useHardShadowAtlas = shadowRouting.UsesHardShadowAtlas;
 
 	auto sync = m_dInFlight.empty() ? nullptr : m_dInFlight.back();
 
@@ -117,7 +120,7 @@ void MainRenderer::UserLoop()
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
 	std::shared_ptr<FD3DW::ExecutionHandle> uploadMetaH = nullptr;
-	if (!isUnlitScene && IsRTSupported()) {
+	if (useHardShadowAtlas) {
 		auto createMetaH = m_pAtlasRTShadowSystem->OnCreateLightsMeta({ lightsH, cameraH });
 		uploadMetaH = m_pAtlasRTShadowSystem->OnUploadLightsMeta(createMetaH);
 	}
@@ -135,7 +138,7 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> blasCallH = nullptr;
 
-	if (!isUnlitScene && IsRTSupported()) {
+	if (useHardShadowAtlas) {
 		blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
 		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ blasCallH, meshH });
 	}
@@ -177,13 +180,20 @@ void MainRenderer::UserLoop()
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> atlasRtShadowsH = nullptr;
-	if (!isUnlitScene && IsRTSupported()) {
+	if (useHardShadowAtlas) {
 		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
 	}
 
+	const auto shadowMetaBufferAddress = useHardShadowAtlas
+		? m_pAtlasRTShadowSystem->GetLightsMetasBufferGPULocation()
+		: GetEmptyStructuredBufferGPUVirtualAddress();
+	const auto shadowParamsBufferAddress = useHardShadowAtlas
+		? m_pAtlasRTShadowSystem->GetAtlasConstantBufferGPULocation()
+		: m_pNeutralShadowParamsBuffer->GetGPULocation(0);
+
 	//////////////////////////
 	// SHADING PASS
-	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort](ID3D12GraphicsCommandList* list) {
+	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort, shadowMetaBufferAddress, shadowParamsBufferAddress](ID3D12GraphicsCommandList* list) {
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pForwardRenderPassRTV->StartDraw(list);
 
@@ -191,7 +201,7 @@ void MainRenderer::UserLoop()
 		list->RSSetViewports(1, &sceneViewPort);
 
 		list->ClearRenderTargetView(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0), COLOR, 0, nullptr);
-		list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, &FD3DW::keep(GetCurrentDSV_CPUAddr()));
+		list->OMSetRenderTargets(1, &FD3DW::keep(m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0)), true, nullptr);
 
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
@@ -209,8 +219,8 @@ void MainRenderer::UserLoop()
 		list->SetGraphicsRootShaderResourceView(LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pLightSystem->GetLightsStructuredBufferGPULocation());
 		list->SetGraphicsRootShaderResourceView(LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation());
 		list->SetGraphicsRootConstantBufferView(LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation());
-		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, m_pAtlasRTShadowSystem->GetLightsMetasBufferGPULocation());
-		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, m_pAtlasRTShadowSystem->GetAtlasConstantBufferGPULocation());
+		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, shadowMetaBufferAddress);
+		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, shadowParamsBufferAddress);
 
 		list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
@@ -221,6 +231,7 @@ void MainRenderer::UserLoop()
 
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
+	inSkyboxRenderData.DSV = GetCurrentDSV();
 	inSkyboxRenderData.RTV_CPU = m_pForwardRenderPassRTVPack->GetResult()->GetCPUDescriptorHandle(0);
 	inSkyboxRenderData.DSV_CPU = GetCurrentDSV_CPUAddr();
 	inSkyboxRenderData.Rect = sceneRect;
@@ -777,19 +788,53 @@ int MainRenderer::GetLightsCount() {
 }
 
 bool MainRenderer::IsShadowEnabled() {
-	return !m_bIsUnlitScene && IsRTSupported();
+	return GetShadowRoutingState().UsesHardShadowAtlas;
 }
 
-ShadowUpscaleSettings MainRenderer::GetShadowUpscaleSettings() const {
-	if (!m_pAtlasRTShadowSystem) {
-		return ShadowUpscaleSettings{};
+ShadowMode MainRenderer::GetShadowMode() const {
+	return m_eShadowMode;
+}
+
+bool MainRenderer::SetShadowMode(ShadowMode mode) {
+	if (!IsKnownShadowMode(mode)) return false;
+
+	if (mode == m_eShadowMode) return true;
+
+	if (!IsShadowModeAvailable(mode)) return false;
+
+	m_eShadowMode = mode;
+	return true;
+}
+
+bool MainRenderer::IsShadowModeAvailable(ShadowMode mode) const {
+	switch (mode) {
+
+	case ShadowMode::HardShadowAtlas:
+		return m_pAtlasRTShadowSystem != nullptr;
+
+	case ShadowMode::RayTraced:
+	case ShadowMode::Neural:
+	case ShadowMode::COUNT:
+	default:
+		return false;
 	}
-	return m_pAtlasRTShadowSystem->GetShadowUpscaleSettings();
 }
 
-void MainRenderer::SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings) {
+ShadowRoutingState MainRenderer::GetShadowRoutingState() const {
+	return ResolveShadowRouting( m_eShadowMode, m_bIsUnlitScene, IsRTSupported(), m_pAtlasRTShadowSystem!=nullptr);
+}
+
+HardShadowAtlasFilterSettings MainRenderer::GetHardShadowAtlasFilterSettings() const {
+	if (!m_pAtlasRTShadowSystem) {
+		return HardShadowAtlasFilterSettings{};
+	}
+	return m_pAtlasRTShadowSystem->GetHardShadowAtlasFilterSettings();
+}
+
+void MainRenderer::SetHardShadowAtlasFilterSettings(const HardShadowAtlasFilterSettings& settings) {
 	if (!m_pAtlasRTShadowSystem) return;
-	m_pAtlasRTShadowSystem->SetShadowUpscaleSettings(settings);
+
+	m_pAtlasRTShadowSystem->SetHardShadowAtlasFilterSettings(settings);
 }
 
 std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
@@ -1010,7 +1055,7 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	m_pGBuffers.clear();
 	m_pGBuffersRTVPack = CreateRTVPack(gbuffersNum);
 	m_pGBuffersSRVPack = CreateSRVPack(COUNT_SRV_IN_GBUFFER_HEAP);
-	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	BindShadowFactorResourceForSelectedMode(device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_BRDF_LUT_LOCATION_IN_HEAP, device);
 	m_pGBuffersSRVPack->AddNullResource(IBL_IRRADIANCE_SKYBOX_LOCATION_IN_HEAP, device);
@@ -1060,10 +1105,10 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 		m_pLightSystem->InvalidateIBLResourceBindings();
 	}
 
-	if (IsRTSupported() && m_pAtlasRTShadowSystem) {
+	if (m_pAtlasRTShadowSystem) {
 		m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
-		m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 	}
+	BindShadowFactorResourceForSelectedMode(device);
 
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
@@ -1104,5 +1149,64 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
 	m_pAtlasRTShadowSystem = CreateSystem<AtlasRTShadowSystem>();
 	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
-	m_pGBuffersSRVPack->AddResource(m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, SHADOW_FACTOR_LOCATION_IN_HEAP, device);
+	BindShadowFactorResourceForSelectedMode(device);
+}
+
+void MainRenderer::InitNeutralShadowResources(ID3D12Device* device) {
+	m_pNeutralShadowTexture = FD3DW::FResource::CreateAnonimTexture(
+		device,
+		1,
+		RT_SHADOW_ATLAS_FORMAT,
+		1,
+		1,
+		DXGI_SAMPLE_DESC({ 1, 0 }),
+		D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+		D3D12_RESOURCE_FLAG_NONE,
+		D3D12_TEXTURE_LAYOUT_UNKNOWN,
+		D3D12_HEAP_FLAG_NONE,
+		&FD3DW::keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
+		1);
+
+	m_pNeutralShadowParamsBuffer = FD3DW::UploadBuffer<AtlasRTShadowParams>::CreateConstantBuffer(device, 1);
+	AtlasRTShadowParams neutralParams{};
+	neutralParams.ScreenWidth = 1;
+	neutralParams.ScreenHeight = 1;
+	neutralParams.AtlasWidth = 1;
+	neutralParams.AtlasHeight = 1;
+	neutralParams.InverseViewProjectionMatrix = dx::XMMatrixIdentity();
+	m_pNeutralShadowParamsBuffer->CpyData(0, neutralParams);
+
+	BindShadowFactorResourceForSelectedMode(device);
+
+	auto uploadNeutralShadowRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(
+		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		[this](ID3D12GraphicsCommandList* list) {
+			constexpr uint16_t litVisibilityR16Float = 0x3C00u;
+			std::array<uint16_t, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT / sizeof(uint16_t)> litVisibilityData{};
+			litVisibilityData.fill(litVisibilityR16Float);
+			m_pNeutralShadowTexture->UploadData(GetDevice(), list, litVisibilityData.data(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		});
+	GlobalRenderThreadManager::GetInstance()->Submit(uploadNeutralShadowRecipe);
+}
+
+void MainRenderer::BindShadowFactorResourceForSelectedMode(ID3D12Device* device) {
+	if (m_eShadowMode == ShadowMode::HardShadowAtlas && m_pAtlasRTShadowSystem) {
+		m_pGBuffersSRVPack->AddResource(
+			m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(),
+			D3D12_SRV_DIMENSION_TEXTURE2D,
+			SHADOW_FACTOR_LOCATION_IN_HEAP,
+			device);
+		return;
+	}
+
+	if (m_pNeutralShadowTexture) {
+		m_pGBuffersSRVPack->AddResource(
+			m_pNeutralShadowTexture->GetResource(),
+			D3D12_SRV_DIMENSION_TEXTURE2D,
+			SHADOW_FACTOR_LOCATION_IN_HEAP,
+			device);
+		return;
+	}
+
+	m_pGBuffersSRVPack->AddNullResource(SHADOW_FACTOR_LOCATION_IN_HEAP, device);
 }

@@ -270,6 +270,10 @@
     <ClCompile Include="D3DFramework\pch.cpp" />
     <ClCompile Include="D3DFramework\Utilites\Audio.cpp" />
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
+    <ClCompile Include="tests\RenderQueueTests.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="D3DFramework\GraphicUtilites\PostProcessingAlgorithms.cu" />

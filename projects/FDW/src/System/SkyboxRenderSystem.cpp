@@ -46,6 +46,8 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::RenderSkyboxPass(std
 		if (!m_pActiveComponent) return;
 
 		input.RTV->StartDraw(list);
+		input.DSV->DepthRead(list);
+
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		list->RSSetScissorRects(1, &input.Rect);
 		list->RSSetViewports(1, &input.Viewport);
@@ -70,6 +72,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> SkyboxRenderSystem::RenderSkyboxPass(std
 		list->DrawIndexedInstanced(objectInfo.IndicesCount, 1, objectInfo.IndicesOffset, objectInfo.VerticesOffset, 0);
 
 		input.RTV->EndDraw(list);
+		input.DSV->SRVPass(list);
 	});
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
 }

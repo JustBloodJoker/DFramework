@@ -37,16 +37,20 @@ namespace FD3DW {
 
     UINT64 AsyncCommandQueue::GetLoadApprox() const
     {
-        return m_uLastFenceEvent - m_pFence->GetCompletedValue();
+        const auto lastSignaled = m_uLastFenceEvent.load(std::memory_order_acquire);
+        const auto completed = m_pFence->GetCompletedValue();
+        return lastSignaled > completed ? lastSignaled - completed : 0;
     }
 
     UINT64 AsyncCommandQueue::ReserveFenceTicket()
     {
-        return m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed) ;
+        const auto ticket = m_uNextFenceTicket.fetch_add(1, std::memory_order_relaxed);
+        if (ticket == 0) std::terminate();
+        return ticket;
     }
 
-    UINT64 AsyncCommandQueue::CurrentFenceTicket() {
-        return m_uNextFenceTicket;
+    UINT64 AsyncCommandQueue::CurrentFenceTicket() const {
+        return m_uNextFenceTicket.load(std::memory_order_relaxed);
     }
 
     void AsyncCommandQueue::WaitFence(std::shared_ptr<ExecutionHandle> dependency)
@@ -63,8 +67,9 @@ namespace FD3DW {
 
 
     void AsyncCommandQueue::WaitIdle() {
-        const UINT64 ticket = CurrentFenceTicket();
+        const UINT64 ticket = ReserveFenceTicket();
         HRESULT_ASSERT(m_pCommandQueue->Signal(m_pFence.Get(), ticket), "Signal error");
+        m_uLastFenceEvent.store(ticket, std::memory_order_release);
 
         ExecutionHandle h;
         h.Bind(m_pFence.Get(), ticket);

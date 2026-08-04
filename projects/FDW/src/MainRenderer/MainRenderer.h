@@ -2,6 +2,7 @@
 
 #include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
+#include <MainRenderer/ShadowMode.h>
 
 #include <UI/MainRenderer_UIComponent.h>
 #include <D3DFramework/D3DFW.h>
@@ -17,7 +18,6 @@
 #include <System/ClusteredLightningSystem.h>
 #include <System/SceneAnimationSystem.h>
 #include <System/RenderMeshesSystem.h>
-#include <System/RTShadowSystem.h>
 #include <System/SkyboxRenderSystem.h>
 #include <System/BloomEffectSystem.h>
 #include <System/AtlasRTShadowSystem.h>
@@ -124,8 +124,12 @@ public:
 
 	//SHADOWS
 	bool IsShadowEnabled();
-	ShadowUpscaleSettings GetShadowUpscaleSettings() const;
-	void SetShadowUpscaleSettings(const ShadowUpscaleSettings& settings);
+	ShadowMode GetShadowMode() const;
+	bool SetShadowMode(ShadowMode mode);
+	bool IsShadowModeAvailable(ShadowMode mode) const;
+	ShadowRoutingState GetShadowRoutingState() const;
+	HardShadowAtlasFilterSettings GetHardShadowAtlasFilterSettings() const;
+	void SetHardShadowAtlasFilterSettings(const HardShadowAtlasFilterSettings& settings);
 
 	//WORLD
 	void LoadWorld(std::string pathTo);
@@ -184,6 +188,8 @@ private:
 
 	void InitMainRendererSystems(ID3D12Device* device);
 	void InitMainRendererDXRSystems(ID3D12Device5* device);
+	void InitNeutralShadowResources(ID3D12Device* device);
+	void BindShadowFactorResourceForSelectedMode(ID3D12Device* device);
 
 private:
 
@@ -208,6 +214,7 @@ private:
 	BloomEffectSystem* m_pBloomEffectSystem = nullptr;
 	AtlasRTShadowSystem* m_pAtlasRTShadowSystem = nullptr;
 	TAASystem* m_pTAASystem = nullptr;
+	ShadowMode m_eShadowMode = DEFAULT_SHADOW_MODE;
 
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 
@@ -247,6 +254,10 @@ protected:
 	std::unique_ptr<FD3DW::SRV_UAVPacker> m_pGBuffersSRVPack;
 
 	std::vector< std::shared_ptr<FD3DW::FResource>> m_vLCTResources;
+
+	//TODO: remove from here
+	std::unique_ptr<FD3DW::FResource> m_pNeutralShadowTexture;
+	std::unique_ptr<FD3DW::UploadBuffer<AtlasRTShadowParams>> m_pNeutralShadowParamsBuffer;
 
 	UINT m_uCurrentDSVIndex = 0;
 	std::unique_ptr<FD3DW::DepthStencilView> m_pDSV[2];

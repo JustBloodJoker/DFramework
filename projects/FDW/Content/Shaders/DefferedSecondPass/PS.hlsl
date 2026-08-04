@@ -440,17 +440,17 @@ float GetShadowFactor(int id, float2 UV)
     float2 animatedNoisePixel = GetAnimatedNoisePixel(UV);
 
     float rawShadow = 1.0f;
-    switch (ShadowAtlasData.UpscaleMode)
+    switch (ShadowAtlasData.FilterMode)
     {
-    case SHADOW_UPSCALE_MODE_POINT:
+    case SHADOW_ATLAS_FILTER_MODE_NEAREST:
         rawShadow = SampleShadowPoint(atlasPixelInt, meta);
         break;
 
-    case SHADOW_UPSCALE_MODE_BILINEAR:
+    case SHADOW_ATLAS_FILTER_MODE_BILINEAR:
         rawShadow = SampleShadowBilinear(baseUV);
         break;
 
-    case SHADOW_UPSCALE_MODE_PCF:
+    case SHADOW_ATLAS_FILTER_MODE_PCF:
         rawShadow = ApplyKernelPCFFilter(
             meta,
             baseUV,
@@ -465,7 +465,7 @@ float GetShadowFactor(int id, float2 UV)
         );
         break;
 
-    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL:
+    case SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL:
         rawShadow = ApplyJointBilateralRingFilter(
             meta,
             baseUV,
@@ -479,7 +479,7 @@ float GetShadowFactor(int id, float2 UV)
         );
         break;
 
-    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL_PCF:
+    case SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL_PCF:
         rawShadow = ApplyKernelPCFFilter(
             meta,
             baseUV,
@@ -494,7 +494,7 @@ float GetShadowFactor(int id, float2 UV)
         );
         break;
 
-    case SHADOW_UPSCALE_MODE_POISSON_16:
+    case SHADOW_ATLAS_FILTER_MODE_POISSON_16:
         rawShadow = ApplyPoisson16Filter(
             meta,
             baseUV,
@@ -509,7 +509,7 @@ float GetShadowFactor(int id, float2 UV)
         );
         break;
 
-    case SHADOW_UPSCALE_MODE_JOINT_BILATERAL_POISSON_16:
+    case SHADOW_ATLAS_FILTER_MODE_JOINT_BILATERAL_POISSON_16:
         rawShadow = ApplyPoisson16Filter(
             meta,
             baseUV,

@@ -36,4 +36,6 @@ int main() {
 	//WinWindow tests
 	RunOneWindow();
 	RunMultipleWindow();
+
+	return 0;
 }

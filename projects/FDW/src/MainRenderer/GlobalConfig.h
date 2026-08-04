@@ -79,7 +79,7 @@ enum class PSOType {
 	DefferedSecondPassDefaultConfig,
 	SimpleSkyboxDefaultConfig,
 	PostProcessDefaultConfig,
-	RTSoftShadowDefaultConfig,
+	RTSoftShadowDefaultConfig, // Inactive legacy prototype.
 	ObjectsCullingDefaultConfig,
 	PreDepthDefaultConfig,
 	CopyDepthToHIZ,
@@ -252,7 +252,7 @@ const std::map<std::wstring, std::tuple<FD3DW::CompileFileType, std::wstring, st
 
 
 ////////////////////////////////////////////
-///////		RT SOFT SHADOWS BINDING
+///////		INACTIVE LEGACY RT SOFT SHADOW PROTOTYPE BINDING
 #define RT_SOFT_SHADOW_TLAS_BUFFER_POS_IN_ROOT_SIG				0
 #define RT_SOFT_SHADOW_UAV_SHADOWS_OUT_POS_IN_ROOT_SIG			1
 #define RT_SOFT_SHADOW_GBUFFERS_POS_IN_ROOT_SIG					2

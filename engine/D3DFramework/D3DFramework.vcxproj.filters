@@ -22,6 +22,9 @@
     <Filter Include="D3DFramework\GraphicUtilites\RenderThreadUtils">
       <UniqueIdentifier>{4b050713-0044-4611-93e7-7966adf30639}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3DFramework\TESTS">
+      <UniqueIdentifier>{35f593e1-36d7-4893-83dd-4dfcaf16862c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h">
@@ -268,6 +271,9 @@
     </ClCompile>
     <ClCompile Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.cpp">
       <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\RenderQueueTests.cpp">
+      <Filter>D3DFramework\TESTS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

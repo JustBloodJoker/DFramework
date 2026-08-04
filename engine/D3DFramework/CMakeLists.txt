@@ -44,3 +44,18 @@ if(CUDAToolkit_FOUND)
 endif()
 
 set_target_properties(D3DFramework PROPERTIES FOLDER "engine")
+
+if(BUILD_TESTING AND WIN32)
+    add_executable(D3DFrameworkRenderQueueTests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/RenderQueueTests.cpp"
+    )
+    target_compile_features(D3DFrameworkRenderQueueTests PRIVATE cxx_std_20)
+    target_link_libraries(D3DFrameworkRenderQueueTests PRIVATE D3DFramework)
+    set_target_properties(D3DFrameworkRenderQueueTests PROPERTIES FOLDER "tests")
+
+    add_test(
+        NAME D3DFramework.RenderQueueDependencies
+        COMMAND D3DFrameworkRenderQueueTests
+    )
+    set_tests_properties(D3DFramework.RenderQueueDependencies PROPERTIES TIMEOUT 30)
+endif()

@@ -132,11 +132,12 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::UpdateHiZResource(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemHiZUpdateRenderData data) {
-	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_COMPUTE, [this, data](ID3D12GraphicsCommandList* list) {
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, data](ID3D12GraphicsCommandList* list) {
+		data.DSV->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 		m_pMeshesCulling->UpdateHiZResource(data.DSV, m_pOwner->GetDevice(), list);
 	});
 	
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::PreDepthRender(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle, RenderMeshesSystemPreDepthRenderData data) {
@@ -228,10 +229,12 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::IndirectRender(std::
 			for (auto& gbuffer : data.RTV) {
 				gbuffer->EndDraw(list);
 			}
+
+			data.DSV->SRVPass(list);
 		}
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle);
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnEndRenderTick(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle)

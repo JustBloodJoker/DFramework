@@ -9,6 +9,7 @@
 
 struct SkyboxRenderPassInput {
 	FD3DW::RenderTarget* RTV;
+	FD3DW::DepthStencilView* DSV;
 	D3D12_CPU_DESCRIPTOR_HANDLE DSV_CPU;
 	D3D12_CPU_DESCRIPTOR_HANDLE RTV_CPU;
 	D3D12_RECT Rect;
