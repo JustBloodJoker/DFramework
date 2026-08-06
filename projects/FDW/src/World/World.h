@@ -87,6 +87,7 @@ public:
     TSimpleCube* CreateSimpleCube();
     TSimpleCone* CreateSimpleCone();
     TSimpleSphere* CreateSimpleSphere();
+    TSimpleCylinder* CreateSimpleCylinder();
     TSkybox* CreateSkybox(std::string path);
     TScene* CreateScene(std::string path);
     TAudio* CreateAudio(std::string path);
@@ -272,6 +273,7 @@ public:
         REFLECT_METHOD(CreateSimpleCube)
         REFLECT_METHOD(CreateSimpleCone)
         REFLECT_METHOD(CreateSimpleSphere)
+        REFLECT_METHOD(CreateSimpleCylinder)
         REFLECT_METHOD(CreateSkybox)
         REFLECT_METHOD(CreateScene)
         REFLECT_METHOD(CreateAudio)

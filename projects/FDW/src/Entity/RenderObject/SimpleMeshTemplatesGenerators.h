@@ -7,3 +7,4 @@ void GenerateSimplePlaneScene(std::vector<FD3DW::VertexFrameWork>& vertices, std
 void GenerateSimpleConeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
 void GenerateSimpleCubeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
 void GenerateSimpleSphereScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);
+void GenerateSimpleCylinderScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices);

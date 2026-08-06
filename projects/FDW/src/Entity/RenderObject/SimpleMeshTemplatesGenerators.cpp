@@ -226,3 +226,72 @@ void GenerateSimpleSphereScene(std::vector<FD3DW::VertexFrameWork>& vertices, st
 	}
 }
 
+void GenerateSimpleCylinderScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+	const auto segments = 32;
+	const float radius = 1.0f;
+	const float halfHeight = 1.0f;
+
+	vertices.clear();
+	indices.clear();
+		
+	for (auto segment = 0; segment <= segments; ++segment) {
+		auto angle = float(segment) / float(segments) * M_2_PI_F;
+		auto x = std::cos(angle);
+		auto z = std::sin(angle);
+		for (auto top = 0; top < 2; ++top) {
+			FD3DW::VertexFrameWork vertex{};
+			
+			vertex.Pos = { radius * x, top == 0 ? -halfHeight : halfHeight, radius * z };
+			vertex.Normal = { x, 0.0f, z };
+			vertex.TexCoord = { float(segment) / segments, float(top) };
+			vertex.Tangent = { -z, 0.0f, x };
+			vertex.Bitangent = { 0.0f, 1.0f, 0.0f };
+			
+			vertices.push_back(vertex);
+		}
+	}
+
+	for (auto segment = 0; segment < segments; ++segment) {
+		auto base = unsigned(segment * 2);
+		indices.insert(indices.end(), { base, base + 1u, base + 2u, base + 2u, base + 1u, base + 3u });
+	}
+	
+	for (int top = 0; top < 2; ++top) {
+		auto center = unsigned( vertices.size() );
+
+		FD3DW::VertexFrameWork centerVertex{};
+		centerVertex.Pos = { 0.0f, top == 0 ? -halfHeight : halfHeight, 0.0f };
+		centerVertex.Normal = { 0.0f, top == 0 ? -1.0f : 1.0f, 0.0f };
+		centerVertex.TexCoord = { 0.5f, 0.5f };
+		centerVertex.Tangent = { 1.0f, 0.0f, 0.0f };
+		centerVertex.Bitangent = { 0.0f, 0.0f, 1.0f };
+		
+		vertices.push_back(centerVertex);
+		
+		for (int segment = 0; segment < segments; ++segment) {
+			
+			auto angle0 = float(segment) / segments * M_2_PI_F;
+			auto angle1 = float(segment + 1) / segments * M_2_PI_F;
+			auto first = unsigned(vertices.size());
+			
+			for (const auto angle : { angle0, angle1 }) {
+				
+				FD3DW::VertexFrameWork edge{};
+				edge.Pos = { radius * std::cos(angle), top == 0 ? -halfHeight : halfHeight, radius * std::sin(angle) };
+				edge.Normal = centerVertex.Normal;
+				edge.TexCoord = { 0.5f + 0.5f * std::cos(angle), 0.5f + 0.5f * std::sin(angle) };
+				edge.Tangent = centerVertex.Tangent;
+				edge.Bitangent = centerVertex.Bitangent;
+				
+				vertices.push_back(edge);
+			}
+			
+			if (top == 0) {
+				indices.insert(indices.end(), { center, first + 1u, first });
+			} else {
+				indices.insert(indices.end(), { center, first, first + 1u });
+			}
+		}
+	}
+}
+

@@ -811,6 +811,10 @@ void MainRenderer_UIComponent::DrawWorld_AddEntity() {
         AddCallToPull([world]() { world->CreateSimpleSphere(); });
     }
 
+    if (ImGui::Button("Simple Cylinder")) {
+        AddCallToPull([world]() { world->CreateSimpleCylinder(); });
+    }
+
     ImGui::Separator();
 
     if (ImGui::Button("Skybox...")) {

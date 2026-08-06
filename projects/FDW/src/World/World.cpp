@@ -72,6 +72,10 @@ TSimpleSphere* World::CreateSimpleSphere() {
 	return CreateEntity<TSimpleSphere>();
 }
 
+TSimpleCylinder* World::CreateSimpleCylinder() {
+	return CreateEntity<TSimpleCylinder>();
+}
+
 TSkybox* World::CreateSkybox(std::string path) {
 	return CreateEntity<TSkybox>(path);
 }
