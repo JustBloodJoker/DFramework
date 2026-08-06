@@ -32,6 +32,10 @@
 #include <stack>
 #include <limits>
 #include <cwctype>
+#include <cstddef>
+#include <cstdint>
+#include <span>
+#include <iomanip>
 
 #define _USE_MATH_DEFINES 
 #include <cmath>

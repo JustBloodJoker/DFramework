@@ -56,7 +56,7 @@ namespace FD3DW
 	public:
 
 		template<typename BUFFER_STRUCTURE_TYPE>
-		static bool CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer);
+		static bool CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer, D3D12_RESOURCE_FLAGS resourceFlags = D3D12_RESOURCE_FLAG_NONE);
 
 		
 	private:
@@ -156,14 +156,14 @@ namespace FD3DW
 
 
 	template<typename BUFFER_STRUCTURE_TYPE>
-	inline bool BufferManager::CreateDefaultBuffer(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pInitData, UINT elementCount, wrl::ComPtr<ID3D12Resource>& dstBuffer, std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer)
+	inline bool BufferManager::CreateDefaultBuffer(ID3D12Device* pDevice,ID3D12GraphicsCommandList* pCommandList,const void* pInitData,UINT elementCount,wrl::ComPtr<ID3D12Resource>& dstBuffer,std::unique_ptr<UploadBuffer<BUFFER_STRUCTURE_TYPE>>& m_pUploadBuffer,D3D12_RESOURCE_FLAGS resourceFlags)
 	{
 		if (dstBuffer)
 			dstBuffer->Release();
 
 		HRESULT_ASSERT(pDevice->CreateCommittedResource(&keep(CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT)),
 			D3D12_HEAP_FLAG_NONE,
-			&keep(CD3DX12_RESOURCE_DESC::Buffer(elementCount * sizeof(BUFFER_STRUCTURE_TYPE))),
+			&keep(CD3DX12_RESOURCE_DESC::Buffer(elementCount * sizeof(BUFFER_STRUCTURE_TYPE), resourceFlags)),
 			D3D12_RESOURCE_STATE_COMMON,
 			nullptr,
 			IID_PPV_ARGS(dstBuffer.GetAddressOf())),

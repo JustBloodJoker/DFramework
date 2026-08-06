@@ -10,6 +10,13 @@ namespace FD3DW
 		InitXAudio();
 	}
 
+	AudioManager::~AudioManager()
+	{
+		m_pMasterVoice.reset();
+		m_pAudio.reset();
+		if (m_bCOMInitialized) CoUninitialize();
+	}
+
     Audio* AudioManager::CreateAudio(const std::string& path)
     {
         return CreateAudio(StringToWString(path));
@@ -60,15 +67,17 @@ namespace FD3DW
 
 	void AudioManager::InitXAudio()
 	{
-		HRESULT_ASSERT(CoInitializeEx(NULL, COINITBASE_MULTITHREADED), "Com init error");
+		auto comResult = CoInitializeEx(NULL, COINITBASE_MULTITHREADED);
+		HRESULT_ASSERT(comResult, "Com init error");
+		m_bCOMInitialized = SUCCEEDED(comResult);
 
 		IXAudio2* tempAudio;
 		HRESULT_ASSERT(XAudio2Create(&tempAudio, 0, XAUDIO2_DEFAULT_PROCESSOR), "XAudio2 create error");
-        m_pAudio = std::unique_ptr<IXAudio2>(tempAudio);
+		m_pAudio.reset(tempAudio);
 
 		IXAudio2MasteringVoice* tempMasteringVoice;
 		HRESULT_ASSERT(m_pAudio->CreateMasteringVoice(&tempMasteringVoice, XAUDIO2_DEFAULT_CHANNELS, XAUDIO2_MAX_SAMPLE_RATE), "MasteringVoice create error");
-        m_pMasterVoice = std::unique_ptr<IXAudio2MasteringVoice>(tempMasteringVoice);
+		m_pMasterVoice.reset(tempMasteringVoice);
 	}
 
 	HRESULT FD3DW::AudioManager::FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)

@@ -27,7 +27,7 @@ namespace FDWWIN
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
-	WinWindow::WinWindow(std::wstring windowTittle, int Width, int height, bool FullScreen)
+	WinWindow::WinWindow(std::wstring windowTittle, int Width, int height, bool FullScreen, bool visible)
 	{
 		m_xWndSettings.FullScreen = FullScreen;
 		m_xWndSettings.Height = height;
@@ -35,6 +35,7 @@ namespace FDWWIN
 		m_xWndSettings.TittleName = windowTittle;
 
 		m_bPAUSEWORK = false;
+		m_bWindowVisible = visible;
 	}
 
 	void WinWindow::__START()
@@ -169,7 +170,7 @@ namespace FDWWIN
 
 		SAFE_ASSERT(m_xHWND, "Create m_xHWND error");
 
-		ShowWindow(m_xHWND, 1);
+		ShowWindow(m_xHWND, m_bWindowVisible ? SW_SHOW : SW_HIDE);
 		UpdateWindow(m_xHWND);
 		return true;
 	}

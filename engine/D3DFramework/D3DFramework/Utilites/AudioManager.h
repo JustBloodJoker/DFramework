@@ -4,14 +4,25 @@
 
 namespace FD3DW
 {
+	struct XAudio2Releaser {
+		void operator()(IXAudio2* audio) const noexcept {
+			if (audio) audio->Release();
+		}
+	};
 
-	class AudioManager // TO DO MP3 support 
+	struct XAudio2MasteringVoiceReleaser {
+		void operator()(IXAudio2MasteringVoice* voice) const noexcept {
+			if (voice) voice->DestroyVoice();
+		}
+	};
+
+	class AudioManager // TODO: MP3 support 
 	{
 
 	public:
 
 		AudioManager();
-		~AudioManager()=default;
+		~AudioManager();
 
 		Audio* CreateAudio(const std::string& path);
 		Audio* CreateAudio(const std::wstring& path);
@@ -20,8 +31,10 @@ namespace FD3DW
 
 		void InitXAudio();
 		
-		std::unique_ptr<IXAudio2> m_pAudio;
-		std::unique_ptr<IXAudio2MasteringVoice> m_pMasterVoice;
+		std::unique_ptr<IXAudio2, XAudio2Releaser> m_pAudio;
+		std::unique_ptr<IXAudio2MasteringVoice, XAudio2MasteringVoiceReleaser> m_pMasterVoice;
+		
+		bool m_bCOMInitialized = false;
 
 	private:
 		//			WAV	CHUNKS

@@ -65,7 +65,10 @@ namespace FD3DW {
         for (int i = 0; i < inputs.size(); ++i) {
             AccelerationStructureBuffers buffer;
             CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
-            CD3DX12_RESOURCE_DESC descScratch = CD3DX12_RESOURCE_DESC::Buffer(prebuildInfos[i].ScratchDataSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+            
+            const auto scratchSize = std::max(prebuildInfos[i].ScratchDataSizeInBytes, prebuildInfos[i].UpdateScratchDataSizeInBytes);
+            CD3DX12_RESOURCE_DESC descScratch = CD3DX12_RESOURCE_DESC::Buffer(scratchSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
             device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &descScratch, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&buffer.pScratch));
 
             CD3DX12_RESOURCE_DESC descResult = CD3DX12_RESOURCE_DESC::Buffer(prebuildInfos[i].ResultDataMaxSizeInBytes, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);

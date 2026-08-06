@@ -16,7 +16,7 @@ namespace FDWWIN
 	public:
 
 		WinWindow()=default;
-		WinWindow(std::wstring windowTittle, int width, int height, bool fullScreen);
+		WinWindow(std::wstring windowTittle, int width, int height, bool fullScreen, bool visible = true);
 		virtual ~WinWindow() = default;
 
 		virtual void __START() final;
@@ -67,6 +67,7 @@ namespace FDWWIN
 		bool m_bPAUSEWORK = false;
 
 		bool m_bIsStartedWindow = false;
+		bool m_bWindowVisible = true;
 
 		///////////////
 		//	TIMER

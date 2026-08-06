@@ -23,16 +23,16 @@ public:
     ObjectVertexIndexDataCreator() = default;
     virtual ~ObjectVertexIndexDataCreator() = default;
 
-    void Create(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::vector<TVertex>& vertices, const std::vector<TIndex>& indices,bool neverUpdate = false)
+    void Create(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::vector<TVertex>& vertices, const std::vector<TIndex>& indices, bool neverUpdate = false, D3D12_RESOURCE_FLAGS vertexResourceFlags = D3D12_RESOURCE_FLAG_NONE)
     {
-        BufferManager::CreateDefaultBuffer(pDevice,pCommandList,vertices.data(),(UINT)vertices.size(),VertexBufferResource, VertexUploadBuffer );
+        BufferManager::CreateDefaultBuffer(pDevice,pCommandList,vertices.data(),(UINT)vertices.size(),VertexBufferResource,VertexUploadBuffer,vertexResourceFlags);
 
         VertexBufferView = std::make_unique<D3D12_VERTEX_BUFFER_VIEW>();
         VertexBufferView->BufferLocation = VertexBufferResource->GetGPUVirtualAddress();
         VertexBufferView->SizeInBytes = (UINT)(vertices.size() * sizeof(TVertex));
         VertexBufferView->StrideInBytes = sizeof(TVertex);
 
-        BufferManager::CreateDefaultBuffer(pDevice,pCommandList,indices.data(),(UINT)indices.size() ,IndexBufferResource,IndexUploadBuffer);
+        BufferManager::CreateDefaultBuffer(pDevice,pCommandList,indices.data(),(UINT)indices.size(), IndexBufferResource,IndexUploadBuffer);
 
         IndexBufferView = std::make_unique<D3D12_INDEX_BUFFER_VIEW>();
         IndexBufferView->BufferLocation = IndexBufferResource->GetGPUVirtualAddress();
@@ -46,7 +46,7 @@ public:
     }
 
     template<typename TInVertex, typename Converter>
-    void CreateWithConverter(ID3D12Device* pDevice,ID3D12GraphicsCommandList* pCommandList,const std::vector<TInVertex>& inVertices,const std::vector<TIndex>& indices,Converter&& converter, bool neverUpdate = false)
+    void CreateWithConverter(ID3D12Device* pDevice,ID3D12GraphicsCommandList* pCommandList,const std::vector<TInVertex>& inVertices,const std::vector<TIndex>& indices,Converter&& converter,bool neverUpdate = false,D3D12_RESOURCE_FLAGS vertexResourceFlags = D3D12_RESOURCE_FLAG_NONE)
     {
         std::vector<TVertex> converted;
         converted.reserve(inVertices.size());
@@ -54,7 +54,7 @@ public:
             converted.push_back(converter(v));
         }
 
-        Create(pDevice, pCommandList, converted, indices, neverUpdate);
+        Create(pDevice, pCommandList, converted, indices, neverUpdate, vertexResourceFlags);
     }
 
     UINT GetVertexStructSize() override { return sizeof(TVertex); }
