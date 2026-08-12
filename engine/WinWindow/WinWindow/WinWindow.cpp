@@ -97,6 +97,8 @@ namespace FDWWIN
 
 	void WinWindow::Release() {
 		ChildRelease();
+		
+		if ( m_xHWND && IsWindow(m_xHWND) ) DestroyWindow(m_xHWND);
 
 		m_pTimer.release();
 		CONSOLE_MESSAGE("WINWINDOW RELEASE");
@@ -193,7 +195,7 @@ namespace FDWWIN
 		MSG msg;
 		ZeroMemory(&msg, sizeof(MSG));
 
-		while (IsWindowEnabled(m_xHWND))
+		while ( !m_bExitRequested.load(std::memory_order_acquire) && IsWindowEnabled(m_xHWND) )
 		{
 			if (PeekMessage(&msg, m_xHWND, 0, 0, PM_REMOVE))
 			{
@@ -224,6 +226,10 @@ namespace FDWWIN
 
 	bool WinWindow::ISSTARTEDWINDOW() const {
 		return m_bIsStartedWindow;
+	}
+
+	void WinWindow::RequestExit() {
+		m_bExitRequested.store(true, std::memory_order_release);
 	}
 
 	WindowSettings WinWindow::WNDSettings() const {

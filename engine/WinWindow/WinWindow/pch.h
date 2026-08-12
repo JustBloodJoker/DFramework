@@ -1,7 +1,9 @@
 #pragma once
 
 
-#define _XM_NO_INTRINSICS_ 
+#ifndef _XM_NO_INTRINSICS_
+#define _XM_NO_INTRINSICS_
+#endif
 #include <iostream>
 #include <cassert>
 #include <string>

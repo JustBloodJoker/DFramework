@@ -58,6 +58,12 @@ namespace FD3DW
 		~FResource();
 
 		ID3D12Resource* GetResource() const;
+
+		D3D12_RESOURCE_DESC GetResourceDescription() const;
+		D3D12_RESOURCE_STATES GetTrackedState() const;
+		
+		bool RecordBufferReadbackCopy(ID3D12GraphicsCommandList* commandList, ID3D12Resource* readbackDestination, UINT64 destinationOffset, UINT64 sourceOffset, UINT64 byteSize);
+
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter);
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
 		

@@ -20,6 +20,8 @@ if(BUILD_TESTING AND WIN32)
         DEPENDS
             WinWindowTests
             D3DFrameworkRenderQueueTests
+            D3DFrameworkBufferReadbackTests
+            D3DFrameworkD3D12DiagnosticsTests
     )
     set_target_properties(DFrameworkTests PROPERTIES FOLDER "tests")
 endif()

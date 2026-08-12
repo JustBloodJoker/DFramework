@@ -31,6 +31,8 @@ namespace FDWWIN
 		bool ISPAUSED() const;
 		bool ISSTARTEDWINDOW() const;
 
+		void RequestExit();
+
 	protected:
 		
 		void HideCMD();
@@ -68,6 +70,8 @@ namespace FDWWIN
 
 		bool m_bIsStartedWindow = false;
 		bool m_bWindowVisible = true;
+
+		std::atomic<bool> m_bExitRequested{ false };
 
 		///////////////
 		//	TIMER

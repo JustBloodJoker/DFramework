@@ -58,4 +58,26 @@ if(BUILD_TESTING AND WIN32)
         COMMAND D3DFrameworkRenderQueueTests
     )
     set_tests_properties(D3DFramework.RenderQueueDependencies PROPERTIES TIMEOUT 30)
+
+    add_executable(D3DFrameworkBufferReadbackTests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/BufferReadbackTests.cpp"
+    )
+    target_compile_features(D3DFrameworkBufferReadbackTests PRIVATE cxx_std_20)
+    target_link_libraries(D3DFrameworkBufferReadbackTests PRIVATE D3DFramework)
+    set_target_properties(D3DFrameworkBufferReadbackTests PROPERTIES FOLDER "tests")
+    add_test(NAME D3DFramework.BufferReadback COMMAND D3DFrameworkBufferReadbackTests)
+    set_tests_properties(D3DFramework.BufferReadback PROPERTIES
+        TIMEOUT 30
+        ENVIRONMENT_MODIFICATION
+            "PATH=path_list_prepend:${CMAKE_SOURCE_DIR}/x64/$<CONFIG>"
+    )
+
+    add_executable(D3DFrameworkD3D12DiagnosticsTests
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/D3D12DiagnosticsTests.cpp"
+    )
+    target_compile_features(D3DFrameworkD3D12DiagnosticsTests PRIVATE cxx_std_20)
+    target_link_libraries(D3DFrameworkD3D12DiagnosticsTests PRIVATE D3DFramework)
+    set_target_properties(D3DFrameworkD3D12DiagnosticsTests PROPERTIES FOLDER "tests")
+    add_test(NAME D3DFramework.D3D12Diagnostics COMMAND D3DFrameworkD3D12DiagnosticsTests)
+    set_tests_properties(D3DFramework.D3D12Diagnostics PROPERTIES TIMEOUT 30)
 endif()

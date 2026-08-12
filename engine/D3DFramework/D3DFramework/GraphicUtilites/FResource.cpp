@@ -819,6 +819,32 @@ namespace FD3DW
         return m_pResource.Get();
     }
 
+    D3D12_RESOURCE_DESC FResource::GetResourceDescription() const
+    {
+        return m_pResource ? m_pResource->GetDesc() : D3D12_RESOURCE_DESC{};
+    }
+
+    D3D12_RESOURCE_STATES FResource::GetTrackedState() const
+    {
+        return m_xCurrState;
+    }
+
+    bool FResource::RecordBufferReadbackCopy(ID3D12GraphicsCommandList* commandList, ID3D12Resource* readbackDestination, UINT64 destinationOffset, UINT64 sourceOffset, UINT64 byteSize)
+    {
+        if (!commandList || !readbackDestination || !m_pResource || byteSize == 0u) return false;
+        
+        const auto description = m_pResource->GetDesc();
+        if (description.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || sourceOffset > description.Width || byteSize > description.Width - sourceOffset) return false;
+
+        const auto restoreState = m_xCurrState;
+        
+        ResourceBarrierChange(commandList, D3D12_RESOURCE_STATE_COPY_SOURCE);
+        commandList->CopyBufferRegion( readbackDestination, destinationOffset, m_pResource.Get(), sourceOffset, byteSize);
+        ResourceBarrierChange(commandList, restoreState);
+        
+        return true;
+    }
+
     void FResource::ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter)
     {
         ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, resourceStateAfter);
