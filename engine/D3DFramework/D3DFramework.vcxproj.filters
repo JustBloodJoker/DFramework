@@ -25,6 +25,9 @@
     <Filter Include="D3DFramework\TESTS">
       <UniqueIdentifier>{35f593e1-36d7-4893-83dd-4dfcaf16862c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3DFramework\Diagnostics">
+      <UniqueIdentifier>{e78eaf67-4158-427f-9c30-5c26d92e6531}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h">
@@ -165,6 +168,12 @@
     <ClInclude Include="D3DFramework\GraphicUtilites\RenderThreadUtils\RenderThread.h">
       <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
     </ClInclude>
+    <ClInclude Include="D3DFramework\Diagnostics\D3D12Diagnostics.h">
+      <Filter>D3DFramework\Diagnostics</Filter>
+    </ClInclude>
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferReadbackBatch.h">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp">
@@ -273,6 +282,18 @@
       <Filter>D3DFramework\GraphicUtilites\RenderThreadUtils</Filter>
     </ClCompile>
     <ClCompile Include="tests\RenderQueueTests.cpp">
+      <Filter>D3DFramework\TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\Diagnostics\D3D12Diagnostics.cpp">
+      <Filter>D3DFramework\Diagnostics</Filter>
+    </ClCompile>
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferReadbackBatch.cpp">
+      <Filter>D3DFramework\GraphicUtilites</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\BufferReadbackTests.cpp">
+      <Filter>D3DFramework\TESTS</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\D3D12DiagnosticsTests.cpp">
       <Filter>D3DFramework\TESTS</Filter>
     </ClCompile>
   </ItemGroup>

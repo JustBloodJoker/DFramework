@@ -189,11 +189,13 @@
   <ItemGroup>
     <ClInclude Include="D3DFramework\d3dframework.h" />
     <ClInclude Include="D3DFramework\D3DFW.h" />
+    <ClInclude Include="D3DFramework\Diagnostics\D3D12Diagnostics.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BaseCommandQueue.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BasePipelineObject.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BilateralFilter.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\BufferManager.h" />
+    <ClInclude Include="D3DFramework\GraphicUtilites\BufferReadbackBatch.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandList.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandListTemplate.h" />
     <ClInclude Include="D3DFramework\GraphicUtilites\CommandQueue.h" />
@@ -236,11 +238,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3DFramework\D3DFW.cpp" />
+    <ClCompile Include="D3DFramework\Diagnostics\D3D12Diagnostics.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BaseCommandQueue.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BasePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BilateralFilter.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferDescriptorHeap.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\BufferManager.cpp" />
+    <ClCompile Include="D3DFramework\GraphicUtilites\BufferReadbackBatch.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\CommandQueue.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\ComputePipelineObject.cpp" />
     <ClCompile Include="D3DFramework\GraphicUtilites\DynamicSRV_UAVPacker.cpp" />
@@ -270,6 +274,14 @@
     <ClCompile Include="D3DFramework\pch.cpp" />
     <ClCompile Include="D3DFramework\Utilites\Audio.cpp" />
     <ClCompile Include="D3DFramework\Utilites\AudioManager.cpp" />
+    <ClCompile Include="tests\BufferReadbackTests.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="tests\D3D12DiagnosticsTests.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="tests\RenderQueueTests.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Lib|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
