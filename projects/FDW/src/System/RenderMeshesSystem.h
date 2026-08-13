@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/GraphicUtilites/RenderTarget.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <System/MeshesCullingSubSystem.h>

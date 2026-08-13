@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Component/RenderObject/RenderComponent.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <D3DFramework/Objects/Object.h>

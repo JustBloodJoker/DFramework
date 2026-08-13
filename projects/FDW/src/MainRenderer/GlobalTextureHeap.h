@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/GraphicUtilites/DynamicSRV_UAVPacker.h>
 #include <WinWindow/Utils/CreativeSingleton.h>
 #include <D3DFramework/GraphicUtilites/FResource.h>

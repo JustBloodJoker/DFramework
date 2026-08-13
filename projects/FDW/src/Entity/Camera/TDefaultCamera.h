@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Entity/Camera/TBaseCamera.h>
 #include <Entity/Camera/DefaultCameraInputLayer.h>
 

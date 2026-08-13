@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <System/CameraFrustum.h>
 #include <System/CameraSystemInputLayer.h>

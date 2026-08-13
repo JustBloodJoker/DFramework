@@ -162,7 +162,17 @@ void TScene::CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* 
 	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
 
 	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
-	m_pObjectVBV_IBV->CreateWithConverter(device, list, m_pScene->GetVertices(), m_pScene->GetIndices(), SceneVertexToVertex);
+	const auto vertexFlags = m_pScene->GetBonesCount() > 0
+		? D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS
+		: D3D12_RESOURCE_FLAG_NONE;
+	m_pObjectVBV_IBV->CreateWithConverter(
+		device,
+		list,
+		m_pScene->GetVertices(),
+		m_pScene->GetIndices(),
+		SceneVertexToVertex,
+		false,
+		vertexFlags);
 }
 
 AnimationComponent* TScene::GetAnimationComponent() {

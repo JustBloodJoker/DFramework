@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/Objects/Scene.h>
 #include <Entity/RenderObject/TMesh.h>
 #include <Component/RenderObject/AnimationComponent.h>

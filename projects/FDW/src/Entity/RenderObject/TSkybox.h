@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Entity/RenderObject/TRender.h>
 #include <Component/RenderObject/SkyboxComponent.h>
 

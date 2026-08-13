@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Entity/RenderObject/TMesh.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>

@@ -1,5 +1,4 @@
 #pragma once
-#include <pch.h>
 
 #include <Entity/RenderObject/TSimpleMesh.h>
 #include <Entity/RenderObject/SimpleMeshTemplatesGenerators.h>

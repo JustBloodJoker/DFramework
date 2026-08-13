@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Component/Core/IComponent.h>
 #include <Component/Light/LightComponentData.h>
 

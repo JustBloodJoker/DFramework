@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/GraphicUtilites/Materials.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
 

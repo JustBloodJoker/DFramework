@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Entity/Light/TLight.h>
 
 class TPointLight : public TLight {

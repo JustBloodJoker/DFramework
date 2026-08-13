@@ -1,7 +1,9 @@
 #pragma once
 
-#include <pch.h>
 #include <Component/Core/IComponent.h>
+#include <DirectXMath.h>
+
+namespace dx = DirectX;
 
 class CameraComponent : public IComponent {
 public:

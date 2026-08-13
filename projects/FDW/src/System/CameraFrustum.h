@@ -1,7 +1,11 @@
 #pragma once
 
-#include <pch.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
+#include <DirectXMath.h>
+
+#include <array>
+
+namespace dx = DirectX;
 
 class CameraFrustum {
 public:

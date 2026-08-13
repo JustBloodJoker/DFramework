@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 
 struct BloomSystemBrightPassData {
 	float Threshold = 1.0f;

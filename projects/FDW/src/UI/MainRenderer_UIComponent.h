@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pch.h>
+#include <MainRenderer/GlobalConfig.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <UI/UIInputLayer.h>
 

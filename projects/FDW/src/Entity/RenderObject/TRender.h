@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <D3DFramework/GraphicUtilites/DepthStencilView.h>
 #include <System/CameraFrustum.h>

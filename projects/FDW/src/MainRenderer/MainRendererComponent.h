@@ -1,5 +1,4 @@
 #pragma once 
-#include <pch.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
 #include <System/NRenderSystemNotifyType.h>
 
