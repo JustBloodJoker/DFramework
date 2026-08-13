@@ -285,6 +285,9 @@ void MainRenderer::UserLoop()
 		{
 			list->RSSetViewports(1, &mainViewPort);
 			list->RSSetScissorRects(1, &mainRect);
+			if (m_pUIComponent) {
+				list->RSSetViewports(1, &mainViewPort);
+				list->RSSetScissorRects(1, &mainRect);
 				m_pUIComponent->RenderImGui(list);
 			}
 
@@ -311,6 +314,7 @@ void MainRenderer::UserLoop()
 	m_dInFlight.push_back(presentH);
 
 	auto needProcessUI = m_pUIComponent->GetPendingAfterRenderCallsCount()>0;
+	auto needProcessUI = m_pUIComponent && m_pUIComponent->GetPendingAfterRenderCallsCount() > 0;
 	while ( ( needProcessUI && !m_dInFlight.empty() ) || m_dInFlight.size() >= m_uMaxFramesInFlight) {
 		auto front = m_dInFlight.front();
 		if (front && !front->IsDone()) {
@@ -1070,6 +1074,7 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 
 	m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
 	if (m_pLightSystem->GetIBLBrdfLUTResource()) {
+	if (m_pLightSystem && m_pLightSystem->GetIBLBrdfLUTResource()) {
 		UpdateIBL_LUT_Resource();
 	}
 	if (m_vLCTResources.size() > 0 && m_vLCTResources[0]) {

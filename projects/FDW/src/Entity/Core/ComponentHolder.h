@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
 #include <Component/Core/IComponent.h>
 #include <System/NRenderSystemNotifyType.h>
@@ -132,3 +131,8 @@ inline bool operator==(const std::shared_ptr<ComponentHolder>& lhs, const Compon
 inline bool operator==(const ComponentHolder* lhs, const std::shared_ptr<ComponentHolder>& rhs) {
     return lhs == rhs.get();
 }
+BEGIN_REFLECT(IComponent)
+    REFLECT_PROPERTY(m_sName)
+    REFLECT_PROPERTY(m_bIsActive)
+    REFLECT_PROPERTY(m_pOwner)
+END_REFLECT(IComponent)

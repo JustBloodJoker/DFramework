@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <D3DFramework/GraphicUtilites/RenderThreadUtils/RenderThreadManager.h>
 #include <WinWindow/Utils/CreativeSingleton.h>
 

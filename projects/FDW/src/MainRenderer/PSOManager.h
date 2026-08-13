@@ -1,6 +1,6 @@
 #pragma once
 
-#include <pch.h>
+#include <Config/PipelineRegistry.h>
 #include <WinWindow/Utils/CreativeSingleton.h>
 #include <D3DFramework/GraphicUtilites/GraphicsPipelineObject.h>
 #include <D3DFramework/GraphicUtilites/ComputePipelineObject.h>

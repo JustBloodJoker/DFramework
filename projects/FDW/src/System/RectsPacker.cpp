@@ -1,6 +1,7 @@
 #include "RectsPacker.h"
 #include <algorithm>
 #include <limits>
+#include <unordered_map>
 
 RectsPacker::RectsPacker(int width, int height, int padding_)
     : m_iBinWidth(width), m_iBinHeight(height), m_iPadding(padding_), m_iUsedWidth(0), m_iUsedHeight(0)

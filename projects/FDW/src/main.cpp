@@ -1,9 +1,7 @@
 #include <MainRenderer/MainRenderer.h>
 
 int main() {
-
-	auto mr = new MainRenderer();
-	mr->__START();
-
-	return 0;
+    auto renderer = std::make_unique<MainRenderer>();
+    renderer->__START();
+    return 0;
 }

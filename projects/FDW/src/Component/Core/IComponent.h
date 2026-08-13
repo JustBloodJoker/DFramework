@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pch.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
 
 class ComponentHolder;
@@ -13,11 +12,6 @@ public:
 
 public:
     REFLECT_BODY(IComponent)
-    BEGIN_REFLECT(IComponent)
-        REFLECT_PROPERTY(m_sName)
-        REFLECT_PROPERTY(m_bIsActive)
-        REFLECT_PROPERTY(m_pOwner)
-    END_REFLECT(IComponent)
 
 public:
 	void SetOwner(ComponentHolder* owner);

@@ -238,6 +238,7 @@ protected:
 
 	template <typename T>
 	void DestroyComponent(std::unique_ptr<T>& cmp) {
+		if (!cmp) return;
 		cmp->BeforeDestruction();
 		cmp = nullptr;
 	}
