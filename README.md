@@ -80,3 +80,8 @@ Output binary:
 
 - Source assets are in `projects/FDW/Content`
 - For CMake build, `Content` is copied automatically near `FDW.exe` after build
+
+<img width="1253" height="934" alt="img1" src="https://github.com/user-attachments/assets/8c4c1e2e-7c9e-4193-84e5-f2bff4bb457b" />
+<img width="1672" height="941" alt="img3" src="https://github.com/user-attachments/assets/1ff10705-b0e5-427b-8d78-fc3706b0f1a3" />
+<img width="1672" height="941" alt="img2" src="https://github.com/user-attachments/assets/afbde798-950d-4825-9e52-acaac07d517c" />
+
