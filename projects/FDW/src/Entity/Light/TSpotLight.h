@@ -22,4 +22,5 @@ public:
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(OuterConeAngle, Light, float);
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(InnerConeAngle, Light, float);
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(AttenuationRadius, Light, float);
+	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(SourceRadius, Light, float);
 };

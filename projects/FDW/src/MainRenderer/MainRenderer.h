@@ -1,8 +1,14 @@
 #pragma once
 
-#include <pch.h>
 #include <MainRenderer/MainRendererComponent.h>
-#include <MainRenderer/ShadowMode.h>
+#include <Config/LightingConfig.h>
+#include <Config/PipelineRegistry.h>
+#include <Config/RendererLimits.h>
+#include <Config/RenderFormats.h>
+#include <Config/ShaderBindings.h>
+#include <Config/ShadowConfig.h>
+#include <Config/RendererResources.h>
+#include <Config/ShadowMode.h>
 
 #include <UI/MainRenderer_UIComponent.h>
 #include <D3DFramework/D3DFW.h>
@@ -16,16 +22,19 @@
 #include <System/CameraSystem.h>
 #include <System/LightSystem.h>
 #include <System/ClusteredLightningSystem.h>
+#include <System/Shadows/Neural/NeuralShadowWorkGenerator.h>
+#include <System/Shadows/Neural/NeuralShadowBaselinePass.h>
+#include <System/Shadows/ShadowSystem.h>
 #include <System/SceneAnimationSystem.h>
 #include <System/RenderMeshesSystem.h>
 #include <System/SkyboxRenderSystem.h>
 #include <System/BloomEffectSystem.h>
-#include <System/AtlasRTShadowSystem.h>
 #include <System/TAASystem.h>
 
 class MeshComponent;
 
 class MainRenderer : virtual public FD3DW::D3DFW {
+	friend class ShadowSystem;
 
 public:
 	MainRenderer();
@@ -106,11 +115,14 @@ public:
 	dx::XMFLOAT3 GetCurrentCameraPosition() const;
 	CameraFrustum GetCameraFrustum();
 	float GetFoVY() const;
+	float GetCameraNear() const;
+	float GetCameraFar() const;
 
 	//MESHES
 	void SetMeshCullingType(MeshCullingType in);
 	MeshCullingType GetMeshCullingType();
 	FD3DW::AccelerationStructureBuffers GetTLAS();
+	NSRTGeometryCoverageState GetRTGeometryCoverageState() const;
 
 
 	//LIGHTS
@@ -120,16 +132,24 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetClusterStructuredBufferAddress();
 	FD3DW::StructuredBuffer* GetLightsBuffer();
 	const std::vector<LightComponentData>& GetLightComponentsData() const;
+	const std::vector<std::uint64_t>& GetLightRuntimeIdentities() const;
 	int GetLightsCount();
 
 	//SHADOWS
 	bool IsShadowEnabled();
 	ShadowMode GetShadowMode() const;
 	bool SetShadowMode(ShadowMode mode);
+	bool SetNeuralShadowMode();
 	bool IsShadowModeAvailable(ShadowMode mode) const;
+	bool IsNeuralShadowActive() const;
+	NeuralShadowRuntimeState GetNeuralShadowRuntimeState() const;
 	ShadowRoutingState GetShadowRoutingState() const;
+	NSRTQualitySettings GetNSRTQualitySettings() const;
+	void SetNSRTQualitySettings(const NSRTQualitySettings& settings);
 	HardShadowAtlasFilterSettings GetHardShadowAtlasFilterSettings() const;
 	void SetHardShadowAtlasFilterSettings(const HardShadowAtlasFilterSettings& settings);
+	void PrepareShadowMetadataForCompute(ID3D12GraphicsCommandList* list);
+	void PrepareShadowMetadataForPixel(ID3D12GraphicsCommandList* list);
 
 	//WORLD
 	void LoadWorld(std::string pathTo);
@@ -174,7 +194,7 @@ private:
 	void ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies);
 	void RecreateWindowSizeDependentResources(int width, int height);
 	void OnMainWindowResize(int width, int height) override;
-	void ValidateSelection();
+	void ValidateEditorSelection();
 	void UpdateSceneViewportLayout();
 
 private:
@@ -202,19 +222,21 @@ private:
 
 	///////////////////////////////////////////
 	std::deque<std::shared_ptr<FD3DW::ExecutionHandle>> m_dInFlight;
-	size_t m_uMaxFramesInFlight = GLOBAL_IN_FLIGHT_FRAMES_MAX_COUNT;
+	size_t m_uMaxFramesInFlight = FDWConfig::RendererLimits::InFlightFrameCount;
 
 	AudioSystem* m_pAudioSystem = nullptr;
 	CameraSystem* m_pCameraSystem = nullptr;
 	LightSystem* m_pLightSystem = nullptr;
 	ClusteredLightningSystem* m_pClusteredLightningSystem = nullptr;
+	ShadowSystem* m_pShadowSystem = nullptr;
 	SceneAnimationSystem* m_pSceneAnimationSystem = nullptr;
 	RenderMeshesSystem* m_pRenderMeshesSystem = nullptr;
 	SkyboxRenderSystem* m_pSkyboxRenderSystem = nullptr;
 	BloomEffectSystem* m_pBloomEffectSystem = nullptr;
-	AtlasRTShadowSystem* m_pAtlasRTShadowSystem = nullptr;
 	TAASystem* m_pTAASystem = nullptr;
 	ShadowMode m_eShadowMode = DEFAULT_SHADOW_MODE;
+	std::atomic_bool m_bRendererInitializationComplete{ false };
+	std::mutex m_xResizeResourcesMutex;
 
 	std::vector<std::unique_ptr<MainRendererComponent>> m_vSystems;
 

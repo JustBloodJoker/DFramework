@@ -26,9 +26,9 @@ void InitRectPoints(LightStruct light, out float3 points[4])
     points[3] = center - ex + ey;
 }
 
-float3 IntegrateEdgeVec(float3 v1, float3 v2)
+float3 IntegrateEdgeVec(float3 edgeStart, float3 edgeEnd)
 {
-    float x = dot(v1, v2);
+    float x = dot(edgeStart, edgeEnd);
     float y = abs(x);
 
     float a = 0.8543985 + (0.4965155 + 0.0145206 * y) * y;
@@ -37,7 +37,7 @@ float3 IntegrateEdgeVec(float3 v1, float3 v2)
 
     float theta_sintheta = (x > 0.0) ? v : 0.5 * rsqrt(max(1.0 - x * x, 1e-7)) - v;
 
-    return cross(v1, v2) * theta_sintheta;
+    return cross(edgeStart, edgeEnd) * theta_sintheta;
 }
 
 float3 LTCEvaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4])
@@ -84,7 +84,9 @@ float3 LTCEvaluate(float3 N, float3 V, float3 P, float3x3 Minv, float3 points[4]
     float l = length(vsum);
     sum = max((l * l + vsum.z) / (l + 1), 0.0f);
     
-    if (behind) sum = 0.0;
+    if (behind) {
+        sum = 0.0;
+    }
 
     float3 Lo_i = float3(sum, sum, sum);
 

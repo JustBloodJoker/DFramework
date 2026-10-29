@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #pragma once
 
 #include <Utilities/HelperFunctions.h>

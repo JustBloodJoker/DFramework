@@ -45,7 +45,9 @@ void CS(uint3 dtid : SV_DispatchThreadID)
     uint width, height, layers;
     PrefilteredMap.GetDimensions(width, height, layers);
 
-    if (dtid.x >= width || dtid.y >= height || dtid.z >= layers) return;
+    if (dtid.x >= width || dtid.y >= height || dtid.z >= layers) {
+        return;
+    }
 
     float2 uv = (float2(dtid.xy) + 0.5f) / float2(width, height);
     float nx = uv.x * 2.0f - 1.0f;

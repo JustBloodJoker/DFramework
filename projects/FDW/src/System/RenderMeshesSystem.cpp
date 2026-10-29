@@ -1,8 +1,11 @@
+#include "pch.h"
+
 #include <System/RenderMeshesSystem.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <MainRenderer/PSOManager.h>
-#include <MainRenderer/GlobalConfig.h>
+#include <Config/PipelineRegistry.h>
+#include <Config/ShaderBindings.h>
 #include <World/World.h>
 
 void RenderMeshesSystem::AfterConstruction() {
@@ -90,6 +93,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 		for (auto& cmp : m_vActiveMeshComponents) {
 			cmp->OnStartRenderTick(inData);
 		}
+		RefreshRTGeometryCoverageState();
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, {handle}, true);
@@ -97,12 +101,19 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartRenderTick(st
 
 std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartBLASCall(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> handle) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList5>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList4* list) {
-		if (!m_bNeedUpdateBLAS.exchange(false, std::memory_order_acq_rel)) return;
+		const bool updateAll = m_bNeedUpdateBLAS.exchange(false, std::memory_order_acq_rel);
+		bool updatedAny = false;
 
 		for (const auto& cmp : m_vActiveMeshComponents) {
-			cmp->UpdateBLASDXR(m_pOwner->GetDXRDevice(), list);
+			if ((updateAll || cmp->HasSkinningSource()) && cmp->HasCompleteBLAS()) {
+				cmp->UpdateBLASDXR(m_pOwner->GetDXRDevice(), list);
+				updatedAny = true;
+			}
 		}
-		m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
+		if (updatedAny) {
+			m_bNeedUpdateTLAS.store(true, std::memory_order_relaxed);
+		}
+		RefreshRTGeometryCoverageState();
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
@@ -114,7 +125,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 
 		std::vector<std::pair<FD3DW::AccelerationStructureBuffers, dx::XMMATRIX>> instances;
 		for (const auto& cmp : m_vActiveMeshComponents) {
-			instances.push_back({ cmp->GetBLASBuffer() , cmp->GetWorldMatrix() });
+			if (cmp->HasCompleteBLAS()) {
+				instances.push_back({ cmp->GetBLASBuffer() , cmp->GetWorldMatrix() });
+			}
 		}
 
 		if (instances.empty()) 
@@ -125,7 +138,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnStartTLASCall(std:
 		{
 			FD3DW::UpdateTopLevelAS(m_pOwner->GetDXRDevice(), list, m_xTLASBufferData, instances);
 		}
-
+		RefreshRTGeometryCoverageState();
 	});
 
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, handle, true);
@@ -250,6 +263,49 @@ std::shared_ptr<FD3DW::ExecutionHandle> RenderMeshesSystem::OnEndRenderTick(std:
 
 FD3DW::AccelerationStructureBuffers RenderMeshesSystem::GetTLAS() const {
 	return m_xTLASBufferData;
+}
+
+void RenderMeshesSystem::RefreshRTGeometryCoverageState() {
+	NSRTGeometryCoverageState state;
+	if (!m_vActiveMeshComponents.empty()) {
+		state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::OpaqueTriangles);
+		state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::TwoSidedThinTriangles);
+	}
+
+	for (const auto& cmp : m_vActiveMeshComponents) {
+		++state.ActiveTriangleInstances;
+		if (cmp->HasSkinningSource()) {
+			++state.SkinnedInstances;
+			state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::SkinnedVertexUpdates);
+		}
+		else {
+			++state.RigidInstances;
+			state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::RigidTransforms);
+		}
+
+		if (cmp->HasPotentialAlphaOrOpacity()) {
+			++state.ConservativeAlphaOrOpacityInstances;
+			state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::ConservativeAlphaOrOpacityMask);
+		}
+		if (!cmp->HasCompleteBLAS()) {
+			++state.MissingBLASInstances;
+			state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::MissingAccelerationStructure);
+		}
+	}
+
+	state.TLASComplete = m_xTLASBufferData.pResult != nullptr ? 1u : 0u;
+	if (state.TLASComplete == 0u) {
+		state.Flags |= ToGeometryCoverageBits(NSRTGeometryCoverageFlags::MissingAccelerationStructure);
+	}
+	state.GroundTruthGeometryEligible = IsGroundTruthGeometryEligible(state) ? 1u : 0u;
+
+	std::lock_guard<std::mutex> lock(m_xRTGeometryCoverageMutex);
+	m_xRTGeometryCoverageState = state;
+}
+
+NSRTGeometryCoverageState RenderMeshesSystem::GetRTGeometryCoverageState() const {
+	std::lock_guard<std::mutex> lock(m_xRTGeometryCoverageMutex);
+	return m_xRTGeometryCoverageState;
 }
 
 MeshCullingType RenderMeshesSystem::GetCullingType() const {

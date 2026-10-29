@@ -5,6 +5,7 @@
 #include <System/MeshesCullingSubSystem.h>
 #include <Component/RenderObject/MeshesIndirectRenderData.h>
 #include <Component/RenderObject/MeshComponent.h>
+#include <System/Shadows/RayTracing/RTGeometryCoverage.h>
 
 enum class MeshCullingType {
 	None = 0,
@@ -53,10 +54,17 @@ public:
 
 
 	FD3DW::AccelerationStructureBuffers GetTLAS() const;
+	NSRTGeometryCoverageState GetRTGeometryCoverageState() const;
 	MeshCullingType GetCullingType() const;
 	void SetCullingType(MeshCullingType type);
 
 protected:
+	void RefreshRTGeometryCoverageState();
+
+
+	mutable std::mutex m_xRTGeometryCoverageMutex;
+	NSRTGeometryCoverageState m_xRTGeometryCoverageState;
+
 	std::atomic<bool> m_bNeedUpdateTLAS{ true };
 	std::atomic<bool> m_bNeedUpdateBLAS{ true };
 	std::atomic<bool> m_bNeedUpdateMeshesActivationDeactivation{ true };

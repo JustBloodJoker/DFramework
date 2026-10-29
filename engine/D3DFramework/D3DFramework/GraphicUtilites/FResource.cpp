@@ -850,6 +850,11 @@ namespace FD3DW
         ResourceBarrierChange(pCommandList, D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES, resourceStateAfter);
     }
 
+    void FResource::ResourceUAVBarrier(ID3D12GraphicsCommandList* pCommandList) {
+        auto barrier = CD3DX12_RESOURCE_BARRIER::UAV(m_pResource.Get());
+        pCommandList->ResourceBarrier(1u, &barrier);
+    }
+
     void FResource::ReleaseUploadBuffers() 
     {
         for (auto& el : FResource::s_vTextures)

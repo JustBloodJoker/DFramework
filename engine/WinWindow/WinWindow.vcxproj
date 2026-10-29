@@ -40,6 +40,7 @@
     <ClInclude Include="WinWindow\InputSystem\WinWindowInputRouter.h" />
     <ClInclude Include="WinWindow\pch.h" />
     <ClInclude Include="WinWindow\Utils\CreativeSingleton.h" />
+    <ClInclude Include="WinWindow\Utils\FileHash.h" />
     <ClInclude Include="WinWindow\Utils\Macroses.h" />
     <ClInclude Include="WinWindow\Utils\Reflection\ClassInfo.h" />
     <ClInclude Include="WinWindow\Utils\Reflection\MethodInfo.h" />
@@ -79,6 +80,7 @@
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputLayer.cpp" />
     <ClCompile Include="WinWindow\InputSystem\WinWindowInputRouter.cpp" />
     <ClCompile Include="WinWindow\Utils\Reflection\ClassInfo.cpp" />
+    <ClCompile Include="WinWindow\Utils\FileHash.cpp" />
     <ClCompile Include="WinWindow\Utils\Reflection\ReflectionRegistry.cpp" />
     <ClCompile Include="WinWindow\Utils\Scripting\ScriptLexer.cpp" />
     <ClCompile Include="WinWindow\Utils\Scripting\ScriptNodes.cpp" />

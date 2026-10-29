@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/Light/TSpotLight.h>
 #include <World/World.h>
 

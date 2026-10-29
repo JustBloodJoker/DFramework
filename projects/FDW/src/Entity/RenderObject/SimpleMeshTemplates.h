@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Entity/RenderObject/TSimpleMesh.h>
-#include <Entity/RenderObject/SimpleMeshTemplatesGenerators.h>
 
 #define DECL_SIMPLE_MESH_ENTITY(name) class TSimple##name : public TSimpleMesh {																								\
 public:																																									\

@@ -67,6 +67,10 @@ struct MeshMatrices
 #define TEXTURE_EMISSIVE_LOAD_FLAG_LOCATION         8
 
 #define TEXTURE_ORM_TEXTURE_TYPE_FLAG_LOCATION   9
+#define MATERIAL_ALPHA_MODE_FLAG_LOCATION       10
+#define MATERIAL_RESERVED_FLAG_LOCATION         11
+
+#define MATERIAL_ALPHA_MODE_OPAQUE               0
 
 struct Materials
 {
@@ -123,17 +127,9 @@ struct LightStruct {
     //RectLight
     float2 RectSize;
     float3 Rotation;
-};
 
-struct RTSoftShadowFrameStruct {
-    matrix PrevViewProj;
-    matrix CurrViewProj;
-    float TemporalFeedbackMin;
-    float TemporalFeedbackMax;
-    float ReprojDistThreshold;
-    float NormalThreshold;
-    uint FrameIndex;
-    int3 padding;
+    float DirectionalAngularRadius;
+    float ShadowSoftness;
 };
 
 struct AABB
@@ -199,6 +195,7 @@ struct Cluster
     float4 MinPoint;
     float4 MaxPoint;
     uint Count;
+    uint AffectingLightCount;
     uint LightIndices[MAX_LIGHTS_PER_CLUSTER];
 };
 

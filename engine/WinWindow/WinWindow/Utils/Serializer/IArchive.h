@@ -55,7 +55,7 @@ public:
             m_vBuffer.insert(m_vBuffer.end(), static_cast<char*>(data), static_cast<char*>(data) + size);
         }
         else {
-            assert(m_uPosition + size <= m_vBuffer.size());
+            SAFE_ASSERT(m_uPosition + size <= m_vBuffer.size(), "Archive read exceeds serialized buffer bounds");
             std::memcpy(data, m_vBuffer.data() + m_uPosition, size);
             m_uPosition += size;
         }

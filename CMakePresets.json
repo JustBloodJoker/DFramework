@@ -32,5 +32,25 @@
       "configurePreset": "vs2022-x64",
       "configuration": "Release"
     }
+  ],
+  "testPresets": [
+    {
+      "name": "vs2022-x64-debug",
+      "displayName": "Test Debug (VS2022 x64)",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "vs2022-x64-release",
+      "displayName": "Test Release (VS2022 x64)",
+      "configurePreset": "vs2022-x64",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }

@@ -1,7 +1,6 @@
 #include "../pch.h"
 #include "Scene.h"
 
-
 namespace FD3DW
 {
 
@@ -23,7 +22,7 @@ namespace FD3DW
 		else
 		{
 			auto identity = dx::XMMatrixIdentity();
-			
+
 			GetPose(animation->second, m_xMainBone, time, m_vResultBones, identity);
 		}
 		return m_vResultBones;
@@ -71,10 +70,10 @@ namespace FD3DW
 		CONSOLE_MESSAGE(std::string("START PARSING SCENE WITH PATH: " + file));
 
 		std::filesystem::path path(file);
-		
+
 		const aiScene* scene = nullptr;
 		Assimp::Importer importer;
-		
+
 		scene = importer.ReadFile(file,
 			aiProcess_MakeLeftHanded | aiProcess_FlipWindingOrder | aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace );
 		SAFE_ASSERT(scene, std::string("SCENE PATH: " + file + "  READ ERROR || ASSIMP ERROR INFO: " + importer.GetErrorString()).c_str());
@@ -82,13 +81,13 @@ namespace FD3DW
 		size_t verticesSize = 0;
 		size_t offsetVertices = 0;
 		size_t indicesSize = 0;
-		
+
 		std::unordered_map<std::string, Bone> bonesMap;
 
 		for (size_t i = 0; i < scene->mNumMeshes; i++)
 		{
 			const aiMesh* mesh = scene->mMeshes[i];
-			
+
 			offsetVertices += verticesSize;
 			m_vVertices.insert(m_vVertices.end(), mesh->mNumVertices, SceneVertexFrameWork());
 
@@ -144,7 +143,7 @@ namespace FD3DW
 				m_vIndices.push_back(mesh->mFaces[j].mIndices[1]);
 				m_vIndices.push_back(mesh->mFaces[j].mIndices[2]);
 			}
-			
+
 			if (mesh->HasBones())
 			{
 				std::vector<int>weightsCurrIndex(verticesSize, 0);
@@ -167,7 +166,22 @@ namespace FD3DW
 				}
 			}
 
-			m_vObjectParameters.push_back(ObjectDesc{ UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize), UINT(m_vIndices.size() - indicesSize), UINT(mesh->mMaterialIndex),objectMin,objectMax });
+			ObjectDesc object{
+				UINT(verticesSize), UINT(offsetVertices), UINT(indicesSize),
+				UINT(m_vIndices.size() - indicesSize), UINT(mesh->mMaterialIndex), objectMin, objectMax
+			};
+
+			const auto* material = mesh->mMaterialIndex < scene->mNumMaterials ? scene->mMaterials[mesh->mMaterialIndex] : nullptr;
+
+			object.AlphaMode = ReadMaterialAlphaMode(material);
+			object.AlphaCutoff = ReadMaterialAlphaCutoff(material);
+			object.DoubleSided = ReadMaterialDoubleSided(material);
+			object.HasNormals = mesh->HasNormals() ? 1u : 0u;
+			object.HasTangents = mesh->HasTangentsAndBitangents() ? 1u : 0u;
+			object.HasTextureCoordinates = mesh->HasTextureCoords(0) ? 1u : 0u;
+			object.HasBones = mesh->HasBones() ? 1u : 0u;
+			object.MeshName = mesh->mName.C_Str();
+			m_vObjectParameters.push_back(std::move(object));
 		}
 
 		for (size_t i = 0; i < scene->mNumMaterials; i++)
@@ -268,7 +282,7 @@ namespace FD3DW
 			{
 				name = prePathName + std::string(pathname.C_Str());
 				m_pMaterialManager->SetTexture(name, TextureType::HEIGHT, pDevice, pCommandList);
-			}	
+			}
 			if (AI_SUCCESS == scene->mMaterials[i]->GetTexture(aiTextureType::aiTextureType_OPACITY, 0, &pathname))
 			{
 				name = prePathName + std::string(pathname.C_Str());
@@ -286,7 +300,7 @@ namespace FD3DW
 		/////////////////////////////////////////////////////////////////////////////////////
 
 		if (scene->HasAnimations())
-		{	
+		{
 			for (unsigned ind = 0; ind < scene->mNumAnimations; ind++)
 			{
 				auto anim = scene->mAnimations[ind];
@@ -305,7 +319,7 @@ namespace FD3DW
 				animation.Transformations = {};
 
 				for (size_t i = 0; i < anim->mNumChannels; i++)
-				{	
+				{
 					aiNodeAnim* channel = anim->mChannels[i];
 					BoneTransformations transformation;
 					for (size_t j = 0; j < channel->mNumPositionKeys; j++)
@@ -391,7 +405,7 @@ namespace FD3DW
 			{
 				dx::XMVECTOR rotation1 = bt.Rotations[fp.first - 1];
 				dx::XMVECTOR rotation2 = bt.Rotations[fp.first];
-				
+
 				rotation = dx::XMQuaternionSlerp(rotation1, rotation2, fp.second);
 			}
 			else
@@ -411,7 +425,7 @@ namespace FD3DW
 			{
 				scale = bt.Scales[fp.first];
 			}
-		
+
 			dx::XMMATRIX positionMat = dx::XMMatrixTranslation(position.vector4_f32[0], position.vector4_f32[1], position.vector4_f32[2]);
 			dx::XMMATRIX rotationMat = dx::XMMatrixRotationQuaternion(rotation);
 			dx::XMMATRIX scaleMat = dx::XMMatrixScaling(scale.vector4_f32[0], scale.vector4_f32[1], scale.vector4_f32[2]);
@@ -420,10 +434,50 @@ namespace FD3DW
 		}
 		output[skeletion.Index] =  dx::XMMatrixTranspose(skeletion.Offset * globalTransform ); // * globalInverseTransform  why this doesn't need here? ((
 																							   // and why some animations incorrect (
-		for (Bone& child : skeletion.Children) 
+		for (Bone& child : skeletion.Children)
 		{
 			GetPose(animation, child, dt, output, globalTransform);
 		}
+	}
+
+	MaterialAlphaMode Scene::ReadMaterialAlphaMode(const aiMaterial* material)
+	{
+		if (!material) return MaterialAlphaMode::Unknown;
+
+		aiString mode;
+		if (material->Get("$mat.gltf.alphaMode", 0u, 0u, mode) == AI_SUCCESS)
+		{
+			const std::string value = mode.C_Str();
+			if (value == "OPAQUE") return MaterialAlphaMode::Opaque;
+
+			if (value == "MASK") return MaterialAlphaMode::Mask;
+
+			if (value == "BLEND") return MaterialAlphaMode::Blend;
+
+			return MaterialAlphaMode::Unknown;
+		}
+
+		auto opacity = 1.0f;
+		const bool nonOpaqueConstant = material->Get(AI_MATKEY_OPACITY, opacity) == AI_SUCCESS && opacity < 1.0f;
+		const bool opacityTexture = material->GetTextureCount(aiTextureType_OPACITY) != 0u;
+
+		return nonOpaqueConstant || opacityTexture ? MaterialAlphaMode::Blend : MaterialAlphaMode::Opaque;
+	}
+
+	float Scene::ReadMaterialAlphaCutoff(const aiMaterial* material)
+	{
+		auto cutoff = 0.5f;
+		if (material) material->Get("$mat.gltf.alphaCutoff", 0u, 0u, cutoff);
+
+		return std::isfinite(cutoff) ? std::clamp(cutoff, 0.0f, 1.0f) : 0.5f;
+	}
+
+	UINT Scene::ReadMaterialDoubleSided(const aiMaterial* material)
+	{
+		auto value = 0;
+		if (material) material->Get(AI_MATKEY_TWOSIDED, value);
+
+		return value != 0 ? 1u : 0u;
 	}
 
 	std::pair<unsigned, float> Scene::GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& Duration)
@@ -434,14 +488,14 @@ namespace FD3DW
 
 		double frac = 1.0;
 		unsigned segment = 0;
-		
+
 		double mod = animationTime / times[times.size() - 1];
 		mod = mod - std::floor(mod);
 		double tempDT = times[times.size() - 1] * mod;
 
 		while (tempDT > times[segment])
 			segment++;
-		
+
 		if (!segment) segment++;
 		if (times.size() > 1)
 		{
@@ -456,7 +510,7 @@ namespace FD3DW
 		return { segment, (float)frac };
 	}
 
-	bool Scene::ReadSkeleton(Bone& boneOutput, aiNode* node, std::unordered_map<std::string, Bone>& bonesMap) 
+	bool Scene::ReadSkeleton(Bone& boneOutput, aiNode* node, std::unordered_map<std::string, Bone>& bonesMap)
 	{
 		if (bonesMap.find(node->mName.C_Str()) != bonesMap.end()) {
 			boneOutput.Name = node->mName.C_Str();

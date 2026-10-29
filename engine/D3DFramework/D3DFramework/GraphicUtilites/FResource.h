@@ -66,6 +66,7 @@ namespace FD3DW
 
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const D3D12_RESOURCE_STATES resourceStateAfter);
 		void ResourceBarrierChange(ID3D12GraphicsCommandList* pCommandList, const UINT numBariers, const D3D12_RESOURCE_STATES resourceStateAfter);
+		void ResourceUAVBarrier(ID3D12GraphicsCommandList* pCommandList);
 		
 		void UploadDataNoBarrier(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const void* pData, bool bCopyAllMips = false);
 

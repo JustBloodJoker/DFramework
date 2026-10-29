@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <UI/UIInputLayer.h>
 #include <UI/MainRenderer_UIComponent.h>
 
@@ -31,7 +33,7 @@ bool UIInputLayer::ProcessInput(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 		auto deltaX = std::abs(mouseX - m_iLMBDownX);
 		auto deltaY = std::abs(mouseY - m_iLMBDownY);
 		
-		if (std::max(deltaX, deltaY) > SELECTION_DRAG_THRESHOLD_PIXELS) {
+		if (std::max(deltaX, deltaY) > FDWConfig::RendererLimits::SelectionDragThresholdPixels) {
 			m_bLMBDragDetected = true;
 		}
 

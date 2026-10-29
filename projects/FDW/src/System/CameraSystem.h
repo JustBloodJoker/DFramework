@@ -35,7 +35,10 @@ public:
 	void EnableJitter(bool enabled);
 
 	void UpdateProjectionMatrix();
+	void SetProjectionParameters(float fovY, float zNear, float zFar);
 	float GetFoVY() const;
+	float GetZNear() const;
+	float GetZFar() const;
 	CameraFrustum GetCameraFrustum();
 	void UpdateCameraFrustum();
 
@@ -61,6 +64,7 @@ protected:
 	CameraFrustum m_xFrustum;
 	float m_fZNear = 0.1f;
 	float m_fZFar = 10000.0f;
+	float m_fFoVY = M_PI_2_F;
 
 	std::atomic<bool> m_bIsNeedUpdateCamera{ false };
 	std::atomic<bool> m_bIsNeedCheckCamera{ false };

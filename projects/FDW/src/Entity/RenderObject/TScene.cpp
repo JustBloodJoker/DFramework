@@ -1,5 +1,6 @@
+#include "pch.h"
+
 #include <Entity/RenderObject/TScene.h>
-#include <Entity/RenderObject/VerticesConverter.h>
 #include <MainRenderer/GlobalRenderThreadManager.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <World/World.h>
@@ -10,6 +11,16 @@
 TScene::TScene(std::string path) {
 	m_sPath = path;
 	m_sName = path;
+}
+
+FD3DW::VertexFrameWork TScene::ConvertSceneVertex(FD3DW::SceneVertexFrameWork vertex) {
+	FD3DW::VertexFrameWork result;
+	result.Pos = vertex.Pos;
+	result.Normal = vertex.Normal;
+	result.Bitangent = vertex.Bitangent;
+	result.Tangent = vertex.Tangent;
+	result.TexCoord = vertex.TexCoord;
+	return result;
 }
 
 
@@ -170,7 +181,7 @@ void TScene::CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* 
 		list,
 		m_pScene->GetVertices(),
 		m_pScene->GetIndices(),
-		SceneVertexToVertex,
+		ConvertSceneVertex,
 		false,
 		vertexFlags);
 }

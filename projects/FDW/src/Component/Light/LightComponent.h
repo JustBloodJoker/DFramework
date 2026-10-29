@@ -2,6 +2,7 @@
 
 #include <Component/Core/IComponent.h>
 #include <Component/Light/LightComponentData.h>
+#include <Component/Light/LightRuntimeIdentity.h>
 
 class LightComponent : public IComponent {
 public:
@@ -18,6 +19,7 @@ public:
 public:
 
 	LightComponentData GetLightComponentData();
+	std::uint64_t GetRuntimeLightIdentity() const;
 	void SetLightComponentData(LightComponentData newData);
     void SetLightComponentDataSilent(const LightComponentData& newData);
 
@@ -26,6 +28,10 @@ public:
 	virtual void Destroy() override;
 
 protected:
+	static LightComponentData NormalizeData(LightComponentData data);
+
+protected:
 	LightComponentData m_xData;
+	LightRuntimeIdentity m_xRuntimeIdentity;
 
 };

@@ -29,6 +29,7 @@ namespace FD3DW {
 		UINT64 m_uValue = 0;
 
 		std::atomic<bool> m_bMustFullExecuteWait{ false };
+		std::atomic<bool> m_bBound{ false };
 
 		std::promise<void>        m_xBoundPromise;
 		std::shared_future<void>  m_xBoundFuture = m_xBoundPromise.get_future().share();

@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <System/CameraSystemInputLayer.h>
 #include <System/CameraSystem.h>
 #include <Entity/Core/ComponentHolder.h>

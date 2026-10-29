@@ -1,7 +1,6 @@
+#include "pch.h"
+
 #include "RectsPacker.h"
-#include <algorithm>
-#include <limits>
-#include <unordered_map>
 
 RectsPacker::RectsPacker(int width, int height, int padding_)
     : m_iBinWidth(width), m_iBinHeight(height), m_iPadding(padding_), m_iUsedWidth(0), m_iUsedHeight(0)
@@ -145,11 +144,11 @@ Rect RectsPacker::InsertBest(const Rect& inRect)
 void RectsPacker::SplitFreeNode(const FreeRect& freeNode, const Rect& usedNode)
 {
     int u1 = usedNode.X - m_iPadding;
-    int v1 = usedNode.Y - m_iPadding;
+    int top = usedNode.Y - m_iPadding;
     int u2 = usedNode.X + usedNode.W + m_iPadding;
-    int v2 = usedNode.Y + usedNode.H + m_iPadding;
+    int bottom = usedNode.Y + usedNode.H + m_iPadding;
 
-    if (u1 >= freeNode.X + freeNode.W || u2 <= freeNode.X || v1 >= freeNode.Y + freeNode.H || v2 <= freeNode.Y) {
+    if (u1 >= freeNode.X + freeNode.W || u2 <= freeNode.X || top >= freeNode.Y + freeNode.H || bottom <= freeNode.Y) {
         m_vFreeRects.push_back(freeNode);
         return;
     }
@@ -160,11 +159,11 @@ void RectsPacker::SplitFreeNode(const FreeRect& freeNode, const Rect& usedNode)
     if (u2 > freeNode.X && u2 < freeNode.X + freeNode.W) {
         m_vFreeRects.push_back({ u2, freeNode.Y, freeNode.X + freeNode.W - u2, freeNode.H });
     }
-    if (v1 > freeNode.Y && v1 < freeNode.Y + freeNode.H) {
-        m_vFreeRects.push_back({ freeNode.X, freeNode.Y, freeNode.W, v1 - freeNode.Y });
+    if (top > freeNode.Y && top < freeNode.Y + freeNode.H) {
+        m_vFreeRects.push_back({ freeNode.X, freeNode.Y, freeNode.W, top - freeNode.Y });
     }
-    if (v2 > freeNode.Y && v2 < freeNode.Y + freeNode.H) {
-        m_vFreeRects.push_back({ freeNode.X, v2, freeNode.W, freeNode.Y + freeNode.H - v2 });
+    if (bottom > freeNode.Y && bottom < freeNode.Y + freeNode.H) {
+        m_vFreeRects.push_back({ freeNode.X, bottom, freeNode.W, freeNode.Y + freeNode.H - bottom });
     }
 }
 

@@ -172,7 +172,7 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             else
             {
                 void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
-                assert(raw && "Unknown polymorphic type");
+                SAFE_ASSERT(raw, "Unknown polymorphic type");
 
                 auto sp = std::shared_ptr<T>(static_cast<T*>(raw));
                 ctx.IDToPtrShared[id] = sp;
@@ -236,7 +236,7 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             else
             {
                 void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
-                assert(raw && "Unknown polymorphic type");
+                SAFE_ASSERT(raw, "Unknown polymorphic type");
 
                 T* obj = static_cast<T*>(raw);
                 ctx.IDToPtr[id] = obj;
@@ -298,7 +298,7 @@ void SerializePointer(IArchive& ar, PtrT& ptr)
             else
             {
                 void* raw = PolymorphicFactory::GetInstance()->Create(typeName);
-                assert(raw && "Unknown polymorphic type");
+                SAFE_ASSERT(raw, "Unknown polymorphic type");
 
                 ptr = static_cast<T*>(raw);
                 ctx.IDToPtr[id] = ptr;

@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/RenderObject/TSimpleMesh.h>
 #include <MainRenderer/GlobalTextureHeap.h>
 #include <World/World.h>

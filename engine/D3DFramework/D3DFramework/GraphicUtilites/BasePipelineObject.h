@@ -9,7 +9,7 @@
 namespace FD3DW {
 
 	enum class CompileFileType {
-		VS, PS, GS, HS, DS, CS, RootSignature, RayGen, Miss, ClosestHit
+		VS, PS, GS, HS, DS, CS, RootSignature, RayGen, Miss, ClosestHit, AnyHit
 	};
 
 	struct CompileDesc {
@@ -17,6 +17,7 @@ namespace FD3DW {
 		std::wstring entry;
 		std::wstring target;
 		bool isFile = true;
+		bool enable16BitTypes = false;
 	};
 
 	class BasePipelineObject {
@@ -36,10 +37,9 @@ namespace FD3DW {
 
 		//for RT PO returning global root signature
 		ID3D12RootSignature* GetRootSignature();
-
 	protected:
 		wrl::ComPtr<IDxcBlob> CompileShader(const CompileDesc& desc);
-		wrl::ComPtr<IDxcBlob> CompileShader(std::vector<char> data, std::wstring entry, std::wstring target);
+		wrl::ComPtr<IDxcBlob> CompileShader(std::vector<char> data, std::wstring entry, std::wstring target, bool enable16BitTypes = false);
 		wrl::ComPtr<IDxcBlob> CompileRootSignatureBlob(const CompileDesc& desc);
 		wrl::ComPtr<ID3D12RootSignature> ExtractRootSignature(IDxcBlob* blob);
 

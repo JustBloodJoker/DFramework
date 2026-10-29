@@ -7,6 +7,7 @@ float3 ScreenToViewDepth(float2 screenCoord, float ndcZ)
 {
     float2 scrDim = float2(ClusterData.ScreenWidth, ClusterData.ScreenHeight);
     float2 ndcXY = (screenCoord / scrDim) * 2.0f - 1.0f;
+    ndcXY.y = -ndcXY.y;
     float4 ndc = float4(ndcXY, ndcZ, 1.0f);
     float4 view = mul(ndc, ClusterData.InverseProjection);
     view /= view.w;
@@ -50,4 +51,5 @@ void CS(uint3 groupID : SV_DispatchThreadID)
     Clusters[tileIndex].MinPoint = float4(aabbMin, 0.0f);
     Clusters[tileIndex].MaxPoint = float4(aabbMax, 0.0f);
     Clusters[tileIndex].Count = 0;
+    Clusters[tileIndex].AffectingLightCount = 0;
 }

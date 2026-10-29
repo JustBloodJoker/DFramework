@@ -52,6 +52,9 @@ namespace FD3DW
 		const std::vector<uint32_t>& GetIndices();
 
 	protected:
+		MaterialAlphaMode ReadMaterialAlphaMode(const aiMaterial* material);
+		float ReadMaterialAlphaCutoff(const aiMaterial* material);
+		UINT ReadMaterialDoubleSided(const aiMaterial* material);
 
 		std::pair<unsigned, float> GetTimeKeyAndFrac(std::vector<double>& times, double& dt, const double& animTick, const double& duration);
 		void GetPose(Animation& animation, Bone& skeletion, double dt, std::vector<dx::XMMATRIX>& output, dx::XMMATRIX& parentTransform);

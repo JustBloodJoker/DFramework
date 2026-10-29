@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/RenderObject/TRender.h>
 #include <Component/RenderObject/RenderComponent.h>
 #include <World/World.h>

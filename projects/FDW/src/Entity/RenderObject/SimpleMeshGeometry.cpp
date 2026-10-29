@@ -1,0 +1,298 @@
+#include <Entity/RenderObject/SimpleMeshGeometry.h>
+
+void SimpleMeshGeometry::GenerateSimplePlaneScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices)
+{
+	const dx::XMFLOAT3 normal = { 0.0f, 0.0f, 1.0f };
+	const dx::XMFLOAT3 tangent = { 1.0f, 0.0f, 0.0f };
+	const dx::XMFLOAT3 bitangent = { 0.0f, 1.0f, 0.0f };
+
+	FD3DW::VertexFrameWork bottomLeft;
+	bottomLeft.Pos = { -1.0f, -1.0f, 0.0f };
+	bottomLeft.Normal = normal;
+	bottomLeft.TexCoord = { 0.0f, 1.0f };
+	bottomLeft.Tangent = tangent;
+	bottomLeft.Bitangent = bitangent;
+
+	FD3DW::VertexFrameWork bottomRight;
+	bottomRight.Pos = { 1.0f, -1.0f, 0.0f };
+	bottomRight.Normal = normal;
+	bottomRight.TexCoord = { 1.0f, 1.0f };
+	bottomRight.Tangent = tangent;
+	bottomRight.Bitangent = bitangent;
+
+	FD3DW::VertexFrameWork topLeft;
+	topLeft.Pos = { -1.0f,  1.0f, 0.0f };
+	topLeft.Normal = normal;
+	topLeft.TexCoord = { 0.0f, 0.0f };
+	topLeft.Tangent = tangent;
+	topLeft.Bitangent = bitangent;
+
+	FD3DW::VertexFrameWork topRight;
+	topRight.Pos = { 1.0f,  1.0f, 0.0f };
+	topRight.Normal = normal;
+	topRight.TexCoord = { 1.0f, 0.0f };
+	topRight.Tangent = tangent;
+	topRight.Bitangent = bitangent;
+
+	vertices = { bottomLeft, bottomRight, topLeft, topRight };
+	indices = { 2, 1, 0, 3, 1, 2 };
+}
+
+void SimpleMeshGeometry::GenerateSimpleConeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+	const int segments = 32;
+	const float radius = 1.0f;
+	const float height = 2.0f;
+	const dx::XMFLOAT3 tangent = { 1.0f, 0.0f, 0.0f };
+	const dx::XMFLOAT3 bitangent = { 0.0f, 0.0f, 1.0f };
+
+	vertices.clear();
+	indices.clear();
+
+	FD3DW::VertexFrameWork tipVertex;
+	tipVertex.Pos = { 0.0f, height, 0.0f };
+	tipVertex.Normal = { 0.0f, 1.0f, 0.0f };
+	tipVertex.TexCoord = { 0.5f, 0.0f };
+	tipVertex.Tangent = tangent;
+	tipVertex.Bitangent = bitangent;
+
+	vertices.push_back(tipVertex);
+
+	for (int i = 0; i <= segments; ++i) {
+		float theta = (float)i / segments * M_2_PI_F;
+		float x = radius * std::cos(theta);
+		float z = radius * std::sin(theta);
+
+		FD3DW::VertexFrameWork baseVertex;
+		baseVertex.Pos = { x, 0.0f, z };
+		baseVertex.Normal = { x, radius / height, z };
+		baseVertex.TexCoord = { (x / (2.0f * radius)) + 0.5f, (z / (2.0f * radius)) + 0.5f };
+		baseVertex.Tangent = tangent;
+		baseVertex.Bitangent = bitangent;
+
+		vertices.push_back(baseVertex);
+	}
+
+	for (int i = 1; i <= segments; ++i) {
+		indices.push_back(0);
+		indices.push_back(i);
+		indices.push_back(i % segments + 1);
+	}
+
+	FD3DW::VertexFrameWork centerVertex;
+	centerVertex.Pos = { 0.0f, 0.0f, 0.0f };
+	centerVertex.Normal = { 0.0f, -1.0f, 0.0f };
+	centerVertex.TexCoord = { 0.5f, 0.5f };
+	centerVertex.Tangent = tangent;
+	centerVertex.Bitangent = bitangent;
+
+	int centerIndex = static_cast<int>(vertices.size());
+	vertices.push_back(centerVertex);
+
+	for (int i = 1; i <= segments; ++i) {
+		indices.push_back(centerIndex);
+		indices.push_back(i % segments + 1);
+		indices.push_back(i);
+	}
+}
+
+void SimpleMeshGeometry::GenerateSimpleCubeScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+	vertices.clear();
+	indices.clear();
+
+	const dx::XMFLOAT3 normals[6] = {
+		{  0.0f,  0.0f,  1.0f },
+		{  0.0f,  0.0f, -1.0f },
+		{ -1.0f,  0.0f,  0.0f },
+		{  1.0f,  0.0f,  0.0f },
+		{  0.0f,  1.0f,  0.0f },
+		{  0.0f, -1.0f,  0.0f }
+	};
+
+	const dx::XMFLOAT3 tangents[6] = {
+		{ 1.0f, 0.0f, 0.0f },
+		{-1.0f, 0.0f, 0.0f },
+		{ 0.0f, 0.0f,-1.0f },
+		{ 0.0f, 0.0f, 1.0f },
+		{ 1.0f, 0.0f, 0.0f },
+		{ 1.0f, 0.0f, 0.0f }
+	};
+
+	const dx::XMFLOAT3 bitangents[6] = {
+		{ 0.0f, 1.0f, 0.0f },
+		{ 0.0f, 1.0f, 0.0f },
+		{ 0.0f, 1.0f, 0.0f },
+		{ 0.0f, 1.0f, 0.0f },
+		{ 0.0f, 0.0f, -1.0f },
+		{ 0.0f, 0.0f,  1.0f }
+	};
+
+	const dx::XMFLOAT3 faceVertices[6][4] = {
+		{ {-1,-1, 1}, {1,-1, 1}, {-1,1, 1}, {1,1, 1} },
+		{ {1,-1,-1}, {-1,-1,-1}, {1,1,-1}, {-1,1,-1} },
+		{ {-1,-1,-1}, {-1,-1, 1}, {-1,1,-1}, {-1,1,1} },
+		{ {1,-1, 1}, {1,-1,-1}, {1,1, 1}, {1,1,-1} },
+		{ {-1,1, 1}, {1,1, 1}, {-1,1,-1}, {1,1,-1} },
+		{ {-1,-1,-1}, {1,-1,-1}, {-1,-1, 1}, {1,-1,1} }
+	};
+
+	const dx::XMFLOAT2 texCoords[4] = {
+		{0.0f, 1.0f},
+		{1.0f, 1.0f},
+		{0.0f, 0.0f},
+		{1.0f, 0.0f}
+	};
+
+	for (int face = 0; face < 6; ++face) {
+		int baseIndex = static_cast<int>(vertices.size());
+
+		for (int i = 0; i < 4; ++i) {
+			FD3DW::VertexFrameWork v;
+			v.Pos = faceVertices[face][i];
+			v.Normal = normals[face];
+			v.Tangent = tangents[face];
+			v.Bitangent = bitangents[face];
+			v.TexCoord = texCoords[i];
+
+			vertices.push_back(v);
+		}
+
+		indices.push_back(baseIndex + 0);
+		indices.push_back(baseIndex + 1);
+		indices.push_back(baseIndex + 2);
+
+		indices.push_back(baseIndex + 2);
+		indices.push_back(baseIndex + 1);
+		indices.push_back(baseIndex + 3);
+	}
+}
+
+void SimpleMeshGeometry::GenerateSimpleSphereScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+	const int latitudeBands = 32;
+	const int longitudeBands = 32;
+	const float radius = 1.0f;
+
+	vertices.clear();
+	indices.clear();
+
+	for (int lat = 0; lat <= latitudeBands; ++lat) {
+		float theta = lat * M_PI_F / latitudeBands;
+		float sinTheta = std::sin(theta);
+		float cosTheta = std::cos(theta);
+
+		for (int lon = 0; lon <= longitudeBands; ++lon) {
+			float phi = lon * 2.0f * M_PI_F / longitudeBands;
+			float sinPhi = std::sin(phi);
+			float cosPhi = std::cos(phi);
+
+			float x = cosPhi * sinTheta;
+			float y = cosTheta;
+			float z = sinPhi * sinTheta;
+
+			dx::XMFLOAT3 position = { radius * x, radius * y, radius * z };
+			dx::XMFLOAT3 normal = { x, y, z };
+			dx::XMFLOAT2 texCoord = { 1.0f - ((float)lon / longitudeBands), 1.0f - ((float)lat / latitudeBands) };
+
+			dx::XMFLOAT3 tangent = { -sinPhi, 0.0f, cosPhi };
+			dx::XMFLOAT3 bitangent = {
+				cosTheta * cosPhi,
+				-sinTheta,
+				cosTheta * sinPhi
+			};
+
+			FD3DW::VertexFrameWork v;
+			v.Pos = position;
+			v.Normal = normal;
+			v.TexCoord = texCoord;
+			v.Tangent = tangent;
+			v.Bitangent = bitangent;
+
+			vertices.push_back(v);
+		}
+	}
+
+	for (int lat = 0; lat < latitudeBands; ++lat) {
+		for (int lon = 0; lon < longitudeBands; ++lon) {
+			int first = (lat * (longitudeBands + 1)) + lon;
+			int second = first + longitudeBands + 1;
+
+			indices.push_back(first);
+			indices.push_back(second);
+			indices.push_back(first + 1);
+
+			indices.push_back(second);
+			indices.push_back(second + 1);
+			indices.push_back(first + 1);
+		}
+	}
+}
+
+void SimpleMeshGeometry::GenerateSimpleCylinderScene(std::vector<FD3DW::VertexFrameWork>& vertices, std::vector<std::uint32_t>& indices) {
+	const auto segments = 32;
+	const float radius = 1.0f;
+	const float halfHeight = 1.0f;
+
+	vertices.clear();
+	indices.clear();
+		
+	for (auto segment = 0; segment <= segments; ++segment) {
+		auto angle = float(segment) / float(segments) * M_2_PI_F;
+		auto x = std::cos(angle);
+		auto z = std::sin(angle);
+		for (auto top = 0; top < 2; ++top) {
+			FD3DW::VertexFrameWork vertex{};
+			
+			vertex.Pos = { radius * x, top == 0 ? -halfHeight : halfHeight, radius * z };
+			vertex.Normal = { x, 0.0f, z };
+			vertex.TexCoord = { float(segment) / segments, float(top) };
+			vertex.Tangent = { -z, 0.0f, x };
+			vertex.Bitangent = { 0.0f, 1.0f, 0.0f };
+			
+			vertices.push_back(vertex);
+		}
+	}
+
+	for (auto segment = 0; segment < segments; ++segment) {
+		auto base = unsigned(segment * 2);
+		indices.insert(indices.end(), { base, base + 1u, base + 2u, base + 2u, base + 1u, base + 3u });
+	}
+	
+	for (int top = 0; top < 2; ++top) {
+		auto center = unsigned( vertices.size() );
+
+		FD3DW::VertexFrameWork centerVertex{};
+		centerVertex.Pos = { 0.0f, top == 0 ? -halfHeight : halfHeight, 0.0f };
+		centerVertex.Normal = { 0.0f, top == 0 ? -1.0f : 1.0f, 0.0f };
+		centerVertex.TexCoord = { 0.5f, 0.5f };
+		centerVertex.Tangent = { 1.0f, 0.0f, 0.0f };
+		centerVertex.Bitangent = { 0.0f, 0.0f, 1.0f };
+		
+		vertices.push_back(centerVertex);
+		
+		for (int segment = 0; segment < segments; ++segment) {
+			
+			auto angle0 = float(segment) / segments * M_2_PI_F;
+			auto angle1 = float(segment + 1) / segments * M_2_PI_F;
+			auto first = unsigned(vertices.size());
+			
+			for (const auto angle : { angle0, angle1 }) {
+				
+				FD3DW::VertexFrameWork edge{};
+				edge.Pos = { radius * std::cos(angle), top == 0 ? -halfHeight : halfHeight, radius * std::sin(angle) };
+				edge.Normal = centerVertex.Normal;
+				edge.TexCoord = { 0.5f + 0.5f * std::cos(angle), 0.5f + 0.5f * std::sin(angle) };
+				edge.Tangent = centerVertex.Tangent;
+				edge.Bitangent = centerVertex.Bitangent;
+				
+				vertices.push_back(edge);
+			}
+			
+			if (top == 0) {
+				indices.insert(indices.end(), { center, first + 1u, first });
+			} else {
+				indices.insert(indices.end(), { center, first, first + 1u });
+			}
+		}
+	}
+}
+
+

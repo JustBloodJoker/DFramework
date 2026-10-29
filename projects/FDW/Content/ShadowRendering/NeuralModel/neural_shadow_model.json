@@ -1,0 +1,91 @@
+{
+  "architecture": "SpatialVisibilityModel",
+  "checkpoint_sha256": "193c452432f257ffd7de41a41a11f3e112d00d05119f6306134911a7c5b76319",
+  "descriptor_layout": "STRUCTURED_3X3",
+  "flops_64x64": 484147200,
+  "format": "FDW_NEURAL_SHADOW_MODEL_PACKAGE",
+  "graph_bytes": 257815,
+  "graph_sha256": "d2bc1a514d42db01520354a7652078454bf941f7654b3a3490226517f6d1bbfc",
+  "hard_input_layout": "BILINEAR_HALF_PIXEL",
+  "inference_state": "EMA step 600",
+  "input_layout": "BASE9_DESCRIPTOR18_HARD1",
+  "operators": [
+    "Add",
+    "And",
+    "Cast",
+    "Clip",
+    "Concat",
+    "Constant",
+    "ConstantOfShape",
+    "Conv",
+    "Div",
+    "Greater",
+    "Max",
+    "Mul",
+    "ReduceL2",
+    "ReduceMean",
+    "ReduceSum",
+    "Shape",
+    "Sigmoid",
+    "Slice",
+    "Split",
+    "Sqrt",
+    "Sub",
+    "Tanh"
+  ],
+  "opset": 17,
+  "output_layout": "PHYSICAL_VISIBILITY",
+  "output_semantics": "PHYSICAL_VISIBILITY",
+  "parameter_count": 59661,
+  "receptive_field": 33,
+  "receptive_field_radius": 16,
+  "runtime_model_id": "SpatialVisibilityModel",
+  "runtime_role": "FROZEN_RUNTIME_MODEL",
+  "schema": {
+    "inputs": [
+      {
+        "dtype": "float32",
+        "name": "base",
+        "shape": [
+          1,
+          9,
+          "height",
+          "width"
+        ]
+      },
+      {
+        "dtype": "float32",
+        "name": "descriptor",
+        "shape": [
+          1,
+          18,
+          "height",
+          "width"
+        ]
+      },
+      {
+        "dtype": "float32",
+        "name": "hard",
+        "shape": [
+          1,
+          1,
+          "height",
+          "width"
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "dtype": "float32",
+        "name": "visibility",
+        "shape": [
+          1,
+          1,
+          "height",
+          "width"
+        ]
+      }
+    ]
+  },
+  "spatial_axes": "DYNAMIC_HW"
+}

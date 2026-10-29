@@ -4,6 +4,7 @@
 #include "PBRFunctions.hlsli"
 #include "LTCFunctions.hlsli"
 #include "ClusteredLightsUtils.hlsli"
+#include "NeuralShadowVisibilityData.hlsli"
 
 struct PIXEL_OUTPUT
 {
@@ -37,6 +38,22 @@ TextureCube IBL_PrefilteredTexture : register(t14); //GGX prefiltered environmen
 StructuredBuffer<LightAtlasMeta> ShadowLightsMeta : register(t16);
 ConstantBuffer<ShadowAtlasParams>  ShadowAtlasData : register(b2);
 
+cbuffer NeuralShadowConsumerConstants : register(b3)
+{
+    uint NSCompactVisibilityEnabled;
+};
+
+StructuredBuffer<NSWorkItem> NSDeferredWorkItems : register(t17);
+StructuredBuffer<NSWorkDispatchHeader> NSDeferredWorkHeader : register(t18);
+StructuredBuffer<NSWorkPatchRecord> NSDeferredPatchRecords : register(t19);
+StructuredBuffer<uint> NSDeferredVisibility : register(t20);
+StructuredBuffer<uint> NSDeferredValidity : register(t21);
+StructuredBuffer<NSOutputHeader> NSDeferredOutputHeader : register(t22);
+StructuredBuffer<NSNeuralOutputGridWorkItem> NSDeferredNeuralOutputWorkItems : register(t23);
+StructuredBuffer<NSNeuralOutputGridOutputHeader> NSDeferredNeuralOutputHeader : register(t24);
+StructuredBuffer<float> NSDeferredNeuralOutputVisibility : register(t25);
+StructuredBuffer<uint> NSDeferredNeuralOutputValidity : register(t26);
+
 SamplerState ss : register(s0);
 SamplerState linearSS : register(s1);
 
@@ -53,10 +70,14 @@ bool IsSelectionMaskSelected(float alphaValue) {
 float ComputeSelectionOutlineFactor(float2 uv) {
     uint w, h;
     GBuffer_Normal.GetDimensions(w, h);
-    if(w == 0 || h == 0) return 0.0f;
+    if(w == 0 || h == 0) {
+        return 0.0f;
+    }
 
     float centerAlpha = GBuffer_Normal.Sample(ss, uv).a;
-    if(!IsSelectionMaskGeometry(centerAlpha)) return 0.0f;
+    if(!IsSelectionMaskGeometry(centerAlpha)) {
+        return 0.0f;
+    }
 
     bool centerSelected = IsSelectionMaskSelected(centerAlpha);
     float2 texel = 1.0f / float2(w, h);
@@ -66,7 +87,9 @@ float ComputeSelectionOutlineFactor(float2 uv) {
     for(int y = -1; y <= 1; ++y) {
         [unroll]
         for(int x = -1; x <= 1; ++x) {
-            if(x == 0 && y == 0) continue;
+            if (x == 0 && y == 0) {
+                continue;
+            }
 
             float2 sampleUV = saturate(uv + float2(x, y) * texel);
             float sampleAlpha = GBuffer_Normal.Sample(ss, sampleUV).a;
@@ -111,7 +134,7 @@ float3 CalculateImageBasedLighting(float3 N, float3 V, float3 albedo, float meta
     float3 diffuse = irradiance * albedo;
 
     float3 R = reflect(-V, N);
-    
+
     uint prefilteredWidth, prefilteredHeight, prefilteredMipCount;
 
     IBL_PrefilteredTexture.GetDimensions(0u, prefilteredWidth, prefilteredHeight, prefilteredMipCount);
@@ -131,9 +154,13 @@ float3 CalculateImageBasedLighting(float3 N, float3 V, float3 albedo, float meta
 
 LightAtlasMeta GetLightMeta(int id){
     LightAtlasMeta empty = (LightAtlasMeta)0;
-    if (id < 0 || id >= LHelper.LightCount) return empty;
+    if (id < 0 || id >= LHelper.LightCount) {
+        return empty;
+    }
 
-    if(ShadowLightsMeta[id].LightIndex==id) return ShadowLightsMeta[id];
+    if(ShadowLightsMeta[id].LightIndex==id) {
+        return ShadowLightsMeta[id];
+    }
 
     for(int i=0;i<LHelper.LightCount;++i) {
         if(ShadowLightsMeta[i].LightIndex==id) {
@@ -169,13 +196,15 @@ float GetLinearDepth(float2 screenUV)
 {
     uint w, h;
     DepthBuffer.GetDimensions(w, h);
-    if (w == 0 || h == 0) return 0.0f;
+    if (w == 0 || h == 0) {
+        return 0.0f;
+    }
 
     int2 texCoord2 = int2(screenUV * float2(w, h));
     texCoord2 = clamp(texCoord2, int2(0, 0), int2((int)w - 1, (int)h - 1));
     int3 texCoord = int3(texCoord2, 0);
     float z_b = DepthBuffer.Load(texCoord).r;
-    
+
     float nearClip = LHelper.ZNear;
     float farClip = LHelper.ZFar;
     return (nearClip * farClip) / (farClip - z_b * (farClip - nearClip));
@@ -216,6 +245,247 @@ float ApplyBlackLevelAndContrast(float shadowValue)
     float normalized = saturate((shadowValue - blackLevel) / max(1.0f - blackLevel, 1e-6f));
     float contrast = max(ShadowAtlasData.ShadowContrast, 0.1f);
     return saturate(pow(normalized, contrast));
+}
+
+NSOutputLookupResult MakeNSOutputLookupFailure(uint status)
+{
+    NSOutputLookupResult result;
+    result.WorkItemIndex = NS_WORK_INVALID_INDEX;
+    result.OutputOffset = NS_WORK_INVALID_INDEX;
+    result.ProbeCount = 0u;
+    result.Status = status;
+    return result;
+}
+
+float LoadNSCompactVisibility(uint elementIndex)
+{
+    uint packed = NSDeferredVisibility[elementIndex >> 1u];
+    uint bits = (packed >> ((elementIndex & 1u) * 16u)) & 0xffffu;
+    return f16tof32(bits);
+}
+
+bool TryLoadNSNeuralOutputGridVisibility(NSNeuralOutputGridOutputHeader spatialHeader, uint2 pixel, uint lightIndex, out float visibility)
+{
+    visibility = 0.0f;
+    uint regionIndex = NSNeuralOutputGridRegionIndex(pixel, spatialHeader.RegionCountX);
+    uint workIndex = NSNeuralOutputGridFindWorkItem(NSDeferredNeuralOutputWorkItems, spatialHeader.WorkItemCount, regionIndex, lightIndex);
+    if (workIndex == 0xffffffffu) {
+        return false;
+    }
+
+    NSNeuralOutputGridWorkItem item = NSDeferredNeuralOutputWorkItems[workIndex];
+    uint2 local = pixel % 64u;
+    uint element = item.OutputOffset + local.x + local.y * 64u;
+    if (item.OutputOffset != workIndex * 4096u ||
+        element >= spatialHeader.WorkItemCount * spatialHeader.ValuesPerWorkItem ||
+        NSDeferredNeuralOutputValidity[element] != NS_NEURAL_OUTPUT_VALIDITY_VALID) {
+
+        return false;
+
+    }
+
+    visibility = NSDeferredNeuralOutputVisibility[element];
+    return isfinite(visibility);
+}
+
+bool NeuralReceiverCompatible(uint2 centerPixel, uint2 samplePixel)
+{
+    float3 centerNormal = GBuffer_Normal.Load(int3(centerPixel, 0)).xyz;
+    float3 sampleNormal = GBuffer_Normal.Load(int3(samplePixel, 0)).xyz;
+    float centerLength = length(centerNormal);
+    float sampleLength = length(sampleNormal);
+    if (centerLength < 1e-4f || sampleLength < 1e-4f) {
+        return false;
+    }
+
+    float normalAgreement = dot(centerNormal / centerLength, sampleNormal / sampleLength);
+    float centerDepth = DepthBuffer.Load(int3(centerPixel, 0)).r;
+    float sampleDepth = DepthBuffer.Load(int3(samplePixel, 0)).r;
+    return normalAgreement >= 0.9f && abs(centerDepth - sampleDepth) <= 0.002f;
+}
+
+float ResolveNeuralBoundary(NSNeuralOutputGridOutputHeader spatialHeader, uint2 pixel, uint lightIndex, float centerVisibility)
+{
+    static const uint blendRadius = 6u;
+    uint2 local = pixel % 64u;
+    uint2 mirror = pixel;
+    float2 weight = 0.0f;
+
+    if (local.x < blendRadius) {
+        uint delta = local.x * 2u + 1u;
+        if (pixel.x >= delta) {
+            mirror.x = pixel.x - delta;
+            weight.x = 0.5f * (1.0f - smoothstep(0.0f, float(blendRadius - 1u), float(local.x)));
+        }
+    }
+    else if (local.x >= 64u - blendRadius) {
+        uint distance = 63u - local.x;
+        uint candidate = pixel.x + distance * 2u + 1u;
+        if (candidate < spatialHeader.ScreenWidth) {
+            mirror.x = candidate;
+            weight.x = 0.5f * (1.0f - smoothstep(0.0f, float(blendRadius - 1u), float(distance)));
+        }
+    }
+    if (local.y < blendRadius) {
+        uint delta = local.y * 2u + 1u;
+        if (pixel.y >= delta) {
+            mirror.y = pixel.y - delta;
+            weight.y = 0.5f * (1.0f - smoothstep(0.0f, float(blendRadius - 1u), float(local.y)));
+        }
+    }
+    else if (local.y >= 64u - blendRadius) {
+        uint distance = 63u - local.y;
+        uint candidate = pixel.y + distance * 2u + 1u;
+        if (candidate < spatialHeader.ScreenHeight) {
+            mirror.y = candidate;
+            weight.y = 0.5f * (1.0f - smoothstep(0.0f, float(blendRadius - 1u), float(distance)));
+        }
+    }
+
+    float horizontal = centerVisibility;
+    float vertical = centerVisibility;
+    float diagonal = centerVisibility;
+
+    bool horizontalValid = weight.x > 0.0f &&
+        NeuralReceiverCompatible(pixel, uint2(mirror.x, pixel.y)) &&
+        TryLoadNSNeuralOutputGridVisibility(spatialHeader, uint2(mirror.x, pixel.y), lightIndex, horizontal);
+
+    bool verticalValid = weight.y > 0.0f &&
+        NeuralReceiverCompatible(pixel, uint2(pixel.x, mirror.y)) &&
+        TryLoadNSNeuralOutputGridVisibility(spatialHeader, uint2(pixel.x, mirror.y), lightIndex, vertical);
+
+    if (!horizontalValid) {
+        weight.x = 0.0f;
+    }
+
+    if (!verticalValid) {
+        weight.y = 0.0f;
+    }
+
+    if (weight.x > 0.0f && weight.y > 0.0f &&
+        NeuralReceiverCompatible(pixel, mirror) &&
+        TryLoadNSNeuralOutputGridVisibility(spatialHeader, mirror, lightIndex, diagonal)) {
+        return lerp(
+            lerp(centerVisibility, horizontal, weight.x),
+            lerp(vertical, diagonal, weight.x),
+            weight.y);
+    }
+    float result = lerp(centerVisibility, horizontal, weight.x);
+    return lerp(result, vertical, weight.y);
+}
+
+uint LoadNSCompactValidity(uint elementIndex)
+{
+    uint packed = NSDeferredValidity[elementIndex >> 2u];
+    return (packed >> ((elementIndex & 3u) * 8u)) & 0xffu;
+}
+
+float ResolveNSCompactVisibility(int lightIndex, float2 screenUV, float hardAtlasVisibility)
+{
+    if (NSCompactVisibilityEnabled == 0u) {
+        return hardAtlasVisibility;
+    }
+
+    if (NSCompactVisibilityEnabled >= 2u) {
+        NSNeuralOutputGridOutputHeader spatialHeader = NSDeferredNeuralOutputHeader[0];
+        uint viewportWidth, viewportHeight;
+        GBuffer_Normal.GetDimensions(viewportWidth, viewportHeight);
+        if (!NSNeuralOutputGridHeaderCompatible(spatialHeader) ||
+            spatialHeader.ScreenWidth != viewportWidth || spatialHeader.ScreenHeight != viewportHeight) {
+            return hardAtlasVisibility;
+        }
+
+        uint2 pixel = min( uint2(saturate(screenUV) * float2(viewportWidth, viewportHeight)), uint2(viewportWidth - 1u, viewportHeight - 1u));
+        float visibility = 0.0f;
+        if (!TryLoadNSNeuralOutputGridVisibility(spatialHeader, pixel, (uint)lightIndex, visibility)) {
+            return NSCompactVisibilityEnabled == 3u
+                ? ApplyBlackLevelAndContrast(hardAtlasVisibility)
+                : hardAtlasVisibility;
+        }
+
+        if (NSCompactVisibilityEnabled == 3u) {
+            visibility = ResolveNeuralBoundary(spatialHeader, pixel, (uint)lightIndex, visibility);
+            LightStruct source = Lights[lightIndex];
+
+            if (source.LightType == 0 || source.LightType == 1) {
+                float normalizedRadius = saturate(max(source.SourceRadius, 0.0f) * clamp(source.ShadowSoftness, 0.0f, 4.0f) / 40.0f);
+                float learnedWeight = smoothstep(0.005f, 0.1f, normalizedRadius);
+                float renderedHard = ApplyBlackLevelAndContrast(hardAtlasVisibility);
+                visibility = lerp(renderedHard, visibility, learnedWeight);
+            }
+        }
+        return saturate(visibility);
+    }
+
+    NSWorkDispatchHeader work = NSDeferredWorkHeader[0];
+    NSOutputHeader output = NSDeferredOutputHeader[0];
+    uint2 generation = uint2(work.GenerationLow, work.GenerationHigh);
+    uint2 pixel = uint2(0u, 0u);
+    NSOutputLookupResult lookup = MakeNSOutputLookupFailure(NS_OUTPUT_LOOKUP_INCOMPATIBLE_LAYOUT);
+
+    if (!any(generation != 0u) ||
+        any(uint2(output.GenerationLow, output.GenerationHigh) != generation))
+    {
+        lookup.Status = NS_OUTPUT_LOOKUP_GENERATION_MISMATCH;
+    }
+    else if (output.Completion != NS_OUTPUT_COMPLETION_COMPLETE)
+    {
+        lookup.Status = NS_OUTPUT_LOOKUP_INCOMPLETE;
+    }
+    else
+    {
+        uint viewportWidth, viewportHeight;
+        GBuffer_Normal.GetDimensions(viewportWidth, viewportHeight);
+        if (NSOutputIsCompleteForViewport(output,work,generation,viewportWidth, viewportHeight))
+        {
+            pixel = min(
+                uint2(saturate(screenUV) * float2(viewportWidth, viewportHeight)),
+                uint2(viewportWidth - 1u, viewportHeight - 1u));
+            uint2 patchCoord = pixel / uint2(NS_WORK_PATCH_WIDTH, NS_WORK_PATCH_HEIGHT);
+            uint screenTileIndex = patchCoord.x + patchCoord.y * work.PatchCountX;
+            uint patchCount = work.PatchCountX * work.PatchCountY;
+            if (screenTileIndex < patchCount)
+            {
+                lookup = NSOutputFindWorkItem(
+                    screenTileIndex,
+                    (uint)lightIndex,
+                    NSDeferredPatchRecords[screenTileIndex],
+                    work.WorkItemCount,
+                    NSDeferredWorkItems);
+            }
+            else
+            {
+                lookup.Status = NS_OUTPUT_LOOKUP_INVALID_PATCH;
+            }
+        }
+    }
+
+    float compactVisibility = 1.0f;
+    uint validityReason = NS_OUTPUT_VALIDITY_INCOMPLETE;
+    if (lookup.Status == NS_OUTPUT_LOOKUP_FOUND)
+    {
+        uint2 localPixel = pixel % uint2(NS_WORK_PATCH_WIDTH, NS_WORK_PATCH_HEIGHT);
+        uint localPixelIndex = localPixel.x + localPixel.y * NS_WORK_PATCH_WIDTH;
+        if (lookup.OutputOffset == lookup.WorkItemIndex * NS_WORK_VALUES_PER_ITEM &&
+            lookup.OutputOffset < output.OutputValueCount &&
+            localPixelIndex < output.OutputValueCount - lookup.OutputOffset)
+        {
+            uint elementIndex = lookup.OutputOffset + localPixelIndex;
+            compactVisibility = LoadNSCompactVisibility(elementIndex);
+            validityReason = LoadNSCompactValidity(elementIndex);
+        }
+        else
+        {
+            lookup.Status = NS_OUTPUT_LOOKUP_INVALID_WORK_RANGE;
+        }
+    }
+
+    NSOutputFallbackInput fallback;
+    fallback.Available = 1u;
+    fallback.GenerationLow = generation.x;
+    fallback.GenerationHigh = generation.y;
+    fallback.Visibility = hardAtlasVisibility;
+    return NSOutputResolveVisibility(generation, lookup, compactVisibility, validityReason, fallback).Visibility;
 }
 
 static const float2 ShadowRing3[3] = {
@@ -265,7 +535,8 @@ float ApplyJointBilateralRingFilter(
     float2 texelSize,
     float centerDepth,
     float3 centerNormal,
-    float2 animatedNoisePixel)
+    float2 animatedNoisePixel,
+    float lightSoftness)
 {
     float2 jitterNoise = float2(
         InterleavedGradientNoise(animatedNoisePixel + float2(13.1f, 71.7f)),
@@ -295,7 +566,7 @@ float ApplyJointBilateralRingFilter(
     {
         float2 rotatedOffset = mul(rotMat, ShadowRing3[i]);
         float2 sampleUV = clamp(
-            jitteredBaseUV + rotatedOffset * texelSize * max(ShadowAtlasData.FilterRadius, 0.01f),
+            jitteredBaseUV + rotatedOffset * texelSize * max(ShadowAtlasData.FilterRadius, 0.01f) * lightSoftness,
             minUV,
             maxUV
         );
@@ -306,7 +577,9 @@ float ApplyJointBilateralRingFilter(
         weightSum += weight;
     }
 
-    if (weightSum <= 1e-6f) return SampleShadowBilinear(jitteredBaseUV);
+    if (weightSum <= 1e-6f) {
+        return SampleShadowBilinear(jitteredBaseUV);
+    }
     return shadowSum / weightSum;
 }
 
@@ -320,7 +593,8 @@ float ApplyKernelPCFFilter(
     int inputKernelSize,
     bool useJointBilateral,
     float centerDepth,
-    float3 centerNormal)
+    float3 centerNormal,
+    float lightSoftness)
 {
     int kernelSize = max(inputKernelSize, 1);
     int start = -(kernelSize / 2);
@@ -328,7 +602,7 @@ float ApplyKernelPCFFilter(
 
     float sigma = max(1.0f, float(kernelSize) * 0.5f);
     float invTwoSigma2 = 1.0f / (2.0f * sigma * sigma);
-    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f);
+    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f) * lightSoftness;
 
     float shadowSum = 0.0f;
     float weightSum = 0.0f;
@@ -356,7 +630,9 @@ float ApplyKernelPCFFilter(
         }
     }
 
-    if (weightSum <= 1e-6f) return SampleShadowBilinear(baseUV);
+    if (weightSum <= 1e-6f) {
+        return SampleShadowBilinear(baseUV);
+    }
     return shadowSum / weightSum;
 }
 
@@ -370,15 +646,16 @@ float ApplyPoisson16Filter(
     bool useJointBilateral,
     float centerDepth,
     float3 centerNormal,
-    float2 animatedNoisePixel)
+    float2 animatedNoisePixel,
+    float lightSoftness)
 {
     float angle = InterleavedGradientNoise(animatedNoisePixel) * PI * 2.0f;
     float s, c;
     sincos(angle, s, c);
     float2x2 rotMat = float2x2(c, -s, s, c);
 
-    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f);
-    float noiseScale = ShadowAtlasData.NoiseScale;
+    float radiusScale = max(ShadowAtlasData.FilterRadius, 0.01f) * lightSoftness;
+    float noiseScale = ShadowAtlasData.NoiseScale * lightSoftness;
 
     float shadowSum = 0.0f;
     float weightSum = 0.0f;
@@ -403,19 +680,30 @@ float ApplyPoisson16Filter(
         weightSum += weight;
     }
 
-    if (weightSum <= 1e-6f) return SampleShadowBilinear(baseUV);
+    if (weightSum <= 1e-6f) {
+        return SampleShadowBilinear(baseUV);
+    }
     return shadowSum / weightSum;
 }
 
 float GetShadowFactor(int id, float2 UV)
 {
-    if (LHelper.IsShadowImpl == 0) return 1.0f;
-    
-    LightAtlasMeta meta = GetLightMeta(id);
-    if (meta.AtlasWidth == 0 || meta.AtlasHeight == 0) return 1.0f;
-    if (meta.ScreenMaxU <= meta.ScreenMinU || meta.ScreenMaxV <= meta.ScreenMinV) return 1.0f;
-    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV)
+    if (LHelper.IsShadowImpl == 0) {
         return 1.0f;
+    }
+
+    LightAtlasMeta meta = GetLightMeta(id);
+    if (meta.AtlasWidth == 0 || meta.AtlasHeight == 0) {
+        return 1.0f;
+    }
+
+    if (meta.ScreenMaxU <= meta.ScreenMinU || meta.ScreenMaxV <= meta.ScreenMinV) {
+        return 1.0f;
+    }
+
+    if (UV.x < meta.ScreenMinU || UV.x >= meta.ScreenMaxU || UV.y < meta.ScreenMinV || UV.y >= meta.ScreenMaxV) {
+        return 1.0f;
+    }
 
     float2 atlasSize = float2(max(ShadowAtlasData.AtlasWidth, 1u), max(ShadowAtlasData.AtlasHeight, 1u));
     float2 texelSize = 1.0f / atlasSize;
@@ -435,9 +723,17 @@ float GetShadowFactor(int id, float2 UV)
     float2 minUV = (minPixel + 0.5f) * texelSize;
     float2 maxUV = (minPixel + tileSize - 0.5f) * texelSize;
 
+    // Neural output is already physical visibility. Hard-atlas filtering is
+    // neither an input to the model nor a postprocess for its result; only a
+    // bilinear hard value is needed as the explicit invalid-output fallback.
+    if (NSCompactVisibilityEnabled >= 2u) {
+        return saturate(ResolveNSCompactVisibility(id, UV, SampleShadowBilinear(baseUV)));
+    }
+
     float centerDepth = GetLinearDepth(UV);
     float3 centerNormal = GetSurfaceNormal(UV);
     float2 animatedNoisePixel = GetAnimatedNoisePixel(UV);
+    float lightSoftness = isfinite(Lights[id].ShadowSoftness) ? clamp(Lights[id].ShadowSoftness, 0.0f, 4.0f) : 1.0f;
 
     float rawShadow = 1.0f;
     switch (ShadowAtlasData.FilterMode)
@@ -461,7 +757,8 @@ float GetShadowFactor(int id, float2 UV)
             (int)ShadowAtlasData.PCFKernelSize,
             false,
             centerDepth,
-            centerNormal
+            centerNormal,
+            lightSoftness
         );
         break;
 
@@ -475,7 +772,8 @@ float GetShadowFactor(int id, float2 UV)
             texelSize,
             centerDepth,
             centerNormal,
-            animatedNoisePixel
+            animatedNoisePixel,
+            lightSoftness
         );
         break;
 
@@ -490,7 +788,8 @@ float GetShadowFactor(int id, float2 UV)
             (int)ShadowAtlasData.PCFKernelSize,
             true,
             centerDepth,
-            centerNormal
+            centerNormal,
+            lightSoftness
         );
         break;
 
@@ -505,7 +804,8 @@ float GetShadowFactor(int id, float2 UV)
             false,
             centerDepth,
             centerNormal,
-            animatedNoisePixel
+            animatedNoisePixel,
+            lightSoftness
         );
         break;
 
@@ -520,7 +820,8 @@ float GetShadowFactor(int id, float2 UV)
             true,
             centerDepth,
             centerNormal,
-            animatedNoisePixel
+            animatedNoisePixel,
+            lightSoftness
         );
         break;
 
@@ -534,9 +835,14 @@ float GetShadowFactor(int id, float2 UV)
             texelSize,
             centerDepth,
             centerNormal,
-            animatedNoisePixel
+            animatedNoisePixel,
+            lightSoftness
         );
         break;
+    }
+
+    if (NSCompactVisibilityEnabled == 1u) {
+        rawShadow = ResolveNSCompactVisibility(id, UV, rawShadow);
     }
 
     return ApplyBlackLevelAndContrast(rawShadow);
@@ -546,14 +852,16 @@ float GetShadowFactor(int id, float2 UV)
 float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
     float shadowFactor = GetShadowFactor(id, UV);
-    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+    if(shadowFactor<=0.0f) {
+        return float3(0.0f,0.0f,0.0f);
+    }
 
     float3 L = light.Position - WorldPos;
     float distance = length(L);
     L /= distance;
 
     float angularRadius = light.SourceRadius / distance;
-    roughness = sqrt(roughness * roughness + angularRadius * angularRadius);   
+    roughness = sqrt(roughness * roughness + angularRadius * angularRadius);
     roughness = clamp(roughness, 0.0, 1.0);
 
     float attenuation = saturate(1.0 - (distance / light.AttenuationRadius));
@@ -569,7 +877,9 @@ float3 ApplyPointLight(in LightStruct light, float2 UV, int id, float3 WorldPos,
 float3 ApplySpotLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
     float shadowFactor = GetShadowFactor(id, UV);
-    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+    if(shadowFactor<=0.0f) {
+        return float3(0.0f,0.0f,0.0f);
+    }
 
     float3 L = light.Position - WorldPos;
     float distance = length(L);
@@ -589,14 +899,16 @@ float3 ApplySpotLight(in LightStruct light, float2 UV, int id, float3 WorldPos, 
     float3 radiance = light.Color * light.Intensity * attenuation * spotFalloff;
 
     float3 resultLight = CalculatePBRLighting(N, V, L, radiance, albedo, metallic, roughness, F0);
-    
+
     return resultLight * shadowFactor;
 }
 
 float3 ApplyDirectionalLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0)
 {
     float shadowFactor = GetShadowFactor(id, UV);
-    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+    if(shadowFactor<=0.0f) {
+        return float3(0.0f,0.0f,0.0f);
+    }
 
     float3 L = normalize(-light.Direction);
     float3 radiance = light.Color * light.Intensity;
@@ -609,16 +921,18 @@ float3 ApplyDirectionalLight(in LightStruct light, float2 UV, int id, float3 Wor
 
 float3 ApplyRectLight(in LightStruct light, float2 UV, int id, float3 WorldPos, float3 N, float3 V, float3 albedo, float metallic, float roughness, float3 F0) {
     float shadowFactor = GetShadowFactor(id, UV);
-    if(shadowFactor<=0.0f) return float3(0.0f,0.0f,0.0f);
+    if(shadowFactor<=0.0f) {
+        return float3(0.0f,0.0f,0.0f);
+    }
 
     float3 points[4];
     InitRectPoints(light, points);
-    
+
     float NdotV = clamp(dot(N, V), 0.0, 1.0);
     roughness = max(0.1, roughness);
     float2 uv = float2(roughness, sqrt(1.0 - NdotV));
     uv = uv*LUT_SCALE + LUT_BIAS;
-    
+
     float4 ltc1 = LTC_Mat.SampleLevel(ss, uv, 0);
     float2 ltc2 = LTC_Amp.SampleLevel(ss, uv, 0);
 
@@ -627,11 +941,11 @@ float3 ApplyRectLight(in LightStruct light, float2 UV, int id, float3 WorldPos, 
 	   float3(0, 1, 0),
 	   float3(ltc1.z, 0, ltc1.w)
 	);
-	
+
     minV = transpose(minV);
-    
+
     float3 spec = LTCEvaluate(N, V, WorldPos, minV, points);
-    
+
     spec *= F0 * ltc2.x + (1.0 - F0) * ltc2.y;
 
     float3 diffuse = LTCEvaluate(N, V, WorldPos, float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1), points);
@@ -687,10 +1001,10 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
     );
     uint tileIndex = ComputeClusterIndex(fragCoord, viewZAbs, ClustersData);
     uint lightCount = Clusters[tileIndex].Count;
-    
+
     float3 Lo = float3(0.0, 0.0, 0.0);
     for (int i = 0; i < lightCount; ++i) {
-        
+
         uint lightIndex = Clusters[tileIndex].LightIndices[i];
         LightStruct light = Lights[lightIndex];
 
@@ -709,14 +1023,14 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
                 break;
         }
     }
-    
+
     float3 color = Lo;
-    
+
     if (LHelper.IsIBLEnabled != 0) color += CalculateImageBasedLighting(N, V, albedo, metallic, roughness, ao, F0);
 
     color += emissive * emissiveFactor;
     color = lerp(color, SELECTION_OUTLINE_COLOR, selectionOutline);
-    
+
     AlphaClipping(alpha);
     psOut.result = float4(color, alpha);
     return psOut;

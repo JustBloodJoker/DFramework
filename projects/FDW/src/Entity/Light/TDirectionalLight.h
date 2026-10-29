@@ -18,5 +18,6 @@ public:
 	virtual NLightComponentTypes LightType() override;
 
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(Direction, Light, dx::XMFLOAT3);
+	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(DirectionalAngularRadius, Light, float);
 
 };

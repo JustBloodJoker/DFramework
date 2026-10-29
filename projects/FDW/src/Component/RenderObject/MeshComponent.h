@@ -90,6 +90,9 @@ public:
 
 public:
     FD3DW::AccelerationStructureBuffers GetBLASBuffer();
+    bool HasSkinningSource() const;
+    bool HasPotentialAlphaOrOpacity() const;
+    bool HasCompleteBLAS() const;
 
 
 public:

@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/Camera/TDefaultCamera.h>
 #include <World/World.h>
 #include <MainRenderer/MainRenderer.h>
@@ -63,9 +65,11 @@ void TDefaultCamera::SetEyeAndLookAt(float eyeX, float eyeY, float eyeZ, float l
 	dx::XMFLOAT3 dir3;
 	dx::XMStoreFloat3(&dir3, dir);
 	m_fCamYaw = std::atan2(dir3.x, dir3.z);
-	m_fCamPitch = std::asin(std::clamp(dir3.y, -1.0f, 1.0f));
+	m_fCamPitch = -std::asin(std::clamp(dir3.y, -1.0f, 1.0f));
 
-	UpdateCamera();
+	m_xAt = lookAt;
+	m_xUp = dx::XMVector3Normalize(dx::XMVector3TransformCoord(m_xStartUp, dx::XMMatrixRotationRollPitchYaw(0, 0, m_fCamRoll)));
+	if (m_pCameraComponent) m_pCameraComponent->SetAllVectors(m_xEye, m_xUp, m_xAt);
 }
 
 void TDefaultCamera::SetYawPitchRoll(float yaw, float pitch, float roll) {

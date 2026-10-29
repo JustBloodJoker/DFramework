@@ -46,7 +46,7 @@ namespace FD3DW {
     }
     void RTShaderBindingTable::CreateShaderTable(ID3D12Device5* device, ID3D12StateObjectProperties* props,const std::vector<std::wstring>& entries, ShaderTable& outTable)
     {
-        assert(!entries.empty());
+        SAFE_ASSERT(!entries.empty(), "Shader binding table section cannot be empty");
 
         outTable.RecordCount = (uint32_t)entries.size();
         outTable.RecordSize = 0;
@@ -55,7 +55,7 @@ namespace FD3DW {
 
         for (const auto& entry : entries) {
             void* id = props->GetShaderIdentifier(entry.c_str());
-            assert(id);
+            SAFE_ASSERT(id, "Ray-tracing shader identifier is missing");
 
             const auto& args = m_mLocalRootArgs[entry];
             uint32_t recordSize = Align(m_uShaderIdSize + (uint32_t)args.size(), D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
@@ -63,7 +63,7 @@ namespace FD3DW {
             if (outTable.RecordSize == 0)
                 outTable.RecordSize = recordSize;
             else
-                assert(outTable.RecordSize == recordSize);
+                SAFE_ASSERT(outTable.RecordSize == recordSize, "Shader binding table records have inconsistent sizes");
 
             std::vector<uint8_t> record(recordSize);
             memcpy(record.data(), id, m_uShaderIdSize);

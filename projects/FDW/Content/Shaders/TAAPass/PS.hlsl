@@ -62,10 +62,14 @@ void GetNeighborhoodBounds(uint2 centerPixel, uint w, uint h, float3 centerColor
             );
 
             float4 sampleColorPP = RenderOutput.Load(int3(samplePixel, 0));
-            if (sampleColorPP.a == 3.0f) continue;
+            if (sampleColorPP.a == 3.0f) {
+                continue;
+            }
 
             float3 sampleColor = sampleColorPP.rgb;
-            if (any(isnan(sampleColor)) || any(isinf(sampleColor))) continue;
+            if (any(isnan(sampleColor)) || any(isinf(sampleColor))) {
+                continue;
+            }
 
             aabbMin = min(aabbMin, sampleColor);
             aabbMax = max(aabbMax, sampleColor);

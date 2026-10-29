@@ -16,7 +16,7 @@ public:
 
 public:
 	virtual void AfterConstruction() override;
-	void SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FResource* motion, FD3DW::DepthStencilView* dsv1, FD3DW::DepthStencilView* dsv2);
+	void SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FResource* motion, FD3DW::DepthStencilView* currentDepth, FD3DW::DepthStencilView* previousDepth);
 	void ResizeResources(UINT width, UINT height);
 
 	std::shared_ptr<FD3DW::ExecutionHandle> ProcessTAABufferCollection(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync);

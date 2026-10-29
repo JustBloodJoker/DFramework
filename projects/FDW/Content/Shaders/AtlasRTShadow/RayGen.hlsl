@@ -12,6 +12,11 @@ Texture2D<float4> GBufferNormal : register(t5);
 SamplerState samplerLinearClamp : register(s0);
 
 RWTexture2D<float> ShadowAtlasUAV : register(u0);
+RWTexture2D<float> BlockerDistanceAtlasUAV : register(u1);
+RWTexture2D<uint> BlockerValidityAtlasUAV : register(u2);
+
+static const uint NS_BLOCKER_HARD_VALID = 1u;
+static const uint NS_BLOCKER_DISTANCE_VALID = 2u;
 
 float3 ReconstructWorldPositionFromPixel(uint2 gBufferPixel)
 {
@@ -53,7 +58,7 @@ float3 ComputeDepthNormal(uint2 gBufferPixel, float3 fallbackNormal, out float p
     return dot(depthNormal, fallbackNormal) < 0.0f ? -depthNormal : depthNormal;
 }
 
-float TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist, float pixelWorldSize)
+bool TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist, float pixelWorldSize, out float2 result)
 {
     RayDesc ray;
     
@@ -67,14 +72,24 @@ float TraceShadowRay(float3 origin, float3 normal, float3 dir, float dist, float
     
     ray.Direction = dir;
     ray.TMin = rayEpsilon;
-    ray.TMax = max(dist - bias - rayEpsilon, ray.TMin);
+    ray.TMax = dist - bias - rayEpsilon;
+    if (!all(isfinite(float4(ray.Origin, ray.TMax))) || !all(isfinite(ray.Direction)) ||
+        !isfinite(ray.TMin) || ray.TMax <= ray.TMin)
+    {
+        result = float2(1.0f, 1.0f);
+        return false;
+    }
 
     ShadowPayload payload;
     payload.Visible = 1.0f;
+    payload.BlockerDistance = dist;
     
     TraceRay(SceneBVH, RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH, 0xFF, 0, 1, 0, ray, payload);
 
-    return payload.Visible;
+    result = float2(
+        payload.Visible,
+        payload.Visible >= 0.5f ? 1.0f : saturate(payload.BlockerDistance / max(dist, 1e-6f)));
+    return all(isfinite(result));
 }
 
 [shader("raygeneration")]
@@ -87,6 +102,8 @@ void RayGen()
     uint texelLookup = TexelToLight.Load(int3(pixel,0));
     if (texelLookup >= 0xFFu) {
         ShadowAtlasUAV[pixel] = 1.0f;
+        BlockerDistanceAtlasUAV[pixel] = 1.0f;
+        BlockerValidityAtlasUAV[pixel] = 0u;
         return;
     }
 
@@ -107,18 +124,52 @@ void RayGen()
     gBuffersPixel.x = min(gBuffersPixel.x, AtlasData.ScreenWidth - 1);
     gBuffersPixel.y = min(gBuffersPixel.y, AtlasData.ScreenHeight - 1);
     
+    float visible = 1.0f;
+    float blockerDistance = 1.0f;
+    uint validity = 0u;
+
+    float receiverDepth = DepthBuffer.Load(int3(gBuffersPixel, 0)).x;
+    if (!isfinite(receiverDepth) || receiverDepth < 0.0f || receiverDepth >= 1.0f)
+    {
+        ShadowAtlasUAV[pixel] = visible;
+        BlockerDistanceAtlasUAV[pixel] = blockerDistance;
+        BlockerValidityAtlasUAV[pixel] = 0u;
+        return;
+    }
+
     float3 worldPos = ReconstructWorldPositionFromPixel(gBuffersPixel);
-    float3 shadingNormal = normalize(GBufferNormal.Load(int3(gBuffersPixel,0)).xyz);
+    float3 shadingNormal = GBufferNormal.Load(int3(gBuffersPixel,0)).xyz;
+    float shadingNormalLengthSquared = dot(shadingNormal, shadingNormal);
+    if (!all(isfinite(worldPos)))
+    {
+        ShadowAtlasUAV[pixel] = visible;
+        BlockerDistanceAtlasUAV[pixel] = blockerDistance;
+        BlockerValidityAtlasUAV[pixel] = 0u;
+        return;
+    }
+    if (!isfinite(shadingNormalLengthSquared) || shadingNormalLengthSquared <= 1e-10f)
+    {
+        ShadowAtlasUAV[pixel] = visible;
+        BlockerDistanceAtlasUAV[pixel] = blockerDistance;
+        BlockerValidityAtlasUAV[pixel] = 0u;
+        return;
+    }
+    shadingNormal *= rsqrt(shadingNormalLengthSquared);
     float pixelWorldSize = 0.0f;
     float3 normal = ComputeDepthNormal(gBuffersPixel, shadingNormal, pixelWorldSize);
-
-    float visible = 1.0f;
 
     if (light.LightType == LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE)
     {
         float3 lightDir = -normalize(light.Direction);
         const float INF_DIST = 1e6f;
-        visible = TraceShadowRay(worldPos, normal, lightDir, INF_DIST, pixelWorldSize);
+        float2 traceResult;
+        validity = NS_BLOCKER_HARD_VALID;
+        if (TraceShadowRay(worldPos, normal, lightDir, INF_DIST, pixelWorldSize, traceResult))
+        {
+            visible = traceResult.x;
+            blockerDistance = traceResult.y;
+            validity |= NS_BLOCKER_DISTANCE_VALID;
+        }
     }
     else if (light.LightType == LIGHT_POINT_LIGHT_ENUM_VALUE)
     {
@@ -127,6 +178,7 @@ void RayGen()
         if (dist <= 0.0f) {
             visible = 0.0f;
         } else {
+            validity = NS_BLOCKER_HARD_VALID;
             if (light.AttenuationRadius > 0.0f && dist > light.AttenuationRadius)
             {
                 visible = 0.0f;
@@ -134,7 +186,13 @@ void RayGen()
             else
             {
                 float3 dir = toLight / dist;
-                visible = TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize);
+                float2 traceResult;
+                if (TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize, traceResult))
+                {
+                    visible = traceResult.x;
+                    blockerDistance = traceResult.y;
+                    validity |= NS_BLOCKER_DISTANCE_VALID;
+                }
             }
         }
     }
@@ -146,6 +204,7 @@ void RayGen()
             visible = 0.0f;
         } else
         {
+            validity = NS_BLOCKER_HARD_VALID;
             float3 L = normalize(worldPos - light.Position);
             float3 spotDir = normalize(light.Direction);
             float cosAngle = dot(spotDir, L);
@@ -156,7 +215,13 @@ void RayGen()
             } else 
             {
                 float3 dir = normalize(toLight);
-                visible = TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize);
+                float2 traceResult;
+                if (TraceShadowRay(worldPos, normal, dir, dist, pixelWorldSize, traceResult))
+                {
+                    visible = traceResult.x;
+                    blockerDistance = traceResult.y;
+                    validity |= NS_BLOCKER_DISTANCE_VALID;
+                }
             }
             
         }
@@ -168,4 +233,6 @@ void RayGen()
     }
 
     ShadowAtlasUAV[pixel] = visible;
+    BlockerDistanceAtlasUAV[pixel] = blockerDistance;
+    BlockerValidityAtlasUAV[pixel] = validity;
 }

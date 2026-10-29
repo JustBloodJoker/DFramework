@@ -1,5 +1,10 @@
+#include "pch.h"
+
 #include <System/MeshesCullingSubSystem.h>
-#include <MainRenderer/GlobalConfig.h>
+#include <Config/RendererLimits.h>
+#include <Config/ShaderBindings.h>
+#include <Config/RendererResources.h>
+#include <Config/RenderFormats.h>
 #include <MainRenderer/PSOManager.h>
 
 MeshesCullingSubSystem::MeshesCullingSubSystem(ID3D12Device* device) {
@@ -17,8 +22,7 @@ void MeshesCullingSubSystem::ProcessGPUCulling(const InputMeshesCullingProcessDa
 	LoadDataToInstancesBuffer(data.Device, data.CommandList, data.Instances);
 	RecreateOutputCommandBuffer(data.Device, data.CommandList, sizeInstances);
 
-	CD3DX12_RESOURCE_BARRIER uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(m_pOutputCommandsBuffer->GetResource());
-	data.CommandList->ResourceBarrier(1, &uavBarrier);
+	m_pOutputCommandsBuffer->ResourceUAVBarrier(data.CommandList);
 
 	m_pHiZResource->ResourceBarrierChange(data.CommandList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
 
@@ -32,7 +36,7 @@ void MeshesCullingSubSystem::ProcessGPUCulling(const InputMeshesCullingProcessDa
 	data.CommandList->SetComputeRootDescriptorTable(OBJECT_GPU_CULLING_HIZ_RESOURCE_POS_IN_ROOT_SIG, m_pPack->GetResult()->GetGPUDescriptorHandle(OBJECT_CULLING_OUTPUT_SRV_HIZ_POS_IN_PACK));
 	data.CommandList->SetComputeRootDescriptorTable(OBJECT_GPU_CULLING_UAV_BUFFER_OUTPUT_COMMANDS_POS_IN_ROOT_SIG, m_pPack->GetResult()->GetGPUDescriptorHandle(OBJECT_CULLING_OUTPUT_COMMANDS_POS_IN_PACK));
 
-	UINT threadGroups = (sizeInstances + OBJECT_GPU_CULLING_THREAD_GROUP_SIZE - 1) / OBJECT_GPU_CULLING_THREAD_GROUP_SIZE;
+	UINT threadGroups = (sizeInstances + FDWConfig::RendererLimits::GpuCullingThreadGroupSize - 1) / FDWConfig::RendererLimits::GpuCullingThreadGroupSize;
 	data.CommandList->Dispatch(threadGroups, 1, 1);
 
 }
@@ -67,8 +71,8 @@ void MeshesCullingSubSystem::UpdateHiZResource(FD3DW::DepthStencilView* mainDSV,
 	auto width = std::min(dsvDesc.Width, hizDesc.Width);
 	auto height = std::min(dsvDesc.Height, hizDesc.Height);
 
-	auto dispatchX = (width + OBJECT_CULLING_HIZ_COPY_DEPTH_THREAD_X_GROUP - 1) / OBJECT_CULLING_HIZ_COPY_DEPTH_THREAD_X_GROUP;
-	auto dispatchY = (height + OBJECT_CULLING_HIZ_COPY_DEPTH_THREAD_Y_GROUP - 1) / OBJECT_CULLING_HIZ_COPY_DEPTH_THREAD_Y_GROUP;
+	auto dispatchX = (width + FDWConfig::RendererLimits::HizCopyDepthThreadX - 1) / FDWConfig::RendererLimits::HizCopyDepthThreadX;
+	auto dispatchY = (height + FDWConfig::RendererLimits::HizCopyDepthThreadY - 1) / FDWConfig::RendererLimits::HizCopyDepthThreadY;
 
 	list->Dispatch(UINT(dispatchX), UINT(dispatchY), 1);
 

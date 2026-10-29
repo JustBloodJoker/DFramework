@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <System/BloomEffectSystem.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>

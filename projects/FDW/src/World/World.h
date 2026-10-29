@@ -1,6 +1,5 @@
 #pragma once 
 
-#include <pch.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <Entity/RenderObject/TRender.h>
 #include <Entity/Audio/TAudio.h>
@@ -111,6 +110,8 @@ public:
     void SetLightDirection(ComponentHolder* entity, float x, float y, float z);
     void SetLightAttenuationRadius(ComponentHolder* entity, float radius);
     void SetLightSourceRadius(ComponentHolder* entity, float radius);
+    void SetDirectionalLightAngularRadius(ComponentHolder* entity, float radians);
+    void SetLightShadowSoftness(ComponentHolder* entity, float softness);
     void SetLightConeAngles(ComponentHolder* entity, float inner, float outer);
     void SetRectLightSize(ComponentHolder* entity, float x, float y);
     void SetRectLightRotation(ComponentHolder* entity, float x, float y, float z);
@@ -293,6 +294,8 @@ public:
         REFLECT_METHOD(SetLightDirection)
         REFLECT_METHOD(SetLightAttenuationRadius)
         REFLECT_METHOD(SetLightSourceRadius)
+        REFLECT_METHOD(SetDirectionalLightAngularRadius)
+        REFLECT_METHOD(SetLightShadowSoftness)
         REFLECT_METHOD(SetLightConeAngles)
         REFLECT_METHOD(SetRectLightSize)
         REFLECT_METHOD(SetRectLightRotation)
@@ -356,6 +359,43 @@ protected:
     void AddEntityNameToCache(ComponentHolder* entity);
     void RemoveEntityNameFromCache(ComponentHolder* entity);
     void RebuildEntityNameCache();
+    static ScriptArray* AsScriptArray(void* pointer);
+    static const ScriptArray* AsScriptArrayConst(void* pointer);
+    static bool TryReadFloatAt(const ScriptArray* values, int index, float& outValue);
+    static bool TryReadIntAt(const ScriptArray* values, int index, int& outValue);
+    static ComponentHolder* ReadEntityAt(const ScriptArray* values, int index);
+    static void WriteFloatAt(ScriptArray* values, int index, float value);
+    static float RandomRange(float minimum, float maximum);
+
+protected:
+    struct ScriptLightNativeState {
+        bool Valid = false;
+        float X = 0.0f;
+        float Y = 0.0f;
+        float Z = 0.0f;
+        float TX = 0.0f;
+        float TY = 0.0f;
+        float TZ = 0.0f;
+        float Speed = 0.0f;
+        float Intensity = 0.0f;
+        float IntensityDirection = 0.0f;
+        float IntensityMin = 0.0f;
+        float IntensityMax = 0.0f;
+        float DirectionX = 0.0f;
+        float DirectionY = 0.0f;
+        float DirectionZ = 0.0f;
+        int Kind = 0;
+    };
+
+protected:
+    static ScriptLightNativeState ComputeScriptLightNativeState(
+        const ScriptArray* kinds, const ScriptArray* xs, const ScriptArray* ys,
+        const ScriptArray* zs, const ScriptArray* txs, const ScriptArray* tys,
+        const ScriptArray* tzs, const ScriptArray* speeds, const ScriptArray* distanceLimits,
+        const ScriptArray* minimumY, const ScriptArray* maximumY, const ScriptArray* intensities,
+        const ScriptArray* intensityDirections, const ScriptArray* heat, const ScriptArray* minimumIntensity,
+        const ScriptArray* maximumIntensity, const ScriptArray* directionX, const ScriptArray* directionY,
+        const ScriptArray* directionZ, const ScriptArray* directionInterpolation, float deltaTime, int index);
 
 protected:
     bool BuildBoundsFromMeshes(const std::vector<MeshComponent*>& meshes, ScriptBoundsInfo& outBounds) const;
@@ -363,11 +403,13 @@ protected:
     void SetCinematicInputLock(bool lockInput);
     static float ApplyCinematicSmoothStep(float t);
 
+protected:
     struct CinematicPoint {
         dx::XMFLOAT3 Eye = { 0.0f, 0.0f, 0.0f };
         dx::XMFLOAT3 LookAt = { 0.0f, 0.0f, 0.0f };
     };
 
+protected:
     static dx::XMFLOAT3 CatmullRom(const dx::XMFLOAT3& p0, const dx::XMFLOAT3& p1, const dx::XMFLOAT3& p2, const dx::XMFLOAT3& p3, float t);
     static dx::XMFLOAT3 EvaluateCinematicSpline(const std::vector<CinematicPoint>& points, float t01, bool sampleLookAt);
 

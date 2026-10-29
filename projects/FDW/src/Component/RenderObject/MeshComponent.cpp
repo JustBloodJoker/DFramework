@@ -1,4 +1,9 @@
+#include "pch.h"
+
 #include <Component/RenderObject/MeshComponent.h>
+#include <Config/RendererResources.h>
+#include <Config/RendererLimits.h>
+#include <Config/ShaderBindings.h>
 #include <World/World.h>
 #include <D3DFramework/Objects/RTObjectHelper.h>
 
@@ -50,6 +55,8 @@ void MeshComponent::IgnoreParentScaling(bool b) {
 
 void MeshComponent::SetCreationData(MeshComponentCreationData data) {
     m_xData = data;
+    m_xData.MaterialCBufferData.LoadedTexture[MATERIAL_ALPHA_MODE_FLAG_POS] = static_cast<int>(m_xData.ObjectDescriptor.AlphaMode);
+    m_xData.MaterialCBufferData.LoadedTexture[MATERIAL_RESERVED_FLAG_POS] = 0;
     UpdateWorldMatrix();
 }
 
@@ -161,6 +168,22 @@ FD3DW::AccelerationStructureBuffers MeshComponent::GetBLASBuffer() {
     return m_xBLASBuffer;
 }
 
+bool MeshComponent::HasSkinningSource() const {
+    return m_xData.BoneBuffer != nullptr;
+}
+
+bool MeshComponent::HasPotentialAlphaOrOpacity() const {
+    const auto& material = m_xData.MaterialCBufferData;
+    const bool hasBaseTexture = material.LoadedTexture[FD3DW::TEXTURETYPE::BASE] >= 0;
+    const bool hasOpacityTexture = material.LoadedTexture[FD3DW::TEXTURETYPE::OPACITY] >= 0;
+    const bool hasNonOpaqueConstant = material.Diffuse.w < 1.0f;
+    return hasBaseTexture || hasOpacityTexture || hasNonOpaqueConstant;
+}
+
+bool MeshComponent::HasCompleteBLAS() const {
+    return m_xBLASBuffer.pResult != nullptr;
+}
+
 void MeshComponent::OnStartRenderTick(const RenderComponentBeforeRenderInputData& data) {
     MeshComponentMatricesData cmb;
     cmb.Projection = dx::XMMatrixTranspose(data.Projection);
@@ -196,7 +219,7 @@ void MeshComponent::RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* 
 
 void MeshComponent::RenderInitDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {
     auto geometry = GenerateGeometry();
-    m_xBLASBuffer = FD3DW::CreateBottomLevelAS(device, list, { geometry }, BASE_RENDERABLE_OBJECTS_BLAS_HIT_GROUP_INDEX, false).front();
+    m_xBLASBuffer = FD3DW::CreateBottomLevelAS(device, list, { geometry }, FDWConfig::RendererLimits::BaseRenderableBlasHitGroupIndex, false).front();
 }
 
 void MeshComponent::UpdateBLASDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list) {

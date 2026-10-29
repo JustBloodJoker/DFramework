@@ -107,7 +107,10 @@ PIXEL_OUTPUT PS(VERTEX_OUTPUT vsOut)
         ao = GlobalTextures[LoadedTexture[TEXTURE_AMBIENT_LOAD_FLAG_LOCATION]].Sample(wraps, texCoord).r;
     }
 
-    AlphaClipping(albedo.a);
+    if (LoadedTexture[MATERIAL_ALPHA_MODE_FLAG_LOCATION] != MATERIAL_ALPHA_MODE_OPAQUE)
+    {
+        AlphaClipping(albedo.a);
+    }
 
     float2 currentNDC   = vsOut.currentClipPos.xy / vsOut.currentClipPos.w;
     float2 prevNDC      = vsOut.prevClipPos.xy / vsOut.prevClipPos.w;

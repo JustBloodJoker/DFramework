@@ -15,8 +15,9 @@ namespace FD3DW {
 		m_pFence = fence;
 		m_uValue = val;
 
-		try { m_xBoundPromise.set_value(); }
-		catch (...) {}
+		if (!m_bBound.exchange(true, std::memory_order_acq_rel)) {
+			m_xBoundPromise.set_value();
+		}
 	}
 
 	void ExecutionHandle::WaitForExecute()

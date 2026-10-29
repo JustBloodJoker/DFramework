@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
 #include <MainRenderer/GlobalTextureHeap.h>
@@ -11,7 +13,7 @@
 
 static FLOAT COLOR[4] = { 0.2f,0.2f,0.2f,3.0f };
 
-MainRenderer::MainRenderer() : WinWindow(WINDOW_TITLE, WINDOW_START_WIDTH, WINDOW_START_HEIGHT, false) {}
+MainRenderer::MainRenderer() : WinWindow(FDWConfig::RendererLimits::WindowTitle, FDWConfig::RendererLimits::WindowStartWidth, FDWConfig::RendererLimits::WindowStartHeight, false, true) {}
 
 void MainRenderer::UserInit()
 {
@@ -20,7 +22,6 @@ void MainRenderer::UserInit()
 
 	InitMainRendererParts(device);
 	if(dxrDevice) InitMainRendererDXRParts(dxrDevice);
-
 	SetVSync(true);
 	UpdateSceneViewportLayout();
 	auto sceneWidth = (UINT)std::max(1, GetSceneRenderWidth());
@@ -47,7 +48,7 @@ void MainRenderer::UserInit()
 	for (const auto& format : gBufferFormats) {
 		m_pGBuffers.push_back(CreateRenderTarget(format, D3D12_RTV_DIMENSION_TEXTURE2D, 1, sceneWidth, sceneHeight));
 		auto& gbuffer = m_pGBuffers.back();
-		
+
 		m_pGBuffersRTVPack->PushResource(gbuffer->GetRTVResource(), gbuffer->GetRTVDesc(), device);
 		m_pGBuffersSRVPack->PushResource(device, gbuffer->GetRTVResource(), D3D12_SRV_DIMENSION_TEXTURE2D);
 	}
@@ -57,17 +58,17 @@ void MainRenderer::UserInit()
 	auto ltcRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		auto device = GetDevice();
 
-		auto LTCMat = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_MAT, device, list);
+		auto LTCMat = FD3DW::FResource::CreateTextureFromPath(FDWConfig::Lighting::LtcMatrixTexturePath, device, list);
 		m_pGBuffersSRVPack->AddResource(LTCMat->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_MAT_LOCATION_IN_HEAP, device);
 
-		auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(LIGHTS_LTC_TEXTURES_PATH_AMP, device, list);
+		auto LTCAmp = FD3DW::FResource::CreateTextureFromPath(FDWConfig::Lighting::LtcAmplitudeTexturePath, device, list);
 		m_pGBuffersSRVPack->AddResource(LTCAmp->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, LIGHTS_LTC_AMP_LOCATION_IN_HEAP, device);
 
 		m_vLCTResources.push_back(LTCMat);
 		m_vLCTResources.push_back(LTCAmp);
 	});
 	GlobalRenderThreadManager::GetInstance()->Submit(ltcRecipe);
-	
+
 	m_pForwardRenderPassRTV = CreateRenderTarget(GetForwardRenderPassFormat(), D3D12_RTV_DIMENSION_TEXTURE2D, 1, sceneWidth, sceneHeight);
 	m_pForwardRenderPassRTVPack = CreateRTVPack(1u);
 	m_pForwardRenderPassSRVPack = CreateSRVPack(2u);
@@ -78,7 +79,7 @@ void MainRenderer::UserInit()
 		m_pScreen = CreateRectangle(list);
 		m_pSceneVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
 		m_pSceneVBV_IBV->Create(GetDevice(), list, m_pScreen->GetVertices(), m_pScreen->GetIndices());
-		
+
 	});
 	GlobalRenderThreadManager::GetInstance()->Submit(rtvRectangleCreation);
 
@@ -91,16 +92,19 @@ void MainRenderer::UserInit()
 
 	GlobalRenderThreadManager::GetInstance()->WaitIdle();
 	ProcessNotifiesInWorld();
+	m_bRendererInitializationComplete.store(true, std::memory_order_release);
 }
 
 void MainRenderer::UserLoop()
-{	
+{
 	if (auto timer = GetTimer(); m_pWorld && timer) {
 		m_pWorld->UpdateScripts(timer->GetDeltaTime());
 		ProcessNotifiesInWorld();
 	}
 
-	ValidateSelection();
+	ValidateEditorSelection();
+	// Model upload/reload publication is polled on the render-owner thread.
+	// This never waits for global idle and does not read GPU work counts.
 
 	auto sceneRect = m_xSceneRect;
 	auto sceneViewPort = m_xSceneViewPort;
@@ -108,8 +112,20 @@ void MainRenderer::UserLoop()
 	auto mainViewPort = m_xMainViewPort;
 	auto mainRect = m_xMainRect;
 	const bool isUnlitScene = m_bIsUnlitScene;
-	const auto shadowRouting = GetShadowRoutingState();
-	const bool useHardShadowAtlas = shadowRouting.UsesHardShadowAtlas;
+	const auto shadowFrameContext = m_pShadowSystem->BuildFrameContext( m_uFrameIndex, m_eShadowMode, m_pShadowSystem->GetAvailability(m_bIsUnlitScene, IsRTSupported()), static_cast<std::uint32_t>(std::max(0, GetLightsCount())));
+	const auto& shadowRouting = shadowFrameContext.Routing;
+	const bool useCompactOutput = shadowRouting.UsesCompactBaseline || shadowRouting.UsesNeural;
+	const auto& shadowProducerRouting = shadowFrameContext.Producers;
+	m_pShadowSystem->EnsureProducerResources(shadowProducerRouting);
+
+	// Spatial work identity is CPU-derived and its descriptor upload has no
+	// current-frame GPU inputs. Submit it before the dependency-rich camera,
+	// lighting and mesh recipes so the fixed command-builder pool cannot place
+	// the upload behind workers that are all waiting on those later recipes.
+	std::shared_ptr<FD3DW::ExecutionHandle> neuralShadowWorkH = nullptr;
+	if (shadowProducerRouting.NeedsNeuralWorkItems && shadowRouting.UsesNeural) {
+		neuralShadowWorkH = m_pShadowSystem->ScheduleNeuralWork({}, true);
+	}
 
 	auto sync = m_dInFlight.empty() ? nullptr : m_dInFlight.back();
 
@@ -120,9 +136,8 @@ void MainRenderer::UserLoop()
 	auto lightsH = m_pLightSystem->OnStartRenderTick(sync);
 
 	std::shared_ptr<FD3DW::ExecutionHandle> uploadMetaH = nullptr;
-	if (useHardShadowAtlas) {
-		auto createMetaH = m_pAtlasRTShadowSystem->OnCreateLightsMeta({ lightsH, cameraH });
-		uploadMetaH = m_pAtlasRTShadowSystem->OnUploadLightsMeta(createMetaH);
+	if (shadowProducerRouting.NeedsShadowMetadata) {
+		uploadMetaH = m_pShadowSystem->ScheduleMetadata({ lightsH, cameraH });
 	}
 
 	auto meshH = m_pRenderMeshesSystem->OnStartRenderTick(cameraH);
@@ -138,7 +153,7 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> tlasCallH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> blasCallH = nullptr;
 
-	if (useHardShadowAtlas) {
+	if (shadowProducerRouting.NeedsAccelerationStructure) {
 		blasCallH = m_pRenderMeshesSystem->OnStartBLASCall({ animationGpuSkinningH , meshH });
 		tlasCallH = m_pRenderMeshesSystem->OnStartTLASCall({ blasCallH, meshH });
 	}
@@ -146,8 +161,13 @@ void MainRenderer::UserLoop()
 	std::shared_ptr<FD3DW::ExecutionHandle> clusteredH = nullptr;
 	std::shared_ptr<FD3DW::ExecutionHandle> clusterAssignH = nullptr;
 	if (!isUnlitScene) {
-		clusteredH = m_pClusteredLightningSystem->OnStartRenderTick(cameraH);
+		clusteredH = m_pClusteredLightningSystem->OnStartRenderTick({ cameraH, lightsH });
 		clusterAssignH = m_pClusteredLightningSystem->AssignLightsToClusters({ clusteredH, lightsH, cameraH });
+	}
+	if (shadowProducerRouting.NeedsNeuralWorkItems && !neuralShadowWorkH) {
+		neuralShadowWorkH = m_pShadowSystem->ScheduleNeuralWork(
+			{ clusterAssignH, uploadMetaH, lightsH, cameraH },
+			shadowRouting.UsesNeural);
 	}
 
 	std::shared_ptr<FD3DW::ExecutionHandle> preDepthH = nullptr;
@@ -180,20 +200,43 @@ void MainRenderer::UserLoop()
 
 
 	std::shared_ptr<FD3DW::ExecutionHandle> atlasRtShadowsH = nullptr;
-	if (useHardShadowAtlas) {
-		atlasRtShadowsH = m_pAtlasRTShadowSystem->OnGenerateShadowAtlas({ clusterAssignH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
+	if (shadowProducerRouting.NeedsHardShadowInput || shadowProducerRouting.NeedsRayTracedVisibility) {
+		atlasRtShadowsH = m_pShadowSystem->ScheduleHardVisibility({ clusterAssignH, neuralShadowWorkH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
+	}
+	if (shadowProducerRouting.NeedsRayTracedVisibility) {
+		atlasRtShadowsH = m_pShadowSystem->ScheduleRayTracedVisibility({ atlasRtShadowsH, clusterAssignH, neuralShadowWorkH, tlasCallH, lightsH, uploadMetaH, indirectRenderH });
 	}
 
-	const auto shadowMetaBufferAddress = useHardShadowAtlas
-		? m_pAtlasRTShadowSystem->GetLightsMetasBufferGPULocation()
-		: GetEmptyStructuredBufferGPUVirtualAddress();
-	const auto shadowParamsBufferAddress = useHardShadowAtlas
-		? m_pAtlasRTShadowSystem->GetAtlasConstantBufferGPULocation()
-		: m_pNeutralShadowParamsBuffer->GetGPULocation(0);
+	std::shared_ptr<FD3DW::ExecutionHandle> neuralShadowBaselineH = nullptr;
+	if (shadowProducerRouting.NeedsNeuralFeaturePreparation || shadowProducerRouting.NeedsNeuralOutput) {
+		neuralShadowBaselineH = m_pShadowSystem->ScheduleNeuralOutput({ neuralShadowWorkH, atlasRtShadowsH, indirectRenderH, lightsH, uploadMetaH }, shadowProducerRouting.NeedsNeuralInference);
+	}
+
+	const auto emptyStructuredBufferAddress = GetEmptyStructuredBufferGPUVirtualAddress();
+
+	const auto shadowVisibility = m_pShadowSystem->BuildVisibilityView(shadowFrameContext,emptyStructuredBufferAddress, m_pNeutralShadowParamsBuffer->GetGPULocation(0));
+	const auto shadowMetaBufferAddress = shadowVisibility.LightMetadata;
+	const auto shadowParamsBufferAddress = shadowVisibility.ShadowParameters;
+	const auto nsWorkItemsAddress = shadowVisibility.WorkItems;
+	const auto nsWorkHeaderAddress = shadowVisibility.WorkHeader;
+	const auto nsPatchRecordsAddress = shadowVisibility.PatchRecords;
+	const auto nsVisibilityAddress = shadowVisibility.Visibility;
+	const auto nsValidityAddress = shadowVisibility.Validity;
+	const auto nsOutputHeaderAddress = shadowVisibility.OutputHeader;
+	const auto nsNeuralOutputWorkItemsAddress = shadowVisibility.NeuralOutputWorkItems;
+	const auto nsNeuralOutputOutputHeaderAddress = shadowVisibility.NeuralOutputOutputHeader;
+	const auto nsNeuralOutputVisibilityAddress = shadowVisibility.NeuralOutputVisibility;
+	const auto nsNeuralOutputValidityAddress = shadowVisibility.NeuralOutputValidity;
+	const UINT compactVisibilityEnabled = shadowVisibility.CompactVisibilityEnabled;
 
 	//////////////////////////
 	// SHADING PASS
-	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort, shadowMetaBufferAddress, shadowParamsBufferAddress](ID3D12GraphicsCommandList* list) {
+	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort, shadowMetaBufferAddress,
+																																shadowParamsBufferAddress, nsWorkItemsAddress, nsWorkHeaderAddress,
+																																nsPatchRecordsAddress, nsVisibilityAddress, nsValidityAddress,
+																																nsOutputHeaderAddress, nsNeuralOutputWorkItemsAddress,
+																																nsNeuralOutputOutputHeaderAddress, nsNeuralOutputVisibilityAddress,
+																																nsNeuralOutputValidityAddress, compactVisibilityEnabled](ID3D12GraphicsCommandList* list) {
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pForwardRenderPassRTV->StartDraw(list);
 
@@ -206,7 +249,7 @@ void MainRenderer::UserLoop()
 		PSOManager::GetInstance()->GetPSOObject(PSOType::DefferedSecondPassDefaultConfig)->Bind(list);
 
 		m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, GetDevice());
-		
+
 		list->IASetVertexBuffers(0, 1, m_pSceneVBV_IBV->GetVertexBufferView());
 		list->IASetIndexBuffer(m_pSceneVBV_IBV->GetIndexBufferView());
 
@@ -222,12 +265,25 @@ void MainRenderer::UserLoop()
 		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, shadowMetaBufferAddress);
 		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, shadowParamsBufferAddress);
 
+		UINT consumerConstants[] = { compactVisibilityEnabled };
+		list->SetGraphicsRoot32BitConstants(NEURAL_SHADOW_DEFERRED_CONSTANTS_POS_IN_ROOT_SIG,_countof(consumerConstants),consumerConstants,0u);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, nsWorkItemsAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_HEADER_SRV_POS_IN_ROOT_SIG, nsWorkHeaderAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_PATCH_RECORDS_SRV_POS_IN_ROOT_SIG, nsPatchRecordsAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VISIBILITY_SRV_POS_IN_ROOT_SIG, nsVisibilityAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VALIDITY_SRV_POS_IN_ROOT_SIG, nsValidityAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, nsOutputHeaderAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, nsNeuralOutputWorkItemsAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, nsNeuralOutputOutputHeaderAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VISIBILITY_SRV_POS_IN_ROOT_SIG, nsNeuralOutputVisibilityAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VALIDITY_SRV_POS_IN_ROOT_SIG, nsNeuralOutputValidityAddress);
+
 		list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 
 		m_pForwardRenderPassRTV->EndDraw(list);
 	});
 
-	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { lightsH, clusterAssignH, indirectRenderH, atlasRtShadowsH, iblUpdateH });
+	auto shadingPassH = GlobalRenderThreadManager::GetInstance()->Submit(gSecondPassRecipe, { lightsH, clusterAssignH, neuralShadowWorkH, neuralShadowBaselineH, indirectRenderH, atlasRtShadowsH, iblUpdateH });
 
 	SkyboxRenderPassInput inSkyboxRenderData;
 	inSkyboxRenderData.RTV = m_pForwardRenderPassRTV.get();
@@ -245,7 +301,7 @@ void MainRenderer::UserLoop()
 
 	auto gPostProcessPass = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneOutputViewPort, mainViewPort, mainRect, isUnlitScene](ID3D12GraphicsCommandList* list) {
 		//////////////////////////
-		// POSTPROCESS PASS	
+		// POSTPROCESS PASS
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		list->RSSetViewports(1, &mainViewPort);
 		list->RSSetScissorRects(1, &mainRect);
@@ -283,12 +339,11 @@ void MainRenderer::UserLoop()
 		////			UI PASS
 
 		{
-			list->RSSetViewports(1, &mainViewPort);
-			list->RSSetScissorRects(1, &mainRect);
 			if (m_pUIComponent) {
 				list->RSSetViewports(1, &mainViewPort);
 				list->RSSetScissorRects(1, &mainRect);
 				m_pUIComponent->RenderImGui(list);
+			}
 			}
 
 		/////
@@ -297,6 +352,7 @@ void MainRenderer::UserLoop()
 		{
 			EndDraw(list);
 		}
+
 	});
 
 	auto postProcessPass = GlobalRenderThreadManager::GetInstance()->Submit(gPostProcessPass, { shadingPassH, skyboxRenderH, bloomPassH, taaPassH });
@@ -305,15 +361,14 @@ void MainRenderer::UserLoop()
 	auto lCameraH = m_pCameraSystem->OnEndTick(indirectRenderH);
 	auto lMeshH = m_pRenderMeshesSystem->OnEndRenderTick({ indirectRenderH });
 
-	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() { 
-		PresentSwapchain(); 
+	auto presentH = GlobalRenderThreadManager::GetInstance()->SubmitLambda([this]() {
+		PresentSwapchain();
 		++m_uFrameIndex;
 		m_uCurrentDSVIndex = (m_uCurrentDSVIndex + 1) % 2;
 	}, { postProcessPass,lCameraH,lMeshH }, true);
 
 	m_dInFlight.push_back(presentH);
 
-	auto needProcessUI = m_pUIComponent->GetPendingAfterRenderCallsCount()>0;
 	auto needProcessUI = m_pUIComponent && m_pUIComponent->GetPendingAfterRenderCallsCount() > 0;
 	while ( ( needProcessUI && !m_dInFlight.empty() ) || m_dInFlight.size() >= m_uMaxFramesInFlight) {
 		auto front = m_dInFlight.front();
@@ -333,7 +388,7 @@ void MainRenderer::UserLoop()
 void MainRenderer::UserClose()
 {
 	GlobalRenderThreadManager::GetInstance()->Shutdown();
-	
+
 	for (auto& system : m_vSystems) {
 		DestroyComponent(system);
 	}
@@ -525,12 +580,12 @@ bool MainRenderer::RayIntersectsAABB(const dx::XMFLOAT3& rayOrigin, const dx::XM
 
 std::shared_ptr<FD3DW::ExecutionHandle> MainRenderer::UpdateIBLResource(std::shared_ptr<FD3DW::ExecutionHandle> syncHandle) {
 	FD3DW::FResource* iblSkyboxTexture = nullptr;
-	if (!m_pWorld) return nullptr; 
+	if (!m_pWorld) return nullptr;
 
 	auto skyboxComponents = m_pWorld->GetAllComponentsOfType<SkyboxComponent>();
 	for (auto skyboxComponent : skyboxComponents) {
 		if (!skyboxComponent || !skyboxComponent->IsActive() || !skyboxComponent->Material()) continue;
-		
+
 		if (auto texture = m_pSkyboxRenderSystem->GetActiveSkyboxTexture()) {
 			iblSkyboxTexture = texture;
 			break;
@@ -547,7 +602,7 @@ void MainRenderer::UpdateIBL_LUT_Resource() {
 
 void MainRenderer::BindIBLEnvironmentResource(FD3DW::FResource* environmentResource) {
 	if (!environmentResource) return;
-	
+
 	m_pGBuffersSRVPack->AddResource(environmentResource->GetResource(),D3D12_SRV_DIMENSION_TEXTURECUBE,IBL_ENVIRONMENT_SKYBOX_LOCATION_IN_HEAP,GetDevice());
 }
 
@@ -597,9 +652,9 @@ MeshComponent* MainRenderer::PickMeshComponentAtScreenPoint(int mouseX, int mous
 	auto sceneWidth = GetSceneRenderWidth();
 	auto sceneHeight = GetSceneRenderHeight();
 	if (sceneWidth <= 0 || sceneHeight <= 0) return nullptr;
-	
+
 	if (mouseX < m_xSceneRect.left || mouseX >= m_xSceneRect.right) return nullptr;
-	
+
 	if (mouseY < m_xSceneRect.top || mouseY >= m_xSceneRect.bottom) return nullptr;
 
 	auto view = GetCurrentViewMatrix();
@@ -680,9 +735,10 @@ int MainRenderer::GetSceneRenderHeight() const {
 void MainRenderer::RequestSceneViewportLayoutUpdate() {
 	auto prevSceneWidth = GetSceneRenderWidth();
 	auto prevSceneHeight = GetSceneRenderHeight();
-	
+
 	UpdateSceneViewportLayout();
-	
+	if (!m_bRendererInitializationComplete.load(std::memory_order_acquire)) return;
+
 	auto newSceneWidth = GetSceneRenderWidth();
 	auto newSceneHeight = GetSceneRenderHeight();
 
@@ -751,6 +807,14 @@ float MainRenderer::GetFoVY() const {
 	return m_pCameraSystem->GetFoVY();
 }
 
+float MainRenderer::GetCameraNear() const {
+	return m_pCameraSystem->GetZNear();
+}
+
+float MainRenderer::GetCameraFar() const {
+	return m_pCameraSystem->GetZFar();
+}
+
 void MainRenderer::SetMeshCullingType(MeshCullingType in) {
 	m_pRenderMeshesSystem->SetCullingType(in);
 }
@@ -762,6 +826,10 @@ MeshCullingType MainRenderer::GetMeshCullingType() {
 FD3DW::AccelerationStructureBuffers MainRenderer::GetTLAS()
 {
 	return m_pRenderMeshesSystem->GetTLAS();
+}
+
+NSRTGeometryCoverageState MainRenderer::GetRTGeometryCoverageState() const {
+	return m_pRenderMeshesSystem ? m_pRenderMeshesSystem->GetRTGeometryCoverageState() : NSRTGeometryCoverageState{};
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetLightBufferConstantBufferAddress() {
@@ -779,6 +847,7 @@ D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterConstantBufferAddress() {
 D3D12_GPU_VIRTUAL_ADDRESS MainRenderer::GetClusterStructuredBufferAddress() {
 	return m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation();
 }
+
 FD3DW::StructuredBuffer* MainRenderer::GetLightsBuffer() {
 	return m_pLightSystem->GetLightsBuffer();
 }
@@ -787,12 +856,24 @@ const std::vector<LightComponentData>& MainRenderer::GetLightComponentsData() co
 	return m_pLightSystem->GetLightComponentsData();
 }
 
+const std::vector<std::uint64_t>& MainRenderer::GetLightRuntimeIdentities() const {
+	return m_pLightSystem->GetLightRuntimeIdentities();
+}
+
 int MainRenderer::GetLightsCount() {
 	return m_pLightSystem->GetLightsCount();
 }
 
+void MainRenderer::PrepareShadowMetadataForCompute(ID3D12GraphicsCommandList* list) {
+	if (m_pShadowSystem) m_pShadowSystem->PrepareShadowMetadataForCompute(list);
+}
+
+void MainRenderer::PrepareShadowMetadataForPixel(ID3D12GraphicsCommandList* list) {
+	if (m_pShadowSystem) m_pShadowSystem->PrepareShadowMetadataForPixel(list);
+}
+
 bool MainRenderer::IsShadowEnabled() {
-	return GetShadowRoutingState().UsesHardShadowAtlas;
+	return ShadowRouting::UsesPerLightVisibility(GetShadowRoutingState());
 }
 
 ShadowMode MainRenderer::GetShadowMode() const {
@@ -800,24 +881,63 @@ ShadowMode MainRenderer::GetShadowMode() const {
 }
 
 bool MainRenderer::SetShadowMode(ShadowMode mode) {
-	if (!IsKnownShadowMode(mode)) return false;
+	if (!ShadowRouting::IsKnownMode(mode)) return false;
 
 	if (mode == m_eShadowMode) return true;
 
-	if (!IsShadowModeAvailable(mode)) return false;
+	if (!IsShadowModeAvailable(mode)) {
+		// Keep a requested Neural mode routable when model initialization fails:
+		// ShadowRouter will select the existing exact Hard atlas fallback. This is
+		// deliberately narrower than advertising Neural as available in the UI.
+		const auto availability = m_pShadowSystem ? m_pShadowSystem->GetAvailability(m_bIsUnlitScene, IsRTSupported()) : ShadowBackendAvailability{};
+
+		if (mode != ShadowMode::Neural || !availability.HardAtlas) return false;
+	}
 
 	m_eShadowMode = mode;
+	BindShadowFactorResourceForSelectedMode(GetDevice());
 	return true;
 }
 
+bool MainRenderer::SetNeuralShadowMode() {
+	if (!m_pShadowSystem || !IsRTSupported()) return false;
+
+	if (!m_pShadowSystem->SelectNeuralRuntimeAfterGpuIdle()) return false;
+
+	if (!SetShadowMode(ShadowMode::Neural)) return false;
+
+	return GetShadowRoutingState().UsesNeural;
+}
+
+bool MainRenderer::IsNeuralShadowActive() const {
+	if (!m_pShadowSystem || m_eShadowMode != ShadowMode::Neural || !m_pShadowSystem->IsNeuralRuntimeSelected()) return false;
+
+	return GetShadowRoutingState().UsesNeural;
+}
+
+NeuralShadowRuntimeState MainRenderer::GetNeuralShadowRuntimeState() const {
+	return m_pShadowSystem
+		? m_pShadowSystem->GetNeuralRuntimeState(IsRTSupported())
+		: NeuralShadowRuntimeState{ NeuralShadowRuntimeStatus::Unavailable, false, false, "Shadow system is unavailable." };
+}
+
 bool MainRenderer::IsShadowModeAvailable(ShadowMode mode) const {
+	const auto availability = m_pShadowSystem ? m_pShadowSystem->GetAvailability(m_bIsUnlitScene, IsRTSupported()) : ShadowBackendAvailability{};
+
 	switch (mode) {
 
 	case ShadowMode::HardShadowAtlas:
-		return m_pAtlasRTShadowSystem != nullptr;
+		return availability.HardAtlas;
 
 	case ShadowMode::RayTraced:
+		return availability.RayTraced;
+
+	case ShadowMode::CompactBaseline:
+		return availability.CompactBaseline;
+
 	case ShadowMode::Neural:
+		return availability.Neural;
+
 	case ShadowMode::COUNT:
 	default:
 		return false;
@@ -825,20 +945,29 @@ bool MainRenderer::IsShadowModeAvailable(ShadowMode mode) const {
 }
 
 ShadowRoutingState MainRenderer::GetShadowRoutingState() const {
-	return ResolveShadowRouting( m_eShadowMode, m_bIsUnlitScene, IsRTSupported(), m_pAtlasRTShadowSystem!=nullptr);
+	if (!m_pShadowSystem) return {};
+
+	return m_pShadowSystem->BuildFrameContext(
+		m_uFrameIndex,
+		m_eShadowMode,
+		m_pShadowSystem->GetAvailability(m_bIsUnlitScene, IsRTSupported()),
+		static_cast<std::uint32_t>(std::max(0, m_pLightSystem ? m_pLightSystem->GetLightsCount() : 0))).Routing;
+}
+
+NSRTQualitySettings MainRenderer::GetNSRTQualitySettings() const {
+	return m_pShadowSystem ? m_pShadowSystem->GetRTQualitySettings() : NSRTQualitySettings{};
+}
+
+void MainRenderer::SetNSRTQualitySettings(const NSRTQualitySettings& settings) {
+	if (m_pShadowSystem) m_pShadowSystem->SetRTQualitySettings(settings);
 }
 
 HardShadowAtlasFilterSettings MainRenderer::GetHardShadowAtlasFilterSettings() const {
-	if (!m_pAtlasRTShadowSystem) {
-		return HardShadowAtlasFilterSettings{};
-	}
-	return m_pAtlasRTShadowSystem->GetHardShadowAtlasFilterSettings();
+	return m_pShadowSystem ? m_pShadowSystem->GetHardFilterSettings() : HardShadowAtlasFilterSettings{};
 }
 
 void MainRenderer::SetHardShadowAtlasFilterSettings(const HardShadowAtlasFilterSettings& settings) {
-	if (!m_pAtlasRTShadowSystem) return;
-
-	m_pAtlasRTShadowSystem->SetHardShadowAtlasFilterSettings(settings);
+	if (m_pShadowSystem) m_pShadowSystem->SetHardFilterSettings(settings);
 }
 
 std::shared_ptr<World> MainRenderer::CreateEmptyWorld() {
@@ -890,7 +1019,7 @@ FD3DW::FResource* MainRenderer::GetShadingResultResource() {
 
 void MainRenderer::CreateTestWorld() {
 	m_pWorld->CreateDefaultCamera();
-	
+
 	auto light = m_pWorld->CreatePointLight();
 	auto pos = light->GetLightPosition();
 	pos.y = 444.0f;
@@ -923,7 +1052,7 @@ void MainRenderer::ProcessNotifiesInWorld() {
 	if (hasMatch) GlobalRenderThreadManager::GetInstance()->WaitIdle();
 
 	ProcessNotifies(checkNotifies);
-	
+
 	if (hasMatch) GlobalRenderThreadManager::GetInstance()->WaitIdle();
 }
 
@@ -935,7 +1064,7 @@ void MainRenderer::ProcessNotifies(std::vector<NRenderSystemNotifyType> notifies
 	}
 }
 
-void MainRenderer::ValidateSelection() {
+void MainRenderer::ValidateEditorSelection() {
 	if (!m_pWorld) {
 		m_pSelectedEntity = nullptr;
 		m_pSelectedMeshComponent = nullptr;
@@ -966,10 +1095,10 @@ void MainRenderer::UpdateSceneViewportLayout() {
 	auto prevSceneHeight = GetSceneRenderHeight();
 
 	auto sceneRight = wndWidth;
-	
+
 	if (m_pUIComponent && m_pUIComponent->IsUIVisible()) {
-		auto maxPanelWidth = std::max(0, wndWidth - WINDOW_MINIMAL_SCENE_WIDTH);
-		auto minPanelWidth = std::min(WINDOW_MINIMAL_UI_WIDTH, maxPanelWidth);
+		auto maxPanelWidth = std::max(0, wndWidth - FDWConfig::RendererLimits::MinimumSceneWidth);
+		auto minPanelWidth = std::min(FDWConfig::RendererLimits::MinimumUIWidth, maxPanelWidth);
 		auto panelWidth = std::clamp( (int)std::lround(m_pUIComponent->GetFixedPanelWidth()), minPanelWidth, maxPanelWidth );
 		sceneRight = wndWidth - panelWidth;
 	}
@@ -1031,11 +1160,17 @@ bool MainRenderer::IsComponentAlive(MeshComponent* cmp) {
 void MainRenderer::OnMainWindowResize(int width, int height) {
 	if (width <= 0 || height <= 0) return;
 
+	// The hidden validation window can receive its initial WM_SIZE while UserInit
+	// is still constructing the first G-buffer set. A concurrent rebuild would
+	// interleave both six-target append loops and break RTV/SRV ownership.
+	if (!m_bRendererInitializationComplete.load(std::memory_order_acquire)) return;
+
 	UpdateSceneViewportLayout();
 	RecreateWindowSizeDependentResources( GetSceneRenderWidth(), GetSceneRenderHeight() );
 }
 
 void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
+	std::scoped_lock resizeLock(m_xResizeResourcesMutex);
 	for (auto& handle : m_dInFlight) {
 		if ( handle && !handle->IsDone() ) {
 			handle->WaitForExecute();
@@ -1073,7 +1208,6 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 	}
 
 	m_pGBuffersSRVPack->AddResource(GetCurrentDSV(), DEPTH_BUFFER_LOCATION_IN_HEAP, device);
-	if (m_pLightSystem->GetIBLBrdfLUTResource()) {
 	if (m_pLightSystem && m_pLightSystem->GetIBLBrdfLUTResource()) {
 		UpdateIBL_LUT_Resource();
 	}
@@ -1110,8 +1244,8 @@ void MainRenderer::RecreateWindowSizeDependentResources(int width, int height) {
 		m_pLightSystem->InvalidateIBLResourceBindings();
 	}
 
-	if (m_pAtlasRTShadowSystem) {
-		m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
+	if (m_pShadowSystem) {
+		m_pShadowSystem->ConfigureInputResources( m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
 	}
 	BindShadowFactorResourceForSelectedMode(device);
 
@@ -1122,7 +1256,7 @@ void MainRenderer::InitMainRendererParts(ID3D12Device* device) {
 	InitializeDescriptorSizes(device, Get_RTV_DescriptorSize(), Get_DSV_DescriptorSize(), Get_CBV_SRV_UAV_DescriptorSize());
 	PSOManager::GetInstance()->InitPSOjects(device);
 	CreateEmptyStructuredBuffer(device);
-	GlobalTextureHeap::GetInstance()->Init(device, GLOBAL_TEXTURE_HEAP_PRECACHE_SIZE,GLOBAL_TEXTURE_HEAP_NODE_MASK);
+	GlobalTextureHeap::GetInstance()->Init(device, FDWConfig::RendererLimits::TextureHeapPrecacheSize,FDWConfig::RendererLimits::TextureHeapNodeMask);
 
 	m_pUIComponent = CreateUniqueComponent<MainRenderer_UIComponent>();
 }
@@ -1137,6 +1271,7 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 	m_pCameraSystem = CreateSystem<CameraSystem>();
 	m_pLightSystem = CreateSystem<LightSystem>();;
 	m_pClusteredLightningSystem = CreateSystem<ClusteredLightningSystem>();
+	m_pShadowSystem = CreateSystem<ShadowSystem>();
 	m_pSceneAnimationSystem = CreateSystem<SceneAnimationSystem>();
 	m_pRenderMeshesSystem = CreateSystem<RenderMeshesSystem>();
 	m_pSkyboxRenderSystem = CreateSystem<SkyboxRenderSystem>();
@@ -1152,8 +1287,8 @@ void MainRenderer::InitMainRendererSystems(ID3D12Device* device) {
 }
 
 void MainRenderer::InitMainRendererDXRSystems(ID3D12Device5* device) {
-	m_pAtlasRTShadowSystem = CreateSystem<AtlasRTShadowSystem>();
-	m_pAtlasRTShadowSystem->SetGBuffersResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
+	m_pShadowSystem->InitializeBackend();
+	m_pShadowSystem->ConfigureInputResources(m_pGBuffers[GBUFFER_NORMAL_LOCATION_IN_HEAP]->GetTexture(), device);
 	BindShadowFactorResourceForSelectedMode(device);
 }
 
@@ -1161,7 +1296,7 @@ void MainRenderer::InitNeutralShadowResources(ID3D12Device* device) {
 	m_pNeutralShadowTexture = FD3DW::FResource::CreateAnonimTexture(
 		device,
 		1,
-		RT_SHADOW_ATLAS_FORMAT,
+		FDWConfig::Shadows::AtlasFormat,
 		1,
 		1,
 		DXGI_SAMPLE_DESC({ 1, 0 }),
@@ -1195,21 +1330,29 @@ void MainRenderer::InitNeutralShadowResources(ID3D12Device* device) {
 }
 
 void MainRenderer::BindShadowFactorResourceForSelectedMode(ID3D12Device* device) {
-	if (m_eShadowMode == ShadowMode::HardShadowAtlas && m_pAtlasRTShadowSystem) {
+	if ((m_eShadowMode == ShadowMode::HardShadowAtlas ||
+		m_eShadowMode == ShadowMode::RayTraced ||
+		m_eShadowMode == ShadowMode::CompactBaseline ||
+		m_eShadowMode == ShadowMode::Neural) && m_pShadowSystem &&
+		m_pShadowSystem->GetShadowAtlasResource()) {
+
 		m_pGBuffersSRVPack->AddResource(
-			m_pAtlasRTShadowSystem->GetShadowAtlas()->GetResource(),
+			m_pShadowSystem->GetShadowAtlasResource()->GetResource(),
 			D3D12_SRV_DIMENSION_TEXTURE2D,
 			SHADOW_FACTOR_LOCATION_IN_HEAP,
 			device);
+
 		return;
 	}
 
 	if (m_pNeutralShadowTexture) {
+
 		m_pGBuffersSRVPack->AddResource(
 			m_pNeutralShadowTexture->GetResource(),
 			D3D12_SRV_DIMENSION_TEXTURE2D,
 			SHADOW_FACTOR_LOCATION_IN_HEAP,
 			device);
+		
 		return;
 	}
 

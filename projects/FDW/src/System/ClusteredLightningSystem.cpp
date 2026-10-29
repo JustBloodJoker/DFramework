@@ -1,26 +1,24 @@
+#include "pch.h"
+
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
 #include <System/ClusteredLightningSystem.h>
-
-
-
-
-
 
 void ClusteredLightningSystem::AfterConstruction() {
 	auto device = m_pOwner->GetDevice();
 	m_pClusterParamsBuffer = FD3DW::UploadBuffer<ClusterSystemClusterParams>::CreateConstantBuffer(device, 1);
 	m_pClusterParamsPSBuffer = FD3DW::UploadBuffer<ClusterSystemClusterParamsPS>::CreateConstantBuffer(device, 1);
 	m_pClusterViewParamsBuffer = FD3DW::UploadBuffer<ClusterSystemClusterViewParams>::CreateConstantBuffer(device, 1);
-	m_pClustersStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<ClusterSystemCluster>(device, CLUSTERED_NUM_X_CLUSTERS * CLUSTERED_NUM_Y_CLUSTERS * CLUSTERED_NUM_Z_CLUSTERS, true, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	m_pClustersStructuredBuffer = FD3DW::StructuredBuffer::CreateStructuredBuffer<ClusterSystemCluster>(device,LIGHT_TILE_COUNT,false, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
 }
 
-std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderTick(std::shared_ptr<FD3DW::ExecutionHandle> sync) {
+std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderTick(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs) {
 	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this](ID3D12GraphicsCommandList* list) {
 		ClusterSystemClusterParams par_1;
-		par_1.GridSize0 = CLUSTERED_NUM_X_CLUSTERS;
-		par_1.GridSize1 = CLUSTERED_NUM_Y_CLUSTERS;
-		par_1.GridSize2 = CLUSTERED_NUM_Z_CLUSTERS;
+		par_1.GridSize0 = FDWConfig::Lighting::TileCountX;
+		par_1.GridSize1 = FDWConfig::Lighting::TileCountY;
+		par_1.GridSize2 = FDWConfig::Lighting::TileCountZ;
 		dx::XMMATRIX proj = m_pOwner->GetCurrentProjectionMatrix();
 		dx::XMMATRIX invProj = XMMatrixInverse(nullptr, proj);
 		XMStoreFloat4x4(&par_1.InverseProjection, invProj);
@@ -35,6 +33,9 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 
 		ClusterSystemClusterViewParams par_2;
 		par_2.LightCount = m_pOwner->GetLightsCount();
+		par_2.TileCount = LIGHT_TILE_COUNT;
+		par_2._pad0 = 0u;
+		par_2._pad1 = 0u;
 		dx::XMStoreFloat4x4(&par_2.ViewMatrix, m_pOwner->GetCurrentViewMatrix());
 
 		ClusterSystemClusterParamsPS par_3;
@@ -52,15 +53,17 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::OnStartRenderT
 
 
 		PSOManager::GetInstance()->GetPSOObject(PSOType::ClusteredShading_BuildGridPass)->Bind(list);
+		m_pClustersStructuredBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
 		list->SetComputeRootConstantBufferView(CLUSTERED_FIRST_PASS_CBV_CLUSTERS_PARAMS_POS_IN_ROOT_SIG, m_pClusterParamsBuffer->GetGPULocation(0));
 		list->SetComputeRootUnorderedAccessView(CLUSTERED_FIRST_PASS_UAV_CLUSTERS_POS_IN_ROOT_SIG, m_pClustersStructuredBuffer->GetResource()->GetGPUVirtualAddress());
 
-		list->Dispatch(CLUSTERED_NUM_X_CLUSTERS, CLUSTERED_NUM_Y_CLUSTERS, CLUSTERED_NUM_Z_CLUSTERS);
+		list->Dispatch(FDWConfig::Lighting::TileCountX, FDWConfig::Lighting::TileCountY, FDWConfig::Lighting::TileCountZ);
+		m_pClustersStructuredBuffer->ResourceUAVBarrier(list);
 	});
 	
 	
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, { sync });
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, syncs, true);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsToClusters(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> syncs) {
@@ -72,12 +75,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> ClusteredLightningSystem::AssignLightsTo
 		
 		list->SetComputeRootShaderResourceView(CLUSTERED_SECOND_PASS_SRV_LIGHTS_POS_IN_ROOT_SIG, m_pOwner->GetLightsBuffer()->GetResource()->GetGPUVirtualAddress());
 
-		int numClusters = CLUSTERED_NUM_X_CLUSTERS * CLUSTERED_NUM_Y_CLUSTERS * CLUSTERED_NUM_Z_CLUSTERS;
-		int numGroups = (numClusters + CLUSTERED_THREADS_PER_GROUP_X_2 - 1) / CLUSTERED_THREADS_PER_GROUP_X_2;
+		const int numGroups = (LIGHT_TILE_COUNT + FDWConfig::Lighting::ClusterThreadsSecondPass - 1) / FDWConfig::Lighting::ClusterThreadsSecondPass;
 		list->Dispatch(numGroups, 1, 1);
+
+		m_pClustersStructuredBuffer->ResourceUAVBarrier(list);
+		m_pClustersStructuredBuffer->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
 	});
 
-	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, syncs);
+	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, syncs, true);
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS ClusteredLightningSystem::GetClusteredStructuredBufferGPULocation() {

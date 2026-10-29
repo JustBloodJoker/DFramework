@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/Camera/TBaseCamera.h>
 #include <World/World.h>
 

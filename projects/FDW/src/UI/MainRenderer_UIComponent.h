@@ -1,6 +1,8 @@
 #pragma once
 
-#include <MainRenderer/GlobalConfig.h>
+#include <Config/LightingConfig.h>
+#include <Config/RendererLimits.h>
+#include <Config/ShadowConfig.h>
 #include <MainRenderer/MainRendererComponent.h>
 #include <UI/UIInputLayer.h>
 
@@ -150,7 +152,7 @@ private:
 
     bool m_bIsInited = false;
     bool m_bUIVisible = true;
-    float m_fFixedPanelWidth = WINDOW_FIXED_UI_WIDTH;
+    float m_fFixedPanelWidth = FDWConfig::RendererLimits::FixedUIWidth;
     int m_iLastPanelLeftX = -1;
 
 
@@ -165,7 +167,7 @@ private:
 
     bool m_bShowSaveWorldBrowser = false;
     bool m_bShowLoadWorldBrowser = false;
-    std::filesystem::path m_xCurrentPath = SCENES_DEFAULT_PATH;
+    std::filesystem::path m_xCurrentPath = FDWConfig::RendererLimits::DefaultScenePath;
     std::vector<std::filesystem::directory_entry> m_vEntries;
     bool m_bIsPathChanged = true;
 

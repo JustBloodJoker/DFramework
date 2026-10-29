@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Component/Camera/CameraComponent.h>
 #include <World/World.h>
 

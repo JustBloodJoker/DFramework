@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <System/CameraFrustum.h>
 
 void CameraFrustum::UpdatePlanes(const dx::XMMATRIX& vp, const float zNear, const float zFar) {

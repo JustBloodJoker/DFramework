@@ -7,12 +7,9 @@
 #endif
 
 
-#include "d3dframework.h"
-
-//////////////////////
-////////	WINWINDOW
-
 #include <WinWindow/pch.h>
+
+#include "d3dframework.h"
 
 #pragma comment(lib, "WinWindow.lib")
 

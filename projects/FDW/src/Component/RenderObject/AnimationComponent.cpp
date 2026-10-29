@@ -1,4 +1,9 @@
+#include "pch.h"
+
 #include <Component/RenderObject/AnimationComponent.h>
+#include <Config/ShaderBindings.h>
+#include <Config/RendererLimits.h>
+#include <Config/RendererResources.h>
 #include <D3DFramework/GraphicUtilites/StructuredBuffer.h>
 #include <World/World.h>
 #include <MainRenderer/PSOManager.h>
@@ -121,17 +126,42 @@ void AnimationComponent::OnAnimationUpdateTick(const AnimationComponentInputData
 }
 
 void AnimationComponent::ProcessGPUSkinning(ID3D12GraphicsCommandList* computeList) {
-    if (!IsPlaying() || !m_bCallGPUCulling.exchange(false, std::memory_order_acq_rel)) return;
+    if (!m_bCallGPUCulling.exchange(false, std::memory_order_acq_rel)) return;
+
+    auto* outputVertexBuffer = m_pSceneCreatorData->GetVertexBufferResource();
+    if (!outputVertexBuffer) {
+        SAFE_ASSERT(false, "AnimationComponent: GPU skinning output vertex buffer is missing");
+        return;
+    }
+    if ((outputVertexBuffer->GetDesc().Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS) == 0) {
+        SAFE_ASSERT(false, "AnimationComponent: GPU skinning output vertex buffer requires ALLOW_UNORDERED_ACCESS");
+        return;
+    }
+
+    auto toUAV = CD3DX12_RESOURCE_BARRIER::Transition(
+        outputVertexBuffer,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    computeList->ResourceBarrier(1, &toUAV);
 
     PSOManager::GetInstance()->GetPSOObject(PSOType::GPUSceneSkinning)->Bind(computeList);
 
     computeList->SetComputeRootShaderResourceView(GPU_SKINNING_PASS_BONES_TRANSFORM_INPUT_POS_IN_ROOT_SIG, m_pStructureBufferBones->GetResource()->GetGPUVirtualAddress());
     computeList->SetComputeRootShaderResourceView(GPU_SKINNING_PASS_VERTICES_SRV_INPUT_POS_IN_ROOT_SIG, m_pStructuredSceneVertexBuffer->GetResource()->GetGPUVirtualAddress());
-    computeList->SetComputeRootUnorderedAccessView(GPU_SKINNING_PASS_VERTICES_UAV_OUTPUT_POS_IN_ROOT_SIG, m_pSceneCreatorData->GetVertexBufferResource()->GetGPUVirtualAddress());
+    computeList->SetComputeRootUnorderedAccessView(GPU_SKINNING_PASS_VERTICES_UAV_OUTPUT_POS_IN_ROOT_SIG, outputVertexBuffer->GetGPUVirtualAddress());
     computeList->SetComputeRootConstantBufferView(GPU_SKINNING_PASS_SCENE_CBV_INPUT_POS_IN_ROOT_SIG, m_pGPUSkinningConstantBuffer->GetGPULocation(0));
 
-    int dispatches = ( int( m_pScene->GetVertices().size() ) + GPU_SKINNING_DISPATCH_X_COUNT - 1) / GPU_SKINNING_DISPATCH_X_COUNT;
+    int dispatches = ( int( m_pScene->GetVertices().size() ) + FDWConfig::RendererLimits::GpuSkinningDispatchSize - 1) / FDWConfig::RendererLimits::GpuSkinningDispatchSize;
     computeList->Dispatch(dispatches,1,1);
+
+    auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(outputVertexBuffer);
+    computeList->ResourceBarrier(1, &uavBarrier);
+
+    auto toRead = CD3DX12_RESOURCE_BARRIER::Transition(
+        outputVertexBuffer,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_GENERIC_READ);
+    computeList->ResourceBarrier(1, &toRead);
 
     GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::UpdateBLAS);
 }

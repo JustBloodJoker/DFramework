@@ -3,9 +3,11 @@
 #include <D3DFramework/GraphicUtilites/Materials.h>
 #include <WinWindow/Utils/Reflection/Reflection.h>
 
-#define LOADED_FLAGS_DATA_SIZE TEXTURE_TYPE_SIZE+1
+#define LOADED_FLAGS_DATA_SIZE TEXTURE_TYPE_SIZE+3
 
 #define IS_ORM_TEXTURE_FLAG_POS TEXTURE_TYPE_SIZE
+#define MATERIAL_ALPHA_MODE_FLAG_POS (TEXTURE_TYPE_SIZE+1)
+#define MATERIAL_RESERVED_FLAG_POS (TEXTURE_TYPE_SIZE+2)
 
 struct MeshComponentMaterialData: FD3DW::MaterialFrameWork{
     std::array<int, LOADED_FLAGS_DATA_SIZE> LoadedTexture = { false };

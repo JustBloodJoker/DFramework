@@ -1,5 +1,8 @@
+#include "pch.h"
+
 #include <MainRenderer/GlobalTextureHeap.h>
-#include <MainRenderer/GlobalConfig.h>
+#include <Config/RenderFormats.h>
+#include <Config/RendererResources.h>
 
 GlobalTextureHeap::GlobalTextureHeap() : FD3DW::DynamicSRV_UAVPacker(0, 0, 0, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE, nullptr) {}
 

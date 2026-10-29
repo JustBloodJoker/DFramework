@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Component/Core/IComponent.h>
 #include <Entity/Core/ComponentHolder.h>
 #include <World/World.h>

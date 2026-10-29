@@ -34,6 +34,7 @@ public:
 	virtual void BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsCommandList* list) override;
 
 protected:
+	static FD3DW::VertexFrameWork ConvertSceneVertex(FD3DW::SceneVertexFrameWork vertex);
 	void CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* list);
 	AnimationComponent* GetAnimationComponent();
 

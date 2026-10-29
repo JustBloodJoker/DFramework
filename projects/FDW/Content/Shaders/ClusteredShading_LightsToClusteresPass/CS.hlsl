@@ -8,6 +8,8 @@ cbuffer ViewParams : register(b0)
 {
     float4x4 ViewMatrix;
     int LightCount;
+    uint TileCount;
+    uint2 Padding;
 };
 
 bool SphereAABBIntersection(float3 center, float radius, float3 aabbMin, float3 aabbMax);
@@ -55,23 +57,40 @@ bool SphereAABBIntersection(float3 center, float radius, float3 aabbMin, float3 
 void CS(uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID)
 {
     uint index = groupID.x * THREAD_X_SIZE + groupThreadID.x;
+    if (index >= TileCount) {
+        return;
+    }
+
     Cluster c = Clusters[index];
     c.Count = 0;
+    c.AffectingLightCount = 0;
 
     for (uint i = 0; i < LightCount; i++)
     {
         bool addd = false;
         int type = Lights[i].LightType;
 
-        if (type == LIGHT_POINT_LIGHT_ENUM_VALUE) addd = TestPointLight(i, c);
-        else if (type == LIGHT_SPOT_LIGHT_ENUM_VALUE) addd = TestSpotLight(i, c);
-        else if (type == LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE) addd = TestDirectionalLight(i, c);
-        else if (type == LIGHT_RECT_LIGHT_ENUM_VALUE) addd = TestRectLight(i, c);
+        if (type == LIGHT_POINT_LIGHT_ENUM_VALUE) {
+            addd = TestPointLight(i, c);
+        }
+        else if (type == LIGHT_SPOT_LIGHT_ENUM_VALUE) {
+            addd = TestSpotLight(i, c);
+        }
+        else if (type == LIGHT_DIRECTIONAL_LIGHT_ENUM_VALUE) {
+            addd = TestDirectionalLight(i, c);
+        }
+        else if (type == LIGHT_RECT_LIGHT_ENUM_VALUE) {
+            addd = TestRectLight(i, c);
+        }
 
-        if (addd && c.Count < MAX_LIGHTS_PER_CLUSTER)
+        if (addd)
         {
-            c.LightIndices[c.Count] = i;
-            c.Count++;
+            c.AffectingLightCount++;
+            if (c.Count < MAX_LIGHTS_PER_CLUSTER)
+            {
+                c.LightIndices[c.Count] = i;
+                c.Count++;
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -23,7 +23,9 @@
     <ClCompile Include="src\Component\Camera\CameraComponent.cpp" />
     <ClCompile Include="src\Component\Core\IComponent.cpp" />
     <ClCompile Include="src\Component\Light\LightComponent.cpp" />
-    <ClCompile Include="src\Component\Light\ShadowComponent.cpp" />
+    <ClCompile Include="src\Component\Light\LightRuntimeIdentity.cpp" />
+    <ClCompile Include="src\ShadowData\ShadowLightParameters.cpp" />
+    <ClCompile Include="src\Component\Shadow\ShadowComponent.cpp" />
     <ClCompile Include="src\Component\RenderObject\AnimationComponent.cpp" />
     <ClCompile Include="src\Component\RenderObject\MeshComponent.cpp" />
     <ClCompile Include="src\Component\RenderObject\RenderComponent.cpp" />
@@ -38,13 +40,12 @@
     <ClCompile Include="src\Entity\Light\TPointLight.cpp" />
     <ClCompile Include="src\Entity\Light\TRectLight.cpp" />
     <ClCompile Include="src\Entity\Light\TSpotLight.cpp" />
-    <ClCompile Include="src\Entity\RenderObject\SimpleMeshTemplatesGenerators.cpp" />
     <ClCompile Include="src\Entity\RenderObject\TMesh.cpp" />
     <ClCompile Include="src\Entity\RenderObject\TRender.cpp" />
     <ClCompile Include="src\Entity\RenderObject\TScene.cpp" />
+    <ClCompile Include="src\Entity\RenderObject\SimpleMeshGeometry.cpp" />
     <ClCompile Include="src\Entity\RenderObject\TSimpleMesh.cpp" />
     <ClCompile Include="src\Entity\RenderObject\TSkybox.cpp" />
-    <ClCompile Include="src\Entity\RenderObject\VerticesConverter.cpp" />
     <ClCompile Include="..\..\external\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="..\..\external\imgui\backends\imgui_impl_win32.cpp" />
     <ClCompile Include="..\..\external\imgui\imgui.cpp" />
@@ -53,13 +54,21 @@
     <ClCompile Include="..\..\external\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\..\external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\MainRenderer\GlobalConfig.cpp" />
+    <ClCompile Include="src\Config\RendererConfiguration.cpp" />
+    <ClCompile Include="src\ShadowData\NeuralShadowData.cpp" />
     <ClCompile Include="src\MainRenderer\GlobalRenderThreadManager.cpp" />
     <ClCompile Include="src\MainRenderer\GlobalTextureHeap.cpp" />
     <ClCompile Include="src\MainRenderer\MainRenderer.cpp" />
     <ClCompile Include="src\MainRenderer\MainRendererComponent.cpp" />
     <ClCompile Include="src\MainRenderer\PSOManager.cpp" />
-    <ClCompile Include="src\System\AtlasRTShadowSystem.cpp" />
+    <ClCompile Include="src\Config\ShadowMode.cpp" />
+    <ClCompile Include="src\System\Shadows\Atlas\ShadowAtlasRenderer.cpp" />
+    <ClCompile Include="src\System\Shadows\Atlas\HardShadowAtlasBackend.cpp" />
+    <ClCompile Include="src\System\Shadows\RayTracing\PerLightRTShadowBackend.cpp" />
+    <ClCompile Include="src\System\Shadows\RayTracing\RTGeometryCoverage.cpp" />
+    <ClCompile Include="src\System\Shadows\ShadowLightSelector.cpp" />
+    <ClCompile Include="src\System\Shadows\ShadowRouter.cpp" />
+    <ClCompile Include="src\System\Shadows\ShadowSystem.cpp" />
     <ClCompile Include="src\System\AudioSystem.cpp" />
     <ClCompile Include="src\System\BloomEffectSystem.cpp" />
     <ClCompile Include="src\System\CameraFrustum.cpp" />
@@ -68,9 +77,12 @@
     <ClCompile Include="src\System\ClusteredLightningSystem.cpp" />
     <ClCompile Include="src\System\LightSystem.cpp" />
     <ClCompile Include="src\System\MeshesCullingSubSystem.cpp" />
+    <ClCompile Include="src\System\Shadows\Neural\NeuralShadowBaselinePass.cpp" />
+    <ClCompile Include="src\System\Shadows\Neural\NeuralShadowModelPackage.cpp" />
+    <ClCompile Include="src\System\Shadows\Neural\NeuralShadowInferencePass.cpp" />
+    <ClCompile Include="src\System\Shadows\Neural\NeuralShadowWorkGenerator.cpp" />
     <ClCompile Include="src\System\RectsPacker.cpp" />
     <ClCompile Include="src\System\RenderMeshesSystem.cpp" />
-    <ClCompile Include="src\System\RTShadowSystem.cpp" />
     <ClCompile Include="src\System\SceneAnimationSystem.cpp" />
     <ClCompile Include="src\System\SkyboxRenderSystem.cpp" />
     <ClCompile Include="src\System\TAASystem.cpp" />
@@ -85,8 +97,8 @@
     <ClInclude Include="src\Component\Core\IComponent.h" />
     <ClInclude Include="src\Component\Light\LightComponent.h" />
     <ClInclude Include="src\Component\Light\LightComponentData.h" />
-    <ClInclude Include="src\Component\Light\ShadowComponent.h" />
-    <ClInclude Include="src\Component\Light\ShadowComponentData.h" />
+    <ClInclude Include="src\Component\Shadow\ShadowComponent.h" />
+    <ClInclude Include="src\Component\Shadow\ShadowComponentData.h" />
     <ClInclude Include="src\Component\RenderObject\AnimationComponent.h" />
     <ClInclude Include="src\Component\RenderObject\MeshComponent.h" />
     <ClInclude Include="src\Component\RenderObject\MeshComponentMaterialData.h" />
@@ -94,6 +106,15 @@
     <ClInclude Include="src\Component\RenderObject\MeshesIndirectRenderData.h" />
     <ClInclude Include="src\Component\RenderObject\RenderComponent.h" />
     <ClInclude Include="src\Component\RenderObject\SkyboxComponent.h" />
+    <ClInclude Include="src\Config\LightingConfig.h" />
+    <ClInclude Include="src\Config\NeuralShadowConfig.h" />
+    <ClInclude Include="src\Config\PipelineRegistry.h" />
+    <ClInclude Include="src\Config\RendererLimits.h" />
+    <ClInclude Include="src\Config\RenderFormats.h" />
+    <ClInclude Include="src\Config\ShaderBindings.h" />
+    <ClInclude Include="src\Config\ShadowConfig.h" />
+    <ClInclude Include="src\ShadowData\NeuralShadowData.h" />
+    <ClInclude Include="src\ShadowData\ShadowLightParameters.h" />
     <ClInclude Include="src\Entity\Audio\TAudio.h" />
     <ClInclude Include="src\Entity\Camera\DefaultCameraInputLayer.h" />
     <ClInclude Include="src\Entity\Camera\TBaseCamera.h" />
@@ -104,23 +125,21 @@
     <ClInclude Include="src\Entity\Light\TPointLight.h" />
     <ClInclude Include="src\Entity\Light\TRectLight.h" />
     <ClInclude Include="src\Entity\Light\TSpotLight.h" />
-    <ClInclude Include="src\Entity\RenderObject\VerticesConverter.h" />
     <ClInclude Include="src\Entity\RenderObject\SimpleMeshTemplates.h" />
-    <ClInclude Include="src\Entity\RenderObject\SimpleMeshTemplatesGenerators.h" />
+    <ClInclude Include="src\Entity\RenderObject\SimpleMeshGeometry.h" />
     <ClInclude Include="src\Entity\RenderObject\TMesh.h" />
     <ClInclude Include="src\Entity\RenderObject\TRender.h" />
     <ClInclude Include="src\Entity\RenderObject\TScene.h" />
     <ClInclude Include="src\Entity\RenderObject\TSimpleMesh.h" />
     <ClInclude Include="src\Entity\RenderObject\TSkybox.h" />
-    <ClInclude Include="src\MainRenderer\GlobalConfig.h" />
+    <ClInclude Include="src\MainRenderer\RendererResources.h" />
     <ClInclude Include="src\MainRenderer\GlobalRenderThreadManager.h" />
     <ClInclude Include="src\MainRenderer\GlobalTextureHeap.h" />
     <ClInclude Include="src\MainRenderer\MainRenderer.h" />
     <ClInclude Include="src\MainRenderer\MainRendererComponent.h" />
     <ClInclude Include="src\MainRenderer\PSOManager.h" />
+    <ClInclude Include="src\Config\ShadowMode.h" />
     <ClInclude Include="src\pch.h" />
-    <ClInclude Include="src\System\AtlasRTShadowLightParams.h" />
-    <ClInclude Include="src\System\AtlasRTShadowSystem.h" />
     <ClInclude Include="src\System\AudioSystem.h" />
     <ClInclude Include="src\System\BloomEffectSystem.h" />
     <ClInclude Include="src\System\BloomSystemConfigs.h" />
@@ -128,13 +147,26 @@
     <ClInclude Include="src\System\CameraSystem.h" />
     <ClInclude Include="src\System\CameraSystemInputLayer.h" />
     <ClInclude Include="src\System\ClusteredLightningSystem.h" />
+    <ClInclude Include="src\System\ClusteredLightTileData.h" />
     <ClInclude Include="src\System\LightSystem.h" />
     <ClInclude Include="src\System\MeshesCullingSubSystem.h" />
+    <ClInclude Include="src\System\Shadows\Neural\NeuralShadowBaselinePass.h" />
+    <ClInclude Include="src\System\Shadows\Neural\NeuralShadowModelPackage.h" />
+    <ClInclude Include="src\System\Shadows\Neural\NeuralShadowInferencePass.h" />
+    <ClInclude Include="src\System\Shadows\Neural\NeuralShadowWorkGenerator.h" />
+    <ClInclude Include="src\System\Shadows\Atlas\ShadowAtlasRenderer.h" />
+    <ClInclude Include="src\System\Shadows\Atlas\HardShadowAtlasBackend.h" />
+    <ClInclude Include="src\System\Shadows\Atlas\ShadowAtlasAllocator.h" />
+    <ClInclude Include="src\System\Shadows\Atlas\ShadowMetadataProvider.h" />
+    <ClInclude Include="src\System\Shadows\RayTracing\PerLightRTShadowBackend.h" />
+    <ClInclude Include="src\System\Shadows\RayTracing\RTGeometryCoverage.h" />
+    <ClInclude Include="src\System\Shadows\ShadowLightSelector.h" />
+    <ClInclude Include="src\System\Shadows\ShadowRenderServices.h" />
+    <ClInclude Include="src\System\Shadows\ShadowRouter.h" />
+    <ClInclude Include="src\System\Shadows\ShadowSystem.h" />
     <ClInclude Include="src\System\NRenderSystemNotifyType.h" />
     <ClInclude Include="src\System\RectsPacker.h" />
     <ClInclude Include="src\System\RenderMeshesSystem.h" />
-    <ClInclude Include="src\System\RTShadowSystem.h" />
-    <ClInclude Include="src\System\RTShadowSystemConfig.h" />
     <ClInclude Include="src\System\SceneAnimationSystem.h" />
     <ClInclude Include="src\System\SkyboxRenderSystem.h" />
     <ClInclude Include="src\System\TAASystem.h" />
@@ -197,6 +229,12 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Platform)'=='x64'">
+    <OutDir>$(SolutionDir)x64\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)x64\$(Configuration)\</IntDir>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)</LocalDebuggerWorkingDirectory>
+    <VcpkgApplocalDeps>true</VcpkgApplocalDeps>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -229,16 +267,26 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;_XM_NO_INTRINSICS_;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;ThirdParty\onnxruntime-directml\include;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\x64\Debug_Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3DFramework.lib;WinWindow.lib;onnxruntime.lib;DirectML.lib;bcrypt.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\x64\Debug_Lib;ThirdParty\onnxruntime-directml\lib\win-x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>onnxruntime.dll;DirectML.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(ProjectDir)Content\ShadowRendering\Runtime\onnxruntime.dll" "$(OutDir)onnxruntime.dll"
+copy /Y "$(ProjectDir)Content\ShadowRendering\Runtime\DirectML.dll" "$(OutDir)DirectML.dll"
+copy /Y "$(ProjectDir)ThirdParty\onnxruntime-directml\LICENSE-ONNXRUNTIME.txt" "$(OutDir)LICENSE-ONNXRUNTIME.txt"
+copy /Y "$(ProjectDir)ThirdParty\onnxruntime-directml\LICENSE-DIRECTML.txt" "$(OutDir)LICENSE-DIRECTML.txt"
+copy /Y "$(SolutionDir)x64\dxcompiler.dll" "$(OutDir)dxcompiler.dll"
+copy /Y "$(SolutionDir)x64\dxil.dll" "$(OutDir)dxil.dll"</Command>
+    </PostBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>x64/Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <Verbose>true</Verbose>
@@ -250,9 +298,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;_XM_NO_INTRINSICS_;NOMINMAX;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\engine\WinWindow;..\..\engine\D3DFramework;src;ThirdParty\onnxruntime-directml\include;..\..\external\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -260,8 +308,18 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\..\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>D3DFramework.lib;WinWindow.lib;onnxruntime.lib;DirectML.lib;bcrypt.lib;delayimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\x64\Release;ThirdParty\onnxruntime-directml\lib\win-x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <DelayLoadDLLs>onnxruntime.dll;DirectML.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
+    <PostBuildEvent>
+      <Command>copy /Y "$(ProjectDir)Content\ShadowRendering\Runtime\onnxruntime.dll" "$(OutDir)onnxruntime.dll"
+copy /Y "$(ProjectDir)Content\ShadowRendering\Runtime\DirectML.dll" "$(OutDir)DirectML.dll"
+copy /Y "$(ProjectDir)ThirdParty\onnxruntime-directml\LICENSE-ONNXRUNTIME.txt" "$(OutDir)LICENSE-ONNXRUNTIME.txt"
+copy /Y "$(ProjectDir)ThirdParty\onnxruntime-directml\LICENSE-DIRECTML.txt" "$(OutDir)LICENSE-DIRECTML.txt"
+copy /Y "$(SolutionDir)x64\dxcompiler.dll" "$(OutDir)dxcompiler.dll"
+copy /Y "$(SolutionDir)x64\dxil.dll" "$(OutDir)dxil.dll"</Command>
+    </PostBuildEvent>
     <Lib>
       <AdditionalLibraryDirectories>..\..\include\DLSS\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
@@ -271,5 +329,3 @@
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.9.targets" />
   </ImportGroup>
 </Project>
-
-

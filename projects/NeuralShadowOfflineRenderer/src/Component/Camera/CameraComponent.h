@@ -1,0 +1,44 @@
+#pragma once
+
+#include <Component/Core/IComponent.h>
+#include <DirectXMath.h>
+
+namespace dx = DirectX;
+
+class CameraComponent : public IComponent {
+public:
+	CameraComponent();
+	virtual ~CameraComponent() = default;
+
+
+public:
+    REFLECT_BODY(CameraComponent)
+    BEGIN_REFLECT(CameraComponent, IComponent)
+        REFLECT_PROPERTY(m_xView)
+        REFLECT_PROPERTY(m_xEye)
+        REFLECT_PROPERTY(m_xUp)
+        REFLECT_PROPERTY(m_xAt)
+    END_REFLECT(CameraComponent)
+
+public:
+
+	virtual void Init() override;
+	virtual void Activate(bool a) override;
+
+	void SetAllVectors(dx::XMVECTOR newEye, dx::XMVECTOR newUp, dx::XMVECTOR newAt);
+
+public:
+	void InitDefault();
+
+	dx::XMMATRIX GetViewMatrix() const;
+	dx::XMFLOAT3 GetCameraPosition() const;
+	void UpdateViewMatrix();
+
+protected:
+
+	dx::XMMATRIX m_xView;
+
+	dx::XMVECTOR m_xEye;
+	dx::XMVECTOR m_xUp;
+	dx::XMVECTOR m_xAt;
+};

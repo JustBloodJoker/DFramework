@@ -1,0 +1,32 @@
+#pragma once
+
+#include <Component/Core/IComponent.h>
+#include <Renderer/GlobalRenderThreadManager.h>
+
+struct RenderComponentBeforeRenderInputData {
+    dx::XMMATRIX Projection;
+    dx::XMMATRIX View;
+    dx::XMFLOAT3 CameraPosition;
+};
+
+class RenderComponent : public IComponent {
+public:
+	RenderComponent() = default;
+	virtual ~RenderComponent() = default;
+
+public:
+    REFLECT_BODY(RenderComponent)
+    BEGIN_REFLECT(RenderComponent, IComponent)
+        REFLECT_PROPERTY(m_xWorldMatrix)
+    END_REFLECT(RenderComponent)
+
+public:
+    dx::XMMATRIX GetWorldMatrix() const;
+
+	virtual void OnStartRenderTick(const RenderComponentBeforeRenderInputData& data) = 0;
+    virtual void RenderInit(ID3D12Device* device, ID3D12GraphicsCommandList* list) = 0;
+    virtual void RenderInitDXR(ID3D12Device5* device, ID3D12GraphicsCommandList4* list);
+
+protected:
+    dx::XMMATRIX m_xWorldMatrix = dx::XMMatrixIdentity();
+};

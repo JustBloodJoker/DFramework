@@ -14,6 +14,7 @@ add_subdirectory(external/imgui)
 add_subdirectory(engine/WinWindow)
 add_subdirectory(engine/D3DFramework)
 add_subdirectory(projects/FDW)
+add_subdirectory(projects/NeuralShadowOfflineRenderer)
 
 if(BUILD_TESTING AND WIN32)
     add_custom_target(DFrameworkTests
@@ -22,6 +23,14 @@ if(BUILD_TESTING AND WIN32)
             D3DFrameworkRenderQueueTests
             D3DFrameworkBufferReadbackTests
             D3DFrameworkD3D12DiagnosticsTests
+            FDWNeuralShadowRoutingTests
+            FDWShadowLightSelectorTests
+            FDWShadowRouterTests
+            FDWNeuralShadowModelPackageTests
+            NeuralShadowOfflineDatasetTests
+            NeuralShadowOfflineCaptureTests
+            NeuralShadowOfflineRTTargetTests
+            NeuralShadowOfflineSplitTests
     )
     set_target_properties(DFrameworkTests PROPERTIES FOLDER "tests")
 endif()

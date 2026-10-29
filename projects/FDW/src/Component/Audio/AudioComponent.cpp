@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Component/Audio/AudioComponent.h>
 #include <World/World.h>
 #include <MainRenderer/MainRenderer.h>

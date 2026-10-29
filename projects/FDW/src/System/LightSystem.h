@@ -45,6 +45,7 @@ public:
 	D3D12_GPU_VIRTUAL_ADDRESS GetLightsConstantBufferGPULocation();
 	
 	const std::vector<LightComponentData>& GetLightComponentsData() const;
+	const std::vector<std::uint64_t>& GetLightRuntimeIdentities() const;
 
 public: //IBL
 	FD3DW::FResource* GetIBLBrdfLUTResource();
@@ -84,6 +85,7 @@ protected:
 protected:
 	LightSystemBuffer m_xLightBuffer;
 	std::vector<LightComponentData> m_vLightComponentsData;
+	std::vector<std::uint64_t> m_LightRuntimeIdentities;
 
 	std::atomic<bool> m_bIsNeedUpdateDataInBuffer{ true };
 

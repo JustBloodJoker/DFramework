@@ -44,7 +44,10 @@ namespace FD3DW {
 		if (desc.isFile) {
 
 			std::ifstream file(desc.pathOrData, std::ios::binary | std::ios::ate);
-			if (!file) throw std::runtime_error("Can't open shader file");
+			if (!file) {
+				CONSOLE_ERROR_MESSAGE("BasePipelineObject: cannot open shader file");
+				return nullptr;
+			}
 
 			data.resize(file.tellg());
 			file.seekg(0);
@@ -57,9 +60,9 @@ namespace FD3DW {
 		}
 
 
-		return CompileShader(data, desc.entry, desc.target);
+		return CompileShader(data, desc.entry, desc.target, desc.enable16BitTypes);
 	}
-	wrl::ComPtr<IDxcBlob> BasePipelineObject::CompileShader(std::vector<char> data, std::wstring entry, std::wstring target) {
+	wrl::ComPtr<IDxcBlob> BasePipelineObject::CompileShader( std::vector<char> data, std::wstring entry, std::wstring target, bool enable16BitTypes) {
 		DxcBuffer buffer{ data.data(), data.size(), DXC_CP_UTF8 };
 
 		std::vector<LPCWSTR> args = {
@@ -74,7 +77,7 @@ namespace FD3DW {
 			L"-Ges",
 			L"-fspv-reflect",
 		};
-
+		if (enable16BitTypes) args.push_back(L"-enable-16bit-types");
 		for (const auto& dir : m_vIncludeDirs) {
 			args.push_back(L"-I");
 			args.push_back(dir.c_str());
@@ -101,7 +104,10 @@ namespace FD3DW {
 		SAFE_ASSERT(desc.isFile, "Only file-based root signature loading is supported.");
 
 		std::ifstream file(desc.pathOrData, std::ios::binary | std::ios::ate);
-		if (!file) throw std::runtime_error("Can't open root signature file");
+		if (!file) {
+			CONSOLE_ERROR_MESSAGE("BasePipelineObject: cannot open root signature file");
+			return nullptr;
+		}
 
 		std::vector<char> data(file.tellg());
 		file.seekg(0);
@@ -117,7 +123,6 @@ namespace FD3DW {
 			L"-Ges",
 			L"-fspv-reflect",
 		};
-
 		wrl::ComPtr<IDxcOperationResult> result;
 		HRESULT_ASSERT(m_pCompiler->Compile(&buffer, args.data(), (UINT)args.size(), m_pIncludeHandler.Get(), IID_PPV_ARGS(result.ReleaseAndGetAddressOf())), "Shader compile error");
 

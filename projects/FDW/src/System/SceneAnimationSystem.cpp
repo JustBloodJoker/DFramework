@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <MainRenderer/MainRenderer.h>
 #include <System/SceneAnimationSystem.h>
 

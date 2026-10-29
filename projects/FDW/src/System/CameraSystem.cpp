@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <System/CameraSystem.h>
 #include <MainRenderer/MainRenderer.h>
 #include <Component/Camera/CameraComponent.h>
@@ -93,7 +95,24 @@ void CameraSystem::UpdateProjectionMatrix() {
 }
 
 float CameraSystem::GetFoVY() const {
-	return M_PI_2_F;
+	return m_fFoVY;
+}
+
+void CameraSystem::SetProjectionParameters(float fovY, float zNear, float zFar) {
+	if (!std::isfinite(fovY) || !std::isfinite(zNear) || !std::isfinite(zFar) || fovY <= 0.0f || fovY >= M_PI_F || zNear <= 0.0f || zFar <= zNear) return;
+	
+	m_fFoVY = fovY;
+	m_fZNear = zNear;
+	m_fZFar = zFar;
+	UpdateProjectionMatrix();
+}
+
+float CameraSystem::GetZNear() const {
+	return m_fZNear;
+}
+
+float CameraSystem::GetZFar() const {
+	return m_fZFar;
 }
 
 void CameraSystem::OnResizeWindow() {
@@ -155,14 +174,14 @@ std::shared_ptr<FD3DW::ExecutionHandle> CameraSystem::OnStartTick(std::shared_pt
 		auto sceneWidth = std::max(1, m_pOwner->GetSceneRenderWidth());
 		auto sceneHeight = std::max(1, m_pOwner->GetSceneRenderHeight());
 
-		auto jitterIndex = frameIdx % TAA_JITTER_PHASES_NUM;
+		auto jitterIndex = frameIdx % FDWConfig::RendererLimits::TaaJitterPhaseCount;
 
 		auto haltonX = Halton(jitterIndex + 1, 2) - 0.5f;
 		auto haltonY = Halton(jitterIndex + 1, 3) - 0.5f;
 
 		auto jitterScale = 1.0f;
 		if (auto timer = m_pOwner->GetTimer(); timer) {
-			auto targetFrameTime = 1.0f / TAA_PREFER_FRAME_RATE_PHASES_NUM;
+			auto targetFrameTime = 1.0f / FDWConfig::RendererLimits::TaaPreferredFrameRate;
 			auto dt = (float)timer->GetDeltaTime();
 			if (dt > targetFrameTime && dt > 0.0001f) {
 				jitterScale = targetFrameTime / dt;

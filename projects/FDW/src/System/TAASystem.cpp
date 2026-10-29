@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <System/TAASystem.h>
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
@@ -44,12 +46,12 @@ void TAASystem::ResizeResources(UINT width, UINT height) {
 	GlobalRenderThreadManager::GetInstance()->Submit(clearRecipe);
 }
 
-void TAASystem::SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FResource* motion, FD3DW::DepthStencilView* dsv1, FD3DW::DepthStencilView* dsv2) {
+void TAASystem::SetGBufferResources(FD3DW::FResource* sceneShading, FD3DW::FResource* motion, FD3DW::DepthStencilView* currentDepth, FD3DW::DepthStencilView* previousDepth) {
 	auto device = m_pOwner->GetDevice();
 	m_pSRVPack->AddResource(sceneShading->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, TAA_SCENE_SHADING_RESULT_SRV_POS_IN_HEAP, device);
 	m_pSRVPack->AddResource(motion->GetResource(), D3D12_SRV_DIMENSION_TEXTURE2D, TAA_MOTION_GBUFFER_SRV_POS_IN_HEAP, device);
-	m_pSRVPack->AddResource(dsv1, TAA_DEPTH_1_BUFFER_SRV_POS_IN_HEAP, device);
-	m_pSRVPack->AddResource(dsv2, TAA_DEPTH_2_BUFFER_SRV_POS_IN_HEAP, device);
+	m_pSRVPack->AddResource(currentDepth, TAA_DEPTH_1_BUFFER_SRV_POS_IN_HEAP, device);
+	m_pSRVPack->AddResource(previousDepth, TAA_DEPTH_2_BUFFER_SRV_POS_IN_HEAP, device);
 }
 
 std::shared_ptr<FD3DW::ExecutionHandle> TAASystem::ProcessTAABufferCollection(std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> sync) {

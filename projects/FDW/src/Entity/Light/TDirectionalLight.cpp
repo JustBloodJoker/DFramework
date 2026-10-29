@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/Light/TDirectionalLight.h>
 #include <World/World.h>
 

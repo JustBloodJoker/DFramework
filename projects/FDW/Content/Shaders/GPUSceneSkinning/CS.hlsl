@@ -38,7 +38,9 @@ cbuffer CSParams : register(b1)
 void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
 {
     uint idx = dispatchThreadID.x;
-    if (idx >= VertexCount) return;
+    if (idx >= VertexCount) {
+        return;
+    }
 
     ANIMVERTEX_INPUT vin = g_InputVertices[idx];
 

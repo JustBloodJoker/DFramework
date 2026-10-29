@@ -1,11 +1,12 @@
 #pragma once
 
 #include <Entity/RenderObject/TMesh.h>
+#include <Entity/RenderObject/SimpleMeshGeometry.h>
 #include <D3DFramework/Objects/SimpleObjects.h>
 #include <D3DFramework/Objects/ObjectVertexIndexDataCreator.h>
 
 
-class TSimpleMesh : public TMesh {
+class TSimpleMesh : public TMesh, protected SimpleMeshGeometry {
 public:
 	TSimpleMesh() = default;
 	virtual ~TSimpleMesh() = default;

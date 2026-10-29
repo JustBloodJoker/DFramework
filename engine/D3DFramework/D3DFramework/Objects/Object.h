@@ -9,6 +9,14 @@
 
 namespace FD3DW
 {
+	enum class MaterialAlphaMode : UINT
+	{
+		Opaque = 0u,
+		Mask = 1u,
+		Blend = 2u,
+		Unknown = 3u
+	};
+
 	struct ObjectDesc
 	{
 		UINT VerticesCount;
@@ -18,6 +26,15 @@ namespace FD3DW
 		UINT MaterialIndex;
 		dx::XMFLOAT3 ObjectMin;
 		dx::XMFLOAT3 ObjectMax;
+		MaterialAlphaMode AlphaMode = MaterialAlphaMode::Opaque;
+		float AlphaCutoff = 0.5f;
+		UINT DoubleSided = 0u;
+		UINT PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+		UINT HasNormals = 0u;
+		UINT HasTangents = 0u;
+		UINT HasTextureCoordinates = 0u;
+		UINT HasBones = 0u;
+		std::string MeshName;
 	};
 
 	class Object

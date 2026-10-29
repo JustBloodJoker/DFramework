@@ -1,0 +1,4 @@
+struct ShadowPayload
+{
+    float Visible;
+};

@@ -256,7 +256,11 @@ namespace FDWWIN
 		{
 			CONSOLE_MESSAGE_NO_PREF("WM_ACTIVATE ACTIVE");
 
-			if (LOWORD(wParam) == WA_INACTIVE)
+			if (!m_bWindowVisible)
+			{
+				m_bPAUSEWORK = false;
+			}
+			else if (LOWORD(wParam) == WA_INACTIVE)
 			{
 				m_bPAUSEWORK = true;
 			}
@@ -276,7 +280,7 @@ namespace FDWWIN
 		
 		case WM_GETMINMAXINFO:
 			((MINMAXINFO*)lParam)->ptMinTrackSize.x = m_xWndSettings.MinWidth;
-			((MINMAXINFO*)lParam)->ptMinTrackSize.y = m_xWndSettings.Height;
+			((MINMAXINFO*)lParam)->ptMinTrackSize.y = m_xWndSettings.MinHeight;
 			isHandled = true;
 			break;
 

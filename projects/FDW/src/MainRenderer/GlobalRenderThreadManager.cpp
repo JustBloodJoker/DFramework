@@ -1,6 +1,8 @@
+#include "pch.h"
+
 #include <MainRenderer/GlobalRenderThreadManager.h>
-#include <MainRenderer/GlobalConfig.h>
+#include <Config/RendererLimits.h>
 
 GlobalRenderThreadManager::GlobalRenderThreadManager() {
-	m_iMaxThreadsCount = GLOBAL_RENDER_THREAD_MANAGER_WORKER_POOL_MAX_COUNT;
+	m_iMaxThreadsCount = FDWConfig::RendererLimits::RenderWorkerCount;
 }

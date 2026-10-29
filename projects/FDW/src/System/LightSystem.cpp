@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <MainRenderer/MainRenderer.h>
 #include <MainRenderer/PSOManager.h>
 #include <System/LightSystem.h>
@@ -21,6 +23,11 @@ void LightSystem::AfterConstruction() {
 }
 
 int LightSystem::GetLightsCount() {
+    if (m_bIsNeedUpdateDataInBuffer.load(std::memory_order_acquire)) {
+        const auto components = GetWorld()->GetAllComponentsOfType<LightComponent>();
+        return static_cast<int>(std::count_if(components.begin(), components.end(),
+            [](LightComponent* component) { return component->IsActive(); }));
+    }
     return m_xLightBuffer.LightCount;
 }
 
@@ -145,7 +152,7 @@ bool LightSystem::UpdateIBLIrradianceResource(FD3DW::FResource* environmentMap, 
     list->SetComputeRootDescriptorTable(IBL_IRRADIANCE_CONV_ENV_SRV_POS_IN_ROOT_SIG,m_pIBLIrradianceConvolutionPack->GetResult()->GetGPUDescriptorHandle(0));
     list->SetComputeRootDescriptorTable(IBL_IRRADIANCE_CONV_OUT_UAV_POS_IN_ROOT_SIG, m_pIBLIrradianceConvolutionPack->GetResult()->GetGPUDescriptorHandle(1) );
 
-    auto dispatchSize = (IBL_IRRADIANCE_CUBEMAP_SIZE + 7u) / 8u;
+    auto dispatchSize = (FDWConfig::Lighting::IrradianceCubemapSize + 7u) / 8u;
     list->Dispatch(dispatchSize, dispatchSize, 6u);
     
     environmentMap->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -214,6 +221,10 @@ bool LightSystem::UpdateIBLPrefilteredResource(FD3DW::FResource* environmentMap,
 
 const std::vector<LightComponentData>& LightSystem::GetLightComponentsData() const { 
     return m_vLightComponentsData; 
+}
+
+const std::vector<std::uint64_t>& LightSystem::GetLightRuntimeIdentities() const {
+	return m_LightRuntimeIdentities;
 }
 
 bool LightSystem::IsEnabledIBL() {
@@ -326,8 +337,8 @@ dx::XMFLOAT2 LightSystem::IntegrateBRDF(float nDotV, float roughness) {
 
     float A = 0.0f;
     float B = 0.0f;
-    for (UINT i = 0; i < IBL_BRDF_LUT_SAMPLES; ++i) {
-        auto xi = Hammersley(i, IBL_BRDF_LUT_SAMPLES);
+    for (UINT i = 0; i < FDWConfig::Lighting::BrdfLutSamples; ++i) {
+        auto xi = Hammersley(i, FDWConfig::Lighting::BrdfLutSamples);
         auto H = ImportanceSampleGGX(xi, roughness);
         auto vDotH = FD3DW::Clamp01(FD3DW::Dot3(V, H));
 
@@ -345,7 +356,7 @@ dx::XMFLOAT2 LightSystem::IntegrateBRDF(float nDotV, float roughness) {
         }
     }
 
-    auto invSamples = 1.0f / float(IBL_BRDF_LUT_SAMPLES);
+    auto invSamples = 1.0f / float(FDWConfig::Lighting::BrdfLutSamples);
     return dx::XMFLOAT2(A * invSamples, B * invSamples);
 }
 
@@ -354,8 +365,8 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLBrdfLutResource(ID3D12De
         device,
         1,
         DXGI_FORMAT_R32G32_FLOAT,
-        IBL_BRDF_LUT_SIZE,
-        IBL_BRDF_LUT_SIZE,
+        FDWConfig::Lighting::BrdfLutSize,
+        FDWConfig::Lighting::BrdfLutSize,
         DXGI_SAMPLE_DESC({ 1, 0 }),
         D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         D3D12_RESOURCE_FLAG_NONE,
@@ -365,13 +376,13 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLBrdfLutResource(ID3D12De
         1
     );
 
-    std::vector<float> pixels(size_t(IBL_BRDF_LUT_SIZE) * size_t(IBL_BRDF_LUT_SIZE) * 2u, 0.0f);
-    for (UINT y = 0; y < IBL_BRDF_LUT_SIZE; ++y) {
-        auto roughness = (float(y) + 0.5f) / float(IBL_BRDF_LUT_SIZE);
-        for (UINT x = 0; x < IBL_BRDF_LUT_SIZE; ++x) {
-            auto nDotV = (float(x) + 0.5f) / float(IBL_BRDF_LUT_SIZE);
+    std::vector<float> pixels(size_t(FDWConfig::Lighting::BrdfLutSize) * size_t(FDWConfig::Lighting::BrdfLutSize) * 2u, 0.0f);
+    for (UINT y = 0; y < FDWConfig::Lighting::BrdfLutSize; ++y) {
+        auto roughness = (float(y) + 0.5f) / float(FDWConfig::Lighting::BrdfLutSize);
+        for (UINT x = 0; x < FDWConfig::Lighting::BrdfLutSize; ++x) {
+            auto nDotV = (float(x) + 0.5f) / float(FDWConfig::Lighting::BrdfLutSize);
             auto brdf = IntegrateBRDF(FD3DW::Clamp01(nDotV), FD3DW::Clamp01(roughness));
-            auto index = (size_t(y) * size_t(IBL_BRDF_LUT_SIZE) + size_t(x)) * 2u;
+            auto index = (size_t(y) * size_t(FDWConfig::Lighting::BrdfLutSize) + size_t(x)) * 2u;
             pixels[index + 0] = brdf.x;
             pixels[index + 1] = brdf.y;
         }
@@ -386,8 +397,8 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLIrradianceResource(ID3D1
         device,
         6,
         DXGI_FORMAT_R16G16B16A16_FLOAT,
-        IBL_IRRADIANCE_CUBEMAP_SIZE,
-        IBL_IRRADIANCE_CUBEMAP_SIZE,
+        FDWConfig::Lighting::IrradianceCubemapSize,
+        FDWConfig::Lighting::IrradianceCubemapSize,
         DXGI_SAMPLE_DESC({ 1, 0 }),
         D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
@@ -402,7 +413,7 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLIrradianceResource(ID3D1
 
 std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLPrefilteredResource(ID3D12Device* device) {
     auto mipLevels = 1u;
-    for (auto size = IBL_PREFILTERED_CUBEMAP_SIZE; size > 1u; size >>= 1u) {
+    for (auto size = FDWConfig::Lighting::PrefilteredCubemapSize; size > 1u; size >>= 1u) {
         ++mipLevels;
     }
 
@@ -410,8 +421,8 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLPrefilteredResource(ID3D
         device,
         6,
         DXGI_FORMAT_R16G16B16A16_FLOAT,
-        IBL_PREFILTERED_CUBEMAP_SIZE,
-        IBL_PREFILTERED_CUBEMAP_SIZE,
+        FDWConfig::Lighting::PrefilteredCubemapSize,
+        FDWConfig::Lighting::PrefilteredCubemapSize,
         DXGI_SAMPLE_DESC({ 1, 0 }),
         D3D12_RESOURCE_DIMENSION_TEXTURE2D,
         D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
@@ -426,8 +437,12 @@ std::shared_ptr<FD3DW::FResource> LightSystem::CreateIBLPrefilteredResource(ID3D
 
 std::vector<LightComponentData> LightSystem::GetDataFromLightComponents(std::vector<LightComponent*> cmps) {
     std::vector<LightComponentData> ret;
+    m_LightRuntimeIdentities.clear();
     for (const auto& cmp : cmps) {
-        if( cmp->IsActive() ) ret.push_back(cmp->GetLightComponentData());
+        if (cmp->IsActive()) {
+            ret.push_back(cmp->GetLightComponentData());
+            m_LightRuntimeIdentities.push_back(cmp->GetRuntimeLightIdentity());
+        }
     }
     return ret;
 }

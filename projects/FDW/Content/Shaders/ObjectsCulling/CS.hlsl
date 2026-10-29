@@ -90,15 +90,21 @@ bool IntersectHIZ(InstanceGPU inst, int MipLevelsCount, matrix vp, int hizWidth,
 void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
 {
     uint idx = dispatchThreadID.x;
-    if (idx >= OcclusionData.InstanceCount) return;
+    if (idx >= OcclusionData.InstanceCount) {
+        return;
+    }
 
     InstanceGPU inst = Instances[idx];
 
-    if (!IntersectFrustum(inst, OcclusionData.Frustum)) return;
+    if (!IntersectFrustum(inst, OcclusionData.Frustum)) {
+        return;
+    }
     
     if (OcclusionData.MipLevels != -1)
     {
-        if (!IntersectHIZ(inst, OcclusionData.MipLevels, OcclusionData.ViewProjection, OcclusionData.HiZWidth, OcclusionData.HiZHeight, HIZTexture, HIZSampler)) return;
+        if (!IntersectHIZ(inst, OcclusionData.MipLevels, OcclusionData.ViewProjection, OcclusionData.HiZWidth, OcclusionData.HiZHeight, HIZTexture, HIZSampler)) {
+            return;
+        }
     }
     
     IndirectMeshCommand cmd = InputCommands[inst.CommandIndex];

@@ -1,0 +1,123 @@
+#include "pch.h"
+
+#include <Entity/RenderObject/TScene.h>
+#include <Renderer/GlobalTextureHeap.h>
+#include <World/World.h>
+
+
+
+
+TScene::TScene(std::string path) {
+	m_sPath = path;
+	m_sName = path;
+}
+
+FD3DW::VertexFrameWork TScene::ConvertSceneVertex(FD3DW::SceneVertexFrameWork vertex) {
+	FD3DW::VertexFrameWork result;
+	result.Pos = vertex.Pos;
+	result.Normal = vertex.Normal;
+	result.Bitangent = vertex.Bitangent;
+	result.Tangent = vertex.Tangent;
+	result.TexCoord = vertex.TexCoord;
+	return result;
+}
+
+
+void TScene::BeforeRenderInitAfterCreation(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	CallCreationScene(device, list);
+
+	std::vector<MeshComponentMaterialData> meshMaterialStructures;
+
+	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
+	{
+		MeshComponentMaterialData cbData;
+
+		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
+		cbData = mat->GetMaterialDesc();
+		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
+			if (mat->IsHaveTexture(FD3DW::TextureType(i)))
+			{
+				cbData.LoadedTexture[i] = (int)GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
+			}
+			else {
+				cbData.LoadedTexture[i] = -1;
+			}
+		}
+		meshMaterialStructures.push_back(cbData);
+	}
+
+	for (auto ind = 0; ind < m_pScene->GetObjectBuffersCount(); ind++)
+	{
+		MeshComponentCreationData data;
+		data.ObjectDescriptor = m_pScene->GetObjectParameters(ind);
+
+		auto matIndex = (UINT)m_pScene->GetObjectParameters(ind).MaterialIndex;
+
+		data.MaterialCBufferData = meshMaterialStructures[matIndex];
+		data.ID = ind;
+		data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+		data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+		data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
+		data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+		data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
+
+		auto cmp = AddComponent<MeshComponent>();
+		cmp->SetCreationData(data);
+	}
+
+
+}
+
+void TScene::BeforeRenderInitAfterLoad(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	CallCreationScene(device, list);
+
+	std::vector<MeshComponentMaterialData> meshMaterialStructures;
+
+	for (size_t ind = 0; ind < m_pScene->GetMaterialSize(); ind++)
+	{
+		MeshComponentMaterialData cbData;
+
+		auto* mat = m_pScene->GetMaterialMananger()->GetMaterial(ind);
+		cbData = mat->GetMaterialDesc();
+		for (int i = 0; i < TEXTURE_TYPE_SIZE; ++i) {
+			if (mat->IsHaveTexture(FD3DW::TextureType(i)))
+			{
+				cbData.LoadedTexture[i] = (int)GlobalTextureHeap::GetInstance()->AddTexture(mat->GetTexture(FD3DW::TextureType(i)), device);
+			}
+			else {
+				cbData.LoadedTexture[i] = -1;
+			}
+		}
+		meshMaterialStructures.push_back(cbData);
+	}
+
+	auto meshComponents = GetComponents<MeshComponent>();
+	for (auto& meshCmp : meshComponents) {
+		auto data = meshCmp->GetCreationData();
+
+		data.ObjectDescriptor = m_pScene->GetObjectParameters(data.ID);
+		auto matIndex = (UINT)data.ObjectDescriptor.MaterialIndex;
+		data.MaterialCBufferData = meshMaterialStructures[matIndex];
+		data.IndexBuffer = m_pObjectVBV_IBV->GetIndexBufferResource();
+		data.VertexBuffer = m_pObjectVBV_IBV->GetVertexBufferResource();
+		data.VertexStructSize = (UINT)m_pObjectVBV_IBV->GetVertexStructSize();
+		data.IndexBufferView = m_pObjectVBV_IBV->GetIndexBufferView();
+		data.VertexBufferView = m_pObjectVBV_IBV->GetVertexBufferView();
+
+		meshCmp->SetCreationData(data);
+	}
+}
+
+void TScene::CallCreationScene(ID3D12Device* device, ID3D12GraphicsCommandList* list) {
+	m_pScene = std::make_unique<FD3DW::Scene>(m_sPath, device, list, true);
+
+	m_pObjectVBV_IBV = std::make_unique<FD3DW::ObjectVertexIndexDataCreator<FD3DW::VertexFrameWork>>();
+	m_pObjectVBV_IBV->CreateWithConverter(
+		device,
+		list,
+		m_pScene->GetVertices(),
+		m_pScene->GetIndices(),
+		ConvertSceneVertex,
+		false,
+		D3D12_RESOURCE_FLAG_NONE);
+}

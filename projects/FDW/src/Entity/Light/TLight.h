@@ -55,6 +55,7 @@ public:
 
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(Intensity, Light, float);
 	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(Color, Light, dx::XMFLOAT3);
+	IMPL_VALUE_GET_SET_FOR_LIGHT_ENTITY(ShadowSoftness, Light, float);
 
 
 protected:

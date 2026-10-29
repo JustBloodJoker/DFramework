@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <MainRenderer/MainRendererComponent.h>
 #include <MainRenderer/MainRenderer.h>
 

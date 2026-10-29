@@ -1,0 +1,21 @@
+#include "pch.h"
+
+#include <Component/Shadow/ShadowComponent.h>
+#include <World/World.h>
+
+ShadowComponent::ShadowComponent() {
+	m_sName = "ShadowComponent";
+}
+
+ShadowComponentData ShadowComponent::GetShadowComponentData() {
+	return m_xData;
+}
+
+void ShadowComponent::Init() {
+	GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Shadow);
+}
+
+void ShadowComponent::Activate(bool a) {
+	IComponent::Activate(a);
+	GetWorld()->AddNotifyToPull(NRenderSystemNotifyType::Shadow);
+}

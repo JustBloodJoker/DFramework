@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <UI/MainRenderer_UIComponent.h>
 #include <UI/UIInputLayer.h>
 #include <imgui.h>
@@ -45,8 +47,8 @@ void MainRenderer_UIComponent::DrawRightPanel() {
 
     auto wndWidth = std::max(1, (int)wndSettings.Width);
     auto wndHeight = std::max(1, (int)wndSettings.Height);
-    auto maxPanelWidth = std::max(0, wndWidth - WINDOW_MINIMAL_SCENE_WIDTH);
-    auto minPanelWidth = std::min(WINDOW_MINIMAL_UI_WIDTH, maxPanelWidth);
+    auto maxPanelWidth = std::max(0, wndWidth - FDWConfig::RendererLimits::MinimumSceneWidth);
+    auto minPanelWidth = std::min(FDWConfig::RendererLimits::MinimumUIWidth, maxPanelWidth);
     
     auto panelWidthInt = std::clamp((int)std::lround(m_fFixedPanelWidth), minPanelWidth, maxPanelWidth);
 
@@ -1004,39 +1006,71 @@ void MainRenderer_UIComponent::DrawEditor_BloomSystem() {
 }
 
 void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
-    struct ShadowModeOption {
-        ShadowMode Mode;
-        const char* AvailableLabel;
-        const char* UnavailableLabel;
+    const auto routing = m_pOwner->GetShadowRoutingState();
+    const auto neuralState = m_pOwner->GetNeuralShadowRuntimeState();
+    const auto deferModeSwitch = [this](ShadowMode mode) {
+        AddCallToPull([this, mode]() { m_pOwner->SetShadowMode(mode); });
     };
 
-    static constexpr ShadowModeOption shadowModeOptions[] = {
-        { ShadowMode::HardShadowAtlas, "Hard Shadow Atlas", "Hard Shadow Atlas (Unavailable: DXR required)" },
-        { ShadowMode::RayTraced, "Ray Traced", "Ray Traced (Unavailable: not implemented)" },
-        { ShadowMode::Neural, "Neural", "Neural (Unavailable: not implemented)" }
-    };
-    static_assert(IM_ARRAYSIZE(shadowModeOptions) == static_cast<int>(ShadowMode::COUNT)); // mmm
+    ImGui::SeparatorText("Shadow Rendering");
+    const bool hardAvailable = m_pOwner->IsShadowModeAvailable(ShadowMode::HardShadowAtlas);
+    if (!hardAvailable) ImGui::BeginDisabled();
+    const bool usesOnlyHardAtlas = routing.UsesHardShadowAtlas && !routing.UsesCompactBaseline && !routing.UsesNeural;
+    if (ImGui::RadioButton("Existing / Default Shadows", usesOnlyHardAtlas)) {
+        deferModeSwitch(ShadowMode::HardShadowAtlas);
+    }
+    if (!hardAvailable) ImGui::EndDisabled();
 
-    const auto currentShadowMode = m_pOwner->GetShadowMode();
-    ImGui::TextUnformatted("Shadow Mode");
-    for (const auto& option : shadowModeOptions) {
-        const bool isAvailable = m_pOwner->IsShadowModeAvailable(option.Mode);
-        const bool isSelected = currentShadowMode == option.Mode;
-        if (!isAvailable) ImGui::BeginDisabled();
-        if (ImGui::RadioButton(isAvailable ? option.AvailableLabel : option.UnavailableLabel, isSelected)) {
-            m_pOwner->SetShadowMode(option.Mode);
-        }
-        if (!isAvailable) ImGui::EndDisabled();
+    const bool rtAvailable = m_pOwner->IsShadowModeAvailable(ShadowMode::RayTraced);
+    if (!rtAvailable) ImGui::BeginDisabled();
+    if (ImGui::RadioButton("Ray Traced", routing.UsesRayTraced)) {
+        deferModeSwitch(ShadowMode::RayTraced);
+    }
+    if (!rtAvailable) ImGui::EndDisabled();
+
+    const bool compactBaselineAvailable = m_pOwner->IsShadowModeAvailable(ShadowMode::CompactBaseline);
+    if (!compactBaselineAvailable) ImGui::BeginDisabled();
+    if (ImGui::RadioButton("CompactBaseline", routing.UsesCompactBaseline)) {
+        deferModeSwitch(ShadowMode::CompactBaseline);
+    }
+    if (!compactBaselineAvailable) ImGui::EndDisabled();
+
+    const bool neuralAvailable = neuralState.Status == NeuralShadowRuntimeStatus::Ready;
+    if (!neuralAvailable) ImGui::BeginDisabled();
+    if (ImGui::RadioButton("Neural Soft Shadows", m_pOwner->IsNeuralShadowActive())) {
+        AddCallToPull([this]() { m_pOwner->SetNeuralShadowMode(); });
+    }
+    if (!neuralAvailable) ImGui::EndDisabled();
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+        ImGui::SetTooltip("Experimental neural soft shadows. High GPU cost at large inference resolutions.");
     }
 
-    const auto routing = m_pOwner->GetShadowRoutingState();
-    if (routing.UsesHardShadowAtlas) {
+    ImGui::SameLine();
+    const char* status = "Unavailable";
+    if (neuralState.Status == NeuralShadowRuntimeStatus::Ready) status = "Ready";
+    else if (neuralState.Status == NeuralShadowRuntimeStatus::Loading) status = "Loading";
+    else if (neuralState.Status == NeuralShadowRuntimeStatus::Error) status = "Error";
+    ImGui::TextDisabled("[%s]", status);
+    if (!neuralState.Reason.empty() && neuralState.Status != NeuralShadowRuntimeStatus::Ready) {
+        ImGui::TextWrapped("Neural: %s", neuralState.Reason.c_str());
+    }
+
+    if (routing.UsesCompactBaseline) {
+        ImGui::Text("Active backend: CompactBaseline");
+    }
+    else if (routing.UsesNeural && m_pOwner->IsNeuralShadowActive()) {
+        ImGui::Text("Active backend: Neural Soft Shadows");
+    }
+    else if (routing.UsesRayTraced) {
+        ImGui::Text("Active backend: Ray Traced");
+    }
+    else if (routing.UsesHardShadowAtlas) {
         ImGui::Text("Active backend: Hard Shadow Atlas");
     }
     else {
         ImGui::TextDisabled(
             "Active backend: Fully Lit Fallback (%s)",
-            GetShadowFallbackReasonLabel(routing.FallbackReason));
+            ShadowRouting::GetFallbackReasonLabel(routing.FallbackReason));
     }
 
     ImGui::Separator();
@@ -1046,8 +1080,9 @@ void MainRenderer_UIComponent::DrawEditor_ShadowSystem() {
         return;
     }
 
+    if (!routing.UsesHardShadowAtlas) return;
+
     ImGui::TextDisabled("Active path: deferred hard-atlas reconstruction");
-    ImGui::TextDisabled("Legacy RT soft-shadow prototype: inactive");
 
     auto settings = m_pOwner->GetHardShadowAtlasFilterSettings();
     bool isDirty = false;

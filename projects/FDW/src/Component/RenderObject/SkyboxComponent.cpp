@@ -1,4 +1,7 @@
+#include "pch.h"
+
 #include <Component/RenderObject/SkyboxComponent.h>
+#include <Config/RenderFormats.h>
 #include <World/World.h>
 
 SkyboxComponent::SkyboxComponent(std::string path) {

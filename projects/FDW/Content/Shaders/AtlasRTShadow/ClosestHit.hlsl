@@ -8,4 +8,5 @@ struct Attributes {
 void ClosestHit(inout ShadowPayload payload, Attributes attr)
 {
     payload.Visible = 0.0f;
+    payload.BlockerDistance = RayTCurrent();
 }

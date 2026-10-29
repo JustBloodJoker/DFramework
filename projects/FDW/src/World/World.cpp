@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <World/World.h>
 #include <MainRenderer/MainRenderer.h>
 #include <WinWindow/Utils/Scripting/ScriptManager.h>
@@ -246,11 +248,31 @@ void World::SetLightAttenuationRadius(ComponentHolder* entity, float radius) {
 
 void World::SetLightSourceRadius(ComponentHolder* entity, float radius) {
 	if (!std::isfinite(radius)) return;
-	auto safeRadius = std::clamp(radius, 0.0f, 50000.0f);
+	auto safeRadius = std::clamp(radius, 0.0f, LIGHT_MAX_SOURCE_RADIUS);
 
 	if (auto* pointLight = dynamic_cast<TPointLight*>(entity)) {
 		auto attenuation = std::max(1.0f, pointLight->GetLightAttenuationRadius());
 		pointLight->SetLightSourceRadius(std::min(safeRadius, attenuation * 0.95f));
+		return;
+	}
+	if (auto* spotLight = dynamic_cast<TSpotLight*>(entity)) {
+		auto attenuation = std::max(1.0f, spotLight->GetLightAttenuationRadius());
+		spotLight->SetLightSourceRadius(std::min(safeRadius, attenuation * 0.95f));
+	}
+}
+
+void World::SetDirectionalLightAngularRadius(ComponentHolder* entity, float radians) {
+	if (!std::isfinite(radians)) return;
+	if (auto* directionalLight = dynamic_cast<TDirectionalLight*>(entity)) {
+		directionalLight->SetLightDirectionalAngularRadius(
+			std::clamp(radians, 0.0f, LIGHT_MAX_DIRECTIONAL_ANGULAR_RADIUS));
+	}
+}
+
+void World::SetLightShadowSoftness(ComponentHolder* entity, float softness) {
+	if (!std::isfinite(softness)) return;
+	if (auto* light = dynamic_cast<TLight*>(entity)) {
+		light->SetLightShadowSoftness(std::clamp(softness, 0.0f, LIGHT_MAX_SHADOW_SOFTNESS));
 	}
 }
 
@@ -278,36 +300,36 @@ void World::SetRectLightRotation(ComponentHolder* entity, float x, float y, floa
 	}
 }
 
-ScriptArray* AsScriptArray(void* ptr) {
+ScriptArray* World::AsScriptArray(void* ptr) {
     return reinterpret_cast<ScriptArray*>(ptr);
 }
 
-const ScriptArray* AsScriptArrayConst(void* ptr) {
+const ScriptArray* World::AsScriptArrayConst(void* ptr) {
     return reinterpret_cast<const ScriptArray*>(ptr);
 }
 
-bool TryReadFloatAt(const ScriptArray* arr, int idx, float& outValue) {
+bool World::TryReadFloatAt(const ScriptArray* arr, int idx, float& outValue) {
     if (!arr) return false;
     if (idx < 0 || idx >= static_cast<int>(arr->Values.size())) return false;
     outValue = arr->Values[static_cast<size_t>(idx)].AsFloat();
     return true;
 }
 
-bool TryReadIntAt(const ScriptArray* arr, int idx, int& outValue) {
+bool World::TryReadIntAt(const ScriptArray* arr, int idx, int& outValue) {
     if (!arr) return false;
     if (idx < 0 || idx >= static_cast<int>(arr->Values.size())) return false;
     outValue = arr->Values[static_cast<size_t>(idx)].AsInt();
     return true;
 }
 
-ComponentHolder* ReadEntityAt(const ScriptArray* arr, int idx) {
+ComponentHolder* World::ReadEntityAt(const ScriptArray* arr, int idx) {
     if (!arr) return nullptr;
     if (idx < 0 || idx >= static_cast<int>(arr->Values.size())) return nullptr;
     auto* obj = arr->Values[static_cast<size_t>(idx)].AsObject();
     return static_cast<ComponentHolder*>(obj);
 }
 
-void WriteFloatAt(ScriptArray* arr, int idx, float value) {
+void World::WriteFloatAt(ScriptArray* arr, int idx, float value) {
     if (!arr) return;
     if (idx < 0) return;
     if (idx >= static_cast<int>(arr->Values.size())) {
@@ -316,33 +338,14 @@ void WriteFloatAt(ScriptArray* arr, int idx, float value) {
     arr->Values[static_cast<size_t>(idx)] = value;
 }
 
-float RandRangeNative(float minValue, float maxValue) {
+float World::RandomRange(float minValue, float maxValue) {
     static thread_local uint32_t seed = 0x9E3779B9u;
     seed = seed * 1664525u + 1013904223u;
     const float t = static_cast<float>((seed >> 8) & 0x00FFFFFFu) / static_cast<float>(0x01000000u);
     return minValue + (maxValue - minValue) * t;
 }
 
-struct ScriptLightNativeState {
-    bool Valid = false;
-    float X = 0.0f;
-    float Y = 0.0f;
-    float Z = 0.0f;
-    float TX = 0.0f;
-    float TY = 0.0f;
-    float TZ = 0.0f;
-    float Speed = 0.0f;
-    float Intensity = 0.0f;
-    float IntensityDirection = 0.0f;
-    float IntensityMin = 0.0f;
-    float IntensityMax = 0.0f;
-    float DirectionX = 0.0f;
-    float DirectionY = 0.0f;
-    float DirectionZ = 0.0f;
-    int Kind = 0;
-};
-
-ScriptLightNativeState ComputeScriptLightNativeState(
+World::ScriptLightNativeState World::ComputeScriptLightNativeState(
     const ScriptArray* kinds,
     const ScriptArray* xs,
     const ScriptArray* ys,
@@ -394,10 +397,10 @@ ScriptLightNativeState ComputeScriptLightNativeState(
 
     const float dist2 = dx * dx + dy * dy + dz * dz;
     if (dist2 < distLim) {
-        tx = RandRangeNative(-800.0f, 800.0f);
-        ty = RandRangeNative(yMinLim, yMaxLim);
-        tz = RandRangeNative(-800.0f, 800.0f);
-        spd = RandRangeNative(0.09f, 0.34f);
+        tx = RandomRange(-800.0f, 800.0f);
+        ty = RandomRange(yMinLim, yMaxLim);
+        tz = RandomRange(-800.0f, 800.0f);
+        spd = RandomRange(0.09f, 0.34f);
     }
 
     intensity = intensity + idir * dt * heat;

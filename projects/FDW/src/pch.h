@@ -1,7 +1,10 @@
 #pragma once
-#pragma comment(lib, "D3DFramework.lib")
 
-#include "WinWindow/pch.h"
-#include "D3DFramework/pch.h"
+#include <D3DFramework/pch.h>
 
-#include <MainRenderer/GlobalConfig.h>
+#include <charconv>
+#include <bit>
+#include <optional>
+#include <regex>
+#include <string_view>
+#include <unordered_set>

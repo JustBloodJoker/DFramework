@@ -1,3 +1,5 @@
+#include "pch.h"
+
 #include <Entity/RenderObject/TSkybox.h>
 #include <World/World.h>
 
