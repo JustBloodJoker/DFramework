@@ -245,6 +245,8 @@ struct NSCaptureOwnedBlock {
 	std::uint32_t Version = 1u;
 	std::uint64_t ElementCount = 0u;
 	std::vector<std::byte> Bytes;
+
+	bool HasLayout(std::uint32_t version, std::uint64_t elementCount, std::uint64_t byteCount) const;
 };
 
 struct NSCaptureRunStats {
@@ -347,7 +349,9 @@ protected:
 protected:
 	static const NSCaptureOwnedBlock* FindBlock(std::span<const NSCaptureOwnedBlock> blocks,NSNeuralShadowDataset::NSSampleBlockKind kind);
 
-	static NSCaptureResult ValidateInputBlocksCore(const NSCaptureSamplePlan& sample,std::span<const NSCaptureOwnedBlock> blocks,bool requireTarget);
+	static NSCaptureResult ValidateInputBlocksCore(const NSCaptureSamplePlan& sample,std::span<const NSCaptureOwnedBlock> blocks,bool allowGroundTruthBlocks);
+	static NSCaptureResult ValidatePixelFeatures(const NSCaptureOwnedBlock& block, std::uint32_t workCount);
+	static NSCaptureResult ValidateLightFeatures(const NSCaptureOwnedBlock& block, std::uint32_t workCount);
 };
 
 }

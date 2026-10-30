@@ -56,31 +56,9 @@ bool ShadowRouting::UsesPerLightVisibility(const ShadowRoutingState& routing) {
 	return routing.UsesHardShadowAtlas || routing.UsesRayTraced;
 }
 
-bool ShadowRouting::NeedsShadowMetadata(const ShadowRoutingState& routing) {
-	return UsesPerLightVisibility(routing);
-}
-
-bool ShadowRouting::NeedsAccelerationStructure(const ShadowRoutingState& routing) {
-	return UsesPerLightVisibility(routing);
-}
-
-bool ShadowRouting::NeedsNeuralWorkItems(const ShadowRoutingState& routing) {
-	return routing.UsesCompactBaseline || routing.UsesNeural;
-}
-
-bool ShadowRouting::NeedsNeuralFeaturePreparation(const ShadowRoutingState& routing) {
-	return routing.UsesCompactBaseline || routing.UsesNeural;
-}
-
-bool ShadowRouting::NeedsNeuralOutput(const ShadowRoutingState& routing) {
-	return routing.UsesCompactBaseline || routing.UsesNeural;
-}
-
-bool ShadowRouting::NeedsNeuralInference(const ShadowRoutingState& routing) {
-	return routing.UsesNeural;
-}
-
 ShadowProducerRoutingState ShadowRouting::ResolveProducers(const ShadowRoutingState& routing) {
+	const bool needsPerLightVisibility = UsesPerLightVisibility(routing);
+	const bool needsCompactOutput = routing.UsesCompactBaseline || routing.UsesNeural;
 	const auto activationReason = routing.UsesNeural
 			? NeuralShadowActivationReason::Neural
 			: routing.UsesCompactBaseline
@@ -89,12 +67,12 @@ ShadowProducerRoutingState ShadowRouting::ResolveProducers(const ShadowRoutingSt
 	return {
 		routing.UsesHardShadowAtlas,
 		routing.UsesRayTraced,
-		NeedsShadowMetadata(routing),
-		NeedsAccelerationStructure(routing),
-		NeedsNeuralWorkItems(routing),
-		NeedsNeuralFeaturePreparation(routing),
-		NeedsNeuralOutput(routing),
-		NeedsNeuralInference(routing),
+		needsPerLightVisibility,
+		needsPerLightVisibility,
+		needsCompactOutput,
+		needsCompactOutput,
+		needsCompactOutput,
+		routing.UsesNeural,
 		activationReason
 	};
 }

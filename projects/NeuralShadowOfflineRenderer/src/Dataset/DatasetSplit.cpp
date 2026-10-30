@@ -7,8 +7,6 @@
 #include <ShadowData/GroundTruthMetadata.h>
 
 
-#include <charconv>
-
 namespace FDW_SD::Split {
 
 bool NSSplitResult::Succeeded() const {

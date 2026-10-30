@@ -4,7 +4,6 @@
 #include <Renderer/OfflineRenderer.h>
 #include <Renderer/PSOManager.h>
 #include <D3DFramework/GraphicUtilites/CommandList.h>
-#include <D3DFramework/GraphicUtilites/BufferReadbackBatch.h>
 #include <ShadowData/GroundTruthMetadata.h>
 #include <ShadowData/NeuralShadowData.h>
 
@@ -34,12 +33,6 @@ bool NeuralShadowCaptureController::BuildNeuralOutputBlocks(
 	std::span<const std::byte> sourceInputValidityBytes,
 	std::vector<FDW_SD::Capture::NSCaptureOwnedBlock>& blocks,
 	std::string& error) {
-
-
-
-
-
-
 
 	if (sourceHeader.ScreenWidth != sample.Metadata.OutputWidth ||
 		sourceHeader.ScreenHeight != sample.Metadata.OutputHeight ||
@@ -284,10 +277,7 @@ const NeuralShadowCaptureRunOptions& NeuralShadowCaptureController::GetOptions()
 	return *m_xCaptureOptions;
 }
 
-NSNeuralShadowDataset::NSDatasetResult NeuralShadowDatasetWriter::Publish(
-	const NeuralShadowCaptureRunOptions& options,
-	const FDW_SD::Capture::NSCaptureSamplePlan& sample,
-	std::span<const FDW_SD::Capture::NSCaptureOwnedBlock> blocks) const {
+NSNeuralShadowDataset::NSDatasetResult NeuralShadowCaptureController::PublishSample(const FDW_SD::Capture::NSCaptureSamplePlan& sample, std::span<const FDW_SD::Capture::NSCaptureOwnedBlock> blocks) const {
 
 	std::vector<NSNeuralShadowDataset::NSSampleBlockInput> inputs;
 	inputs.reserve(blocks.size());
@@ -295,6 +285,7 @@ NSNeuralShadowDataset::NSDatasetResult NeuralShadowDatasetWriter::Publish(
 		inputs.push_back({ block.Kind, block.Version, block.ElementCount, block.Bytes });
 	}
 	
+	const auto& options = *m_xCaptureOptions;
 	return NSNeuralShadowDataset::DatasetContainer::PublishDatasetSample(options.DatasetRoot,options.Config.DatasetId,sample.RelativePath,sample.SampleId,sample.GenerationId, inputs);
 }
 
@@ -455,9 +446,7 @@ bool NeuralShadowCaptureController::ConfigureSample(OfflineRenderer& renderer) {
 		for (auto* existingCamera : renderer.m_pWorld->GetEntitiesByType<TBaseCamera>()) existingCamera->Activate(false);
 	}
 	else if (startsWith("asset:") || startsWith("mixed:")) {
-		const auto prefixSize = startsWith("asset:") ? 6u : 6u;
-		
-		renderer.m_pWorld->CreateScene(sample.SceneAsset.substr(prefixSize));
+		renderer.m_pWorld->CreateScene(sample.SceneAsset.substr(6u));
 	}
 	else if (!startsWith("procedural:")) {
 		m_sCaptureLastError = "scene_asset entries must use procedural:, asset:, mixed:, or world: prefixes";
@@ -688,6 +677,42 @@ std::shared_ptr<FD3DW::ExecutionHandle> NeuralShadowCaptureController::Schedule(
 	return GlobalRenderThreadManager::GetInstance()->Submit(recipe, dependencies, true);
 }
 
+bool NeuralShadowCaptureController::ReadBuffers(OfflineRenderer& renderer, std::span<const FD3DW::BufferReadbackSource> sources, std::vector<std::vector<std::byte>>& slices, std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> dependencies) {
+
+	std::unique_ptr<FD3DW::BufferReadbackBatch> batch;
+	std::string error;
+	if (!FD3DW::BufferReadbackBatch::Create(renderer.GetDevice(), sources, batch, error)) {
+		m_sCaptureLastError = error;
+		return false;
+	}
+
+	std::atomic<bool> recordSucceeded{ false };
+	std::string recordError;
+
+	auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(
+		D3D12_COMMAND_LIST_TYPE_DIRECT,
+		[&batch, &recordSucceeded, &recordError](ID3D12GraphicsCommandList* list) {
+			const auto ok = batch->RecordCopies(list, recordError);
+			recordSucceeded.store(ok, std::memory_order_release);
+		});
+
+	auto handle = GlobalRenderThreadManager::GetInstance()->Submit(recipe, std::move(dependencies), true);
+	// Keep the batch and recording result alive through both recording and GPU execution.
+	handle->WaitForExecute();
+
+	if (!recordSucceeded.load(std::memory_order_acquire)) {
+		m_sCaptureLastError = recordError;
+		return false;
+	}
+
+	if (!batch->ReadAfterCompletion(handle->GetFence(), handle->GetFenceValue(), slices, error)) {
+		m_sCaptureLastError = error;
+		return false;
+	}
+
+	return true;
+}
+
 bool NeuralShadowCaptureController::Finalize(OfflineRenderer& renderer, const std::shared_ptr<FD3DW::ExecutionHandle>& captureHandle) {
 
 	if (!captureHandle || !m_xCaptureOptions || m_uCaptureSampleIndex >= m_vCapturePlan.size()) return false;
@@ -697,55 +722,13 @@ bool NeuralShadowCaptureController::Finalize(OfflineRenderer& renderer, const st
 		m_sCaptureLastError = "DXR target recorder rejected the live frame inputs";
 		return false;
 	}
-
-	auto readBuffers = [this, &renderer](
-		std::span<const FD3DW::BufferReadbackSource> sources,
-		std::vector<std::vector<std::byte>>& slices,
-		std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> dependencies) -> bool {
-		
-		std::unique_ptr<FD3DW::BufferReadbackBatch> batch;
-		std::string error;
-		if (!FD3DW::BufferReadbackBatch::Create(renderer.GetDevice(), sources, batch, error)) {
-			m_sCaptureLastError = error;
-			return false;
-		}
-
-		auto recordSucceeded = std::make_shared<std::atomic<bool>>(false);
-		auto recordError = std::make_shared<std::string>();
-		auto* batchPtr = batch.get();
-		
-		auto recipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(
-			D3D12_COMMAND_LIST_TYPE_DIRECT,
-			[batchPtr, recordSucceeded, recordError](ID3D12GraphicsCommandList* list) {
-				std::string localError;
-				const auto ok = batchPtr->RecordCopies(list, localError);
-				*recordError = std::move(localError);
-				recordSucceeded->store(ok, std::memory_order_release);
-			});
-
-		auto handle = GlobalRenderThreadManager::GetInstance()->Submit(recipe, std::move(dependencies), true);
-		handle->WaitForExecute();
-		
-		if (!recordSucceeded->load(std::memory_order_acquire)) {
-			m_sCaptureLastError = *recordError;
-			return false;
-		}
-		
-		if (!batch->ReadAfterCompletion(handle->GetFence(), handle->GetFenceValue(), slices, error)) {
-			m_sCaptureLastError = error;
-			return false;
-		}
-		
-		return true;
-	};
-
 	const FD3DW::BufferReadbackSource headerSources[] = {
 		{ renderer.m_pShadowSystem->GetNeuralWorkGenerator()->GetDispatchHeaderBufferResource(), 0u, sizeof(FDW_SD::Work::NSWorkDispatchHeader) },
 		{ renderer.m_pShadowSystem->GetNeuralBaselinePass()->GetOutputHeaderResource(), 0u, sizeof(FDW_SD::Output::NSOutputHeader) }
 	};
 	
 	std::vector<std::vector<std::byte>> headerSlices;
-	if (!readBuffers(headerSources, headerSlices, { captureHandle })) return false;
+	if (!ReadBuffers(renderer, headerSources, headerSlices, { captureHandle })) return false;
 	
 	FDW_SD::Work::NSWorkDispatchHeader workHeader{};
 	FDW_SD::Output::NSOutputHeader outputHeader{};
@@ -786,7 +769,7 @@ bool NeuralShadowCaptureController::Finalize(OfflineRenderer& renderer, const st
 	
 	std::vector<std::vector<std::byte>> slices;
 	
-	if (!readBuffers(dataSources, slices, {})) return false;
+	if (!ReadBuffers(renderer, dataSources, slices, {})) return false;
 	
 	std::vector<std::byte> hardInput(static_cast<std::size_t>(workHeader.OutputValueCount) * sizeof(std::uint16_t));
 	
@@ -841,7 +824,7 @@ bool NeuralShadowCaptureController::Finalize(OfflineRenderer& renderer, const st
 	blocks.push_back({ NSNeuralShadowDataset::NSSampleBlockKind::CaptureMetadata, FDW_SD::Capture::CAPTURE_METADATA_VERSION, 1u, sample.MetadataBytes });
 	blocks.push_back({ NSNeuralShadowDataset::NSSampleBlockKind::RTTargetMetadata, FDW_SD::GroundTruth::RT_TARGET_METADATA_VERSION, 1u, std::move(targetMetadata) });
 	
-	const auto publication = DatasetWriter.Publish(*m_xCaptureOptions, sample, blocks);
+	const auto publication = PublishSample(sample, blocks);
 	if (!publication.Succeeded()) {
 		m_sCaptureLastError = publication.Message;
 		return false;
@@ -851,7 +834,6 @@ bool NeuralShadowCaptureController::Finalize(OfflineRenderer& renderer, const st
 	const auto sampleBytes = std::filesystem::file_size( m_xCaptureOptions->DatasetRoot / sample.RelativePath, ec);
 	if (!ec) {
 		m_uCaptureOutputBytes += sampleBytes;
-		DatasetWriter.PublishedBytes += sampleBytes;
 	}
 	
 	const auto sampleElapsed = std::chrono::duration<double>( std::chrono::steady_clock::now() - m_xCaptureSampleStartTime).count();

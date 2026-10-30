@@ -1,6 +1,5 @@
 #include <ShadowData/CaptureConfiguration.h>
 #include <ShadowData/NeuralShadowData.h>
-#include <ShadowData/NeuralShadowData.h>
 
 class CaptureConfigurationTest {
 public:
@@ -279,6 +278,41 @@ int CaptureConfigurationTest::Run() {
 	result = FDW_SD::Capture::CaptureConfiguration::ValidateInputBlocks(firstPlan.front(), wrongShape);
 	
 	if (result.Code != NSNeuralShadowDataset::NSDatasetErrorCode::LayoutMismatch) return 16;
+
+	// All owned tensor blocks share the same version/count/byte-size contract.
+	for (std::size_t blockIndex = 1u; blockIndex < 5u; ++blockIndex) {
+		for (unsigned field = 0u; field < 3u; ++field) {
+			auto malformed = MakeInputBlocks(firstPlan.front());
+			auto& block = malformed[blockIndex];
+			
+			if (field == 0u) ++block.Version;
+			else if (field == 1u) ++block.ElementCount;
+			else block.Bytes.pop_back();
+
+			result = FDW_SD::Capture::CaptureConfiguration::ValidateInputBlocks(firstPlan.front(), malformed);
+			
+			if (result.Code != NSNeuralShadowDataset::NSDatasetErrorCode::LayoutMismatch ||
+				result.Message != "capture tensor bytes/elements do not match the active feature shapes") {
+				return 25;
+			}
+		}
+	}
+
+	auto invalidPixels = MakeInputBlocks(firstPlan.front());
+	reinterpret_cast<std::uint16_t*>(invalidPixels[2].Bytes.data())[0] = 0x3c00u;
+	result = FDW_SD::Capture::CaptureConfiguration::ValidateInputBlocks(firstPlan.front(), invalidPixels);
+	if (result.Message != "pixel feature value violates the active bounds or padding") return 26;
+
+	auto invalidLight = MakeInputBlocks(firstPlan.front());
+	reinterpret_cast<std::uint16_t*>(invalidLight[3].Bytes.data())[1] = 0x3c00u;
+	result = FDW_SD::Capture::CaptureConfiguration::ValidateInputBlocks(firstPlan.front(), invalidLight);
+	if (result.Message != "light feature must have one active type") return 27;
+
+	auto duplicate = MakeInputBlocks(firstPlan.front());
+	duplicate.push_back(duplicate[0]);
+	result = FDW_SD::Capture::CaptureConfiguration::ValidateInputBlocks(firstPlan.front(), duplicate);
+	if (result.Code != NSNeuralShadowDataset::NSDatasetErrorCode::DuplicateBlock ||
+		result.Message != "capture input block kinds must be unique") return 28;
 
 	std::filesystem::remove_all(tempRoot, filesystemError);
 	return 0;

@@ -114,7 +114,6 @@ void MainRenderer::UserLoop()
 	const bool isUnlitScene = m_bIsUnlitScene;
 	const auto shadowFrameContext = m_pShadowSystem->BuildFrameContext( m_uFrameIndex, m_eShadowMode, m_pShadowSystem->GetAvailability(m_bIsUnlitScene, IsRTSupported()), static_cast<std::uint32_t>(std::max(0, GetLightsCount())));
 	const auto& shadowRouting = shadowFrameContext.Routing;
-	const bool useCompactOutput = shadowRouting.UsesCompactBaseline || shadowRouting.UsesNeural;
 	const auto& shadowProducerRouting = shadowFrameContext.Producers;
 	m_pShadowSystem->EnsureProducerResources(shadowProducerRouting);
 
@@ -215,28 +214,10 @@ void MainRenderer::UserLoop()
 	const auto emptyStructuredBufferAddress = GetEmptyStructuredBufferGPUVirtualAddress();
 
 	const auto shadowVisibility = m_pShadowSystem->BuildVisibilityView(shadowFrameContext,emptyStructuredBufferAddress, m_pNeutralShadowParamsBuffer->GetGPULocation(0));
-	const auto shadowMetaBufferAddress = shadowVisibility.LightMetadata;
-	const auto shadowParamsBufferAddress = shadowVisibility.ShadowParameters;
-	const auto nsWorkItemsAddress = shadowVisibility.WorkItems;
-	const auto nsWorkHeaderAddress = shadowVisibility.WorkHeader;
-	const auto nsPatchRecordsAddress = shadowVisibility.PatchRecords;
-	const auto nsVisibilityAddress = shadowVisibility.Visibility;
-	const auto nsValidityAddress = shadowVisibility.Validity;
-	const auto nsOutputHeaderAddress = shadowVisibility.OutputHeader;
-	const auto nsNeuralOutputWorkItemsAddress = shadowVisibility.NeuralOutputWorkItems;
-	const auto nsNeuralOutputOutputHeaderAddress = shadowVisibility.NeuralOutputOutputHeader;
-	const auto nsNeuralOutputVisibilityAddress = shadowVisibility.NeuralOutputVisibility;
-	const auto nsNeuralOutputValidityAddress = shadowVisibility.NeuralOutputValidity;
-	const UINT compactVisibilityEnabled = shadowVisibility.CompactVisibilityEnabled;
 
 	//////////////////////////
 	// SHADING PASS
-	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort, shadowMetaBufferAddress,
-																																shadowParamsBufferAddress, nsWorkItemsAddress, nsWorkHeaderAddress,
-																																nsPatchRecordsAddress, nsVisibilityAddress, nsValidityAddress,
-																																nsOutputHeaderAddress, nsNeuralOutputWorkItemsAddress,
-																																nsNeuralOutputOutputHeaderAddress, nsNeuralOutputVisibilityAddress,
-																																nsNeuralOutputValidityAddress, compactVisibilityEnabled](ID3D12GraphicsCommandList* list) {
+	auto gSecondPassRecipe = std::make_shared<FD3DW::CommandRecipe<ID3D12GraphicsCommandList>>(D3D12_COMMAND_LIST_TYPE_DIRECT, [this, sceneRect, sceneViewPort, shadowVisibility](ID3D12GraphicsCommandList* list) {
 		list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		m_pForwardRenderPassRTV->StartDraw(list);
 
@@ -262,21 +243,21 @@ void MainRenderer::UserLoop()
 		list->SetGraphicsRootShaderResourceView(LIGHTS_BUFFER_POS_IN_ROOT_SIG, m_pLightSystem->GetLightsStructuredBufferGPULocation());
 		list->SetGraphicsRootShaderResourceView(LIGHTS_CLUSTERS_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredStructuredBufferGPULocation());
 		list->SetGraphicsRootConstantBufferView(LIGHTS_CLUSTERS_DATA_BUFFER_POS_IN_ROOT_SIG, m_pClusteredLightningSystem->GetClusteredConstantBufferGPULocation());
-		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, shadowMetaBufferAddress);
-		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, shadowParamsBufferAddress);
+		list->SetGraphicsRootShaderResourceView(LIGHTS_SHADOWS_ATLAS_LIGHT_METAS_POS_IN_ROOT_SIG, shadowVisibility.LightMetadata);
+		list->SetGraphicsRootConstantBufferView(LIGHTS_SHADOWS_ATLAS_CBV_PARAMS_POS_IN_ROOT_SIG, shadowVisibility.ShadowParameters);
 
-		UINT consumerConstants[] = { compactVisibilityEnabled };
+		UINT consumerConstants[] = { shadowVisibility.CompactVisibilityEnabled };
 		list->SetGraphicsRoot32BitConstants(NEURAL_SHADOW_DEFERRED_CONSTANTS_POS_IN_ROOT_SIG,_countof(consumerConstants),consumerConstants,0u);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, nsWorkItemsAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_HEADER_SRV_POS_IN_ROOT_SIG, nsWorkHeaderAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_PATCH_RECORDS_SRV_POS_IN_ROOT_SIG, nsPatchRecordsAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VISIBILITY_SRV_POS_IN_ROOT_SIG, nsVisibilityAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VALIDITY_SRV_POS_IN_ROOT_SIG, nsValidityAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, nsOutputHeaderAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, nsNeuralOutputWorkItemsAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, nsNeuralOutputOutputHeaderAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VISIBILITY_SRV_POS_IN_ROOT_SIG, nsNeuralOutputVisibilityAddress);
-		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VALIDITY_SRV_POS_IN_ROOT_SIG, nsNeuralOutputValidityAddress);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, shadowVisibility.WorkItems);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_WORK_HEADER_SRV_POS_IN_ROOT_SIG, shadowVisibility.WorkHeader);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_PATCH_RECORDS_SRV_POS_IN_ROOT_SIG, shadowVisibility.PatchRecords);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VISIBILITY_SRV_POS_IN_ROOT_SIG, shadowVisibility.Visibility);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_VALIDITY_SRV_POS_IN_ROOT_SIG, shadowVisibility.Validity);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, shadowVisibility.OutputHeader);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_OUTPUT_WORK_ITEMS_SRV_POS_IN_ROOT_SIG, shadowVisibility.NeuralOutputWorkItems);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_OUTPUT_HEADER_SRV_POS_IN_ROOT_SIG, shadowVisibility.NeuralOutputOutputHeader);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VISIBILITY_SRV_POS_IN_ROOT_SIG, shadowVisibility.NeuralOutputVisibility);
+		list->SetGraphicsRootShaderResourceView(NEURAL_SHADOW_DEFERRED_NEURAL_VALIDITY_SRV_POS_IN_ROOT_SIG, shadowVisibility.NeuralOutputValidity);
 
 		list->DrawIndexedInstanced(GetIndexSize(m_pScreen.get(), 0), 1, GetIndexStartPos(m_pScreen.get(), 0), GetVertexStartPos(m_pScreen.get(), 0), 0);
 

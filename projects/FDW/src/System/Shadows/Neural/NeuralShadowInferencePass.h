@@ -41,7 +41,6 @@ class NeuralShadowInferencePass {
 
     public:
     bool IsReady() const;
-    bool AreResourcesAllocated() const;
     
     std::uint32_t GetConsumerMode() const;
     RuntimeState GetRuntimeState() const;
@@ -84,6 +83,7 @@ class NeuralShadowInferencePass {
     protected:
     bool EnsureResources(std::uint32_t width, std::uint32_t height, std::uint32_t lights);
     bool RebuildSession(std::uint32_t width, std::uint32_t height);
+    void BindTensorResources(ID3D12GraphicsCommandList* list, std::uint32_t light, std::uint32_t pass);
     void SetFailure(std::string message);
     static const OrtApi &GetRuntimeApi();
     static bool CheckRuntimeStatus(OrtStatus *status, std::string &error);

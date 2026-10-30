@@ -398,6 +398,24 @@ std::shared_ptr<FD3DW::ExecutionHandle> NeuralShadowInferencePass::PrepareFrame(
     return GlobalRenderThreadManager::GetInstance()->Submit(recipe, dependencies, true);
 }
 
+void NeuralShadowInferencePass::BindTensorResources(ID3D12GraphicsCommandList* list, std::uint32_t light, std::uint32_t pass) {
+    ID3D12DescriptorHeap *heaps[]{m_pTexturePack->GetResult()->GetDescriptorPtr()};
+    list->SetDescriptorHeaps(1u, heaps);
+
+    list->SetComputeRootShaderResourceView(0u, m_pHardLow->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootShaderResourceView(1u, m_pDescriptor->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootShaderResourceView(2u, m_pServices->GetLightsBufferAddress());
+    list->SetComputeRootShaderResourceView(3u, m_pDmlOutput->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootDescriptorTable(4u, m_pTexturePack->GetResult()->GetGPUDescriptorHandle(0u));
+    list->SetComputeRootUnorderedAccessView(5u, m_pBase->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootUnorderedAccessView(6u, m_pHard->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootUnorderedAccessView(7u, m_pFrameValidity->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootUnorderedAccessView(8u, m_pVisibility->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootUnorderedAccessView(9u, m_pValidity->GetResource()->GetGPUVirtualAddress());
+    list->SetComputeRootConstantBufferView(10u, m_pTensorParams->GetGPULocation(light));
+    list->SetComputeRoot32BitConstant(11u, pass, 0u);
+}
+
 std::shared_ptr<FD3DW::ExecutionHandle> NeuralShadowInferencePass::ExecuteFrame(
     const std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> &dependencies) {
     std::unique_lock lock(m_xMutex);
@@ -495,21 +513,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> NeuralShadowInferencePass::ExecuteFrame(
             m_pHard->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             m_pFrameValidity->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
                 
-            ID3D12DescriptorHeap *heaps[]{m_pTexturePack->GetResult()->GetDescriptorPtr()};
-            list->SetDescriptorHeaps(1u, heaps);
-                
-            list->SetComputeRootShaderResourceView(0u, m_pHardLow->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootShaderResourceView(1u, m_pDescriptor->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootShaderResourceView(2u, m_pServices->GetLightsBufferAddress());
-            list->SetComputeRootShaderResourceView(3u, m_pDmlOutput->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootDescriptorTable(4u, m_pTexturePack->GetResult()->GetGPUDescriptorHandle(0u));
-            list->SetComputeRootUnorderedAccessView(5u, m_pBase->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(6u, m_pHard->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(7u, m_pFrameValidity->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(8u, m_pVisibility->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(9u, m_pValidity->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootConstantBufferView(10u, m_pTensorParams->GetGPULocation(light));
-            list->SetComputeRoot32BitConstant(11u, 0u, 0u);
+            BindTensorResources(list, light, 0u);
                 
             list->Dispatch((m_uAllocatedWidth + 7u) / 8u, (m_uAllocatedHeight + 7u) / 8u, 1u);
                 
@@ -550,21 +554,7 @@ std::shared_ptr<FD3DW::ExecutionHandle> NeuralShadowInferencePass::ExecuteFrame(
             m_pVisibility->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             m_pValidity->ResourceBarrierChange(list, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
                 
-            ID3D12DescriptorHeap *heaps[]{m_pTexturePack->GetResult()->GetDescriptorPtr()};
-            list->SetDescriptorHeaps(1u, heaps);
-                
-            list->SetComputeRootShaderResourceView(0u, m_pHardLow->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootShaderResourceView(1u, m_pDescriptor->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootShaderResourceView(2u, m_pServices->GetLightsBufferAddress());
-            list->SetComputeRootShaderResourceView(3u, m_pDmlOutput->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootDescriptorTable(4u, m_pTexturePack->GetResult()->GetGPUDescriptorHandle(0u));
-            list->SetComputeRootUnorderedAccessView(5u, m_pBase->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(6u, m_pHard->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(7u, m_pFrameValidity->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(8u, m_pVisibility->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootUnorderedAccessView(9u, m_pValidity->GetResource()->GetGPUVirtualAddress());
-            list->SetComputeRootConstantBufferView(10u, m_pTensorParams->GetGPULocation(light));
-            list->SetComputeRoot32BitConstant(11u, 1u, 0u);
+            BindTensorResources(list, light, 1u);
                 
             list->Dispatch((m_uAllocatedWidth + 7u) / 8u, (m_uAllocatedHeight + 7u) / 8u, 1u);
                 
@@ -598,11 +588,6 @@ void NeuralShadowInferencePass::SetFailure(std::string message) {
 bool NeuralShadowInferencePass::IsReady() const {
     std::lock_guard lock(m_xMutex);
     return m_xState == State::Ready;
-}
-
-bool NeuralShadowInferencePass::AreResourcesAllocated() const {
-    std::lock_guard lock(m_xMutex);
-    return m_pBase && m_pDescriptor && m_pVisibility;
 }
 
 std::uint32_t NeuralShadowInferencePass::GetConsumerMode() const {

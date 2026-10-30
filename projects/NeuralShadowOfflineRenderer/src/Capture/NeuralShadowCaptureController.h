@@ -1,6 +1,7 @@
 #pragma once
 
 #include <D3DFramework/GraphicUtilites/RenderThreadUtils/ExecutionHandle.h>
+#include <D3DFramework/GraphicUtilites/BufferReadbackBatch.h>
 
 #include <ShadowData/CaptureConfiguration.h>
 #include <RayTracing/GroundTruth/NeuralShadowRTTargetProducer.h>
@@ -12,17 +13,6 @@ struct NeuralShadowCaptureRunOptions {
     FDW_SD::Capture::NSCaptureConfig Config{};
     std::filesystem::path DatasetRoot;
     bool Resume = false;
-};
-
-struct NeuralShadowCaptureFrameContext {
-    std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> Dependencies;
-};
-
-class NeuralShadowDatasetWriter {
-public:
-    NSNeuralShadowDataset::NSDatasetResult Publish(const NeuralShadowCaptureRunOptions& options, const FDW_SD::Capture::NSCaptureSamplePlan& sample, std::span<const FDW_SD::Capture::NSCaptureOwnedBlock> blocks) const;
-
-    std::uint64_t PublishedBytes = 0u;
 };
 
 class NeuralShadowCaptureController {
@@ -46,6 +36,9 @@ public:
     const NeuralShadowCaptureRunOptions& GetOptions() const;
 
 protected:
+	bool ReadBuffers(OfflineRenderer& renderer, std::span<const FD3DW::BufferReadbackSource> sources, std::vector<std::vector<std::byte>>& slices, std::vector<std::shared_ptr<FD3DW::ExecutionHandle>> dependencies);
+	NSNeuralShadowDataset::NSDatasetResult PublishSample(const FDW_SD::Capture::NSCaptureSamplePlan& sample, std::span<const FDW_SD::Capture::NSCaptureOwnedBlock> blocks) const;
+
 	static std::vector<std::byte> CopyBytes(const void* data, std::size_t byteCount);
 	
     static bool BuildNeuralOutputBlocks(
@@ -94,5 +87,4 @@ public:
     bool m_bCaptureSampleActive = false;
     
     std::string m_sCaptureLastError;
-    NeuralShadowDatasetWriter DatasetWriter;
 };

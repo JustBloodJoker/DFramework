@@ -179,13 +179,8 @@ FDW_SD::Capture::NSCaptureResult GroundTruthMetadata::ValidateBlocks(const FDW_S
 		return Failure(NSNeuralShadowDataset::NSDatasetErrorCode::SampleMismatch, "RT output header is not complete for the screen-resolution output layout");
 	}
 	
-	if (targetBlock->Version != FDW_SD::Output::OUTPUT_LAYOUT_VERSION ||
-		targetBlock->ElementCount != output.OutputValueCount ||
-		targetBlock->Bytes.size() != output.VisibilityByteCount ||
-	
-		validityBlock->Version != FDW_SD::Output::OUTPUT_LAYOUT_VERSION ||
-		validityBlock->ElementCount != output.OutputValueCount ||
-		validityBlock->Bytes.size() != output.ValidityByteCount) {
+	if (!targetBlock->HasLayout(FDW_SD::Output::OUTPUT_LAYOUT_VERSION, output.OutputValueCount, output.VisibilityByteCount) ||
+		!validityBlock->HasLayout(FDW_SD::Output::OUTPUT_LAYOUT_VERSION, output.OutputValueCount, output.ValidityByteCount)) {
 	
 		return Failure(NSNeuralShadowDataset::NSDatasetErrorCode::LayoutMismatch, "RT target R16/R8 blocks do not match the output header");
 	}

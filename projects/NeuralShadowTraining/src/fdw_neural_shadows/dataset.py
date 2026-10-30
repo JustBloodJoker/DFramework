@@ -16,8 +16,10 @@ MAX_BLOCKS = 32
 _HEADER = struct.Struct("<IIIIQQQIIIIQIIII")
 _BLOCK = struct.Struct("<IIQQQII")
 
+
 class DatasetFormatError(ValueError):
     """Raised when a sample fails a frozen container invariant."""
+
 
 @dataclass(frozen=True)
 class Block:
@@ -32,6 +34,11 @@ class Sample:
     sample_id: int
     generation_id: int
     blocks: dict[int, Block]
+
+
+def _validate_checksum(data: bytes | bytearray, expected: int, message: str) -> None:
+    if zlib.crc32(data) & 0xFFFFFFFF != expected:
+        raise DatasetFormatError(message)
 
 
 def load_sample(path: str | Path) -> Sample:
@@ -71,16 +78,19 @@ def load_sample(path: str | Path) -> Sample:
     header_copy = bytearray(payload[:header_bytes])
     struct.pack_into("<I", header_copy, 64, 0)
 
-    if zlib.crc32(header_copy) & 0xFFFFFFFF != header_crc:
-        raise DatasetFormatError("header checksum mismatch")
+    _validate_checksum(header_copy, header_crc, "header checksum mismatch")
+    _validate_checksum(payload[block_table_offset:], content_crc, "content checksum mismatch")
 
-    if zlib.crc32(payload[block_table_offset:]) & 0xFFFFFFFF != content_crc:
-        raise DatasetFormatError("content checksum mismatch")
+    blocks = _decode_blocks(payload, block_table_offset, block_count, payload_offset)
+    return Sample(sample_id, generation_id, blocks)
 
+
+def _decode_blocks(payload: bytes, table_offset: int, block_count: int, payload_offset: int) -> dict[int, Block]:
+    """Decode records after the caller validates table bounds and container checksums."""
     blocks: dict[int, Block] = {}
     ranges: list[tuple[int, int]] = []
     for index in range(block_count):
-        offset = block_table_offset + index * block_record_bytes
+        offset = table_offset + index * _BLOCK.size
         kind, block_version, start, size, count, checksum, block_flags = _BLOCK.unpack_from(payload, offset)
         end = start + size
 
@@ -91,10 +101,9 @@ def load_sample(path: str | Path) -> Sample:
             raise DatasetFormatError("sample blocks overlap or repeat a kind")
 
         data = payload[start:end]
-        if zlib.crc32(data) & 0xFFFFFFFF != checksum:
-            raise DatasetFormatError("sample block checksum mismatch")
+        _validate_checksum(data, checksum, "sample block checksum mismatch")
 
         blocks[kind] = Block(kind, block_version, count, data)
         ranges.append((start, end))
 
-    return Sample(sample_id, generation_id, blocks)
+    return blocks

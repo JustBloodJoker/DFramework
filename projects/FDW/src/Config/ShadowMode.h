@@ -66,10 +66,4 @@ public:
 
 protected:
 	static bool IsImplementedMode(ShadowMode mode);
-	static bool NeedsShadowMetadata(const ShadowRoutingState& routing);
-	static bool NeedsAccelerationStructure(const ShadowRoutingState& routing);
-	static bool NeedsNeuralWorkItems(const ShadowRoutingState& routing);
-	static bool NeedsNeuralFeaturePreparation(const ShadowRoutingState& routing);
-	static bool NeedsNeuralOutput(const ShadowRoutingState& routing);
-	static bool NeedsNeuralInference(const ShadowRoutingState& routing);
 };

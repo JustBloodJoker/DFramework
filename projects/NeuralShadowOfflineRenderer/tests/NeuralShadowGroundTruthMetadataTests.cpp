@@ -1,6 +1,5 @@
 #include <ShadowData/GroundTruthMetadata.h>
 #include <ShadowData/NeuralShadowData.h>
-#include <ShadowData/NeuralShadowData.h>
 #include <D3DFramework/Utilites/Structures.h>
 
 class GroundTruthMetadataTest {
@@ -148,6 +147,27 @@ int GroundTruthMetadataTest::Run() {
 	}
 	
 	std::vector<std::byte> metadata;
+	for (const auto blockIndex : { 5u, 6u }) {
+		for (unsigned field = 0u; field < 3u; ++field) {
+			
+			auto malformed = blocks;
+			auto& block = malformed[blockIndex];
+			
+			if (field == 0u) ++block.Version;
+			else if (field == 1u) ++block.ElementCount;
+			else block.Bytes.pop_back();
+
+			FDW_SD::GroundTruth::NSRTTargetValidationStats rejected{};
+			const auto failure = FDW_SD::GroundTruth::GroundTruthMetadata::ValidateBlocks(plan.front(), malformed, evidence, rejected);
+			if (failure.Code != NSNeuralShadowDataset::NSDatasetErrorCode::LayoutMismatch ||
+				failure.Message != "RT target R16/R8 blocks do not match the output header" ||
+				rejected.ValidValueCount != 0u || rejected.InvalidValueCount != 0u || rejected.CompletedRayCount != 0u) {
+				
+				return 21;
+			}
+		}
+	}
+
 	result = FDW_SD::GroundTruth::GroundTruthMetadata::Build(plan.front(), evidence, validation, metadata);
 	FDW_SD::GroundTruth::NSRTTargetMetadataHeader header{};
 	

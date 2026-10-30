@@ -1,9 +1,13 @@
 """Dynamic-resolution ONNX export for the spatial-visibility model."""
 
 from __future__ import annotations
+
 from pathlib import Path
+
 import torch
+
 from .model import SpatialVisibilityModel
+
 
 def export_onnx(model: SpatialVisibilityModel, output: str | Path, *, height: int = 32, width: int = 32) -> Path:
     target = Path(output)
